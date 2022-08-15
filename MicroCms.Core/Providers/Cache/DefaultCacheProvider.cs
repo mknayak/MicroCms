@@ -1,4 +1,6 @@
-﻿namespace MicroCms.Core.Providers.Cache
+﻿using MicroCms.Core.Contracts.Providers;
+
+namespace MicroCms.Core.Providers.Cache
 {
     public class DefaultCacheProvider : ICacheProvider
     {

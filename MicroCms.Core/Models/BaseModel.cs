@@ -2,6 +2,13 @@
 {
     public abstract class BaseModel
     {
+        public BaseModel()
+        {
+            CreatedBy = "System";
+            UpdatedBy = "System";
+            CreatedDate = DateTime.Now;
+            UpdatedDate = DateTime.Now;
+        }
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public bool Enabled { get; set; }

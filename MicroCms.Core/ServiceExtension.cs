@@ -1,7 +1,6 @@
-﻿using MicroCms.Core.Providers.Cache;
+﻿using MicroCms.Core.Contracts.Providers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace MicroCms.Core
 {
