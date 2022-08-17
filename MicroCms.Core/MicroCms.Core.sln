@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroCms.Core", "MicroCms.Core.csproj", "{A6AA09D3-B5CD-4732-992A-3B5F56A21E76}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroCms.Core", "source\MicroCms.Core.csproj", "{F59E1736-53F7-4F6B-9AF2-3FABB6AB8C49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroCms.Core.Tests", "test\MicroCms.Core.Tests\MicroCms.Core.Tests.csproj", "{BF70E1D7-FBD8-4612-BF1A-8D3E2F397E2F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A6AA09D3-B5CD-4732-992A-3B5F56A21E76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A6AA09D3-B5CD-4732-992A-3B5F56A21E76}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A6AA09D3-B5CD-4732-992A-3B5F56A21E76}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A6AA09D3-B5CD-4732-992A-3B5F56A21E76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F59E1736-53F7-4F6B-9AF2-3FABB6AB8C49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F59E1736-53F7-4F6B-9AF2-3FABB6AB8C49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F59E1736-53F7-4F6B-9AF2-3FABB6AB8C49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F59E1736-53F7-4F6B-9AF2-3FABB6AB8C49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF70E1D7-FBD8-4612-BF1A-8D3E2F397E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF70E1D7-FBD8-4612-BF1A-8D3E2F397E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF70E1D7-FBD8-4612-BF1A-8D3E2F397E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF70E1D7-FBD8-4612-BF1A-8D3E2F397E2F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

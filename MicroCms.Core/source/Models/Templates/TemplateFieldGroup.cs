@@ -6,6 +6,8 @@
         {
             Fields= Enumerable.Empty<TemplateField>();
         }
+        public Guid TemplateId { get; set; }
+
         public IEnumerable<TemplateField> Fields { get; set; }
 
     }

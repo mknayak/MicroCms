@@ -13,6 +13,7 @@
   <ItemGroup>
     <Folder Include="Helpers\" />
     <Folder Include="Extensions\" />
+    <Folder Include="Database\" />
   </ItemGroup>
 
 </Project>

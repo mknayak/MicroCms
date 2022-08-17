@@ -10,6 +10,7 @@ namespace MicroCms.Core
         {
             var option = MicroCmsConfigurationOption.Default;
             serviceProvider.AddSingleton(typeof(ICacheProvider), Type.GetType(option.CacheProvider));
+            serviceProvider.AddSingleton(typeof(Models.ExecutionContext), new Models.ExecutionContext());
         }
         
     }

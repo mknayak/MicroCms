@@ -4,13 +4,16 @@
     {
         public BaseModel()
         {
-            CreatedBy = "System";
-            UpdatedBy = "System";
+            Id= Guid.NewGuid();
+            CreatedBy = Constants.DefaultCreatedBy;
+            UpdatedBy = Constants.DefaultCreatedBy;
             CreatedDate = DateTime.Now;
             UpdatedDate = DateTime.Now;
+            Name = string.Empty;
         }
         public Guid Id { get; set; }
-        public string? Name { get; set; }
+        public Guid ParentId { get; set; }
+        public string Name { get; set; }
         public bool Enabled { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
