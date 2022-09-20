@@ -1,12 +1,12 @@
 ﻿namespace MicroCms.Core.Models.Templates
 {
-    public class Template : BaseModel
+    public class Template : BaseEntity
     {
         public Template()
         {
-            FieldGroups = Enumerable.Empty<TemplateFieldGroup>();
+            Fields = Enumerable.Empty<TemplateField>();
         }
-        public IEnumerable<TemplateFieldGroup> FieldGroups { get; set; }
+        public IEnumerable<TemplateField> Fields { get; set; }
     }
 
 }

@@ -31,7 +31,7 @@ namespace MicroCms.Core.Repositories
             Item item = new Item
             {
                 Name = name,
-                ParentId = Guid.Parse(parentId),
+                ParentId =parentId,
                 Enabled = true,
                 TemplateId = template.Id
             };
@@ -39,30 +39,25 @@ namespace MicroCms.Core.Repositories
 
             foreach (var field in fields)
             {
-                var fiedlId = Guid.NewGuid();
+                var fiedlId = Guid.NewGuid().ToString();
                 _dbStore.itemFields.Add(fiedlId.ToString(), new ItemField { Id = fiedlId, ItemId = item.Id, Name = field.Key, Value = Convert.ToString(field.Value) });
             }
 
             return item.Id.ToString();
         }
 
-        public string AddTemplate(string templateName, string parentId, params TemplateFieldGroup[] fields)
+        public string AddTemplate(string templateName, string parentId, params TemplateField[] fields)
         {
             Template template = new Template
             {
                 Name = templateName,
-                ParentId = Guid.Parse(parentId)
+                ParentId = parentId
             };
             _dbStore.templates.Add(template.Id.ToString(), template);
-            foreach (var fieldgroup in fields)
+            foreach (var field in fields)
             {
-                fieldgroup.TemplateId = template.Id;
-                _dbStore.templateFieldGroups.Add(fieldgroup.Id.ToString(), fieldgroup);
-                foreach (var field in fieldgroup.Fields)
-                {
-                    field.TemplateGroupId = fieldgroup.Id;
-                    _dbStore.templateFields.Add(field.Id.ToString(), field);
-                }
+                field.TemplateId = template.Id;
+                _dbStore.templateFields.Add(field.Id.ToString(), field);
             }
             return template.Id.ToString();
         }
@@ -82,11 +77,7 @@ namespace MicroCms.Core.Repositories
             var template = _dbStore.templates.ContainsKey(id) ? _dbStore.templates[id] : null;
             if (null != template)
             {
-                template.FieldGroups = _dbStore.templateFieldGroups.Values.Where(c => c.TemplateId == template.Id).ToList();
-                foreach (var group in template.FieldGroups)
-                {
-                    group.Fields = _dbStore.templateFields.Values.Where(c => c.TemplateGroupId == group.Id).ToList();
-                }
+                template.Fields = _dbStore.templateFields.Values.Where(c => c.TemplateId == template.Id).ToList();
             }
             return template;
         }
@@ -107,7 +98,7 @@ namespace MicroCms.Core.Repositories
                     if (null == cfield)
                     {
                         cfield = new ItemField
-                        { Id = Guid.NewGuid(), Name = field.Key };
+                        { Id = Guid.NewGuid().ToString(), Name = field.Key };
                         _dbStore.itemFields.Add(cfield.Id.ToString(), cfield);
                     }
                     cfield.Value = Convert.ToString(field.Value);
@@ -116,7 +107,7 @@ namespace MicroCms.Core.Repositories
             }
         }
 
-        public void UpdateTemplate(string templateId, params TemplateFieldGroup[] fields)
+        public void UpdateTemplate(string templateId, params TemplateField[] fields)
         {
             throw new NotImplementedException();
         }
@@ -125,7 +116,7 @@ namespace MicroCms.Core.Repositories
         {
             public Dictionary<string, Template> templates = new Dictionary<string, Template>();
             public Dictionary<string, TemplateField> templateFields = new Dictionary<string, TemplateField>();
-            public Dictionary<string, TemplateFieldGroup> templateFieldGroups = new Dictionary<string, TemplateFieldGroup>();
+            //public Dictionary<string, TemplateFieldGroup> templateFieldGroups = new Dictionary<string, TemplateFieldGroup>();
             public Dictionary<string, Item> items = new Dictionary<string, Item>();
             public Dictionary<string, ItemField> itemFields = new Dictionary<string, ItemField>();
             public Dictionary<string, string> itemHierarchy = new Dictionary<string, string>();

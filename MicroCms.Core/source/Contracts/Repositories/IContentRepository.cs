@@ -24,13 +24,13 @@ namespace MicroCms.Core.Contracts.Repositories
         /// <param name="parentId">The parent identifier.</param>
         /// <param name="fields">The fields.</param>
         /// <returns></returns>
-        public string AddTemplate(string templateName, string parentId, params TemplateFieldGroup[] fields);
+        public string AddTemplate(string templateName, string parentId, params TemplateField[] fields);
         /// <summary>
         /// Updates the template.
         /// </summary>
         /// <param name="templateId">The template identifier.</param>
         /// <param name="fields">The fields.</param>
-        public void UpdateTemplate(string templateId, params TemplateFieldGroup[] fields);
+        public void UpdateTemplate(string templateId, params TemplateField[] fields);
         /// <summary>
         /// Adds the item.
         /// </summary>

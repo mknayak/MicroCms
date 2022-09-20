@@ -1,6 +1,6 @@
 ﻿namespace MicroCms.Core.Models.Templates
 {
-    public class TemplateFieldGroup : BaseModel
+    public class TemplateFieldGroup : BaseEntity
     {
         public TemplateFieldGroup()
         {

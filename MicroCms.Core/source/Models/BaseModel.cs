@@ -1,18 +1,18 @@
 ﻿namespace MicroCms.Core.Models
 {
-    public abstract class BaseModel
+    public abstract class BaseEntity
     {
-        public BaseModel()
+        public BaseEntity()
         {
-            Id= Guid.NewGuid();
+            Id= Guid.NewGuid().ToString();
             CreatedBy = Constants.DefaultCreatedBy;
             UpdatedBy = Constants.DefaultCreatedBy;
             CreatedDate = DateTime.Now;
             UpdatedDate = DateTime.Now;
             Name = string.Empty;
         }
-        public Guid Id { get; set; }
-        public Guid ParentId { get; set; }
+        public string Id { get; set; }
+        public string ParentId { get; set; }
         public string Name { get; set; }
         public bool Enabled { get; set; }
         public DateTime CreatedDate { get; set; }

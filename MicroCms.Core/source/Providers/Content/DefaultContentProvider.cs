@@ -26,12 +26,24 @@ namespace MicroCms.Core.Providers.Content
             this.cacheProvider = cacheProvider;
         }
         /// <summary>
+        /// Adds the template.
+        /// </summary>
+        /// <param name="templateName">Name of the template.</param>
+        /// <param name="parentId">The parent identifier.</param>
+        /// <param name="fields">The fields.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public void AddTemplate(string templateName, string parentId, params TemplateField[] fields)
+        {
+            contentRepository.AddTemplate(templateName, parentId, fields);  
+        }
+
+        /// <summary>
         /// Finds the by identifier.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="id">The identifier.</param>
         /// <returns></returns>
-        public T? FindById<T>(Guid id)
+        public T? FindById<T>(string id)
         {
             string key = $"{nameof(FindById)}-{id}";
             var item = FindItemById(id);
@@ -44,7 +56,7 @@ namespace MicroCms.Core.Providers.Content
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns></returns>
-        public Item? FindItemById(Guid id)
+        public Item? FindItemById(string id)
         {
             string key = $"{nameof(FindItemById)}-{id}";
             return cacheProvider.GetOrSet(key, (key) => contentRepository.FindItemById(id.ToString()));
@@ -54,7 +66,7 @@ namespace MicroCms.Core.Providers.Content
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns></returns>
-        public Template? FindTemplateById(Guid id)
+        public Template? FindTemplateById(string id)
         {
             string key = $"{nameof(FindTemplateById)}-{id}";
             return cacheProvider.GetOrSet(key, (key) => contentRepository.FindTemplateById(id.ToString()));
