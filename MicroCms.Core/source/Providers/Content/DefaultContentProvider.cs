@@ -37,6 +37,11 @@ namespace MicroCms.Core.Providers.Content
             contentRepository.AddTemplate(templateName, parentId, fields);  
         }
 
+        public IEnumerable<Item> ChildItems(string itemId)
+        {
+            return contentRepository.ChildItems(itemId);
+        }
+
         /// <summary>
         /// Finds the by identifier.
         /// </summary>

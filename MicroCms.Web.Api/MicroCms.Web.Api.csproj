@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MicroCms.Core\source\MicroCms.Core.csproj" />
+    <ProjectReference Include="..\Packages\MicroCms.Package\MicroCms.Package.csproj" />
   </ItemGroup>
 
 </Project>

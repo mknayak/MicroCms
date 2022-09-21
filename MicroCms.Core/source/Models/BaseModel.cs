@@ -2,14 +2,18 @@
 {
     public abstract class BaseEntity
     {
-        public BaseEntity()
+        public BaseEntity(string name, string id)
         {
-            Id= Guid.NewGuid().ToString();
+            Id = id;
             CreatedBy = Constants.DefaultCreatedBy;
             UpdatedBy = Constants.DefaultCreatedBy;
             CreatedDate = DateTime.Now;
             UpdatedDate = DateTime.Now;
-            Name = string.Empty;
+            Name = name;
+            Enabled = true;
+        }
+        public BaseEntity(string name) : this(name, Guid.NewGuid().ToString())
+        {
         }
         public string Id { get; set; }
         public string ParentId { get; set; }

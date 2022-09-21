@@ -2,7 +2,7 @@
 {
     public class Item : BaseEntity
     {
-        public Item()
+        public Item(string name):base(name)
         {
             Fields = new List<ItemField>();
         }

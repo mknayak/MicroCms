@@ -2,7 +2,7 @@
 {
     public class Template : BaseEntity
     {
-        public Template()
+        public Template(string name):base(name)
         {
             Fields = Enumerable.Empty<TemplateField>();
         }

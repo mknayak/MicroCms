@@ -4,7 +4,7 @@ namespace MicroCms.Core.Models.Templates
 {
     public class TemplateField : BaseEntity
     {
-        public TemplateField()
+        public TemplateField(string name):base(name)
         {
             Group = "Default";
         }
@@ -18,6 +18,7 @@ namespace MicroCms.Core.Models.Templates
         Number,
         Date,
         Image,
+        File,
         Xml
     }
 }

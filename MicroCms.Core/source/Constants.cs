@@ -4,8 +4,13 @@
     {
         public static class Ids
         {
+
+            internal const string SystemFolderTemplateId = "{94F73E73-39DE-414A-A725-BDA48CDA38BE}";
+            public const string FolderTemplateId = "{F9BB3FAD-C3F4-472C-8015-C6B57EDBDFDB}";
             public const string ContenRootId = "{63D2FCF3-635C-47C9-B1DF-56C419F0E7BB}";
             public const string TemplateRootId = "{4E85013D-E297-4FA3-BCF1-BD3D65D6BAAE}";
+            public const string CoreTemplateFolderId = "{8F917465-C6AE-4D20-A97D-5AC0ED8D0123}";
+            public const string DataRootId = "{A0CD0AC6-ACAE-418C-8E2F-77C2E41939AC}";
         }
         public const string DefaultCreatedBy = "System";
 

@@ -23,35 +23,50 @@ namespace MicroCms.Core.Repositories
                 context.Items.Add(key, _dbStore);
             }
         }
-        public string AddItem(string name, string templateId, string parentId, IDictionary<string, object> fields)
+        public string AddItem(string name, string templateId, string parentId, IDictionary<string, string> fields)
         {
+            return AddItem(name, string.Empty, templateId, parentId, fields);
+        }
+
+        public string AddItem(string name, string itemId, string templateId, string parentId, IDictionary<string, string> fields)
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+                itemId = Guid.NewGuid().ToString();
             var template = _dbStore.templates.ContainsKey(templateId) ? _dbStore.templates[templateId] : null;
             if (null == template)
                 throw new ArgumentNullException(nameof(template));
-            Item item = new Item
+            Item item = new Item(name)
             {
-                Name = name,
-                ParentId =parentId,
-                Enabled = true,
-                TemplateId = template.Id
+                ParentId = parentId,
+                TemplateId = template.Id,
+                Id = itemId
             };
             _dbStore.items.Add(item.Id.ToString(), item);
 
-            foreach (var field in fields)
-            {
-                var fiedlId = Guid.NewGuid().ToString();
-                _dbStore.itemFields.Add(fiedlId.ToString(), new ItemField { Id = fiedlId, ItemId = item.Id, Name = field.Key, Value = Convert.ToString(field.Value) });
-            }
+            if (null != fields)
+                foreach (var field in fields)
+                {
+                    var fiedlId = Guid.NewGuid().ToString();
+                    _dbStore.itemFields.Add(fiedlId.ToString(), new ItemField(field.Key)
+                    { Id = fiedlId, ItemId = item.Id, Value = field.Value });
+                }
 
             return item.Id.ToString();
         }
 
         public string AddTemplate(string templateName, string parentId, params TemplateField[] fields)
         {
-            Template template = new Template
+            return AddTemplate(templateName, string.Empty, parentId, fields);
+        }
+
+        public string AddTemplate(string templateName, string templateId, string parentId, params TemplateField[] fields)
+        {
+            if (string.IsNullOrWhiteSpace(templateId))
+                templateId = Guid.NewGuid().ToString();
+            Template template = new Template(templateName)
             {
-                Name = templateName,
-                ParentId = parentId
+                ParentId = parentId,
+                Id = templateId
             };
             _dbStore.templates.Add(template.Id.ToString(), template);
             foreach (var field in fields)
@@ -60,6 +75,11 @@ namespace MicroCms.Core.Repositories
                 _dbStore.templateFields.Add(field.Id.ToString(), field);
             }
             return template.Id.ToString();
+        }
+
+        public IEnumerable<Item> ChildItems(string itemId)
+        {
+            return _dbStore.items.Values.Where(c => c.ParentId == itemId);
         }
 
         public Item FindItemById(string id)
@@ -82,6 +102,40 @@ namespace MicroCms.Core.Repositories
             return template;
         }
 
+        public void Initialize()
+        {
+            _dbStore.templates.Add(Constants.Ids.SystemFolderTemplateId, new Template("RootSystemNode")
+            {
+                Id = Constants.Ids.SystemFolderTemplateId
+            });
+
+            _dbStore.items.Add(Constants.Ids.ContenRootId, new Item("Content")
+            {
+                TemplateId = Constants.Ids.SystemFolderTemplateId,
+                Id = Constants.Ids.ContenRootId
+            });
+            _dbStore.items.Add(Constants.Ids.DataRootId, new Item("Data")
+            {
+                TemplateId = Constants.Ids.SystemFolderTemplateId,
+                Id = Constants.Ids.DataRootId
+            });
+            _dbStore.items.Add(Constants.Ids.TemplateRootId, new Item("Templates")
+            {
+                TemplateId = Constants.Ids.SystemFolderTemplateId,
+                Id = Constants.Ids.TemplateRootId
+            });
+            _dbStore.items.Add(Constants.Ids.CoreTemplateFolderId, new Item("Core")
+            {
+                TemplateId = Constants.Ids.FolderTemplateId,
+                Id = Constants.Ids.CoreTemplateFolderId,
+                ParentId = Constants.Ids.TemplateRootId
+            });
+            _dbStore.templates.Add(Constants.Ids.FolderTemplateId, new Template("FolderTemplate")
+            {
+                Id = Constants.Ids.FolderTemplateId
+            });
+        }
+
         public void UpdateItem(string itemId, string templateId, IDictionary<string, object> fields)
         {
             var item = _dbStore.items.ContainsKey(itemId) ? _dbStore.items[itemId] : null;
@@ -97,8 +151,7 @@ namespace MicroCms.Core.Repositories
                     var cfield = currentFields.FirstOrDefault(c => c.Name.ToString() == field.Key);
                     if (null == cfield)
                     {
-                        cfield = new ItemField
-                        { Id = Guid.NewGuid().ToString(), Name = field.Key };
+                        cfield = new ItemField(field.Key);
                         _dbStore.itemFields.Add(cfield.Id.ToString(), cfield);
                     }
                     cfield.Value = Convert.ToString(field.Value);
@@ -109,14 +162,13 @@ namespace MicroCms.Core.Repositories
 
         public void UpdateTemplate(string templateId, params TemplateField[] fields)
         {
-            throw new NotImplementedException();
+
         }
 
         public class DbStore
         {
             public Dictionary<string, Template> templates = new Dictionary<string, Template>();
             public Dictionary<string, TemplateField> templateFields = new Dictionary<string, TemplateField>();
-            //public Dictionary<string, TemplateFieldGroup> templateFieldGroups = new Dictionary<string, TemplateFieldGroup>();
             public Dictionary<string, Item> items = new Dictionary<string, Item>();
             public Dictionary<string, ItemField> itemFields = new Dictionary<string, ItemField>();
             public Dictionary<string, string> itemHierarchy = new Dictionary<string, string>();

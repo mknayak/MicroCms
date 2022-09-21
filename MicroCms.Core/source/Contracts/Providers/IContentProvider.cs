@@ -28,6 +28,12 @@ namespace MicroCms.Core.Contracts.Providers
         /// <returns></returns>
         public Item? FindItemById(string id);
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="itemId"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> ChildItems(string itemId);
+        /// <summary>
         /// Adds the template.
         /// </summary>
         /// <param name="templateName">Name of the template.</param>

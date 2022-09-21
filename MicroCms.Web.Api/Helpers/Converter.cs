@@ -56,10 +56,9 @@ namespace MicroCms.Web.Api.Helpers
         public static TemplateField ToTemplateField(this TemplateFieldModel templateFieldModel)
         {
             Validate.Field(templateFieldModel, nameof(templateFieldModel)).IsNotNull();
-            var templateField = new TemplateField()
+            var templateField = new TemplateField(templateFieldModel.Name)
             {
                 Id = templateFieldModel.Id.ToString(),
-                Name = templateFieldModel.Name,
                 Type = templateFieldModel.Type
             };
             return templateField;

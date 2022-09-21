@@ -15,7 +15,14 @@ namespace MicroCms.Web.Api.Controllers
         {
             this.contentProvider = contentProvider;
         }
-        
+
+        [HttpGet("child")]
+        public IEnumerable<ItemModel> Child(string? id)
+        {
+            var items = contentProvider.ChildItems(id);
+
+            return items?.Select(c=>c.ToItemModel());
+        }
 
         // GET api/<TemplateApiController>/5
         [HttpGet("{id}")]

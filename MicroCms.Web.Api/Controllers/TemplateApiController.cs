@@ -34,7 +34,7 @@ namespace MicroCms.Web.Api.Controllers
         public void Post(string name, IDictionary<string, TemplateFieldType> fields, string? parentId = null)
         {
             parentId = parentId ?? Constants.Ids.TemplateRootId;
-            contentProvider.AddTemplate(name, parentId, fields.Select(c => new TemplateField { Name = c.Key, Type = c.Value }).ToArray());
+            contentProvider.AddTemplate(name, parentId, fields.Select(c => new TemplateField(c.Key) { Type = c.Value }).ToArray());
         }
 
         // PUT api/<TemplateApiController>/5

@@ -26,6 +26,15 @@ namespace MicroCms.Core.Contracts.Repositories
         /// <returns></returns>
         public string AddTemplate(string templateName, string parentId, params TemplateField[] fields);
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="templateName"></param>
+        /// <param name="templateId"></param>
+        /// <param name="parentId"></param>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public string AddTemplate(string templateName, string templateId, string parentId, params TemplateField[] fields);
+        /// <summary>
         /// Updates the template.
         /// </summary>
         /// <param name="templateId">The template identifier.</param>
@@ -39,7 +48,23 @@ namespace MicroCms.Core.Contracts.Repositories
         /// <param name="parentId">The parent identifier.</param>
         /// <param name="fields">The fields.</param>
         /// <returns></returns>
-        public string AddItem(string name, string templateId, string parentId, IDictionary<string, object> fields);
+        public string AddItem(string name, string templateId, string parentId, IDictionary<string, string> fields);
+        /// <summary>
+        /// Adds the item.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="itemId">The item id.</param>
+        /// <param name="templateId">The template identifier.</param>
+        /// <param name="parentId">The parent identifier.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns></returns>
+        public string AddItem(string name,string itemId, string templateId, string parentId, IDictionary<string, string> fields);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="itemId"></param>
+        /// <returns></returns>
+        public IEnumerable<Item> ChildItems(string itemId);
         /// <summary>
         /// Updates the item.
         /// </summary>
@@ -47,6 +72,9 @@ namespace MicroCms.Core.Contracts.Repositories
         /// <param name="templateId">The template identifier.</param>
         /// <param name="fields">The fields.</param>
         public void UpdateItem(string itemId, string templateId, IDictionary<string, object> fields);
-
+        /// <summary>
+        /// Initialize the repository
+        /// </summary>
+        public void Initialize();
     }
 }
