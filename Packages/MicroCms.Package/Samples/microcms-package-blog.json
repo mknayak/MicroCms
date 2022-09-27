@@ -1,0 +1,165 @@
+{
+  "name": "microcms-package-blog",
+  "description": "Simple blog template for MicroCms",
+  "version": "1.0",
+  "content": [
+    {
+      "name": "Home",
+      "templateId": "{38CEBFF6-8A6B-4F2B-B9D9-620312D503B7}",
+      "fields": {
+        "Title": "Micro CMS",
+        "Short Description": "Welcome to MicroCMS",
+        "Description": "Micro CMS, as name suggests , is a micro content management platform. This is designed to with a plugable architecture with simplistic yet extendable components."
+      },
+      "childItems": [
+        {
+          "name": null,
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "Blogs",
+      "templateId": "{38CEBFF6-8A6B-4F2B-B9D9-620312D503B7}",
+      "fields": {
+        "Title": "Micro CMS Blogs",
+        "Short Description": "This is landing page for all blogs",
+        "Description": "Micro CMS Blogs"
+      },
+      "childItems": [
+        {
+          "name": "Micro CMS Introduction",
+          "templateId": "{931C0DB4-40DB-4591-A3D6-26A1762C2F41}",
+          "fields": {
+            "Title": "Micro CMS Introduction",
+            "Short Description": "This post will provide basic introduction to MicroCMS",
+            "Description": "About Micro CMS"
+          }
+
+        }
+      ]
+    }
+  ],
+  "data": [
+    {
+      "name": "Comments",
+      "fields": null,
+      "templateId": ""
+    },
+    {
+      "name": "Authors",
+      "fields": null,
+      "templateId": ""
+    }
+  ],
+  "template": [
+    {
+      "name": "BlogPost",
+      "id": "{931C0DB4-40DB-4591-A3D6-26A1762C2F41}",
+      "fields": [
+        {
+          "name": "Title",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Short Description",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Description",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Cover Image",
+          "type": "Image",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Publish Date",
+          "type": "Date",
+          "id": "",
+          "group": "Basic"
+        }
+      ]
+    },
+    {
+      "name": "ContentPage",
+      "id": "{38CEBFF6-8A6B-4F2B-B9D9-620312D503B7}",
+      "fields": [
+        {
+          "name": "Title",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Description",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Cover Image",
+          "type": "Image",
+          "id": "",
+          "group": "Basic"
+        }
+      ]
+    },
+    {
+      "name": "BlogAuthor",
+      "id": "{694DD91F-9327-4CC6-8FC5-24F8AA47B2E7}",
+      "fields": [
+        {
+          "name": "Name",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Description",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Image",
+          "type": "Image",
+          "id": "",
+          "group": "Basic"
+        }
+      ]
+    },
+    {
+      "name": "BlogComment",
+      "id": "{CF11BBE3-BA74-4A29-9797-528621A2A660}",
+      "fields": [
+        {
+          "name": "Name",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Email",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        },
+        {
+          "name": "Comment",
+          "type": "Text",
+          "id": "",
+          "group": "Basic"
+        }
+      ]
+    }
+  ]
+}
