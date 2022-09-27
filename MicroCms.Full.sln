@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroCms.Web.Api", "MicroCm
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{414DF75D-9D02-46BC-AFDB-9D60ECD8B5A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroCms.Package", "Packages\MicroCms.Package\MicroCms.Package.csproj", "{DD8AAE45-A6AB-4039-9A45-0CA6A46C50E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroCms.Package", "Packages\MicroCms.Package\MicroCms.Package.csproj", "{DD8AAE45-A6AB-4039-9A45-0CA6A46C50E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

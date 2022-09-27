@@ -32,5 +32,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.InitializeMicroCms();
 app.AddSamplePackages();
+app.UseCors(p => p.AllowAnyOrigin());
 
 app.Run();
