@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <AssemblyName>MicroCMS.Application</AssemblyName>
+    <RootNamespace>MicroCMS.Application</RootNamespace>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+  </PropertyGroup>
+
+  <!-- Application depends on Domain and Shared only -->
+  <ItemGroup>
+    <ProjectReference Include="..\MicroCMS.Domain\MicroCMS.Domain.csproj" />
+    <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- CQRS dispatcher -->
+    <PackageReference Include="MediatR" Version="12.3.0" />
+    <!-- Validation pipeline behavior -->
+    <PackageReference Include="FluentValidation" Version="11.9.2" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.2" />
+    <!-- Source-generated mappers -->
+    <PackageReference Include="Riok.Mapperly" Version="3.5.0" />
+    <!-- MS DI abstractions (interfaces only — no concrete container) -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <!-- Analyzers -->
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.0.90307">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

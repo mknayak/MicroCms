@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>MicroCMS.Architecture.Tests</AssemblyName>
+    <RootNamespace>MicroCMS.Architecture.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <!-- References all projects so NetArchTest can load assemblies and verify layering rules -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MicroCMS.Domain\MicroCMS.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Application\MicroCMS.Application.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Infrastructure\MicroCMS.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Api\MicroCMS.Api.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.GraphQL\MicroCMS.GraphQL.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Ai.Abstractions\MicroCMS.Ai.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Ai.Core\MicroCMS.Ai.Core.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.AzureOpenAI\MicroCMS.Ai.Providers.AzureOpenAI.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.OpenAI\MicroCMS.Ai.Providers.OpenAI.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.Anthropic\MicroCMS.Ai.Providers.Anthropic.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Plugins.Abstractions\MicroCMS.Plugins.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Plugins.Hosting\MicroCMS.Plugins.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
+    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+    <!-- Layering rule enforcement (ArchUnit-style for .NET) -->
+    <PackageReference Include="NetArchTest.Rules" Version="1.3.2" />
+  </ItemGroup>
+
+</Project>

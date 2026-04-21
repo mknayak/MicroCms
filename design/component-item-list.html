@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hero Banner — Component Items — MicroCMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Component Item List layout ── */
+    .cil-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--color-border);
+      background: white;
+    }
+    .comp-icon-lg {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--color-brand-light);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-brand); flex-shrink: 0;
+    }
+    .comp-icon-lg svg { width: 22px; height: 22px; }
+    .cil-meta { flex: 1 }
+    .cil-meta h1 { font-size: 17px; font-weight: 700; color: var(--color-text); margin: 0 }
+    .cil-meta p  { font-size: 12px; color: var(--color-text-muted); margin: 2px 0 0 }
+
+    /* ── Toolbar ── */
+    .cil-toolbar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--color-border);
+      background: white;
+    }
+    .cil-search {
+      position: relative; flex: 1; max-width: 320px;
+    }
+    .cil-search svg {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      width: 15px; height: 15px; color: #9ca3af; pointer-events: none;
+    }
+    .cil-search input {
+      width: 100%; padding: 7px 12px 7px 32px;
+      border: 1px solid var(--color-border); border-radius: 6px;
+      font-size: 13px; background: var(--color-bg);
+    }
+    .cil-search input:focus { outline: none; border-color: var(--color-brand); background: white; }
+    .filter-select {
+      padding: 7px 10px; border: 1px solid var(--color-border); border-radius: 6px;
+      font-size: 13px; background: white; color: var(--color-text); cursor: pointer;
+    }
+    .spacer { flex: 1 }
+
+    /* ── Table ── */
+    .items-table { width: 100%; border-collapse: collapse }
+    .items-table th {
+      text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--color-text-muted);
+      padding: 10px 16px; background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky; top: var(--topbar-height);
+    }
+    .items-table th input[type=checkbox] { cursor: pointer }
+    .items-table td {
+      padding: 12px 16px; border-bottom: 1px solid var(--color-border);
+      font-size: 13px; vertical-align: middle;
+    }
+    .items-table tr:last-child td { border-bottom: none }
+    .items-table tr:hover td { background: #fafafe }
+
+    .item-thumb {
+      width: 48px; height: 32px; border-radius: 4px; object-fit: cover;
+      background: var(--color-brand-light); border: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-brand); font-size: 10px; font-weight: 600;
+    }
+
+    .item-title {
+      font-weight: 600; color: var(--color-text);
+    }
+    .item-subtitle { font-size: 12px; color: var(--color-text-muted); margin-top: 1px }
+
+    .usage-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 500;
+      background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
+    }
+    .usage-badge.zero { background: #f9fafb; color: #6b7280; border-color: #e5e7eb }
+
+    .status-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 500;
+    }
+    .status-pill.published { background: #f0fdf4; color: #166534 }
+    .status-pill.draft     { background: #fefce8; color: #92400e }
+    .status-pill.archived  { background: #f9fafb; color: #6b7280 }
+
+    .row-actions {
+      display: flex; align-items: center; gap: 4px; opacity: 0;
+      transition: opacity .15s;
+    }
+    .items-table tr:hover .row-actions { opacity: 1 }
+    .row-btn {
+      padding: 4px 6px; border-radius: 5px; border: none; background: transparent;
+      color: var(--color-text-muted); cursor: pointer; display: flex;
+    }
+    .row-btn:hover { background: var(--color-border); color: var(--color-text) }
+    .row-btn svg { width: 15px; height: 15px }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 20px; text-align: center;
+    }
+    .empty-state svg { width: 48px; height: 48px; color: #d1d5db; margin-bottom: 12px }
+    .empty-state h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px }
+    .empty-state p  { font-size: 13px; color: var(--color-text-muted); margin: 0 0 16px }
+
+    /* ── Bulk action bar ── */
+    .bulk-bar {
+      display: none; align-items: center; gap: 10px;
+      padding: 8px 16px;
+      background: var(--color-brand-light);
+      border-bottom: 1px solid #c7d2fe;
+      font-size: 13px;
+    }
+    .bulk-bar.visible { display: flex }
+    .bulk-bar strong { color: var(--color-brand) }
+    .bulk-btn {
+      padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--color-border); background: white;
+    }
+    .bulk-btn.danger { border-color: #fca5a5; color: #dc2626; background: #fff5f5 }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px; border-top: 1px solid var(--color-border);
+      background: white; font-size: 13px; color: var(--color-text-muted);
+    }
+    .page-btns { display: flex; gap: 4px }
+    .page-btn {
+      padding: 5px 10px; border: 1px solid var(--color-border);
+      border-radius: 5px; background: white; font-size: 12px; cursor: pointer;
+    }
+    .page-btn.active { background: var(--color-brand); color: white; border-color: var(--color-brand) }
+    .page-btn:disabled { opacity: .4; cursor: default }
+
+    /* ── Schema column chip ── */
+    .schema-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px; border-radius: 4px; font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <a href="component-library.html">Component Library</a><span class="sep">/</span>
+      <span class="current">Hero Banner</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary" onclick="window.location='component-editor.html'">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Schema
+      </button>
+      <button class="btn btn-primary" onclick="window.location='component-item-editor.html'">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 4v16m8-8H4"/></svg>
+        New Item
+      </button>
+    </div>
+  </header>
+
+  <!-- Component Header -->
+  <div class="cil-header">
+    <div class="comp-icon-lg">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="7" rx="2"/><path d="M7 10v11M17 10v11"/></svg>
+    </div>
+    <div class="cil-meta">
+      <h1>Hero Banner</h1>
+      <p>Full-width hero section with headline, subtitle, CTA, and background image · 5 fields · 8 items</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="schema-chip">hero_banner</span>
+      <button class="btn btn-ghost btn-sm" onclick="window.location='component-editor.html'">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Schema
+      </button>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div class="bulk-bar" id="bulk-bar">
+    <strong id="bulk-count">0</strong> items selected
+    <button class="bulk-btn">Publish Selected</button>
+    <button class="bulk-btn">Unpublish Selected</button>
+    <button class="bulk-btn danger">Delete Selected</button>
+    <div style="flex:1"></div>
+    <button class="bulk-btn" onclick="clearSelection()">Clear</button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="cil-toolbar">
+    <div class="cil-search">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search items by title, field values…" oninput="filterItems(this.value)">
+    </div>
+    <select class="filter-select" onchange="filterStatus(this.value)">
+      <option value="">All Status</option>
+      <option value="published">Published</option>
+      <option value="draft">Draft</option>
+      <option value="archived">Archived</option>
+    </select>
+    <select class="filter-select">
+      <option>Sort: Updated ↓</option>
+      <option>Sort: Updated ↑</option>
+      <option>Sort: Created ↓</option>
+      <option>Sort: Title A–Z</option>
+    </select>
+    <div class="spacer"></div>
+    <span style="font-size:12px;color:var(--color-text-muted)">8 items</span>
+    <button class="btn btn-ghost btn-sm" title="Toggle columns">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;overflow:auto">
+    <table class="items-table" id="items-table">
+      <thead>
+        <tr>
+          <th style="width:36px"><input type="checkbox" id="select-all" onchange="toggleAll(this)"></th>
+          <th style="width:56px">Preview</th>
+          <th>Title / Headline</th>
+          <th>CTA Label</th>
+          <th style="width:90px">Status</th>
+          <th style="width:110px">Used In</th>
+          <th style="width:130px">Updated</th>
+          <th style="width:80px"></th>
+        </tr>
+      </thead>
+      <tbody id="items-tbody">
+        <!-- rows injected by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <span>Showing 1–8 of 8 items</span>
+    <div class="page-btns">
+      <button class="page-btn" disabled>&laquo;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn" disabled>&raquo;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ITEMS = [
+    {
+      id: 1,
+      title: 'Summer Campaign Hero',
+      headline: 'Discover Your Summer Style',
+      cta: 'Shop Now',
+      status: 'published',
+      usedIn: 3,
+      updated: '2 hours ago',
+      bg: '#fde68a'
+    },
+    {
+      id: 2,
+      title: 'Product Launch Hero',
+      headline: 'Introducing Pro 2.0',
+      cta: 'Learn More',
+      status: 'published',
+      usedIn: 2,
+      updated: '1 day ago',
+      bg: '#a5f3fc'
+    },
+    {
+      id: 3,
+      title: 'Homepage Default',
+      headline: 'Build Faster with MicroCMS',
+      cta: 'Get Started',
+      status: 'published',
+      usedIn: 1,
+      updated: '3 days ago',
+      bg: '#c7d2fe'
+    },
+    {
+      id: 4,
+      title: 'Black Friday Promo',
+      headline: 'Up to 60% Off Everything',
+      cta: 'View Deals',
+      status: 'draft',
+      usedIn: 0,
+      updated: '5 days ago',
+      bg: '#fca5a5'
+    },
+    {
+      id: 5,
+      title: 'Newsletter Sign-up Hero',
+      headline: 'Stay in the Loop',
+      cta: 'Subscribe Free',
+      status: 'draft',
+      usedIn: 0,
+      updated: '1 week ago',
+      bg: '#bbf7d0'
+    },
+    {
+      id: 6,
+      title: 'About Page Hero',
+      headline: 'We Build Things That Matter',
+      cta: 'Meet the Team',
+      status: 'published',
+      usedIn: 1,
+      updated: '2 weeks ago',
+      bg: '#ddd6fe'
+    },
+    {
+      id: 7,
+      title: 'Contact Page Hero',
+      headline: "Let's Talk",
+      cta: 'Get in Touch',
+      status: 'published',
+      usedIn: 1,
+      updated: '1 month ago',
+      bg: '#fed7aa'
+    },
+    {
+      id: 8,
+      title: 'Old Spring Campaign',
+      headline: 'Spring Into Action',
+      cta: 'Shop Spring',
+      status: 'archived',
+      usedIn: 0,
+      updated: '3 months ago',
+      bg: '#e5e7eb'
+    }
+  ];
+
+  let selected = new Set();
+  let filteredItems = [...ITEMS];
+
+  function render(items) {
+    const tbody = document.getElementById('items-tbody');
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg><h3>No items found</h3><p>Try a different search or status filter</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = items.map(it => `
+      <tr data-id="${it.id}" data-status="${it.status}">
+        <td><input type="checkbox" class="row-check" onchange="toggleRow(${it.id}, this)" ${selected.has(it.id) ? 'checked' : ''}></td>
+        <td>
+          <div class="item-thumb" style="background:${it.bg}; font-size:9px">${it.title.slice(0,2).toUpperCase()}</div>
+        </td>
+        <td>
+          <div class="item-title">${it.title}</div>
+          <div class="item-subtitle">${it.headline}</div>
+        </td>
+        <td style="font-size:13px;color:var(--color-text)">${it.cta}</td>
+        <td>
+          <span class="status-pill ${it.status}">${capitalize(it.status)}</span>
+        </td>
+        <td>
+          <span class="usage-badge ${it.usedIn === 0 ? 'zero' : ''}">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            ${it.usedIn} page${it.usedIn !== 1 ? 's' : ''}
+          </span>
+        </td>
+        <td style="font-size:12px;color:var(--color-text-muted)">${it.updated}</td>
+        <td>
+          <div class="row-actions">
+            <button class="row-btn" title="Edit" onclick="window.location='component-item-editor.html'">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="row-btn" title="Duplicate" onclick="alert('Item duplicated')">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+            <button class="row-btn" title="Delete" onclick="deleteItem(${it.id})">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1) }
+
+  function filterItems(q) {
+    const lower = q.toLowerCase();
+    const statusFilter = document.querySelector('.filter-select').value;
+    filteredItems = ITEMS.filter(it => {
+      const matchQ = !q || it.title.toLowerCase().includes(lower) || it.headline.toLowerCase().includes(lower) || it.cta.toLowerCase().includes(lower);
+      const matchS = !statusFilter || it.status === statusFilter;
+      return matchQ && matchS;
+    });
+    render(filteredItems);
+  }
+
+  function filterStatus(val) {
+    const q = document.querySelector('.cil-search input').value;
+    filteredItems = ITEMS.filter(it => {
+      const matchQ = !q || it.title.toLowerCase().includes(q.toLowerCase());
+      const matchS = !val || it.status === val;
+      return matchQ && matchS;
+    });
+    render(filteredItems);
+  }
+
+  function toggleAll(cb) {
+    const checks = document.querySelectorAll('.row-check');
+    checks.forEach(c => {
+      c.checked = cb.checked;
+      const id = parseInt(c.closest('tr').dataset.id);
+      if (cb.checked) selected.add(id); else selected.delete(id);
+    });
+    updateBulkBar();
+  }
+
+  function toggleRow(id, cb) {
+    if (cb.checked) selected.add(id); else selected.delete(id);
+    document.getElementById('select-all').checked = selected.size === filteredItems.length;
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulk-bar');
+    document.getElementById('bulk-count').textContent = selected.size;
+    bar.classList.toggle('visible', selected.size > 0);
+  }
+
+  function clearSelection() {
+    selected.clear();
+    document.querySelectorAll('.row-check').forEach(c => c.checked = false);
+    document.getElementById('select-all').checked = false;
+    updateBulkBar();
+  }
+
+  function deleteItem(id) {
+    if (confirm('Delete this item? This cannot be undone.')) {
+      const idx = ITEMS.findIndex(i => i.id === id);
+      if (idx > -1) ITEMS.splice(idx, 1);
+      selected.delete(id);
+      filteredItems = filteredItems.filter(i => i.id !== id);
+      render(filteredItems);
+      updateBulkBar();
+    }
+  }
+
+  // Initial render
+  render(ITEMS);
+</script>
+</body>
+</html>

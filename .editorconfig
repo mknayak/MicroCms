@@ -1,0 +1,40 @@
+root = true
+
+[*]
+indent_style = space
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{cs,csproj,sln,json,yml,yaml}]
+indent_size = 4
+
+[*.{xml,config}]
+indent_size = 2
+
+# C# code-style rules aligned with NFR-6 complexity targets
+[*.cs]
+dotnet_sort_system_directives_first = true
+csharp_new_line_before_open_brace = all
+csharp_indent_labels = one_less_than_current
+csharp_using_directive_placement = outside_namespace:warning
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_prefer_primary_constructors = true:suggestion
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_prefer_collection_expression = true:suggestion
+dotnet_style_readonly_field = true:warning
+
+# Complexity enforcement (Roslynator / SonarAnalyzer surface these)
+# Cyclomatic complexity ≤ 10, cognitive complexity ≤ 15 (NFR-6)
+dotnet_diagnostic.S3776.severity = error   # Cognitive complexity
+dotnet_diagnostic.S1541.severity = error   # Cyclomatic complexity
+
+# Null safety
+dotnet_diagnostic.CS8600.severity = error
+dotnet_diagnostic.CS8601.severity = error
+dotnet_diagnostic.CS8602.severity = error
+dotnet_diagnostic.CS8603.severity = error
+dotnet_diagnostic.CS8604.severity = error

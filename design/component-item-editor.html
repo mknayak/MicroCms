@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hero Banner — Item Editor — MicroCMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Two-column editor layout ── */
+    .cie-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      align-items: start;
+    }
+    .cie-main  { display: flex; flex-direction: column; gap: 16px; }
+    .cie-aside { display: flex; flex-direction: column; gap: 16px; position: sticky; top: calc(var(--topbar-height) + 20px); }
+
+    /* ── Field group ── */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    .field-group:last-child { margin-bottom: 0 }
+
+    .field-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600; color: var(--color-text);
+    }
+    .field-label .field-key {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 500;
+      padding: 1px 5px; border-radius: 3px;
+      background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;
+    }
+    .field-label .required-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: #ef4444;
+      flex-shrink: 0;
+    }
+    .field-hint {
+      font-size: 11px; color: var(--color-text-muted); margin-top: 2px; margin-bottom: 4px;
+    }
+
+    /* ── Inputs ── */
+    .field-input, .field-textarea, .field-select {
+      width: 100%; padding: 8px 12px;
+      border: 1px solid var(--color-border); border-radius: 6px;
+      font-size: 13px; font-family: inherit; color: var(--color-text);
+      background: white; transition: border-color .15s, box-shadow .15s;
+    }
+    .field-input:focus, .field-textarea:focus, .field-select:focus {
+      outline: none; border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    .field-input.error, .field-textarea.error {
+      border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.08);
+    }
+    .field-error-msg {
+      font-size: 11px; color: #ef4444; margin-top: 3px; display: none;
+    }
+    .field-error-msg.visible { display: block }
+
+    .field-textarea { resize: vertical; min-height: 80px; line-height: 1.5 }
+
+    .char-counter {
+      text-align: right; font-size: 11px; color: var(--color-text-muted); margin-top: 3px;
+    }
+    .char-counter.warn { color: #f59e0b }
+    .char-counter.over { color: #ef4444; font-weight: 600 }
+
+    /* ── Rich text placeholder ── */
+    .rich-text-editor {
+      border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden;
+    }
+    .rte-toolbar {
+      display: flex; gap: 2px; padding: 6px 8px;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-bg);
+    }
+    .rte-btn {
+      padding: 4px 7px; border-radius: 4px; border: none; background: transparent;
+      font-size: 12px; font-weight: 600; cursor: pointer; color: var(--color-text-muted);
+    }
+    .rte-btn:hover { background: var(--color-border); color: var(--color-text) }
+    .rte-btn.active { background: var(--color-brand-light); color: var(--color-brand) }
+    .rte-divider { width: 1px; background: var(--color-border); margin: 2px 4px }
+    .rte-body {
+      min-height: 120px; padding: 10px 12px;
+      font-size: 13px; line-height: 1.6; color: var(--color-text);
+      outline: none;
+    }
+    .rte-body:focus { box-shadow: none }
+
+    /* ── Asset picker ── */
+    .asset-picker {
+      border: 2px dashed var(--color-border); border-radius: 8px;
+      padding: 20px; text-align: center; cursor: pointer;
+      transition: border-color .15s, background .15s;
+      background: var(--color-bg);
+    }
+    .asset-picker:hover { border-color: var(--color-brand); background: var(--color-brand-light) }
+    .asset-picker svg { width: 28px; height: 28px; color: #d1d5db; margin-bottom: 6px }
+    .asset-picker p  { font-size: 12px; color: var(--color-text-muted); margin: 0 }
+    .asset-picker strong { color: var(--color-brand) }
+
+    .asset-preview {
+      position: relative; border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--color-border); background: #f0f0f0;
+    }
+    .asset-img-placeholder {
+      width: 100%; height: 140px; background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: #4338ca; font-weight: 500;
+    }
+    .asset-meta {
+      padding: 8px 10px; display: flex; align-items: center; gap: 8px;
+      border-top: 1px solid var(--color-border); background: white;
+    }
+    .asset-meta span { font-size: 12px; color: var(--color-text-muted); flex: 1 }
+    .asset-change-btn {
+      padding: 3px 8px; border-radius: 4px; border: 1px solid var(--color-border);
+      font-size: 11px; cursor: pointer; background: white;
+    }
+
+    /* ── Boolean toggle ── */
+    .toggle-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .toggle-switch {
+      position: relative; width: 36px; height: 20px; flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0 }
+    .toggle-track {
+      position: absolute; inset: 0; border-radius: 10px;
+      background: #e5e7eb; cursor: pointer; transition: background .2s;
+    }
+    .toggle-track::before {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      background: white; border-radius: 50%; top: 3px; left: 3px;
+      transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--color-brand) }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px) }
+    .toggle-label { font-size: 13px; color: var(--color-text) }
+
+    /* ── Live Preview panel ── */
+    .preview-panel {
+      border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden;
+    }
+    .preview-panel-header {
+      padding: 10px 14px; background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .preview-panel-header h4 { font-size: 12px; font-weight: 600; margin: 0; color: var(--color-text-muted) }
+    .preview-panel-body { padding: 14px; min-height: 120px; }
+
+    .hero-preview {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 6px; padding: 20px 16px;
+      color: white; text-align: center;
+    }
+    .hero-preview h2 { font-size: 16px; font-weight: 800; margin: 0 0 4px }
+    .hero-preview p  { font-size: 11px; opacity: .8; margin: 0 0 12px }
+    .hero-preview button {
+      padding: 6px 14px; border-radius: 5px; font-size: 11px; font-weight: 600;
+      border: none; background: white; color: #5b21b6; cursor: default;
+    }
+
+    /* ── Used-in card ── */
+    .usage-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--color-border);
+      font-size: 12px;
+    }
+    .usage-item:last-child { border-bottom: none }
+    .usage-item svg { width: 14px; height: 14px; color: var(--color-text-muted); flex-shrink: 0 }
+    .usage-item a { color: var(--color-brand); text-decoration: none; font-weight: 500 }
+    .usage-item a:hover { text-decoration: underline }
+
+    /* ── Status selector ── */
+    .status-btn-group {
+      display: flex; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden;
+    }
+    .status-option {
+      flex: 1; padding: 7px 0; font-size: 12px; font-weight: 500; text-align: center;
+      cursor: pointer; border: none; background: white; color: var(--color-text-muted);
+      transition: background .15s, color .15s;
+    }
+    .status-option:not(:last-child) { border-right: 1px solid var(--color-border) }
+    .status-option.active.published { background: #f0fdf4; color: #166534 }
+    .status-option.active.draft     { background: #fefce8; color: #92400e }
+    .status-option.active.archived  { background: #f9fafb; color: #374151 }
+
+    /* ── Diff / version row ── */
+    .version-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; font-size: 12px; color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .version-row:last-child { border-bottom: none }
+    .version-tag {
+      padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600;
+      background: var(--color-brand-light); color: var(--color-brand);
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <a href="component-library.html">Component Library</a><span class="sep">/</span>
+      <a href="component-item-list.html">Hero Banner</a><span class="sep">/</span>
+      <span class="current">Summer Campaign Hero</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="window.location='component-item-list.html'">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M15 19l-7-7 7-7"/></svg>
+        Back to List
+      </button>
+      <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
+      <button class="btn btn-primary" onclick="publish()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M5 13l4 4L19 7"/></svg>
+        Publish
+      </button>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <div class="cie-layout">
+
+      <!-- ── Left: Fields ── -->
+      <div class="cie-main">
+
+        <!-- Component identity -->
+        <div class="card">
+          <div class="card-header" style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:7px;background:var(--color-brand-light);display:flex;align-items:center;justify-content:center;color:var(--color-brand)">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="3" width="18" height="7" rx="2"/><path d="M7 10v11M17 10v11"/></svg>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700">Hero Banner</div>
+              <div style="font-size:11px;color:var(--color-text-muted)">Component type · 5 fields</div>
+            </div>
+            <div style="margin-left:auto">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 6px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:3px;color:#6b7280">hero_banner</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fields card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Field Values</h3>
+          </div>
+          <div class="card-body">
+
+            <!-- Field: Item Title (internal) -->
+            <div class="field-group">
+              <label class="field-label">
+                Internal Title
+                <span class="field-key">_title</span>
+                <span class="required-dot"></span>
+              </label>
+              <div class="field-hint">Used for identification in this list only — not displayed on site</div>
+              <input id="f-title" class="field-input" type="text" value="Summer Campaign Hero"
+                oninput="validateRequired(this,'f-title-err')" maxlength="80">
+              <div class="char-counter" id="f-title-chars">21 / 80</div>
+              <div class="field-error-msg" id="f-title-err">This field is required</div>
+            </div>
+
+            <!-- Field: Headline -->
+            <div class="field-group">
+              <label class="field-label">
+                Headline
+                <span class="field-key">headline</span>
+                <span class="required-dot"></span>
+              </label>
+              <div class="field-hint">Main heading displayed in the hero section (max 80 chars)</div>
+              <input id="f-headline" class="field-input" type="text"
+                value="Discover Your Summer Style"
+                oninput="updatePreview(); countChars(this,'f-headline-chars',80)"
+                maxlength="80">
+              <div class="char-counter" id="f-headline-chars">26 / 80</div>
+              <div class="field-error-msg" id="f-headline-err">This field is required</div>
+            </div>
+
+            <!-- Field: Subtitle -->
+            <div class="field-group">
+              <label class="field-label">
+                Subtitle
+                <span class="field-key">subtitle</span>
+              </label>
+              <div class="field-hint">Supporting text below the headline (max 200 chars)</div>
+              <textarea id="f-subtitle" class="field-textarea" rows="2"
+                oninput="updatePreview(); countChars(this,'f-subtitle-chars',200)"
+                maxlength="200">Shop the hottest trends of the season — free shipping on orders over $50.</textarea>
+              <div class="char-counter" id="f-subtitle-chars">70 / 200</div>
+            </div>
+
+            <!-- Field: CTA Label -->
+            <div class="field-group">
+              <label class="field-label">
+                CTA Button Label
+                <span class="field-key">cta_label</span>
+                <span class="required-dot"></span>
+              </label>
+              <div class="field-hint">Text on the call-to-action button (max 30 chars)</div>
+              <input id="f-cta" class="field-input" type="text"
+                value="Shop Now"
+                oninput="updatePreview(); countChars(this,'f-cta-chars',30)"
+                maxlength="30">
+              <div class="char-counter" id="f-cta-chars">8 / 30</div>
+            </div>
+
+            <!-- Field: CTA URL -->
+            <div class="field-group">
+              <label class="field-label">
+                CTA URL
+                <span class="field-key">cta_url</span>
+                <span class="required-dot"></span>
+              </label>
+              <div class="field-hint">Destination when the button is clicked</div>
+              <input id="f-cta-url" class="field-input" type="url"
+                value="/shop/summer"
+                oninput="validateUrl(this,'f-url-err')">
+              <div class="field-error-msg" id="f-url-err">Please enter a valid URL or relative path</div>
+            </div>
+
+            <!-- Field: Background Image (Asset Ref) -->
+            <div class="field-group">
+              <label class="field-label">
+                Background Image
+                <span class="field-key">bg_image</span>
+              </label>
+              <div class="field-hint">Asset from Media Library — recommended 1440×500 px</div>
+              <div class="asset-preview" id="asset-selected">
+                <div class="asset-img-placeholder">
+                  <span>summer-hero-bg.jpg &nbsp;·&nbsp; 1440×500</span>
+                </div>
+                <div class="asset-meta">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  <span>summer-hero-bg.jpg &nbsp;·&nbsp; 342 KB</span>
+                  <button class="asset-change-btn" onclick="openMediaPicker()">Change</button>
+                  <button class="asset-change-btn" style="color:#dc2626;border-color:#fca5a5" onclick="removeAsset()">Remove</button>
+                </div>
+              </div>
+              <div class="asset-picker" id="asset-picker" style="display:none" onclick="openMediaPicker()">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                <p><strong>Choose from Media Library</strong> or drag an image here</p>
+              </div>
+            </div>
+
+            <!-- Field: Show Overlay (Boolean) -->
+            <div class="field-group">
+              <label class="field-label">
+                Show Dark Overlay
+                <span class="field-key">show_overlay</span>
+              </label>
+              <div class="field-hint">Adds a semi-transparent overlay to improve text contrast on bright images</div>
+              <div class="toggle-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="f-overlay" checked onchange="updatePreview()">
+                  <span class="toggle-track"></span>
+                </label>
+                <span class="toggle-label" id="overlay-label">Enabled</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /.cie-main -->
+
+      <!-- ── Right: Sidebar ── -->
+      <div class="cie-aside">
+
+        <!-- Live Preview -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Live Preview</h3>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px">Fullscreen</button>
+          </div>
+          <div class="card-body" style="padding:12px">
+            <div class="hero-preview" id="hero-preview">
+              <h2 id="pv-headline">Discover Your Summer Style</h2>
+              <p id="pv-subtitle">Shop the hottest trends — free shipping over $50.</p>
+              <button id="pv-cta">Shop Now</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Status</h3>
+          </div>
+          <div class="card-body">
+            <div class="status-btn-group">
+              <button class="status-option active published" onclick="setStatus('published',this)">Published</button>
+              <button class="status-option draft" onclick="setStatus('draft',this)">Draft</button>
+              <button class="status-option archived" onclick="setStatus('archived',this)">Archived</button>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--color-text-muted)">
+              Last published: <strong style="color:var(--color-text)">Today at 10:32 AM</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Used In -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Used In</h3>
+            <span style="font-size:11px;color:var(--color-text-muted);background:#f3f4f6;padding:1px 7px;border-radius:10px">3 pages</span>
+          </div>
+          <div class="card-body">
+            <div class="usage-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <a href="page-designer.html">Homepage</a>
+            </div>
+            <div class="usage-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <a href="page-designer.html">Summer Sale Landing</a>
+            </div>
+            <div class="usage-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <a href="page-designer.html">Campaign 2026 — Home</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Version History -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Version History</h3>
+          </div>
+          <div class="card-body">
+            <div class="version-row">
+              <span class="version-tag">v4</span>
+              <div style="flex:1">
+                <div style="font-weight:600;color:var(--color-text)">Current</div>
+                <div>Today · Sarah K.</div>
+              </div>
+            </div>
+            <div class="version-row">
+              <span class="version-tag" style="background:#f0fdf4;color:#166534">v3</span>
+              <div style="flex:1">
+                <div>2 days ago · You</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="restoreVersion(3)">Restore</button>
+            </div>
+            <div class="version-row">
+              <span class="version-tag" style="background:#f0fdf4;color:#166534">v2</span>
+              <div style="flex:1">
+                <div>1 week ago · You</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="restoreVersion(2)">Restore</button>
+            </div>
+            <div class="version-row">
+              <span class="version-tag" style="background:#f9fafb;color:#6b7280">v1</span>
+              <div style="flex:1">
+                <div>1 month ago · MK</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="restoreVersion(1)">Restore</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card" style="border-color:#fecaca">
+          <div class="card-header" style="background:#fff5f5">
+            <h3 class="card-title" style="color:#dc2626">Danger Zone</h3>
+          </div>
+          <div class="card-body">
+            <button class="btn" style="width:100%;border-color:#fca5a5;color:#dc2626;background:#fff5f5;font-size:12px"
+              onclick="deleteItem()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+              Delete this Item
+            </button>
+            <p style="font-size:11px;color:var(--color-text-muted);margin:8px 0 0">
+              Removing this item will also remove it from all 3 pages that reference it.
+            </p>
+          </div>
+        </div>
+
+      </div><!-- /.cie-aside -->
+    </div><!-- /.cie-layout -->
+  </div><!-- /.page-content -->
+</div><!-- /.main-wrap -->
+
+<script>
+  /* ── Live preview ── */
+  function updatePreview() {
+    const h = document.getElementById('f-headline').value || 'Headline';
+    const s = document.getElementById('f-subtitle').value || '';
+    const c = document.getElementById('f-cta').value || 'Click';
+    const overlay = document.getElementById('f-overlay').checked;
+
+    document.getElementById('pv-headline').textContent = h;
+    document.getElementById('pv-subtitle').textContent = s.slice(0, 60) + (s.length > 60 ? '…' : '');
+    document.getElementById('pv-cta').textContent = c;
+
+    const preview = document.getElementById('hero-preview');
+    preview.style.opacity = overlay ? '1' : '0.85';
+
+    document.getElementById('overlay-label').textContent = overlay ? 'Enabled' : 'Disabled';
+  }
+
+  /* ── Character counter ── */
+  function countChars(el, counterId, max) {
+    const len = el.value.length;
+    const counter = document.getElementById(counterId);
+    counter.textContent = len + ' / ' + max;
+    counter.className = 'char-counter' + (len > max * .9 ? (len >= max ? ' over' : ' warn') : '');
+  }
+
+  /* ── Validation ── */
+  function validateRequired(el, errId) {
+    const empty = el.value.trim() === '';
+    el.classList.toggle('error', empty);
+    document.getElementById(errId).classList.toggle('visible', empty);
+    countChars(el, 'f-title-chars', 80);
+  }
+
+  function validateUrl(el, errId) {
+    const val = el.value.trim();
+    const valid = val === '' || val.startsWith('/') || /^https?:\/\/.+/.test(val);
+    el.classList.toggle('error', !valid && val !== '');
+    document.getElementById(errId).classList.toggle('visible', !valid && val !== '');
+  }
+
+  /* ── Status selector ── */
+  function setStatus(val, btn) {
+    document.querySelectorAll('.status-option').forEach(b => b.classList.remove('active','published','draft','archived'));
+    btn.classList.add('active', val);
+  }
+
+  /* ── Asset picker mock ── */
+  function openMediaPicker() {
+    alert('Media Library picker would open here.\n\nYou can browse, search, and select an asset from your library.');
+  }
+  function removeAsset() {
+    document.getElementById('asset-selected').style.display = 'none';
+    document.getElementById('asset-picker').style.display = '';
+  }
+
+  /* ── Save / Publish ── */
+  function saveDraft() {
+    const headline = document.getElementById('f-headline').value.trim();
+    if (!headline) {
+      document.getElementById('f-headline').classList.add('error');
+      document.getElementById('f-headline-err').classList.add('visible');
+      document.getElementById('f-headline').focus();
+      return;
+    }
+    alert('Draft saved successfully.');
+  }
+
+  function publish() {
+    const headline = document.getElementById('f-headline').value.trim();
+    const cta = document.getElementById('f-cta').value.trim();
+    if (!headline || !cta) {
+      alert('Please fill in all required fields before publishing.');
+      return;
+    }
+    alert('Item published successfully!\n\nAll 3 pages using this component will reflect the updated content.');
+  }
+
+  function restoreVersion(v) {
+    if (confirm('Restore version v' + v + '? Your current unsaved changes will be lost.')) {
+      alert('Version v' + v + ' restored. Review the fields and publish when ready.');
+    }
+  }
+
+  function deleteItem() {
+    if (confirm('Delete "Summer Campaign Hero"?\n\nThis item is used on 3 pages. Deleting it will remove it from all those pages. This cannot be undone.')) {
+      window.location = 'component-item-list.html';
+    }
+  }
+
+  // Init counters
+  countChars(document.getElementById('f-title'), 'f-title-chars', 80);
+  countChars(document.getElementById('f-headline'), 'f-headline-chars', 80);
+  countChars(document.getElementById('f-subtitle'), 'f-subtitle-chars', 200);
+  countChars(document.getElementById('f-cta'), 'f-cta-chars', 30);
+</script>
+</body>
+</html>

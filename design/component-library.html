@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Component Library — MicroCMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Component Library specific ── */
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .comp-card {
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+    .comp-card:hover {
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.12), var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .comp-preview {
+      height: 120px;
+      background: linear-gradient(135deg, #f5f5f9 0%, #eef0fb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .comp-preview-inner {
+      width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: flex-start;
+    }
+    .comp-preview-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(99,102,241,0.20);
+    }
+    .comp-preview-bar.wide  { width: 90%; }
+    .comp-preview-bar.med   { width: 65%; background: rgba(99,102,241,0.13); }
+    .comp-preview-bar.short { width: 40%; background: rgba(99,102,241,0.09); }
+    .comp-preview-bar.btn-shape {
+      width: 28%;
+      height: 16px;
+      background: rgba(99,102,241,0.45);
+      border-radius: 4px;
+    }
+    .comp-preview-img {
+      width: 48px; height: 48px;
+      border-radius: 6px;
+      background: rgba(99,102,241,0.18);
+      flex-shrink: 0;
+    }
+    .comp-preview-cols {
+      display: flex;
+      gap: 6px;
+      width: 90%;
+    }
+    .comp-preview-col {
+      flex: 1;
+      height: 44px;
+      border-radius: 4px;
+      background: rgba(99,102,241,0.15);
+    }
+    .comp-preview-grid-mini {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px;
+      width: 90%;
+    }
+    .comp-preview-grid-mini-item {
+      height: 34px;
+      border-radius: 4px;
+      background: rgba(99,102,241,0.14);
+    }
+    .comp-cat-pill {
+      position: absolute;
+      top: 8px; right: 8px;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+    }
+    .comp-cat-layout     { background: #dbeafe; color: #1d4ed8; }
+    .comp-cat-content    { background: #d1fae5; color: #065f46; }
+    .comp-cat-media      { background: #fef3c7; color: #92400e; }
+    .comp-cat-navigation { background: #f3e8ff; color: #6d28d9; }
+    .comp-cat-interactive{ background: #fce7f3; color: #9d174d; }
+    .comp-cat-commerce   { background: #ecfdf5; color: #064e3b; }
+
+    .comp-body { padding: 14px 16px; }
+    .comp-name { font-size: 14px; font-weight: 700; color: var(--color-text); margin-bottom: 3px; }
+    .comp-desc { font-size: 12px; color: var(--color-text-muted); margin-bottom: 10px; line-height: 1.4; }
+    .comp-meta {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .comp-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--color-text-muted);
+    }
+    .comp-meta-item svg { width: 12px; height: 12px; }
+    .comp-zones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .zone-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 7px; border-radius: 4px;
+      background: #eff6ff; color: #3b82f6;
+      border: 1px solid #bfdbfe;
+    }
+    .zone-tag.any { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+    .comp-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border);
+    }
+    .comp-usage {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .comp-usage svg { width: 11px; height: 11px; }
+    .comp-actions { display: flex; gap: 4px; }
+
+    /* ── Add Component card ── */
+    .comp-card.add-new {
+      border-style: dashed;
+      border-color: #d1d5db;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 240px;
+      color: var(--color-text-muted);
+      gap: 8px;
+      cursor: pointer;
+    }
+    .comp-card.add-new:hover {
+      border-color: var(--color-brand);
+      color: var(--color-brand);
+      background: rgba(99,102,241,0.02);
+    }
+    .comp-card.add-new svg { width: 28px; height: 28px; opacity: 0.6; }
+    .comp-card.add-new .add-new-label { font-size: 13px; font-weight: 600; }
+
+    /* ── Category tabs ── */
+    .cat-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .cat-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      font-size: 12px; font-weight: 600;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cat-tab:hover { border-color: var(--color-brand); color: var(--color-brand); }
+    .cat-tab.active {
+      background: var(--color-brand); color: white;
+      border-color: var(--color-brand);
+    }
+    .cat-tab .count {
+      margin-left: 5px;
+      font-size: 10px;
+      opacity: 0.75;
+    }
+
+    /* ── Zone legend ── */
+    .zone-legend {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .zone-legend-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--color-text-muted);
+      margin-bottom: 10px;
+    }
+    .zone-legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 6px;
+    }
+    .zone-legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--color-text-muted);
+    }
+    .zone-dot {
+      width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* ── New Component modal wider ── */
+    .modal.modal-lg { max-width: 640px; }
+    .field-row {
+      display: flex; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+      gap: 12px;
+    }
+    .field-row:last-child { border-bottom: none; }
+    .field-type-pill {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px;
+      background: #f0f9ff; color: #0369a1;
+      border: 1px solid #bae6fd;
+      white-space: nowrap;
+    }
+    .field-type-pill.rich-text { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+    .field-type-pill.asset-ref { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .field-type-pill.entry-ref { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+    .field-type-pill.boolean   { background: #fdf4ff; color: #7e22ce; border-color: #e9d5ff; }
+
+    /* stats strip */
+    .stats-strip {
+      display: flex; gap: 24px; margin-bottom: 24px;
+    }
+    .strip-stat {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 10px 16px;
+    }
+    .strip-stat-icon {
+      width: 32px; height: 32px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .strip-stat-icon svg { width: 16px; height: 16px; }
+    .strip-stat-val { font-size: 18px; font-weight: 800; line-height: 1; }
+    .strip-stat-label { font-size: 11px; color: var(--color-text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div class="main-wrap">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">MicroCMS</a>
+      <span class="sep">/</span>
+      <span class="current">Component Library</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-icon-btn" data-tooltip="Search">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+      <button class="topbar-icon-btn" data-tooltip="Notifications">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="user-avatar">MK</div>
+    </div>
+  </div>
+
+  <!-- Page -->
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Component Library</div>
+        <div class="page-subtitle">UI rendering blocks — compose pages from these in the Page Designer</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Import Component
+        </button>
+        <button class="btn btn-primary" onclick="openNewModal()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          New Component
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-strip">
+      <div class="strip-stat">
+        <div class="strip-stat-icon blue" style="background:#dbeafe;color:#2563eb;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div>
+          <div class="strip-stat-val">12</div>
+          <div class="strip-stat-label">Components</div>
+        </div>
+      </div>
+      <div class="strip-stat">
+        <div class="strip-stat-icon green" style="background:#d1fae5;color:#059669;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <div>
+          <div class="strip-stat-val">8</div>
+          <div class="strip-stat-label">Layout Zones</div>
+        </div>
+      </div>
+      <div class="strip-stat">
+        <div class="strip-stat-icon amber" style="background:#fef3c7;color:#d97706;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3a2 2 0 002 2h2a2 2 0 002-2M9 3a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div>
+          <div class="strip-stat-val">47</div>
+          <div class="strip-stat-label">Usages across pages</div>
+        </div>
+      </div>
+      <div class="strip-stat">
+        <div class="strip-stat-icon purple" style="background:#ede9fe;color:#7c3aed;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <div>
+          <div class="strip-stat-val">3</div>
+          <div class="strip-stat-label">AI-augmented</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone reference legend -->
+    <div class="zone-legend">
+      <div class="zone-legend-title">Layout Zones Reference</div>
+      <div class="zone-legend-grid">
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#3b82f6;"></div>hero-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#10b981;"></div>features-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#f59e0b;"></div>content-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#8b5cf6;"></div>media-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#ef4444;"></div>testimonials-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#6366f1;"></div>cta-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#0ea5e9;"></div>header-zone</div>
+        <div class="zone-legend-item"><div class="zone-dot" style="background:#64748b;"></div>footer-zone</div>
+      </div>
+    </div>
+
+    <!-- Category filter -->
+    <div class="filter-bar" style="justify-content:space-between;">
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="filterCat('all',this)">All <span class="count">12</span></button>
+        <button class="cat-tab" onclick="filterCat('layout',this)">Layout <span class="count">3</span></button>
+        <button class="cat-tab" onclick="filterCat('content',this)">Content <span class="count">5</span></button>
+        <button class="cat-tab" onclick="filterCat('media',this)">Media <span class="count">1</span></button>
+        <button class="cat-tab" onclick="filterCat('navigation',this)">Navigation <span class="count">2</span></button>
+        <button class="cat-tab" onclick="filterCat('interactive',this)">Interactive <span class="count">1</span></button>
+      </div>
+      <div class="search-input-wrap" style="max-width:220px;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="form-input" placeholder="Search components…" oninput="filterSearch(this.value)">
+      </div>
+    </div>
+
+    <!-- Component grid -->
+    <div class="comp-grid" id="comp-grid">
+
+      <!-- HeroBanner -->
+      <div class="comp-card" data-cat="layout" data-comp="HeroBanner" onclick="openCompDetail('HeroBanner')">
+        <div class="comp-preview">
+          <div class="comp-preview-inner">
+            <div class="comp-preview-bar wide"></div>
+            <div class="comp-preview-bar med"></div>
+            <div class="comp-preview-bar short"></div>
+            <div style="margin-top:4px;"><div class="comp-preview-bar btn-shape"></div></div>
+          </div>
+          <div class="comp-cat-pill comp-cat-layout">Layout</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">HeroBanner</div>
+          <div class="comp-desc">Full-width hero with heading, subheading, CTA button and optional background image or video.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              6 fields
+            </div>
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+              3 variants
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">hero-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 7 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" data-tooltip="View Items" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit Schema" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CardGrid -->
+      <div class="comp-card" data-cat="content" data-comp="CardGrid" onclick="openCompDetail('CardGrid')">
+        <div class="comp-preview">
+          <div class="comp-preview-inner">
+            <div class="comp-preview-bar wide" style="margin-bottom:6px;"></div>
+            <div class="comp-preview-grid-mini">
+              <div class="comp-preview-grid-mini-item"></div>
+              <div class="comp-preview-grid-mini-item"></div>
+              <div class="comp-preview-grid-mini-item"></div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-content">Content</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">CardGrid</div>
+          <div class="comp-desc">Responsive grid of feature cards with icon, heading, and short description. Configurable columns.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              5 fields
+            </div>
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+              2 variants
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">features-zone</span>
+            <span class="zone-tag">content-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 9 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" data-tooltip="View Items" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit Schema" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RichTextBlock -->
+      <div class="comp-card" data-cat="content" data-comp="RichTextBlock" onclick="openCompDetail('RichTextBlock')">
+        <div class="comp-preview">
+          <div class="comp-preview-inner">
+            <div class="comp-preview-bar wide"></div>
+            <div class="comp-preview-bar wide" style="background:rgba(99,102,241,0.09);margin-top:4px;"></div>
+            <div class="comp-preview-bar wide" style="background:rgba(99,102,241,0.09);margin-top:2px;"></div>
+            <div class="comp-preview-bar med" style="background:rgba(99,102,241,0.09);margin-top:2px;"></div>
+          </div>
+          <div class="comp-cat-pill comp-cat-content">Content</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">RichTextBlock</div>
+          <div class="comp-desc">Freeform rich text section with optional section heading, max-width, and background colour options.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              4 fields
+            </div>
+            <div class="comp-meta-item" style="color:var(--color-ai);">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+              AI-assisted
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag any">any zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 14 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" data-tooltip="View Items" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit Schema" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ImageGallery -->
+      <div class="comp-card" data-cat="media" data-comp="ImageGallery" onclick="openCompDetail('ImageGallery')">
+        <div class="comp-preview" style="background:linear-gradient(135deg,#fef3c7,#fde68a20);">
+          <div class="comp-preview-inner">
+            <div class="comp-preview-bar wide" style="background:rgba(245,158,11,0.3);margin-bottom:6px;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;width:90%;">
+              <div style="height:36px;border-radius:4px;background:rgba(245,158,11,0.2);"></div>
+              <div style="height:36px;border-radius:4px;background:rgba(245,158,11,0.25);"></div>
+              <div style="height:36px;border-radius:4px;background:rgba(245,158,11,0.18);"></div>
+              <div style="height:36px;border-radius:4px;background:rgba(245,158,11,0.22);"></div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-media">Media</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">ImageGallery</div>
+          <div class="comp-desc">Masonry or grid photo gallery with lightbox, captions, and optional AI-generated alt text.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              4 fields
+            </div>
+            <div class="comp-meta-item" style="color:var(--color-ai);">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+              AI alt-text
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">media-zone</span>
+            <span class="zone-tag">content-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 4 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" data-tooltip="View Items" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit Schema" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TestimonialsCarousel -->
+      <div class="comp-card" data-cat="content" data-comp="TestimonialsCarousel" onclick="openCompDetail('TestimonialsCarousel')">
+        <div class="comp-preview" style="background:linear-gradient(135deg,#fdf4ff,#ede9fe30);">
+          <div class="comp-preview-inner" style="align-items:center;">
+            <div style="width:90%;background:rgba(139,92,246,0.12);border-radius:6px;padding:8px 10px;">
+              <div style="height:6px;border-radius:3px;background:rgba(139,92,246,0.25);width:90%;margin-bottom:4px;"></div>
+              <div style="height:6px;border-radius:3px;background:rgba(139,92,246,0.18);width:70%;margin-bottom:6px;"></div>
+              <div style="display:flex;gap:4px;align-items:center;">
+                <div style="width:18px;height:18px;border-radius:50%;background:rgba(139,92,246,0.3);"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(139,92,246,0.2);width:40%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-content">Content</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">TestimonialsCarousel</div>
+          <div class="comp-desc">Rotating quote carousel with avatar, name, company, and star rating. Auto-play or manual.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              5 fields
+            </div>
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+              1 variant
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">testimonials-zone</span>
+            <span class="zone-tag">content-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 3 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" data-tooltip="View Items" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit Schema" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTABanner -->
+      <div class="comp-card" data-cat="content" data-comp="CTABanner" onclick="openCompDetail('CTABanner')">
+        <div class="comp-preview" style="background:linear-gradient(135deg,#4f46e5,#6366f1);">
+          <div class="comp-preview-inner" style="align-items:center;">
+            <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.6);width:70%;margin-bottom:5px;"></div>
+            <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.35);width:50%;margin-bottom:8px;"></div>
+            <div style="height:18px;border-radius:4px;background:white;width:30%;"></div>
+          </div>
+          <div class="comp-cat-pill comp-cat-content">Content</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">CTABanner</div>
+          <div class="comp-desc">Full-width call-to-action banner with heading, subtext, primary and secondary CTA buttons, and brand background.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              6 fields
+            </div>
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+              2 variants
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">cta-zone</span>
+            <span class="zone-tag">hero-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 6 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" data-tooltip="View Items" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit Schema" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FeatureSection -->
+      <div class="comp-card" data-cat="content" data-comp="FeatureSection" onclick="openCompDetail('FeatureSection')">
+        <div class="comp-preview">
+          <div class="comp-preview-inner">
+            <div class="comp-preview-bar med" style="margin-bottom:6px;"></div>
+            <div class="comp-preview-cols">
+              <div class="comp-preview-col"></div>
+              <div class="comp-preview-col" style="background:rgba(99,102,241,0.1);"></div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-content">Content</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">FeatureSection</div>
+          <div class="comp-desc">Two-column feature highlight with image and text side-by-side. Supports image-left or image-right.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              7 fields
+            </div>
+            <div class="comp-meta-item" style="color:var(--color-ai);">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+              AI summary
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">features-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 5 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VideoHero -->
+      <div class="comp-card" data-cat="layout" data-comp="VideoHero" onclick="openCompDetail('VideoHero')">
+        <div class="comp-preview" style="background:#0f0f1a;">
+          <div class="comp-preview-inner" style="align-items:center;">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(99,102,241,0.5);border:2px solid rgba(99,102,241,0.8);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
+              <div style="width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:12px solid rgba(99,102,241,0.9);margin-left:3px;"></div>
+            </div>
+            <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.4);width:60%;margin:0 auto;"></div>
+          </div>
+          <div class="comp-cat-pill comp-cat-layout">Layout</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">VideoHero</div>
+          <div class="comp-desc">Full-screen video background hero with overlay, headline, and CTA. Supports YouTube, Vimeo, or direct upload.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              5 fields
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">hero-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 2 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQAccordion -->
+      <div class="comp-card" data-cat="interactive" data-comp="FAQAccordion" onclick="openCompDetail('FAQAccordion')">
+        <div class="comp-preview" style="background:linear-gradient(135deg,#fce7f3,#fbcfe820);">
+          <div class="comp-preview-inner">
+            <div style="display:flex;flex-direction:column;gap:4px;width:90%;">
+              <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(236,72,153,0.12);border-radius:4px;padding:4px 8px;">
+                <div style="height:5px;border-radius:3px;background:rgba(236,72,153,0.3);width:60%;"></div>
+                <div style="font-size:10px;color:rgba(236,72,153,0.6);">▼</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(236,72,153,0.06);border-radius:4px;padding:4px 8px;">
+                <div style="height:5px;border-radius:3px;background:rgba(236,72,153,0.2);width:50%;"></div>
+                <div style="font-size:10px;color:rgba(236,72,153,0.4);">▶</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(236,72,153,0.06);border-radius:4px;padding:4px 8px;">
+                <div style="height:5px;border-radius:3px;background:rgba(236,72,153,0.2);width:55%;"></div>
+                <div style="font-size:10px;color:rgba(236,72,153,0.4);">▶</div>
+              </div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-interactive">Interactive</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">FAQAccordion</div>
+          <div class="comp-desc">Expandable FAQ section with question/answer pairs. Supports schema.org structured data for SEO.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              3 fields
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag any">any zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on 3 pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NavBar -->
+      <div class="comp-card" data-cat="navigation" data-comp="NavBar" onclick="openCompDetail('NavBar')">
+        <div class="comp-preview" style="background:#1e1b4b;">
+          <div class="comp-preview-inner">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:90%;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="width:20px;height:20px;border-radius:4px;background:rgba(99,102,241,0.6);"></div>
+                <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.5);width:40px;"></div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.3);width:24px;"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.3);width:24px;"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.3);width:24px;"></div>
+              </div>
+              <div style="height:16px;border-radius:3px;background:rgba(99,102,241,0.7);width:36px;"></div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-navigation">Navigation</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">NavBar</div>
+          <div class="comp-desc">Top navigation bar with logo, nav links, optional dropdown menus, and CTA button. Sticky/fixed support.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              6 fields
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">header-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on all pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="comp-card" data-cat="navigation" data-comp="Footer" onclick="openCompDetail('Footer')">
+        <div class="comp-preview" style="background:#111827;">
+          <div class="comp-preview-inner">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:90%;">
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.4);width:80%;"></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.2);width:60%;"></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.2);width:70%;"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.4);width:70%;"></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.2);width:55%;"></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.2);width:65%;"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.4);width:75%;"></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.2);width:60%;"></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.2);width:50%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="comp-cat-pill comp-cat-navigation">Navigation</div>
+        </div>
+        <div class="comp-body">
+          <div class="comp-name">Footer</div>
+          <div class="comp-desc">Multi-column site footer with logo, link columns, social icons, legal links, and copyright.</div>
+          <div class="comp-meta">
+            <div class="comp-meta-item">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+              7 fields
+            </div>
+          </div>
+          <div class="comp-zones">
+            <span class="zone-tag">footer-zone</span>
+          </div>
+          <div class="comp-footer">
+            <div class="comp-usage">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2"/></svg>
+              Used on all pages
+            </div>
+            <div class="comp-actions">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;gap:4px" onclick="event.stopPropagation();openCompDetail(this.closest('.comp-card').dataset.comp)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                Items
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="openCompEditor(this.closest('.comp-card').dataset.comp, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add New card -->
+      <div class="comp-card add-new" onclick="openNewModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M12 4v16m8-8H4"/></svg>
+        <div class="add-new-label">New Component</div>
+        <div style="font-size:11px;color:var(--color-text-muted);text-align:center;max-width:140px;">Define fields, zones, and rendering template</div>
+      </div>
+
+    </div><!-- /comp-grid -->
+  </div><!-- /page -->
+</div><!-- /main-wrap -->
+
+<!-- ══════════════ NEW COMPONENT MODAL ══════════════ -->
+<div class="modal-backdrop" id="new-modal" style="display:none;" onclick="if(event.target===this)closeNewModal()">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">New Component</div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Define a reusable UI rendering block</div>
+      </div>
+      <button class="modal-close" onclick="closeNewModal()">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Component Name <span class="req">*</span></label>
+          <input class="form-input" placeholder="e.g. PricingTable" oninput="autoCompSlug(this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Component Key <span class="req">*</span></label>
+          <div class="input-group">
+            <span class="input-prefix">comp/</span>
+            <input class="form-input" id="comp-slug" placeholder="pricing-table">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" style="min-height:60px;" placeholder="What does this component render?"></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select">
+            <option>Layout</option>
+            <option>Content</option>
+            <option>Media</option>
+            <option>Navigation</option>
+            <option>Interactive</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rendering Template</label>
+          <select class="form-select">
+            <option>Razor Partial (.cshtml)</option>
+            <option>Handlebars (.hbs)</option>
+            <option>React (.tsx)</option>
+            <option>Web Component</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Allowed Zones</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> hero-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> features-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> content-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> media-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> testimonials-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> cta-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> header-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> footer-zone</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;"><input type="checkbox" style="accent-color:var(--color-brand);"> any zone</label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Field definitions -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;">Fields</div>
+        <button class="btn btn-secondary btn-sm">+ Add Field</button>
+      </div>
+
+      <div class="card" style="overflow:hidden;">
+        <div style="padding:0 16px;">
+          <div class="field-row">
+            <div style="flex:1;font-size:13px;font-weight:600;">heading</div>
+            <span class="field-type-pill">Text</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" checked style="accent-color:var(--color-brand);"> Required</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" checked style="accent-color:var(--color-brand);"> Localised</label>
+            <button class="btn btn-ghost btn-sm btn-icon" style="color:#ef4444;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="field-row">
+            <div style="flex:1;font-size:13px;font-weight:600;">subheading</div>
+            <span class="field-type-pill">Text</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Required</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" checked style="accent-color:var(--color-brand);"> Localised</label>
+            <button class="btn btn-ghost btn-sm btn-icon" style="color:#ef4444;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="field-row">
+            <div style="flex:1;font-size:13px;font-weight:600;">backgroundImage</div>
+            <span class="field-type-pill asset-ref">Asset Ref</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Required</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Localised</label>
+            <button class="btn btn-ghost btn-sm btn-icon" style="color:#ef4444;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="field-row">
+            <div style="flex:1;font-size:13px;font-weight:600;">ctaLabel</div>
+            <span class="field-type-pill">Text</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Required</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" checked style="accent-color:var(--color-brand);"> Localised</label>
+            <button class="btn btn-ghost btn-sm btn-icon" style="color:#ef4444;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="field-row">
+            <div style="flex:1;font-size:13px;font-weight:600;">ctaUrl</div>
+            <span class="field-type-pill">URL</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" checked style="accent-color:var(--color-brand);"> Required</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Localised</label>
+            <button class="btn btn-ghost btn-sm btn-icon" style="color:#ef4444;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="field-row">
+            <div style="flex:1;font-size:13px;font-weight:600;">overlayOpacity</div>
+            <span class="field-type-pill">Number</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Required</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);"><input type="checkbox" style="accent-color:var(--color-brand);"> Localised</label>
+            <button class="btn btn-ghost btn-sm btn-icon" style="color:#ef4444;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeNewModal()">Cancel</button>
+      <button class="btn btn-primary">Create Component</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openNewModal() {
+    document.getElementById('new-modal').style.display = 'flex';
+  }
+  function closeNewModal() {
+    document.getElementById('new-modal').style.display = 'none';
+  }
+  function autoCompSlug(val) {
+    document.getElementById('comp-slug').value = val
+      .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+  function filterCat(cat, el) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.comp-card:not(.add-new)').forEach(card => {
+      card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
+    });
+  }
+  function filterSearch(val) {
+    var q = val.toLowerCase();
+    document.querySelectorAll('.comp-card:not(.add-new)').forEach(card => {
+      var name = card.querySelector('.comp-name');
+      var desc = card.querySelector('.comp-desc');
+      var match = (name && name.textContent.toLowerCase().includes(q)) ||
+                  (desc && desc.textContent.toLowerCase().includes(q));
+      card.style.display = match ? '' : 'none';
+    });
+  }
+  function openCompDetail(name) {
+    // Clicking the card body navigates to the item list for that component type
+    location.href = 'component-item-list.html?comp=' + encodeURIComponent(name);
+  }
+
+  function openCompEditor(name, evt) {
+    if (evt) evt.stopPropagation();
+    location.href = 'component-editor.html?comp=' + encodeURIComponent(name);
+  }
+
+  function openNewItem(name, evt) {
+    if (evt) evt.stopPropagation();
+    location.href = 'component-item-editor.html?comp=' + encodeURIComponent(name) + '&new=1';
+  }
+</script>
+</body>
+</html>

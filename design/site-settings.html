@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acme Corp Website — Site Settings — MicroCMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Two-column settings layout ── */
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 0;
+      min-height: calc(100vh - var(--topbar-height));
+    }
+
+    /* ── Left settings nav ── */
+    .settings-nav {
+      border-right: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 16px 0;
+      position: sticky;
+      top: var(--topbar-height);
+      height: calc(100vh - var(--topbar-height));
+      overflow-y: auto;
+    }
+    .settings-nav-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--color-text-muted);
+      padding: 8px 16px 4px;
+    }
+    .settings-nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; font-size: 13px; cursor: pointer;
+      color: var(--color-text); border-left: 3px solid transparent;
+      transition: background .1s; border: none; background: none;
+      width: 100%; text-align: left;
+    }
+    .settings-nav-item:hover { background: white }
+    .settings-nav-item.active {
+      background: var(--color-brand-light);
+      border-left-color: var(--color-brand);
+      color: var(--color-brand); font-weight: 600;
+    }
+    .settings-nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: .7 }
+    .settings-nav-item.active svg { opacity: 1 }
+    .settings-nav-item.danger { color: #dc2626 }
+    .settings-nav-item.danger svg { opacity: 1 }
+    .settings-nav-item.danger:hover { background: #fff5f5 }
+    .settings-nav-item.danger.active { background: #fff5f5; border-left-color: #dc2626; color: #dc2626 }
+
+    /* ── Right content pane ── */
+    .settings-pane {
+      padding: 28px 32px;
+      max-width: 780px;
+    }
+    .settings-section-title {
+      font-size: 17px; font-weight: 800; margin: 0 0 4px;
+    }
+    .settings-section-sub {
+      font-size: 13px; color: var(--color-text-muted); margin: 0 0 24px;
+    }
+
+    /* ── Form rows ── */
+    .form-row { margin-bottom: 20px }
+    .form-row label {
+      display: block; font-size: 12px; font-weight: 600;
+      margin-bottom: 5px; color: var(--color-text);
+    }
+    .form-row .hint { font-size: 11px; color: var(--color-text-muted); margin-top: 4px }
+    .form-row input[type=text],
+    .form-row input[type=url],
+    .form-row input[type=email],
+    .form-row select,
+    .form-row textarea {
+      width: 100%; padding: 8px 12px;
+      border: 1px solid var(--color-border); border-radius: 7px;
+      font-size: 13px; font-family: inherit; background: white;
+      box-sizing: border-box;
+    }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+      outline: none; border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    .form-row .mono { font-family: 'JetBrains Mono', monospace; font-size: 12.5px }
+    .form-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+
+    /* ── Section divider ── */
+    .section-divider {
+      border: none; border-top: 1px solid var(--color-border);
+      margin: 28px 0;
+    }
+
+    /* ── Domain table ── */
+    .domain-table { width: 100%; border-collapse: collapse }
+    .domain-table th {
+      text-align: left; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--color-text-muted); padding: 8px 12px;
+      background: var(--color-bg); border-bottom: 1px solid var(--color-border);
+    }
+    .domain-table td {
+      padding: 12px; border-bottom: 1px solid var(--color-border);
+      font-size: 13px; vertical-align: middle;
+    }
+    .domain-table tr:last-child td { border-bottom: none }
+    .domain-table tr:hover td { background: #fafafe }
+
+    .env-pill {
+      display: inline-block; padding: 2px 9px; border-radius: 10px;
+      font-size: 11px; font-weight: 700;
+    }
+    .env-pill.prod    { background: #dcfce7; color: #166534 }
+    .env-pill.staging { background: #fef9c3; color: #854d0e }
+    .env-pill.preview { background: #ede9fe; color: #6d28d9 }
+    .env-pill.dev     { background: #f3f4f6; color: #374151 }
+
+    .ssl-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 500;
+    }
+    .ssl-badge.ok   { color: #16a34a }
+    .ssl-badge.warn { color: #b45309 }
+    .ssl-dot { width: 7px; height: 7px; border-radius: 50% }
+    .ssl-dot.ok   { background: #16a34a }
+    .ssl-dot.warn { background: #f59e0b }
+
+    /* ── Locale drag list ── */
+    .locale-list { display: flex; flex-direction: column; gap: 6px }
+    .locale-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border: 1px solid var(--color-border);
+      border-radius: 8px; background: white;
+    }
+    .locale-row.primary { border-color: var(--color-brand); background: var(--color-brand-light) }
+    .locale-drag { color: #d1d5db; cursor: grab; font-size: 14px }
+    .locale-flag-lg { font-size: 20px }
+    .locale-info { flex: 1 }
+    .locale-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--color-text-muted) }
+    .locale-name-lg { font-size: 13px; font-weight: 600 }
+    .locale-primary-badge {
+      font-size: 10px; font-weight: 700; padding: 1px 7px;
+      border-radius: 10px; background: var(--color-brand); color: white;
+    }
+    .locale-fallback-arrow { color: var(--color-text-muted); font-size: 18px }
+
+    /* ── API key card ── */
+    .api-key-card {
+      border: 1px solid var(--color-border); border-radius: 10px;
+      overflow: hidden; margin-bottom: 16px;
+    }
+    .api-key-header {
+      padding: 12px 16px; background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .api-key-header h4 { font-size: 13px; font-weight: 700; margin: 0; flex: 1 }
+    .api-key-header p  { font-size: 11px; color: var(--color-text-muted); margin: 2px 0 0 }
+    .api-key-type {
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .api-key-type.delivery  { background: #dcfce7; color: #166534 }
+    .api-key-type.mgmt      { background: #fef9c3; color: #854d0e }
+    .api-key-type.preview   { background: #ede9fe; color: #6d28d9 }
+
+    .api-key-body { padding: 14px 16px }
+    .key-field {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .key-value {
+      flex: 1; padding: 7px 10px;
+      border: 1px solid var(--color-border); border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      background: #f9fafb; color: var(--color-text); letter-spacing: .03em;
+    }
+    .key-copy-btn {
+      padding: 6px 10px; border-radius: 6px;
+      border: 1px solid var(--color-border); background: white;
+      font-size: 12px; cursor: pointer; white-space: nowrap;
+    }
+    .key-copy-btn:hover { background: var(--color-bg) }
+    .key-meta { font-size: 11px; color: var(--color-text-muted) }
+
+    /* ── Webhook table ── */
+    .webhook-row {
+      border: 1px solid var(--color-border); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 12px; background: white;
+    }
+    .webhook-row-top { display: flex; align-items: flex-start; gap: 10px }
+    .webhook-url { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 600; flex: 1 }
+    .webhook-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11.5px; font-weight: 600; padding: 3px 9px;
+      border-radius: 10px; flex-shrink: 0;
+    }
+    .webhook-status.ok   { background: #dcfce7; color: #166534 }
+    .webhook-status.fail { background: #fee2e2; color: #991b1b }
+    .webhook-status.pending { background: #f3f4f6; color: #6b7280 }
+    .webhook-events { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 }
+    .event-chip {
+      font-size: 10px; font-weight: 600; padding: 2px 7px;
+      border-radius: 4px; background: #f0f9ff; color: #0369a1;
+      border: 1px solid #bae6fd; font-family: 'JetBrains Mono', monospace;
+    }
+    .webhook-meta { font-size: 11px; color: var(--color-text-muted) }
+    .webhook-actions { display: flex; gap: 6px; margin-top: 10px }
+
+    /* ── Toggle switch ── */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px }
+    .toggle-switch { position: relative; width: 36px; height: 20px; flex-shrink: 0 }
+    .toggle-switch input { opacity: 0; width: 0; height: 0 }
+    .toggle-track {
+      position: absolute; inset: 0; border-radius: 10px;
+      background: #e5e7eb; cursor: pointer; transition: background .2s;
+    }
+    .toggle-track::before {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      background: white; border-radius: 50%; top: 3px; left: 3px;
+      transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--color-brand) }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px) }
+    .toggle-label { font-size: 13px }
+    .toggle-hint  { font-size: 11px; color: var(--color-text-muted); margin-left: auto }
+
+    /* ── Danger zone ── */
+    .danger-action {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; border: 1px solid #fecaca; border-radius: 8px;
+      margin-bottom: 12px; background: white;
+    }
+    .danger-action-info h4 { font-size: 13px; font-weight: 700; margin: 0 0 2px }
+    .danger-action-info p  { font-size: 12px; color: var(--color-text-muted); margin: 0 }
+    .btn-danger {
+      padding: 7px 14px; border-radius: 6px;
+      border: 1px solid #fca5a5; background: #fff5f5;
+      color: #dc2626; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-danger:hover { background: #fee2e2 }
+
+    /* ── Unsaved banner ── */
+    .unsaved-banner {
+      display: none; position: fixed; bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: #1e1b4b; color: white; border-radius: 10px;
+      padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25); font-size: 13px; font-weight: 500;
+      z-index: 300;
+    }
+    .unsaved-banner.visible { display: flex }
+    .unsaved-banner .save-btn {
+      padding: 6px 14px; border-radius: 6px;
+      background: var(--color-brand); color: white;
+      border: none; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .unsaved-banner .discard-btn {
+      padding: 6px 12px; border-radius: 6px;
+      background: transparent; color: rgba(255,255,255,.7);
+      border: 1px solid rgba(255,255,255,.2); font-size: 12px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <a href="site-management.html">Sites</a><span class="sep">/</span>
+      <span class="current">Acme Corp Website — Settings</span>
+    </div>
+    <div class="topbar-actions">
+      <a href="site-structure.html" class="btn btn-ghost btn-sm">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        View Site
+      </a>
+    </div>
+  </header>
+
+  <div class="settings-layout">
+
+    <!-- Left nav -->
+    <div class="settings-nav">
+      <div class="settings-nav-label">Site Settings</div>
+      <button class="settings-nav-item active" onclick="showSection('general', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        General
+      </button>
+      <button class="settings-nav-item" onclick="showSection('domains', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+        Domains
+      </button>
+      <button class="settings-nav-item" onclick="showSection('locales', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+        Locales
+      </button>
+      <button class="settings-nav-item" onclick="showSection('apikeys', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        API Keys
+      </button>
+      <button class="settings-nav-item" onclick="showSection('webhooks', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Webhooks
+      </button>
+      <div class="settings-nav-label" style="margin-top:12px">Advanced</div>
+      <button class="settings-nav-item danger" onclick="showSection('danger', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        Danger Zone
+      </button>
+    </div>
+
+    <!-- Content pane -->
+    <div style="overflow-y:auto">
+
+      <!-- ══ GENERAL ══ -->
+      <div id="sec-general" class="settings-pane">
+        <h2 class="settings-section-title">General</h2>
+        <p class="settings-section-sub">Basic identity and behaviour settings for this site.</p>
+
+        <div class="form-row">
+          <label>Site Name</label>
+          <input type="text" value="Acme Corp Website" oninput="markDirty()">
+        </div>
+        <div class="form-row">
+          <label>Site ID <span style="font-size:11px;color:var(--color-text-muted);font-weight:400">(read-only)</span></label>
+          <input type="text" class="mono" value="acme-corp-website" readonly
+            style="background:#f9fafb;color:var(--color-text-muted);cursor:default">
+          <div class="hint">Cannot be changed after creation · used in API paths and SDK references</div>
+        </div>
+        <div class="form-row">
+          <label>Description</label>
+          <textarea rows="2" oninput="markDirty()">Main marketing and product site for Acme Corp.</textarea>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="form-two-col">
+          <div class="form-row">
+            <label>Timezone</label>
+            <select onchange="markDirty()">
+              <option>UTC</option>
+              <option selected>Asia/Singapore (UTC+8)</option>
+              <option>America/New_York (UTC-5)</option>
+              <option>Europe/London (UTC+0)</option>
+              <option>Europe/Paris (UTC+1)</option>
+            </select>
+            <div class="hint">Used for scheduled publish/unpublish times</div>
+          </div>
+          <div class="form-row">
+            <label>Date Format</label>
+            <select onchange="markDirty()">
+              <option selected>DD/MM/YYYY</option>
+              <option>MM/DD/YYYY</option>
+              <option>YYYY-MM-DD (ISO 8601)</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Features</div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Versioning</span>
+          <span class="toggle-hint">Keep full revision history for all entries</span>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Approval Workflow</span>
+          <span class="toggle-hint">Require editorial review before publishing</span>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Scheduled Publishing</span>
+          <span class="toggle-hint">Allow entries to be published at a future date/time</span>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Preview Mode</span>
+          <span class="toggle-hint">Enable draft preview via signed preview URLs</span>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">AI Copilot</span>
+          <span class="toggle-hint">Enable AI writing and translation assist for this site</span>
+        </div>
+      </div>
+
+      <!-- ══ DOMAINS ══ -->
+      <div id="sec-domains" class="settings-pane" style="display:none">
+        <h2 class="settings-section-title">Domains &amp; Environments</h2>
+        <p class="settings-section-sub">Manage deployment URLs, SSL status, and CORS origins per environment.</p>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+          <button class="btn btn-primary btn-sm" onclick="addDomainRow()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 4v16m8-8H4"/></svg>
+            Add Environment
+          </button>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <table class="domain-table" id="domain-table">
+            <thead>
+              <tr>
+                <th>Environment</th>
+                <th>URL</th>
+                <th>SSL</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="env-pill prod">Production</span></td>
+                <td><span class="mono" style="font-size:12.5px">https://acme.com</span></td>
+                <td><span class="ssl-badge ok"><span class="ssl-dot ok"></span>Valid · expires Jan 2026</span></td>
+                <td><span style="font-size:11.5px;font-weight:600;color:#16a34a">● Live</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-ghost btn-sm" onclick="editDomain(this)">Edit</button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="env-pill staging">Staging</span></td>
+                <td><span class="mono" style="font-size:12.5px">https://staging.acme.com</span></td>
+                <td><span class="ssl-badge ok"><span class="ssl-dot ok"></span>Valid</span></td>
+                <td><span style="font-size:11.5px;font-weight:600;color:#b45309">● Staging</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-ghost btn-sm" onclick="editDomain(this)">Edit</button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="env-pill preview">Preview</span></td>
+                <td><span class="mono" style="font-size:12.5px">https://preview.acme.com</span></td>
+                <td><span class="ssl-badge warn"><span class="ssl-dot warn"></span>Expiring in 14 days</span></td>
+                <td><span style="font-size:11.5px;color:var(--color-text-muted)">● Preview only</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-ghost btn-sm" onclick="editDomain(this)">Edit</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <hr class="section-divider">
+
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">CORS — Allowed Origins</div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin:0 0 12px">
+          Delivery API responses will include <code style="font-size:11px;background:#f3f4f6;padding:1px 4px;border-radius:3px">Access-Control-Allow-Origin</code>
+          headers for these origins. Wildcards (<code style="font-size:11px;background:#f3f4f6;padding:1px 4px;border-radius:3px">*</code>) are supported but not recommended for production.
+        </p>
+        <div class="form-row">
+          <textarea class="mono" rows="3" oninput="markDirty()" style="font-size:12px">https://acme.com
+https://staging.acme.com
+https://preview.acme.com</textarea>
+          <div class="hint">One origin per line</div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">Preview URL Template</div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin:0 0 12px">
+          Used to construct preview links from the entry editor. Use <code style="font-size:11px;background:#f3f4f6;padding:1px 4px;border-radius:3px">{slug}</code>, <code style="font-size:11px;background:#f3f4f6;padding:1px 4px;border-radius:3px">{locale}</code>, and <code style="font-size:11px;background:#f3f4f6;padding:1px 4px;border-radius:3px">{secret}</code> tokens.
+        </p>
+        <div class="form-row">
+          <input type="url" class="mono" value="https://acme.com/api/preview?secret={secret}&slug={slug}&locale={locale}" oninput="markDirty()">
+        </div>
+      </div>
+
+      <!-- ══ LOCALES ══ -->
+      <div id="sec-locales" class="settings-pane" style="display:none">
+        <h2 class="settings-section-title">Locales &amp; i18n</h2>
+        <p class="settings-section-sub">Configure the languages this site supports and how missing translations are handled.</p>
+
+        <div class="form-row" style="margin-bottom:24px">
+          <label>Default Locale</label>
+          <select onchange="markDirty()" style="max-width:320px">
+            <option selected>🇺🇸 English (US) — en-US</option>
+            <option>🇬🇧 English (UK) — en-GB</option>
+            <option>🇫🇷 French — fr-FR</option>
+            <option>🇩🇪 German — de-DE</option>
+          </select>
+          <div class="hint">The authoritative locale — all other locales fall back to this if a translation is missing</div>
+        </div>
+
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">Active Locales &amp; Fallback Chain</div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin:0 0 12px">
+          Drag to reorder the fallback chain. Missing translations resolve top-to-bottom.
+        </p>
+        <div class="locale-list" id="locale-list">
+          <div class="locale-row primary">
+            <span class="locale-drag">⠿</span>
+            <span class="locale-flag-lg">🇺🇸</span>
+            <div class="locale-info">
+              <div class="locale-name-lg">English (US)</div>
+              <div class="locale-code">en-US</div>
+            </div>
+            <span class="locale-primary-badge">Primary</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:2px 16px;font-size:11px;color:var(--color-text-muted)">
+            <span>↓ fallback</span>
+          </div>
+          <div class="locale-row">
+            <span class="locale-drag">⠿</span>
+            <span class="locale-flag-lg">🇫🇷</span>
+            <div class="locale-info">
+              <div class="locale-name-lg">French</div>
+              <div class="locale-code">fr-FR</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="removeLocale(this)">Remove</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:2px 16px;font-size:11px;color:var(--color-text-muted)">
+            <span>↓ fallback</span>
+          </div>
+          <div class="locale-row">
+            <span class="locale-drag">⠿</span>
+            <span class="locale-flag-lg">🇩🇪</span>
+            <div class="locale-info">
+              <div class="locale-name-lg">German</div>
+              <div class="locale-code">de-DE</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="removeLocale(this)">Remove</button>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-sm" style="margin-top:12px;gap:5px" onclick="addLocale()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 4v16m8-8H4"/></svg>
+          Add locale
+        </button>
+
+        <hr class="section-divider">
+
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Fallback Behaviour</div>
+        <div class="form-row">
+          <select onchange="markDirty()">
+            <option selected>Fall back to default locale if translation is missing</option>
+            <option>Return null / empty string for missing translations</option>
+            <option>Return HTTP 404 for missing locale routes</option>
+          </select>
+        </div>
+
+        <div class="toggle-wrap" style="margin-top:8px">
+          <label class="toggle-switch">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">RTL support</span>
+          <span class="toggle-hint">Auto-detect and apply RTL layout for ar-*, he-*, fa-* locales</span>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Show translation coverage</span>
+          <span class="toggle-hint">Display % translated in the entry list</span>
+        </div>
+      </div>
+
+      <!-- ══ API KEYS ══ -->
+      <div id="sec-apikeys" class="settings-pane" style="display:none">
+        <h2 class="settings-section-title">API Keys</h2>
+        <p class="settings-section-sub">Manage tokens for accessing this site's content via the Delivery and Management APIs.</p>
+
+        <!-- Delivery API Key -->
+        <div class="api-key-card">
+          <div class="api-key-header">
+            <div style="flex:1">
+              <h4>Delivery API Key</h4>
+              <p>Read-only access to published content. Safe to use in client-side code.</p>
+            </div>
+            <span class="api-key-type delivery">Delivery</span>
+          </div>
+          <div class="api-key-body">
+            <div class="key-field">
+              <input class="key-value" type="password" id="del-key"
+                value="sk_del_acme_4f8a2b1c9e3d7f0a5b6c2e1d8f3a7b9c">
+              <button class="key-copy-btn" onclick="toggleKey('del-key', this)">Show</button>
+              <button class="key-copy-btn" onclick="copyKey('del-key')">Copy</button>
+            </div>
+            <div class="key-meta">Created Apr 15, 2026 · Last used 2 hours ago · <strong style="color:var(--color-text)">Never expires</strong></div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" onclick="confirmRegen('Delivery API Key')">Regenerate</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Management API Key -->
+        <div class="api-key-card">
+          <div class="api-key-header">
+            <div style="flex:1">
+              <h4>Management API Key</h4>
+              <p>Full read/write access. <strong>Never expose in client-side code.</strong></p>
+            </div>
+            <span class="api-key-type mgmt">Management</span>
+          </div>
+          <div class="api-key-body">
+            <div class="key-field">
+              <input class="key-value" type="password" id="mgmt-key"
+                value="sk_mgmt_acme_9c2a1b4d8f7e3c6a0b5d2e9f4a1c7b3e">
+              <button class="key-copy-btn" onclick="toggleKey('mgmt-key', this)">Show</button>
+              <button class="key-copy-btn" onclick="copyKey('mgmt-key')">Copy</button>
+            </div>
+            <div class="key-meta">Created Apr 15, 2026 · Last used 1 day ago · Expires Apr 15, 2027</div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" onclick="confirmRegen('Management API Key')">Regenerate</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview API Key -->
+        <div class="api-key-card">
+          <div class="api-key-header">
+            <div style="flex:1">
+              <h4>Preview API Key</h4>
+              <p>Read access to draft/unpublished content. Used in preview environments.</p>
+            </div>
+            <span class="api-key-type preview">Preview</span>
+          </div>
+          <div class="api-key-body">
+            <div class="key-field">
+              <input class="key-value" type="password" id="prev-key"
+                value="sk_prev_acme_1d7b3e9f2c0a4b6c8e1f3d5a7b2c4e6f">
+              <button class="key-copy-btn" onclick="toggleKey('prev-key', this)">Show</button>
+              <button class="key-copy-btn" onclick="copyKey('prev-key')">Copy</button>
+            </div>
+            <div class="key-meta">Created Apr 15, 2026 · Last used 3 days ago · <strong style="color:var(--color-text)">Never expires</strong></div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" onclick="confirmRegen('Preview API Key')">Regenerate</button>
+            </div>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">Personal Access Tokens</div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin:0 0 12px">
+          Fine-grained tokens scoped to specific permissions. Suitable for CI/CD pipelines and integrations.
+        </p>
+        <button class="btn btn-secondary" onclick="alert('Personal access token creation wizard would open here.')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M12 4v16m8-8H4"/></svg>
+          Generate Token
+        </button>
+      </div>
+
+      <!-- ══ WEBHOOKS ══ -->
+      <div id="sec-webhooks" class="settings-pane" style="display:none">
+        <h2 class="settings-section-title">Webhooks</h2>
+        <p class="settings-section-sub">Send HTTP POST requests to external services when content events occur.</p>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" onclick="openWebhookModal()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 4v16m8-8H4"/></svg>
+            Add Webhook
+          </button>
+        </div>
+
+        <!-- Webhook 1 -->
+        <div class="webhook-row">
+          <div class="webhook-row-top">
+            <div style="flex:1">
+              <div class="webhook-url">https://hooks.netlify.com/build/acme-prod-abc123</div>
+              <div class="webhook-events">
+                <span class="event-chip">entry.published</span>
+                <span class="event-chip">entry.unpublished</span>
+                <span class="event-chip">entry.deleted</span>
+              </div>
+              <div class="webhook-meta">Last triggered: 2 hours ago · <strong style="color:#16a34a">200 OK</strong> in 142ms</div>
+            </div>
+            <span class="webhook-status ok">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M5 13l4 4L19 7"/></svg>
+              Active
+            </span>
+          </div>
+          <div class="webhook-actions">
+            <button class="btn btn-ghost btn-sm" onclick="testWebhook(this)">Send test</button>
+            <button class="btn btn-ghost btn-sm">Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="viewWebhookLog()">View log</button>
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="deleteWebhook(this)">Delete</button>
+          </div>
+        </div>
+
+        <!-- Webhook 2 -->
+        <div class="webhook-row">
+          <div class="webhook-row-top">
+            <div style="flex:1">
+              <div class="webhook-url">https://api.slack.com/services/T00/B00/XXXXXXXXXXXX</div>
+              <div class="webhook-events">
+                <span class="event-chip">entry.pending_review</span>
+                <span class="event-chip">entry.approved</span>
+                <span class="event-chip">entry.rejected</span>
+              </div>
+              <div class="webhook-meta">Last triggered: 1 day ago · <strong style="color:#16a34a">200 OK</strong> in 89ms</div>
+            </div>
+            <span class="webhook-status ok">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M5 13l4 4L19 7"/></svg>
+              Active
+            </span>
+          </div>
+          <div class="webhook-actions">
+            <button class="btn btn-ghost btn-sm" onclick="testWebhook(this)">Send test</button>
+            <button class="btn btn-ghost btn-sm">Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="viewWebhookLog()">View log</button>
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="deleteWebhook(this)">Delete</button>
+          </div>
+        </div>
+
+        <!-- Webhook 3 — failing -->
+        <div class="webhook-row" style="border-color:#fecaca">
+          <div class="webhook-row-top">
+            <div style="flex:1">
+              <div class="webhook-url">https://cms-sync.internal.acme.io/hook</div>
+              <div class="webhook-events">
+                <span class="event-chip">asset.uploaded</span>
+                <span class="event-chip">asset.deleted</span>
+              </div>
+              <div class="webhook-meta">Last triggered: 3 days ago · <strong style="color:#dc2626">503 Service Unavailable</strong> — 3 retries exhausted</div>
+            </div>
+            <span class="webhook-status fail">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              Failing
+            </span>
+          </div>
+          <div class="webhook-actions">
+            <button class="btn btn-ghost btn-sm" onclick="testWebhook(this)">Retry now</button>
+            <button class="btn btn-ghost btn-sm">Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="viewWebhookLog()">View log</button>
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="deleteWebhook(this)">Delete</button>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">Webhook Secret</div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin:0 0 10px">
+          MicroCMS signs all webhook payloads with this secret using HMAC-SHA256.
+          Verify the <code style="font-size:11px;background:#f3f4f6;padding:1px 4px;border-radius:3px">X-MicroCMS-Signature</code> header on your server.
+        </p>
+        <div class="key-field" style="max-width:500px">
+          <input class="key-value" type="password" id="wh-secret" value="whsec_acme_8f3d1a9b2c7e4f0d5a1b8c3e6f9d2a5b">
+          <button class="key-copy-btn" onclick="toggleKey('wh-secret', this)">Show</button>
+          <button class="key-copy-btn" onclick="copyKey('wh-secret')">Copy</button>
+        </div>
+      </div>
+
+      <!-- ══ DANGER ZONE ══ -->
+      <div id="sec-danger" class="settings-pane" style="display:none">
+        <h2 class="settings-section-title" style="color:#dc2626">Danger Zone</h2>
+        <p class="settings-section-sub">Irreversible actions. Proceed with caution.</p>
+
+        <div class="danger-action">
+          <div class="danger-action-info">
+            <h4>Rename Site ID</h4>
+            <p>Changes the site slug used in all API paths. Existing integrations will break until updated.</p>
+          </div>
+          <button class="btn-danger" onclick="alert('Rename wizard would open here.\n\nAll API clients, webhooks, and SDK configurations must be updated after renaming.')">Rename</button>
+        </div>
+
+        <div class="danger-action">
+          <div class="danger-action-info">
+            <h4>Transfer Ownership</h4>
+            <p>Transfer this site to another workspace or organisation on your plan.</p>
+          </div>
+          <button class="btn-danger" onclick="alert('Transfer wizard would open here.')">Transfer</button>
+        </div>
+
+        <div class="danger-action">
+          <div class="danger-action-info">
+            <h4>Disable Site</h4>
+            <p>Suspends all API access. Content and data are preserved. Can be re-enabled.</p>
+          </div>
+          <button class="btn-danger" onclick="confirmDisable()">Disable</button>
+        </div>
+
+        <div class="danger-action">
+          <div class="danger-action-info">
+            <h4>Purge All Content</h4>
+            <p>Deletes every entry, asset, and component item in this site. Schema and settings are kept. <strong>Permanent.</strong></p>
+          </div>
+          <button class="btn-danger" onclick="confirmPurge()">Purge Content</button>
+        </div>
+
+        <div class="danger-action" style="border-color:#dc2626">
+          <div class="danger-action-info">
+            <h4>Delete Site</h4>
+            <p>Permanently deletes this site, all its content, assets, pages, settings, and API keys. <strong>Cannot be undone.</strong></p>
+          </div>
+          <button class="btn-danger" style="background:#dc2626;color:white;border-color:#dc2626" onclick="confirmDelete()">Delete Site</button>
+        </div>
+      </div>
+
+    </div><!-- /content pane -->
+  </div><!-- /settings-layout -->
+</div><!-- /main-wrap -->
+
+<!-- Unsaved changes banner -->
+<div class="unsaved-banner" id="unsaved-banner">
+  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+  You have unsaved changes
+  <button class="save-btn" onclick="saveSettings()">Save Changes</button>
+  <button class="discard-btn" onclick="discardChanges()">Discard</button>
+</div>
+
+<!-- Add Webhook Modal -->
+<div id="webhook-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:12px;width:500px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="padding:18px 20px;border-bottom:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:700">Add Webhook</div>
+      <button onclick="closeWebhookModal()" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--color-text-muted)">×</button>
+    </div>
+    <div style="padding:20px">
+      <div class="form-row">
+        <label>Endpoint URL</label>
+        <input type="url" placeholder="https://your-server.com/webhook">
+      </div>
+      <div class="form-row">
+        <label>Events to subscribe</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox" checked> entry.published</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox" checked> entry.unpublished</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox"> entry.deleted</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox"> entry.pending_review</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox"> entry.approved</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox"> asset.uploaded</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer"><input type="checkbox"> asset.deleted</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>HTTP Method</label>
+        <select style="width:120px"><option>POST</option><option>PUT</option></select>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--color-border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-ghost" onclick="closeWebhookModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWebhook()">Add Webhook</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let isDirty = false
+
+  /* ── Section navigation ── */
+  function showSection(id, btn) {
+    document.querySelectorAll('[id^="sec-"]').forEach(s => s.style.display = 'none')
+    document.getElementById('sec-' + id).style.display = ''
+    document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+  }
+
+  /* ── Dirty state ── */
+  function markDirty() {
+    isDirty = true
+    document.getElementById('unsaved-banner').classList.add('visible')
+  }
+  function saveSettings() {
+    isDirty = false
+    document.getElementById('unsaved-banner').classList.remove('visible')
+    // Flash save feedback
+    const btn = document.querySelector('.save-btn')
+    const orig = btn.textContent
+    btn.textContent = '✓ Saved'
+    setTimeout(() => btn.textContent = orig, 1500)
+  }
+  function discardChanges() {
+    isDirty = false
+    document.getElementById('unsaved-banner').classList.remove('visible')
+  }
+
+  /* ── API key actions ── */
+  function toggleKey(id, btn) {
+    const inp = document.getElementById(id)
+    if (inp.type === 'password') { inp.type = 'text';  btn.textContent = 'Hide' }
+    else                         { inp.type = 'password'; btn.textContent = 'Show' }
+  }
+  function copyKey(id) {
+    const val = document.getElementById(id).value
+    navigator.clipboard?.writeText(val).catch(() => {})
+    alert('Copied to clipboard.')
+  }
+  function confirmRegen(name) {
+    if (confirm('Regenerate ' + name + '?\n\nThe current key will be immediately invalidated. Any services using it will stop working until updated.')) {
+      alert(name + ' regenerated. Make sure to update all integrations.')
+    }
+  }
+
+  /* ── Domain actions ── */
+  function editDomain(btn) {
+    const url = prompt('Edit URL:', btn.closest('tr').querySelector('.mono').textContent.trim())
+    if (url) { btn.closest('tr').querySelector('.mono').textContent = url; markDirty() }
+  }
+  function addDomainRow() {
+    const envs = ['Development', 'QA', 'UAT']
+    const env = prompt('Environment name (e.g. Development, QA):')
+    if (!env) return
+    const url = prompt('URL for ' + env + ':')
+    if (!url) return
+    const tbody = document.querySelector('#domain-table tbody')
+    const tr = document.createElement('tr')
+    tr.innerHTML = `
+      <td><span class="env-pill dev">${env}</span></td>
+      <td><span class="mono" style="font-size:12.5px">${url}</span></td>
+      <td><span class="ssl-badge warn"><span class="ssl-dot warn"></span>Pending</span></td>
+      <td><span style="font-size:11.5px;color:var(--color-text-muted)">● Not live</span></td>
+      <td style="text-align:right">
+        <button class="btn btn-ghost btn-sm" onclick="editDomain(this)">Edit</button>
+        <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="this.closest('tr').remove();markDirty()">Remove</button>
+      </td>`
+    tbody.appendChild(tr)
+    markDirty()
+  }
+
+  /* ── Locale actions ── */
+  function removeLocale(btn) {
+    if (confirm('Remove this locale? All translated content for it will be detached.')) {
+      btn.closest('.locale-row').remove()
+      // also remove adjacent arrow
+      markDirty()
+    }
+  }
+  function addLocale() {
+    const code = prompt('Locale code (e.g. es-ES, ja-JP):')
+    if (!code) return
+    const list = document.getElementById('locale-list')
+    const arrow = document.createElement('div')
+    arrow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:2px 16px;font-size:11px;color:var(--color-text-muted)'
+    arrow.innerHTML = '<span>↓ fallback</span>'
+    const row = document.createElement('div')
+    row.className = 'locale-row'
+    row.innerHTML = `
+      <span class="locale-drag">⠿</span>
+      <span class="locale-flag-lg">🌐</span>
+      <div class="locale-info">
+        <div class="locale-name-lg">${code}</div>
+        <div class="locale-code">${code}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="removeLocale(this)">Remove</button>`
+    list.appendChild(arrow)
+    list.appendChild(row)
+    markDirty()
+  }
+
+  /* ── Webhook actions ── */
+  function openWebhookModal() { document.getElementById('webhook-modal').style.display = 'flex' }
+  function closeWebhookModal() { document.getElementById('webhook-modal').style.display = 'none' }
+  function saveWebhook() { closeWebhookModal(); alert('Webhook added. A test payload will be sent to verify the endpoint.') }
+  function testWebhook(btn) {
+    const orig = btn.textContent
+    btn.textContent = 'Sending…'
+    btn.disabled = true
+    setTimeout(() => { btn.textContent = '✓ 200 OK'; setTimeout(() => { btn.textContent = orig; btn.disabled = false }, 2000) }, 1000)
+  }
+  function viewWebhookLog() { alert('Webhook delivery log would open in a drawer here.') }
+  function deleteWebhook(btn) {
+    if (confirm('Delete this webhook? It will stop receiving events immediately.')) {
+      btn.closest('.webhook-row').remove()
+    }
+  }
+
+  /* ── Danger actions ── */
+  function confirmDisable() {
+    if (confirm('Disable Acme Corp Website?\n\nAll API keys will stop working. Content is preserved and the site can be re-enabled at any time.')) {
+      alert('Site disabled.')
+    }
+  }
+  function confirmPurge() {
+    const input = prompt('Type the site ID to confirm: acme-corp-website')
+    if (input === 'acme-corp-website') alert('All content purged. Schema and settings remain intact.')
+    else if (input !== null) alert('Site ID did not match. No action taken.')
+  }
+  function confirmDelete() {
+    const input = prompt('This is permanent and cannot be undone.\n\nType DELETE to confirm:')
+    if (input === 'DELETE') { alert('Site deleted.'); window.location = 'site-management.html' }
+    else if (input !== null) alert('Confirmation text did not match. No action taken.')
+  }
+
+  /* Close webhook modal on backdrop */
+  document.getElementById('webhook-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeWebhookModal()
+  })
+
+  /* Warn before leaving with unsaved changes */
+  window.addEventListener('beforeunload', e => { if (isDirty) e.preventDefault() })
+</script>
+</body>
+</html>

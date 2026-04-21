@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <AssemblyName>MicroCMS.GraphQL</AssemblyName>
+    <RootNamespace>MicroCMS.GraphQL</RootNamespace>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+  </PropertyGroup>
+
+  <!-- Hot Chocolate schema and resolvers — NO direct reference to Infrastructure -->
+  <ItemGroup>
+    <ProjectReference Include="..\MicroCMS.Application\MicroCMS.Application.csproj" />
+    <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Hot Chocolate 13 -->
+    <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.Data" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.9.11" />
+    <!-- JWT auth (reused from API layer) -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+    <!-- Observability -->
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
+    <!-- Analyzers -->
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.0.90307">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

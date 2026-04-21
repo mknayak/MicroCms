@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MicroCMS — Content Types</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a>
+      <span class="sep">/</span>
+      <span class="current">Content Types</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-icon-btn"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></button>
+      <div class="user-avatar">MK</div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Content Types</div>
+        <div class="page-subtitle">Define schemas for structured content. Each type generates a REST &amp; GraphQL API automatically.</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Import Schema
+        </button>
+        <button class="btn btn-primary" onclick="document.getElementById('modal-new-type').style.display='flex'">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          New Content Type
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="search-input-wrap">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="form-input" placeholder="Search content types…" />
+      </div>
+      <select class="form-select" style="width:auto">
+        <option>All Sites</option>
+        <option>www.acmecorp.io</option>
+        <option>docs.acmecorp.io</option>
+        <option>blog.acmecorp.io</option>
+      </select>
+    </div>
+
+    <!-- Content Types Grid -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+
+      <!-- Blog Post -->
+      <div class="card" style="cursor:pointer" onclick="window.location='entry-list.html'">
+        <div class="card-body" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div style="width:40px;height:40px;background:#e0e7ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">📝</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge badge-published">Active</span>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation()">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">Blog Post</div>
+          <div class="text-sm text-muted" style="margin-bottom:14px">Long-form articles with rich text, tags, and SEO metadata.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="tag">title</span><span class="tag">body</span><span class="tag">excerpt</span>
+            <span class="tag">cover_image</span><span class="tag">tags</span>
+            <span style="font-size:11px;color:var(--color-text-muted);padding:2px 6px">+4 more</span>
+          </div>
+          <div style="display:flex;gap:16px">
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:800">227</div>
+              <div class="text-xs text-muted">Entries</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:800">9</div>
+              <div class="text-xs text-muted">Fields</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:800">3</div>
+              <div class="text-xs text-muted">Locales</div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:flex-end">
+              <a href="entry-list.html" class="btn btn-secondary btn-sm">Browse →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentation -->
+      <div class="card" style="cursor:pointer" onclick="window.location='entry-list.html'">
+        <div class="card-body" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div style="width:40px;height:40px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">📖</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge badge-published">Active</span>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">Documentation</div>
+          <div class="text-sm text-muted" style="margin-bottom:14px">Technical docs with code examples, versioning, and hierarchy.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="tag">title</span><span class="tag">content</span><span class="tag">slug</span>
+            <span class="tag">parent</span>
+            <span style="font-size:11px;color:var(--color-text-muted);padding:2px 6px">+6 more</span>
+          </div>
+          <div style="display:flex;gap:16px">
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">402</div><div class="text-xs text-muted">Entries</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">11</div><div class="text-xs text-muted">Fields</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">2</div><div class="text-xs text-muted">Locales</div></div>
+            <div style="margin-left:auto;display:flex;align-items:flex-end"><a href="entry-list.html" class="btn btn-secondary btn-sm">Browse →</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- News -->
+      <div class="card" style="cursor:pointer" onclick="window.location='entry-list.html'">
+        <div class="card-body" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div style="width:40px;height:40px;background:#fef3c7;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">📰</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge badge-published">Active</span>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">News</div>
+          <div class="text-sm text-muted" style="margin-bottom:14px">Short announcements and press releases with publication dates.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="tag">headline</span><span class="tag">summary</span><span class="tag">category</span><span class="tag">author</span>
+          </div>
+          <div style="display:flex;gap:16px">
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">91</div><div class="text-xs text-muted">Entries</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">7</div><div class="text-xs text-muted">Fields</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">5</div><div class="text-xs text-muted">Locales</div></div>
+            <div style="margin-left:auto;display:flex;align-items:flex-end"><a href="entry-list.html" class="btn btn-secondary btn-sm">Browse →</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Case Study -->
+      <div class="card" style="cursor:pointer" onclick="window.location='entry-list.html'">
+        <div class="card-body" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div style="width:40px;height:40px;background:#ede9fe;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🏆</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge badge-published">Active</span>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">Case Study</div>
+          <div class="text-sm text-muted" style="margin-bottom:14px">Customer success stories with metrics and testimonials.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="tag">title</span><span class="tag">customer</span><span class="tag">outcome</span>
+            <span style="font-size:11px;color:var(--color-text-muted);padding:2px 6px">+5 more</span>
+          </div>
+          <div style="display:flex;gap:16px">
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">44</div><div class="text-xs text-muted">Entries</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">10</div><div class="text-xs text-muted">Fields</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">2</div><div class="text-xs text-muted">Locales</div></div>
+            <div style="margin-left:auto;display:flex;align-items:flex-end"><a href="entry-list.html" class="btn btn-secondary btn-sm">Browse →</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal Page -->
+      <div class="card" style="cursor:pointer" onclick="window.location='entry-list.html'">
+        <div class="card-body" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div style="width:40px;height:40px;background:#fee2e2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">⚖️</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge badge-published">Active</span>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">Legal Page</div>
+          <div class="text-sm text-muted" style="margin-bottom:14px">Terms, privacy policy, and compliance documents.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="tag">title</span><span class="tag">body</span><span class="tag">effective_date</span><span class="tag">version</span>
+          </div>
+          <div style="display:flex;gap:16px">
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">12</div><div class="text-xs text-muted">Entries</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">6</div><div class="text-xs text-muted">Fields</div></div>
+            <div style="text-align:center"><div style="font-size:18px;font-weight:800">3</div><div class="text-xs text-muted">Locales</div></div>
+            <div style="margin-left:auto;display:flex;align-items:flex-end"><a href="entry-list.html" class="btn btn-secondary btn-sm">Browse →</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add New Type CTA -->
+      <div class="card" style="cursor:pointer;border-style:dashed;border-color:#d1d5db" onclick="document.getElementById('modal-new-type').style.display='flex'">
+        <div class="card-body" style="padding:40px 20px;text-align:center">
+          <div style="width:48px;height:48px;background:var(--color-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:1px dashed #d1d5db">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#9ca3af" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--color-text);margin-bottom:4px">Create Content Type</div>
+          <div class="text-sm text-muted">Define a new schema with custom fields and validation rules.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══ MODAL: New Content Type ══ -->
+<div class="modal-backdrop" id="modal-new-type" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">New Content Type</div>
+      <button class="modal-close" onclick="document.getElementById('modal-new-type').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Display Name <span class="req">*</span></label>
+        <input class="form-input" placeholder="e.g. Product Page" />
+        <div class="form-hint">Human-readable name shown in the admin UI.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">API Slug <span class="req">*</span></label>
+        <div class="input-group">
+          <span class="input-prefix">api/v1/</span>
+          <input class="form-input" style="border-radius:0 6px 6px 0" placeholder="product-page" />
+        </div>
+        <div class="form-hint">Auto-generated from name. URL-safe, lowercase, hyphens only.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" rows="2" placeholder="What is this content type used for?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Site</label>
+        <select class="form-select">
+          <option>www.acmecorp.io</option>
+          <option>docs.acmecorp.io</option>
+          <option>blog.acmecorp.io</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="form-label">Start with template</label>
+          <select class="form-select">
+            <option value="">Blank</option>
+            <option>Blog Post</option>
+            <option>Documentation</option>
+            <option>Landing Page</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Localization</label>
+          <select class="form-select">
+            <option>Per-locale fields</option>
+            <option>Shared (no locale)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-new-type').style.display='none'">Cancel</button>
+      <button class="btn btn-primary">Create &amp; Add Fields →</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

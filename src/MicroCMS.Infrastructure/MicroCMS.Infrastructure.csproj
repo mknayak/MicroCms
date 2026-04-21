@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <AssemblyName>MicroCMS.Infrastructure</AssemblyName>
+    <RootNamespace>MicroCMS.Infrastructure</RootNamespace>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MicroCMS.Domain\MicroCMS.Domain.csproj" />
+    <ProjectReference Include="..\MicroCMS.Application\MicroCMS.Application.csproj" />
+    <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ORM — provider-neutral EF Core Core -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.6" />
+    <!-- DB providers (all ship; which one is registered is a deployment-time choice) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
+    <!-- Migrations design-time support -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <!-- Caching -->
+    <PackageReference Include="StackExchange.Redis" Version="2.7.33" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.6" />
+    <!-- Object storage -->
+    <PackageReference Include="AWSSDK.S3" Version="3.7.307.7" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.9.0" />
+    <!-- Image processing (cross-platform, no GDI) -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
+    <!-- Full-text / vector search client -->
+    <PackageReference Include="OpenSearch.Client" Version="1.9.0" />
+    <!-- Background jobs -->
+    <PackageReference Include="Quartz" Version="3.9.0" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.9.0" />
+    <!-- Identity / OIDC integration -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+    <!-- Outbox / messaging primitives -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+    <!-- Structured logging -->
+    <PackageReference Include="Serilog" Version="4.0.1" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+    <!-- Observability -->
+    <PackageReference Include="OpenTelemetry" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.12" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.0.0-rc9.14" />
+    <!-- Analyzers -->
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.0.90307">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

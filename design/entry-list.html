@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MicroCMS — Entries: Blog Post</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <a href="content-types.html">Content Types</a><span class="sep">/</span>
+      <span class="current">Blog Post</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-icon-btn"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></button>
+      <div class="user-avatar">MK</div>
+    </div>
+  </header>
+
+  <style>
+    /* ── Folder tree panel ── */
+    .entries-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 0;
+      min-height: calc(100vh - var(--topbar-height));
+    }
+    .folder-tree {
+      border-right: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 12px 0;
+      position: sticky;
+      top: var(--topbar-height);
+      height: calc(100vh - var(--topbar-height));
+      overflow-y: auto;
+    }
+    .folder-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--color-text-muted);
+      padding: 8px 14px 4px; margin-top: 4px;
+    }
+    .folder-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; font-size: 12.5px; cursor: pointer;
+      color: var(--color-text); border-left: 3px solid transparent;
+      transition: background .1s;
+    }
+    .folder-item:hover { background: white }
+    .folder-item.active {
+      background: var(--color-brand-light);
+      border-left-color: var(--color-brand);
+      color: var(--color-brand); font-weight: 600;
+    }
+    .folder-item svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .7 }
+    .folder-item.active svg { opacity: 1 }
+    .folder-count {
+      margin-left: auto; font-size: 10px; font-weight: 500;
+      background: #e5e7eb; color: #6b7280;
+      padding: 1px 5px; border-radius: 8px; min-width: 18px; text-align: center;
+    }
+    .folder-item.active .folder-count { background: #c7d2fe; color: var(--color-brand) }
+    .folder-indent { padding-left: 28px }
+    .folder-toggle {
+      width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;
+      color: #9ca3af; flex-shrink: 0; font-size: 9px;
+      transition: transform .15s;
+    }
+    .folder-toggle.open { transform: rotate(90deg) }
+
+    .folder-new-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 14px; font-size: 11.5px;
+      color: var(--color-text-muted); cursor: pointer;
+      background: none; border: none; width: 100%;
+      transition: color .1s;
+    }
+    .folder-new-btn:hover { color: var(--color-brand) }
+    .folder-new-btn svg { width: 13px; height: 13px }
+
+    /* ── Main entries pane ── */
+    .entries-pane { display: flex; flex-direction: column; min-width: 0 }
+  </style>
+
+  <main class="page" style="padding:0">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--color-border)">
+    <div class="page-header" style="margin-bottom:0">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:44px;height:44px;background:#e0e7ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px">📝</div>
+        <div>
+          <div class="page-title">Blog Post</div>
+          <div class="page-subtitle">227 entries · 9 fields · 3 locales · REST &amp; GraphQL enabled</div>
+        </div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          Edit Schema
+        </button>
+        <a href="entry-editor.html" class="btn btn-primary">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          New Entry
+        </a>
+      </div>
+    </div>
+
+    </div><!-- /page-header wrapper -->
+
+    <!-- Tabs -->
+    <div class="tabs" style="padding:0 24px;margin:0">
+      <a href="#" class="tab active" onclick="switchTab('entries',this);return false">Entries <span class="tab-count">227</span></a>
+      <a href="#" class="tab" onclick="switchTab('schema',this);return false">Schema <span class="tab-count">9 fields</span></a>
+      <a href="#" class="tab" onclick="switchTab('localization',this);return false">Localization</a>
+      <a href="#" class="tab" onclick="switchTab('api',this);return false">API Preview</a>
+    </div>
+
+    <!-- ══ TAB: ENTRIES ══ -->
+    <div id="tab-entries">
+    <div class="entries-layout">
+
+    <!-- Folder Tree -->
+    <div class="folder-tree">
+      <div class="folder-section-label">Folders</div>
+
+      <div class="folder-item active" onclick="selectFolder(this,'All Entries',227)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        All Entries
+        <span class="folder-count">227</span>
+      </div>
+
+      <div class="folder-item" onclick="selectFolder(this,'Drafts',18)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+        Drafts
+        <span class="folder-count">18</span>
+      </div>
+
+      <div class="folder-item" onclick="selectFolder(this,'Pending Review',5)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Pending Review
+        <span class="folder-count">5</span>
+      </div>
+
+      <div class="folder-item" onclick="selectFolder(this,'Archived',31)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 8h14M5 8a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v.5a2 2 0 01-2 1.5M5 8v11a2 2 0 002 2h10a2 2 0 002-2V8"/></svg>
+        Archived
+        <span class="folder-count">31</span>
+      </div>
+
+      <div class="folder-section-label" style="margin-top:8px">Custom Folders</div>
+
+      <!-- Campaign folder (expandable) -->
+      <div class="folder-item" onclick="toggleFolder('folder-campaigns',this)">
+        <span class="folder-toggle" id="toggle-campaigns">▶</span>
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        Campaigns
+        <span class="folder-count">24</span>
+      </div>
+      <div id="folder-campaigns" style="display:none">
+        <div class="folder-item folder-indent" onclick="selectFolder(this,'Q1 2026',8)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+          Q1 2026
+          <span class="folder-count">8</span>
+        </div>
+        <div class="folder-item folder-indent" onclick="selectFolder(this,'Q2 2026',16)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+          Q2 2026
+          <span class="folder-count">16</span>
+        </div>
+      </div>
+
+      <div class="folder-item" onclick="selectFolder(this,'Product Docs',42)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        Product Docs
+        <span class="folder-count">42</span>
+      </div>
+
+      <div class="folder-item" onclick="selectFolder(this,'Press Releases',11)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        Press Releases
+        <span class="folder-count">11</span>
+      </div>
+
+      <div class="folder-item" onclick="selectFolder(this,'Tutorials',63)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        Tutorials
+        <span class="folder-count">63</span>
+      </div>
+
+      <button class="folder-new-btn" onclick="newFolder()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+        New folder
+      </button>
+    </div>
+    <!-- /folder-tree -->
+
+    <!-- Entries pane -->
+    <div class="entries-pane">
+    <!-- Folder breadcrumb -->
+    <div style="padding:8px 16px;background:var(--color-bg);border-bottom:1px solid var(--color-border);font-size:12px;color:var(--color-text-muted);display:flex;align-items:center;gap:6px">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+      Blog Post &nbsp;/&nbsp; <strong id="folder-heading" style="color:var(--color-text)">All Entries (227)</strong>
+    </div>
+    <!-- Filters -->
+    <div class="filter-bar">
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="checkbox" class="row-check" id="sel-all" />
+        <label for="sel-all" class="text-muted text-sm" style="cursor:pointer">Select all</label>
+      </div>
+      <div class="search-input-wrap">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="form-input" placeholder="Search entries…" />
+      </div>
+      <select class="form-select" style="width:auto">
+        <option>All Statuses</option>
+        <option>Published</option>
+        <option>Draft</option>
+        <option>Pending Review</option>
+        <option>Approved</option>
+        <option>Archived</option>
+      </select>
+      <select class="form-select" style="width:auto">
+        <option>All Locales</option>
+        <option>en-US</option>
+        <option>fr-FR</option>
+        <option>de-DE</option>
+      </select>
+      <select class="form-select" style="width:auto">
+        <option>Any Author</option>
+        <option>MK</option>
+        <option>JD</option>
+        <option>SA</option>
+      </select>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Bar (shown when items selected) -->
+    <div class="alert alert-info" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+      <span><strong>3 entries selected.</strong> Choose a bulk action:</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm">Publish</button>
+        <button class="btn btn-secondary btn-sm">Unpublish</button>
+        <button class="btn btn-secondary btn-sm">Export</button>
+        <button class="btn btn-danger btn-sm">Delete</button>
+        <button class="btn btn-ghost btn-sm">✕ Clear</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px"><input type="checkbox" class="row-check" /></th>
+              <th>Title / Excerpt</th>
+              <th>Status</th>
+              <th>Locale</th>
+              <th>Author</th>
+              <th>Version</th>
+              <th>Updated</th>
+              <th style="width:80px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" class="row-check" checked /></td>
+              <td>
+                <div class="td-title"><a href="entry-editor.html" style="color:inherit;text-decoration:none">Getting Started with MicroCMS</a></div>
+                <div class="td-meta">The fastest way to set up your first headless CMS project…</div>
+                <div style="margin-top:4px;display:flex;gap:4px"><span class="tag">cms</span><span class="tag">tutorial</span><span class="tag">getting-started</span></div>
+              </td>
+              <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+              <td><span class="tag">🇺🇸 en-US</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar-sm">MK</div> MK</div></td>
+              <td><span class="text-muted">v4</span></td>
+              <td class="text-muted text-sm">2 min ago</td>
+              <td class="td-actions">
+                <a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit">✏️</a>
+                <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="More">⋮</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-check" checked /></td>
+              <td>
+                <div class="td-title"><a href="entry-editor.html" style="color:inherit;text-decoration:none">Product Launch Announcement</a></div>
+                <div class="td-meta">We're thrilled to announce the general availability of MicroCMS v1.0…</div>
+                <div style="margin-top:4px;display:flex;gap:4px"><span class="tag">launch</span><span class="tag">product</span></div>
+              </td>
+              <td><span class="badge badge-pending"><span class="badge-dot"></span>Pending Review</span></td>
+              <td><span class="tag">🇺🇸 en-US</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar-sm" style="background:linear-gradient(135deg,#10b981,#059669)">JD</div> JD</div></td>
+              <td><span class="text-muted">v2</span></td>
+              <td class="text-muted text-sm">1 hr ago</td>
+              <td class="td-actions">
+                <a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit">✏️</a>
+                <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="More">⋮</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-check" checked /></td>
+              <td>
+                <div class="td-title"><a href="entry-editor.html" style="color:inherit;text-decoration:none">Advanced Content Modelling Patterns</a> <span class="badge badge-ai" style="font-size:10px">AI Draft</span></div>
+                <div class="td-meta">Deep dive into designing reusable schemas for complex content hierarchies…</div>
+                <div style="margin-top:4px;display:flex;gap:4px"><span class="tag">advanced</span><span class="tag">schema</span></div>
+              </td>
+              <td><span class="badge badge-draft"><span class="badge-dot"></span>Draft</span></td>
+              <td><span class="tag">🇺🇸 en-US</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar-sm">MK</div> MK</div></td>
+              <td><span class="text-muted">v1</span></td>
+              <td class="text-muted text-sm">3 hr ago</td>
+              <td class="td-actions">
+                <a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit">✏️</a>
+                <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="More">⋮</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-check" /></td>
+              <td>
+                <div class="td-title"><a href="entry-editor.html" style="color:inherit;text-decoration:none">Webhooks Deep Dive</a></div>
+                <div class="td-meta">How to configure and test webhooks for real-time integrations…</div>
+                <div style="margin-top:4px;display:flex;gap:4px"><span class="tag">webhooks</span><span class="tag">integration</span></div>
+              </td>
+              <td><span class="badge badge-approved"><span class="badge-dot"></span>Approved</span></td>
+              <td><span class="tag">🇺🇸 en-US</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706)">SA</div> SA</div></td>
+              <td><span class="text-muted">v3</span></td>
+              <td class="text-muted text-sm">Yesterday</td>
+              <td class="td-actions">
+                <a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit">✏️</a>
+                <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="More">⋮</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-check" /></td>
+              <td>
+                <div class="td-title"><a href="entry-editor.html" style="color:inherit;text-decoration:none">Plugin Development Guide</a></div>
+                <div class="td-meta">Build your first MicroCMS plugin using the extension contracts…</div>
+                <div style="margin-top:4px;display:flex;gap:4px"><span class="tag">plugins</span><span class="tag">development</span></div>
+              </td>
+              <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+              <td><span class="tag">🇺🇸 en-US</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar-sm">MK</div> MK</div></td>
+              <td><span class="text-muted">v5</span></td>
+              <td class="text-muted text-sm">2 days ago</td>
+              <td class="td-actions">
+                <a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit">✏️</a>
+                <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="More">⋮</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-check" /></td>
+              <td>
+                <div class="td-title" style="color:var(--color-text-muted)"><a href="entry-editor.html" style="color:inherit;text-decoration:none">Multi-Tenancy Architecture</a></div>
+                <div class="td-meta">How MicroCMS isolates data across tenants at schema and row levels…</div>
+              </td>
+              <td><span class="badge badge-archived"><span class="badge-dot"></span>Archived</span></td>
+              <td><span class="tag">🇺🇸 en-US</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar-sm" style="background:linear-gradient(135deg,#10b981,#059669)">JD</div> JD</div></td>
+              <td><span class="text-muted">v2</span></td>
+              <td class="text-muted text-sm">1 wk ago</td>
+              <td class="td-actions">
+                <a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon" data-tooltip="Edit">✏️</a>
+                <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="More">⋮</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      <div style="padding:12px 16px;border-top:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between">
+        <div class="text-sm text-muted">Showing 6 of 227 entries</div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-secondary btn-sm" disabled>← Prev</button>
+          <button class="btn btn-primary btn-sm">1</button>
+          <button class="btn btn-secondary btn-sm">2</button>
+          <button class="btn btn-secondary btn-sm">3</button>
+          <span class="btn btn-ghost btn-sm">…</span>
+          <button class="btn btn-secondary btn-sm">23</button>
+          <button class="btn btn-secondary btn-sm">Next →</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="text-sm text-muted">Per page:</span>
+          <select class="form-select" style="width:70px;padding:4px 8px;font-size:12px"><option>10</option><option>25</option><option>50</option><option>100</option></select>
+        </div>
+      </div>
+    </div>
+    </div><!-- /entries-pane -->
+    </div><!-- /entries-layout -->
+    </div><!-- end #tab-entries -->
+
+    <!-- ══ TAB: SCHEMA ══ -->
+    <div style="padding:0 24px">
+    <div id="tab-schema" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:14px;font-weight:700">Schema Definition — Blog Post</div>
+          <div class="text-sm text-muted">Schema version 3 · last edited Apr 10, 2026 by MK</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary">Export JSON Schema</button>
+          <button class="btn btn-primary">+ Add Field</button>
+        </div>
+      </div>
+
+      <div class="alert alert-info" style="margin-bottom:16px">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Editing this schema will create <strong>schema v4</strong>. Existing entries remain on v3 until migrated. A migration wizard will guide you through any breaking changes.</span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:24px"></th>
+                <th>Field Name</th>
+                <th>API Key</th>
+                <th>Type</th>
+                <th style="text-align:center">Required</th>
+                <th style="text-align:center">Localized</th>
+                <th style="text-align:center">Indexed</th>
+                <th>Validators</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Title</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">title</code></td>
+                <td><span class="tag">Text</span></td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">MaxLength: 100</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">URL Slug</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">slug</code></td>
+                <td><span class="tag">Text</span></td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">Unique, Regex: ^[a-z0-9-]+$</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Excerpt</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">excerpt</code></td>
+                <td><span class="tag">Text</span></td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">MaxLength: 300</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Body</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">body</code></td>
+                <td><span class="tag" style="background:#e0e7ff;color:#4338ca;border-color:#c7d2fe">Rich Text</span></td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">—</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Cover Image</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">cover_image</code></td>
+                <td><span class="tag" style="background:#d1fae5;color:#065f46;border-color:#a7f3d0">Asset Ref</span></td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">—</td>
+                <td class="text-muted text-sm">MimeTypes: image/*</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Tags</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">tags</code></td>
+                <td><span class="tag" style="background:#fef3c7;color:#92400e;border-color:#fde68a">Taxonomy Ref</span></td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">Taxonomy: Tags</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Author</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">author</code></td>
+                <td><span class="tag" style="background:#ede9fe;color:#6d28d9;border-color:#ddd6fe">Entry Ref</span></td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">ContentType: Author</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td><div class="td-title">Publish Date</div></td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">publish_date</code></td>
+                <td><span class="tag">DateTime</span></td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">✅</td>
+                <td class="text-muted text-sm">—</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="color:#d1d5db;cursor:grab">⠿</td>
+                <td>
+                  <div class="td-title">SEO Metadata</div>
+                  <div class="td-meta">meta_title, meta_description, canonical_url</div>
+                </td>
+                <td><code style="font-size:11.5px;background:#f3f4f6;padding:2px 6px;border-radius:4px">seo</code></td>
+                <td><span class="tag" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0">Component</span></td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">✅</td>
+                <td style="text-align:center">—</td>
+                <td class="text-muted text-sm">Reusable component</td>
+                <td class="td-actions"><button class="btn btn-ghost btn-sm btn-icon">✏️</button><button class="btn btn-ghost btn-sm btn-icon">🗑️</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Field Types Legend -->
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="text-xs text-muted font-semibold" style="text-transform:uppercase;letter-spacing:0.05em">Field types:</span>
+        <span class="tag">Text</span>
+        <span class="tag" style="background:#e0e7ff;color:#4338ca;border-color:#c7d2fe">Rich Text</span>
+        <span class="tag" style="background:#d1fae5;color:#065f46;border-color:#a7f3d0">Asset Ref</span>
+        <span class="tag" style="background:#fef3c7;color:#92400e;border-color:#fde68a">Taxonomy Ref</span>
+        <span class="tag" style="background:#ede9fe;color:#6d28d9;border-color:#ddd6fe">Entry Ref</span>
+        <span class="tag" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0">Component</span>
+        <span class="tag">DateTime</span>
+        <span class="tag">Boolean</span>
+        <span class="tag">Integer</span>
+        <span class="tag">JSON</span>
+      </div>
+    </div><!-- /schema padding -->
+    </div><!-- /tab-schema -->
+
+    <!-- ══ TAB: LOCALIZATION ══ -->
+    <div id="tab-localization" style="display:none;padding:0 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:14px;font-weight:700">Localization — Blog Post</div>
+          <div class="text-sm text-muted">3 active locales · fallback chain: fr-CA → fr-FR → en-US</div>
+        </div>
+        <button class="btn btn-primary">+ Add Locale</button>
+      </div>
+
+      <!-- Fallback chain visual -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">Locale Fallback Chain</span><button class="btn btn-secondary btn-sm">Edit Chain</button></div>
+        <div class="card-body" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="padding:8px 16px;background:var(--color-brand);color:white;border-radius:8px;font-size:13px;font-weight:700">🇺🇸 en-US</div>
+            <div class="text-xs text-muted">Primary</div>
+          </div>
+          <div style="font-size:18px;color:var(--color-text-muted)">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="padding:8px 16px;background:#e0e7ff;color:#4338ca;border-radius:8px;font-size:13px;font-weight:700">🇫🇷 fr-FR</div>
+            <div class="text-xs text-muted">Step 1</div>
+          </div>
+          <div style="font-size:18px;color:var(--color-text-muted)">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="padding:8px 16px;background:#f3f4f6;color:#6b7280;border-radius:8px;font-size:13px;font-weight:700">🇩🇪 de-DE</div>
+            <div class="text-xs text-muted">Step 2</div>
+          </div>
+          <div style="font-size:18px;color:var(--color-text-muted)">→</div>
+          <div style="padding:8px 16px;background:#f9fafb;border:2px dashed #d1d5db;border-radius:8px;font-size:13px;color:var(--color-text-muted)">+ Add</div>
+        </div>
+      </div>
+
+      <!-- Per-locale coverage -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Translation Coverage</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Entry Title</th>
+                <th style="text-align:center">🇺🇸 en-US</th>
+                <th style="text-align:center">🇫🇷 fr-FR</th>
+                <th style="text-align:center">🇩🇪 de-DE</th>
+                <th>Missing</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-title">Getting Started with MicroCMS</td>
+                <td style="text-align:center"><span class="badge badge-published" style="font-size:10px">✓ Live</span></td>
+                <td style="text-align:center"><span class="badge badge-published" style="font-size:10px">✓ Live</span></td>
+                <td style="text-align:center"><span class="badge badge-draft" style="font-size:10px">Draft</span></td>
+                <td class="text-muted text-sm">—</td>
+                <td class="td-actions"><button class="btn btn-ai btn-sm">✨ Translate de-DE</button></td>
+              </tr>
+              <tr>
+                <td class="td-title">Product Launch Announcement</td>
+                <td style="text-align:center"><span class="badge badge-pending" style="font-size:10px">Review</span></td>
+                <td style="text-align:center"><span style="color:var(--color-text-muted);font-size:18px">—</span></td>
+                <td style="text-align:center"><span style="color:var(--color-text-muted);font-size:18px">—</span></td>
+                <td><span class="badge badge-danger" style="font-size:10px;background:#fee2e2;color:#991b1b">fr, de missing</span></td>
+                <td class="td-actions"><button class="btn btn-ai btn-sm">✨ Translate both</button></td>
+              </tr>
+              <tr>
+                <td class="td-title">Advanced Content Modelling</td>
+                <td style="text-align:center"><span class="badge badge-draft" style="font-size:10px">Draft</span></td>
+                <td style="text-align:center"><span style="color:var(--color-text-muted);font-size:18px">—</span></td>
+                <td style="text-align:center"><span style="color:var(--color-text-muted);font-size:18px">—</span></td>
+                <td class="text-muted text-sm">Waiting for en-US</td>
+                <td class="td-actions"></td>
+              </tr>
+              <tr>
+                <td class="td-title">Plugin Development Guide</td>
+                <td style="text-align:center"><span class="badge badge-published" style="font-size:10px">✓ Live</span></td>
+                <td style="text-align:center"><span class="badge badge-published" style="font-size:10px">✓ Live</span></td>
+                <td style="text-align:center"><span class="badge badge-published" style="font-size:10px">✓ Live</span></td>
+                <td class="text-muted text-sm">—</td>
+                <td class="td-actions"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid var(--color-border);display:flex;align-items:center;gap:10px">
+          <div style="font-size:12.5px;color:var(--color-text-muted)">Overall translation coverage:</div>
+          <div style="flex:1;max-width:240px">
+            <div class="progress-bar"><div class="progress-fill brand" style="width:61%"></div></div>
+          </div>
+          <div class="text-sm font-semibold">61%</div>
+          <button class="btn btn-ai btn-sm" style="margin-left:auto">✨ Batch translate missing</button>
+        </div>
+      </div>
+    </div><!-- /tab-localization -->
+
+    <!-- ══ TAB: API PREVIEW ══ -->
+    <div id="tab-api" style="display:none;padding:0 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:14px;font-weight:700">API Preview — Blog Post</div>
+          <div class="text-sm text-muted">Auto-generated REST &amp; GraphQL endpoints for this content type.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary">Open in Postman ↗</button>
+          <button class="btn btn-secondary">Download OpenAPI spec</button>
+        </div>
+      </div>
+
+      <!-- REST endpoints -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">REST Endpoints</span><span class="tag">v1</span></div>
+        <div class="card-body" style="padding:0">
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:0;font-size:13px">
+            <div style="padding:10px 16px;background:#f0fdf4;border-bottom:1px solid var(--color-border);font-family:monospace;font-weight:800;font-size:11px;color:#059669;display:flex;align-items:center">GET</div>
+            <div style="padding:10px 16px;border-bottom:1px solid var(--color-border);font-family:monospace;font-size:12.5px;display:flex;align-items:center;justify-content:space-between">
+              /api/v1/blog-post
+              <button class="btn btn-ghost btn-sm" style="font-family:inherit">Try →</button>
+            </div>
+            <div style="padding:10px 16px;background:#f0fdf4;border-bottom:1px solid var(--color-border);font-family:monospace;font-weight:800;font-size:11px;color:#059669;display:flex;align-items:center">GET</div>
+            <div style="padding:10px 16px;border-bottom:1px solid var(--color-border);font-family:monospace;font-size:12.5px;display:flex;align-items:center;justify-content:space-between">
+              /api/v1/blog-post/{id}
+              <button class="btn btn-ghost btn-sm" style="font-family:inherit">Try →</button>
+            </div>
+            <div style="padding:10px 16px;background:#eff6ff;border-bottom:1px solid var(--color-border);font-family:monospace;font-weight:800;font-size:11px;color:#2563eb;display:flex;align-items:center">POST</div>
+            <div style="padding:10px 16px;border-bottom:1px solid var(--color-border);font-family:monospace;font-size:12.5px;display:flex;align-items:center;justify-content:space-between">
+              /api/v1/blog-post
+              <button class="btn btn-ghost btn-sm" style="font-family:inherit">Try →</button>
+            </div>
+            <div style="padding:10px 16px;background:#fef3c7;border-bottom:1px solid var(--color-border);font-family:monospace;font-weight:800;font-size:11px;color:#d97706;display:flex;align-items:center">PUT</div>
+            <div style="padding:10px 16px;border-bottom:1px solid var(--color-border);font-family:monospace;font-size:12.5px;display:flex;align-items:center;justify-content:space-between">
+              /api/v1/blog-post/{id}
+              <button class="btn btn-ghost btn-sm" style="font-family:inherit">Try →</button>
+            </div>
+            <div style="padding:10px 16px;background:#fee2e2;border-bottom:1px solid var(--color-border);font-family:monospace;font-weight:800;font-size:11px;color:#dc2626;display:flex;align-items:center">DELETE</div>
+            <div style="padding:10px 16px;border-bottom:1px solid var(--color-border);font-family:monospace;font-size:12.5px;display:flex;align-items:center;justify-content:space-between">
+              /api/v1/blog-post/{id}
+              <button class="btn btn-ghost btn-sm" style="font-family:inherit">Try →</button>
+            </div>
+            <div style="padding:10px 16px;background:#f0fdf4;font-family:monospace;font-weight:800;font-size:11px;color:#059669;display:flex;align-items:center">GET</div>
+            <div style="padding:10px 16px;font-family:monospace;font-size:12.5px;display:flex;align-items:center;justify-content:space-between">
+              /api/v1/blog-post/{id}/versions
+              <button class="btn btn-ghost btn-sm" style="font-family:inherit">Try →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sample JSON Response -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <span class="card-title">Sample Response — GET /api/v1/blog-post/{id}</span>
+          <button class="btn btn-secondary btn-sm">Copy</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <pre style="background:#1e1b4b;color:#c7d2fe;padding:18px;margin:0;font-size:12px;line-height:1.7;overflow-x:auto;border-radius:0 0 8px 8px"><code>{
+  <span style="color:#818cf8">"id"</span>: <span style="color:#fde68a">"01HV3KQDNZXABCD1234567890A"</span>,
+  <span style="color:#818cf8">"contentType"</span>: <span style="color:#fde68a">"blog-post"</span>,
+  <span style="color:#818cf8">"locale"</span>: <span style="color:#fde68a">"en-US"</span>,
+  <span style="color:#818cf8">"status"</span>: <span style="color:#fde68a">"Published"</span>,
+  <span style="color:#818cf8">"version"</span>: <span style="color:#86efac">4</span>,
+  <span style="color:#818cf8">"fields"</span>: {
+    <span style="color:#818cf8">"title"</span>:   <span style="color:#fde68a">"Getting Started with MicroCMS"</span>,
+    <span style="color:#818cf8">"slug"</span>:    <span style="color:#fde68a">"getting-started-with-microcms"</span>,
+    <span style="color:#818cf8">"excerpt"</span>: <span style="color:#fde68a">"The fastest way to set up your first headless CMS…"</span>,
+    <span style="color:#818cf8">"body"</span>:    { <span style="color:#818cf8">"_type"</span>: <span style="color:#fde68a">"portableText"</span>, <span style="color:#818cf8">"blocks"</span>: [<span style="color:#a5f3fc">…</span>] },
+    <span style="color:#818cf8">"tags"</span>:    [<span style="color:#fde68a">"cms"</span>, <span style="color:#fde68a">"tutorial"</span>, <span style="color:#fde68a">"getting-started"</span>],
+    <span style="color:#818cf8">"author"</span>:  { <span style="color:#818cf8">"id"</span>: <span style="color:#fde68a">"01HV…"</span>, <span style="color:#818cf8">"name"</span>: <span style="color:#fde68a">"MK"</span> },
+    <span style="color:#818cf8">"publishDate"</span>: <span style="color:#fde68a">"2026-04-17T09:00:00Z"</span>,
+    <span style="color:#818cf8">"seo"</span>: {
+      <span style="color:#818cf8">"metaTitle"</span>: <span style="color:#fde68a">"Getting Started with MicroCMS — The Ultimate Guide"</span>,
+      <span style="color:#818cf8">"metaDescription"</span>: <span style="color:#fde68a">"Learn how to set up MicroCMS in under 15 minutes…"</span>
+    }
+  },
+  <span style="color:#818cf8">"createdAt"</span>:  <span style="color:#fde68a">"2026-04-15T09:00:00Z"</span>,
+  <span style="color:#818cf8">"updatedAt"</span>:  <span style="color:#fde68a">"2026-04-20T08:32:00Z"</span>,
+  <span style="color:#818cf8">"publishedAt"</span>: <span style="color:#fde68a">"2026-04-17T09:00:00Z"</span>
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- GraphQL -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">GraphQL Query</span><button class="btn btn-secondary btn-sm">Open in Explorer</button></div>
+        <div class="card-body" style="padding:0">
+          <pre style="background:#1e1b4b;color:#c7d2fe;padding:18px;margin:0;font-size:12px;line-height:1.7;overflow-x:auto;border-radius:0 0 8px 8px"><code><span style="color:#818cf8">query</span> GetBlogPost {
+  blogPost(id: <span style="color:#fde68a">"01HV3KQDNZXABCD1234567890A"</span>, locale: <span style="color:#fde68a">"en-US"</span>) {
+    id  title  slug  status  version
+    excerpt
+    body { <span style="color:#a5f3fc">_type  blocks</span> }
+    tags
+    author { id  name }
+    publishDate
+    seo { metaTitle  metaDescription }
+  }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function switchTab(tab, el) {
+    var displays = {entries:'block', schema:'block', localization:'block', api:'block'};
+    ['entries','schema','localization','api'].forEach(t => {
+      var panel = document.getElementById('tab-' + t);
+      if (panel) panel.style.display = 'none';
+    });
+    document.getElementById('tab-' + tab).style.display = 'block';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* ── Folder tree ── */
+  function selectFolder(el, name, count) {
+    document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    // Update table heading
+    var heading = document.getElementById('folder-heading');
+    if (heading) heading.textContent = name + ' (' + count + ')';
+  }
+
+  function toggleFolder(id, el) {
+    var panel = document.getElementById(id);
+    var toggleKey = 'toggle-' + id.replace('folder-','');
+    var toggle = document.getElementById(toggleKey);
+    if (!panel) return;
+    var open = panel.style.display !== 'none';
+    panel.style.display = open ? 'none' : 'block';
+    if (toggle) toggle.classList.toggle('open', !open);
+  }
+
+  function newFolder() {
+    var name = prompt('New folder name:');
+    if (name && name.trim()) {
+      alert('Folder "' + name.trim() + '" created.');
+    }
+  }
+</script>
+
+</body>
+</html>

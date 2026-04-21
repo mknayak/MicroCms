@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MicroCMS — AI Copilot</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    .copilot-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 280px;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+    .copilot-history {
+      border-right: 1px solid var(--color-border);
+      background: white;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .copilot-chat {
+      display: flex;
+      flex-direction: column;
+      background: var(--color-bg);
+      overflow: hidden;
+    }
+    .copilot-context {
+      border-left: 1px solid var(--color-border);
+      background: white;
+      overflow-y: auto;
+    }
+    .history-item {
+      padding: 10px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--color-border);
+      transition: background 0.1s;
+    }
+    .history-item:hover { background: var(--color-bg); }
+    .history-item.active { background: var(--color-brand-light); border-left: 3px solid var(--color-brand); }
+    .history-title { font-size: 13px; font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-meta  { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .chat-header {
+      padding: 14px 20px;
+      background: white;
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chat-mode-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      background: #f5f3ff; color: var(--color-ai);
+      border: 1px solid #ddd6fe; cursor: pointer;
+    }
+    .source-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      font-size: 12.5px;
+    }
+    .source-card:hover { border-color: var(--color-brand); }
+    .source-title { font-weight: 600; margin-bottom: 2px; }
+    .source-excerpt { color: var(--color-text-muted); line-height: 1.4; }
+    .source-meta { font-size: 11px; color: var(--color-text-muted); margin-top: 5px; }
+    .context-section { padding: 14px 16px; border-bottom: 1px solid var(--color-border); }
+    .context-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 8px; }
+    .tool-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 8px; border-radius: 5px;
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      font-size: 11px; font-weight: 600; cursor: pointer; margin: 2px;
+      transition: border-color 0.15s;
+    }
+    .tool-chip:hover { border-color: var(--color-brand); color: var(--color-brand); }
+    .tool-chip.active { background: var(--color-brand-light); border-color: var(--color-brand); color: var(--color-brand-dark); }
+    .feedback-row { display:flex; gap:6px; margin-top:8px; align-items:center; }
+    .feedback-btn { background:none; border:1px solid var(--color-border); border-radius:5px; padding:3px 8px; cursor:pointer; font-size:12px; color:var(--color-text-muted); transition:all 0.1s; }
+    .feedback-btn:hover { border-color:var(--color-brand); color:var(--color-brand); }
+    .citation-inline { display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:700; padding:1px 5px; background:#e0e7ff; color:#4338ca; border-radius:4px; cursor:pointer; text-decoration:none; vertical-align:middle; }
+    .citation-inline:hover { background:#c7d2fe; }
+    .typing-indicator { display:flex; gap:4px; padding:10px 14px; }
+    .typing-dot { width:8px; height:8px; border-radius:50%; background:#d1d5db; animation:typing 1.2s infinite; }
+    .typing-dot:nth-child(2) { animation-delay:0.2s; }
+    .typing-dot:nth-child(3) { animation-delay:0.4s; }
+    @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap" style="overflow:hidden">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <span class="current">AI Copilot</span>
+    </div>
+    <div class="topbar-actions">
+      <span style="font-size:12px;color:var(--color-text-muted)">Provider: <strong>Claude Sonnet</strong></span>
+      <span style="font-size:12px;padding:3px 8px;background:#f5f3ff;color:#7c3aed;border-radius:20px;font-weight:600">$1.20 / $5.00 today</span>
+      <div class="user-avatar">MK</div>
+    </div>
+  </header>
+
+  <div class="copilot-layout">
+
+    <!-- ── Chat History Panel ── -->
+    <div class="copilot-history">
+      <div style="padding:12px">
+        <button class="btn btn-primary w-full" style="justify-content:center" onclick="clearChat()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          New Conversation
+        </button>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-muted);padding:8px 16px 4px">Today</div>
+
+      <div class="history-item active">
+        <div class="history-title">Draft blog post about API limits</div>
+        <div class="history-meta">12 min ago · 6 messages</div>
+      </div>
+      <div class="history-item">
+        <div class="history-title">Rewrite intro for case study</div>
+        <div class="history-meta">2 hr ago · 4 messages</div>
+      </div>
+      <div class="history-item">
+        <div class="history-title">SEO for "Getting Started" post</div>
+        <div class="history-meta">5 hr ago · 9 messages</div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-muted);padding:8px 16px 4px">Yesterday</div>
+      <div class="history-item">
+        <div class="history-title">Translate FAQ to French</div>
+        <div class="history-meta">Yesterday · 3 messages</div>
+      </div>
+      <div class="history-item">
+        <div class="history-title">Summarise Q3 roadmap entry</div>
+        <div class="history-meta">Yesterday · 2 messages</div>
+      </div>
+      <div class="history-item">
+        <div class="history-title">Plugin development outline</div>
+        <div class="history-meta">Yesterday · 8 messages</div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-muted);padding:8px 16px 4px">This Week</div>
+      <div class="history-item">
+        <div class="history-title">Webhook integration guide</div>
+        <div class="history-meta">Apr 18 · 11 messages</div>
+      </div>
+      <div class="history-item">
+        <div class="history-title">Tag suggestions for media batch</div>
+        <div class="history-meta">Apr 17 · 5 messages</div>
+      </div>
+    </div>
+
+    <!-- ── Chat Area ── -->
+    <div class="copilot-chat">
+      <div class="chat-header">
+        <div>
+          <div style="font-size:14px;font-weight:700">Draft blog post about API limits</div>
+          <div style="font-size:12px;color:var(--color-text-muted)">Grounded on tenant content · 6 messages</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="chat-mode-pill">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            Grounded-only mode ON
+          </div>
+          <button class="btn btn-secondary btn-sm">Export</button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-messages" style="flex:1;overflow-y:auto">
+
+        <!-- User message -->
+        <div class="chat-msg user">
+          <div class="avatar-sm" style="width:28px;height:28px;flex-shrink:0">MK</div>
+          <div class="chat-bubble">
+            Write a blog post introduction about API rate limits in MicroCMS. Keep it friendly and accessible for developers who are new to the platform.
+          </div>
+        </div>
+
+        <!-- Assistant message -->
+        <div class="chat-msg assistant">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6366f1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px">μ</div>
+          <div style="max-width:100%">
+            <div class="chat-bubble">
+              <p style="margin-bottom:8px">Here's a friendly introduction for your API rate limits blog post:</p>
+              <div style="background:#f8fafc;border-left:3px solid #6366f1;padding:12px 14px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;line-height:1.6">
+                <p style="margin-bottom:8px"><strong>Working with MicroCMS APIs: A Developer's Guide to Rate Limits</strong></p>
+                <p>If you're building with MicroCMS, you're probably making a lot of API calls — and that's exactly what we designed it for. But like any well-run platform, we apply rate limits to keep things fast and fair for everyone. Don't worry though: for most apps, you'll never hit them. This guide explains how they work, how to check your current usage, and what to do if you ever need more headroom.</p>
+              </div>
+              <p style="margin-bottom:4px;font-size:12px;color:var(--color-text-muted)">Sources used:</p>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <a class="citation-inline" href="#">[1] REST API Design — §15.3</a>
+                <a class="citation-inline" href="#">[2] Rate Limiting docs entry</a>
+              </div>
+            </div>
+            <div class="feedback-row">
+              <button class="feedback-btn">👍 Good</button>
+              <button class="feedback-btn">👎 Needs work</button>
+              <button class="feedback-btn">📋 Copy</button>
+              <button class="feedback-btn">✏️ Insert into editor</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- User follow-up -->
+        <div class="chat-msg user">
+          <div class="avatar-sm" style="width:28px;height:28px;flex-shrink:0">MK</div>
+          <div class="chat-bubble">
+            Can you also add a quick code example showing how to handle a 429 response with retry logic in JavaScript?
+          </div>
+        </div>
+
+        <!-- Assistant with code -->
+        <div class="chat-msg assistant">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6366f1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px">μ</div>
+          <div style="max-width:100%">
+            <div class="chat-bubble">
+              <p style="margin-bottom:8px">Absolutely! Here's a simple retry helper in JavaScript with exponential back-off:</p>
+              <div style="background:#1e1b4b;color:#c7d2fe;padding:14px 16px;border-radius:8px;font-family:monospace;font-size:12px;line-height:1.7;overflow-x:auto;margin:8px 0">
+<span style="color:#818cf8">async function</span> <span style="color:#a5f3fc">fetchWithRetry</span>(url, options, <span style="color:#fcd34d">maxRetries</span> = <span style="color:#86efac">3</span>) {<br>
+&nbsp;&nbsp;<span style="color:#818cf8">for</span> (<span style="color:#818cf8">let</span> attempt = <span style="color:#86efac">0</span>; attempt &lt;= maxRetries; attempt++) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#818cf8">const</span> res = <span style="color:#818cf8">await</span> fetch(url, options);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#818cf8">if</span> (res.status !== <span style="color:#86efac">429</span>) <span style="color:#818cf8">return</span> res;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#818cf8">const</span> retryAfter = res.headers.get(<span style="color:#fde68a">'Retry-After'</span>) ?? <span style="color:#86efac">2</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#818cf8">await</span> <span style="color:#a5f3fc">sleep</span>(retryAfter * <span style="color:#86efac">1000</span> * <span style="color:#86efac">2</span> ** attempt);<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span style="color:#818cf8">throw new</span> <span style="color:#f87171">Error</span>(<span style="color:#fde68a">'Rate limit exceeded after retries'</span>);<br>
+}
+              </div>
+              <p style="font-size:12.5px;color:var(--color-text-muted)">The <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px">Retry-After</code> header from MicroCMS tells you exactly how many seconds to wait. <a class="citation-inline" href="#">[1] Rate Limits §15.3</a></p>
+            </div>
+            <div class="feedback-row">
+              <button class="feedback-btn">👍 Good</button>
+              <button class="feedback-btn">👎 Needs work</button>
+              <button class="feedback-btn">📋 Copy code</button>
+              <button class="feedback-btn">✏️ Insert into editor</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- User: tool invocation -->
+        <div class="chat-msg user">
+          <div class="avatar-sm" style="width:28px;height:28px;flex-shrink:0">MK</div>
+          <div class="chat-bubble">
+            Great! Now create a new draft blog entry with this content under the Blog Post content type.
+          </div>
+        </div>
+
+        <!-- Assistant: tool confirmation -->
+        <div class="chat-msg assistant">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6366f1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px">μ</div>
+          <div style="max-width:100%">
+            <div class="chat-bubble">
+              <p style="margin-bottom:10px">I can do that! I'll call the <strong>create_entry</strong> tool to create a new Draft in Blog Post. Here's a preview of what will be created:</p>
+              <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:12.5px">
+                <div style="display:grid;grid-template-columns:90px 1fr;gap:4px">
+                  <span class="text-muted">Content Type</span><span class="font-semibold">Blog Post</span>
+                  <span class="text-muted">Status</span><span><span class="badge badge-draft" style="font-size:10px">Draft</span></span>
+                  <span class="text-muted">Title</span><span class="font-semibold">Working with MicroCMS APIs: Rate Limits</span>
+                  <span class="text-muted">Locale</span><span>en-US</span>
+                </div>
+              </div>
+              <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;font-size:12.5px;color:#92400e;display:flex;gap:8px;margin-bottom:10px">
+                <span>⚠️</span>
+                <span>This action will <strong>create a new entry</strong> in your CMS. Please confirm before I proceed.</span>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm">✓ Confirm — Create Entry</button>
+                <button class="btn btn-secondary btn-sm">✕ Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <div style="display:flex;flex-direction:column;flex:1;gap:6px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="tool-chip active">📄 Create Entry</span>
+            <span class="tool-chip active">📅 Schedule Publish</span>
+            <span class="tool-chip active">🏷️ Tag Media</span>
+            <span class="tool-chip">🔍 Search Content</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <textarea class="chat-textarea" rows="1" placeholder="Ask the copilot anything about your content, or ask it to draft, revise, translate…">
+            </textarea>
+            <button class="btn btn-primary btn-icon" style="height:38px;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            </button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="text-xs text-muted">Grounded on <strong>1,247 published entries</strong> · Claude Sonnet (Balanced)</span>
+            <span class="text-xs text-muted">0 / 4000 chars</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Context / Sources Panel ── -->
+    <div class="copilot-context">
+      <div class="context-section">
+        <div class="context-label">Retrieved Sources (RAG)</div>
+        <div class="source-card">
+          <div class="source-title">[1] REST API Design — Rate Limiting</div>
+          <div class="source-excerpt">Per-tenant and per-API-client buckets using token-bucket limiter. Authenticated user: 600 rpm. API client: 6000 rpm…</div>
+          <div class="source-meta">📝 Blog Post · Published · Similarity 0.94</div>
+        </div>
+        <div class="source-card">
+          <div class="source-title">[2] Rate Limits — FAQ</div>
+          <div class="source-excerpt">Q: What happens when I hit the rate limit? A: MicroCMS returns HTTP 429 with a Retry-After header…</div>
+          <div class="source-meta">📖 Documentation · Published · Similarity 0.91</div>
+        </div>
+        <div class="source-card">
+          <div class="source-title">[3] API Client Management</div>
+          <div class="source-excerpt">Each API client has its own rate bucket. You can configure per-client limits from the Settings → API Clients panel…</div>
+          <div class="source-meta">📖 Documentation · Published · Similarity 0.87</div>
+        </div>
+      </div>
+
+      <div class="context-section">
+        <div class="context-label">Active Tools</div>
+        <div style="display:flex;flex-wrap:wrap">
+          <span class="tool-chip active">📄 create_entry</span>
+          <span class="tool-chip active">📅 schedule_publish</span>
+          <span class="tool-chip active">🏷️ tag_media</span>
+          <span class="tool-chip">🔍 search_entries</span>
+        </div>
+        <div class="text-xs text-muted" style="margin-top:8px">Tools require explicit author confirmation before execution.</div>
+      </div>
+
+      <div class="context-section">
+        <div class="context-label">Session Stats</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px">
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Messages</span><span>6</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Tokens used</span><span>2,840</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Cost</span><span>~$0.04</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Sources retrieved</span><span>3</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Model</span><span>Claude Sonnet</span></div>
+        </div>
+      </div>
+
+      <div class="context-section">
+        <div class="context-label">Suggested Prompts</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;font-weight:400;font-size:12px">Write meta description for this post</button>
+          <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;font-weight:400;font-size:12px">Translate this draft to French</button>
+          <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;font-weight:400;font-size:12px">Suggest related entries for linking</button>
+          <button class="btn btn-secondary btn-sm" style="text-align:left;justify-content:flex-start;font-weight:400;font-size:12px">Check grammar and readability</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

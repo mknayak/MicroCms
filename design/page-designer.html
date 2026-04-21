@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Designer — MicroCMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ══ Designer chrome overrides ══ */
+    body { overflow: hidden; }
+
+    /* Full-viewport design shell */
+    .designer-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: calc(100vw - var(--sidebar-width));
+      margin-left: var(--sidebar-width);
+      overflow: hidden;
+    }
+
+    /* ── Designer Topbar (replaces normal topbar) ── */
+    .designer-topbar {
+      height: var(--topbar-height);
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0;
+      flex-shrink: 0;
+      z-index: 50;
+      overflow: hidden;
+    }
+    /* Topbar three-group layout */
+    .tb-left  { display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 0 8px; }
+    .tb-center{ flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; padding: 0 8px; border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); }
+    .tb-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 0 10px; }
+    .designer-page-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .designer-page-icon {
+      width: 28px; height: 28px;
+      background: var(--color-brand-light);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-brand);
+    }
+    .designer-page-icon svg { width: 14px; height: 14px; }
+    .designer-page-name { font-size: 14px; font-weight: 700; }
+    .designer-page-url { font-size: 12px; color: var(--color-text-muted); }
+    .designer-topbar-sep { width: 1px; height: 24px; background: var(--color-border); margin: 0 4px; }
+
+    .viewport-toggle {
+      display: flex;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .viewport-btn {
+      padding: 5px 10px;
+      border: none; background: var(--color-surface);
+      cursor: pointer; color: var(--color-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .viewport-btn svg { width: 14px; height: 14px; }
+    .viewport-btn:hover { background: var(--color-bg); }
+    .viewport-btn.active { background: var(--color-brand); color: white; }
+    .viewport-btn + .viewport-btn { border-left: 1px solid var(--color-border); }
+
+    .zoom-ctrl {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--color-text-muted);
+    }
+    .zoom-ctrl button {
+      width: 22px; height: 22px; border: 1px solid var(--color-border);
+      background: var(--color-surface); border-radius: 4px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; line-height: 1; color: var(--color-text-muted);
+    }
+    .zoom-ctrl button:hover { background: var(--color-bg); }
+
+    .preview-mode-btn {
+      background: none; border: 1px solid var(--color-border);
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      color: var(--color-text-muted); transition: all 0.15s;
+    }
+    .preview-mode-btn:hover { border-color: var(--color-brand); color: var(--color-brand); }
+    .preview-mode-btn svg { width: 13px; height: 13px; }
+
+    /* ── Three-panel layout ── */
+    .designer-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;   /* critical: allows flex child to shrink in a column */
+      overflow: hidden;
+    }
+
+    /* Left: Component Palette */
+    .palette-panel {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--color-surface);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .palette-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--color-border);
+      flex-shrink: 0;
+    }
+    .palette-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text-muted); margin-bottom: 8px; }
+    .palette-search {
+      position: relative;
+    }
+    .palette-search svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; color: var(--color-text-muted); }
+    .palette-search input {
+      width: 100%; padding: 6px 8px 6px 26px;
+      border: 1px solid var(--color-border); border-radius: 5px;
+      font-size: 12px; outline: none;
+    }
+    .palette-search input:focus { border-color: var(--color-brand); }
+    .palette-body { flex: 1; overflow-y: auto; padding: 8px; }
+    .palette-section { margin-bottom: 12px; }
+    .palette-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--color-text-muted);
+      padding: 4px 6px; margin-bottom: 4px;
+    }
+    .palette-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: 5px;
+      cursor: grab; border: 1px solid transparent;
+      transition: all 0.12s; margin-bottom: 2px;
+      user-select: none;
+    }
+    .palette-item:hover {
+      background: var(--color-brand-light);
+      border-color: rgba(99,102,241,0.2);
+    }
+    .palette-item:active { cursor: grabbing; opacity: 0.75; }
+    .palette-item-icon {
+      width: 28px; height: 28px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+    .palette-item-name { font-size: 12px; font-weight: 600; color: var(--color-text); }
+    .palette-item-fields { font-size: 10px; color: var(--color-text-muted); }
+    .palette-drag-hint {
+      display: flex; align-items: center; gap: 4px;
+      margin-left: auto; color: #d1d5db;
+    }
+    .palette-drag-hint svg { width: 12px; height: 12px; }
+
+    /* Centre: Canvas */
+    .canvas-wrap {
+      flex: 1;
+      min-width: 0;     /* ← critical: allows flex item to shrink in a row */
+      background: white;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .canvas-ruler {
+      width: 100%;
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px;
+      background: #f3f4f6;
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .canvas-ruler-label {
+      font-size: 11px; color: #9ca3af;
+    }
+    .canvas-frame {
+      width: 100%;
+      background: white;
+      display: block;
+    }
+    /* Viewport size constraints: shrink canvas inside gray area for tablet/mobile */
+    .canvas-wrap.viewport-tablet,
+    .canvas-wrap.viewport-mobile {
+      background: #e8e9f0;
+      padding: 20px;
+    }
+    .canvas-frame.tablet { max-width: 768px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); }
+    .canvas-frame.mobile { max-width: 375px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); }
+
+    /* ── Zone ── */
+    .page-zone {
+      position: relative;
+      border: 2px dashed transparent;
+      transition: border-color 0.15s, background 0.15s;
+      min-height: 60px;
+    }
+    .page-zone:hover {
+      border-color: rgba(99,102,241,0.3);
+    }
+    .page-zone.empty {
+      background: repeating-linear-gradient(
+        45deg,
+        #f9f9fb,
+        #f9f9fb 10px,
+        #f5f5f9 10px,
+        #f5f5f9 20px
+      );
+      display: flex; align-items: center; justify-content: center;
+      min-height: 80px;
+    }
+    .page-zone.drag-over {
+      border-color: var(--color-brand);
+      background: rgba(99,102,241,0.04);
+    }
+    .zone-label {
+      position: absolute; top: 4px; left: 8px;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: rgba(99,102,241,0.5);
+      pointer-events: none;
+    }
+    .zone-add-hint {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #9ca3af;
+      cursor: pointer;
+      padding: 12px 16px;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .zone-add-hint:hover { border-color: var(--color-brand); color: var(--color-brand); }
+    .zone-add-hint svg { width: 14px; height: 14px; }
+
+    /* ── Placed Component ── */
+    .placed-comp {
+      position: relative;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .placed-comp:hover { border-color: rgba(99,102,241,0.4); }
+    .placed-comp.selected { border-color: var(--color-brand); box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+    .placed-comp-toolbar {
+      display: none;
+      position: absolute; top: 0; right: 0;
+      background: var(--color-brand);
+      border-radius: 0 0 0 4px;
+      z-index: 10;
+    }
+    .placed-comp.selected .placed-comp-toolbar,
+    .placed-comp:hover .placed-comp-toolbar { display: flex; }
+    .placed-comp-toolbar button {
+      background: none; border: none; color: white;
+      padding: 4px 6px; cursor: pointer; font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s;
+    }
+    .placed-comp-toolbar button:hover { background: rgba(0,0,0,0.2); }
+    .placed-comp-toolbar button svg { width: 12px; height: 12px; }
+    .placed-comp-toolbar .toolbar-name {
+      padding: 4px 8px; font-size: 10px; font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      border-right: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* ── Rendered component previews inside canvas ── */
+    /* NavBar preview */
+    .render-navbar {
+      background: #1e1b4b;
+      padding: 14px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .render-navbar-logo { display: flex; align-items: center; gap: 8px; color: white; font-weight: 800; font-size: 15px; }
+    .render-navbar-logo-mark { width: 26px; height: 26px; background: var(--color-brand); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: white; }
+    .render-navbar-links { display: flex; gap: 20px; }
+    .render-navbar-link { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500; cursor: pointer; }
+    .render-navbar-link:hover { color: white; }
+    .render-navbar-cta { background: var(--color-brand); color: white; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* HeroBanner preview */
+    .render-hero {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+      padding: 80px 48px;
+      display: flex; flex-direction: column;
+      align-items: flex-start; gap: 16px;
+    }
+    .render-hero h1 { font-size: 32px; font-weight: 800; color: white; line-height: 1.2; max-width: 500px; }
+    .render-hero p { font-size: 16px; color: rgba(255,255,255,0.75); max-width: 420px; line-height: 1.6; }
+    .render-hero-ctas { display: flex; gap: 12px; }
+    .render-hero-btn-primary { background: white; color: var(--color-brand-dark); padding: 12px 24px; border-radius: 7px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .render-hero-btn-secondary { background: rgba(255,255,255,0.1); color: white; padding: 12px 24px; border-radius: 7px; font-size: 14px; font-weight: 600; border: 1px solid rgba(255,255,255,0.25); cursor: pointer; }
+
+    /* CardGrid preview */
+    .render-cardgrid {
+      padding: 56px 48px;
+      background: white;
+    }
+    .render-cardgrid-heading { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+    .render-cardgrid-sub { font-size: 14px; color: var(--color-text-muted); text-align: center; margin-bottom: 36px; }
+    .render-cardgrid-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .render-card { padding: 24px; border: 1px solid var(--color-border); border-radius: 10px; }
+    .render-card-icon { width: 40px; height: 40px; border-radius: 8px; background: var(--color-brand-light); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    .render-card-icon svg { width: 20px; height: 20px; color: var(--color-brand); }
+    .render-card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .render-card-desc { font-size: 13px; color: var(--color-text-muted); line-height: 1.55; }
+
+    /* CTA Banner preview */
+    .render-cta {
+      background: linear-gradient(90deg, var(--color-brand) 0%, #8b5cf6 100%);
+      padding: 48px;
+      text-align: center;
+    }
+    .render-cta h2 { font-size: 24px; font-weight: 800; color: white; margin-bottom: 8px; }
+    .render-cta p { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 24px; }
+    .render-cta-btns { display: flex; gap: 12px; justify-content: center; }
+    .render-cta-btn-white { background: white; color: var(--color-brand); padding: 10px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .render-cta-btn-outline { background: transparent; color: white; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.5); cursor: pointer; }
+
+    /* Footer preview */
+    .render-footer {
+      background: #111827;
+      padding: 40px 48px 20px;
+      color: #9ca3af;
+    }
+    .render-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+    .render-footer-brand { font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+    .render-footer-brand-mark { width: 22px; height: 22px; background: var(--color-brand); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: white; }
+    .render-footer-desc { font-size: 12px; line-height: 1.6; color: #6b7280; }
+    .render-footer-col-title { font-size: 12px; font-weight: 700; color: #d1d5db; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .render-footer-link { font-size: 12px; color: #6b7280; display: block; margin-bottom: 6px; cursor: pointer; }
+    .render-footer-link:hover { color: #d1d5db; }
+    .render-footer-bottom { border-top: 1px solid #1f2937; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; }
+
+    /* Right: Properties Panel */
+    .props-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--color-surface);
+      border-left: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .props-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+    }
+    .props-comp-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--color-brand-light);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .props-comp-icon svg { width: 13px; height: 13px; color: var(--color-brand); }
+    .props-comp-name { font-size: 13px; font-weight: 700; }
+    .props-comp-type { font-size: 11px; color: var(--color-text-muted); }
+    .props-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+    .props-section { margin-bottom: 16px; }
+    .props-section-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--color-text-muted);
+      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .props-field { margin-bottom: 10px; }
+    .props-field-label { font-size: 11.5px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+    .props-field-label .req { color: var(--color-danger); font-size: 10px; }
+    .props-field-label .loc-badge { font-size: 9px; background: #eff6ff; color: #3b82f6; padding: 1px 4px; border-radius: 3px; }
+    .props-input { width: 100%; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12.5px; outline: none; font-family: inherit; }
+    .props-input:focus { border-color: var(--color-brand); }
+    .props-textarea { width: 100%; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12.5px; min-height: 60px; resize: vertical; outline: none; font-family: inherit; }
+    .props-textarea:focus { border-color: var(--color-brand); }
+    .props-select { width: 100%; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12.5px; outline: none; background: white; }
+    .props-asset-picker {
+      border: 1px solid var(--color-border); border-radius: 5px;
+      overflow: hidden;
+    }
+    .props-asset-preview {
+      height: 80px;
+      background: linear-gradient(135deg, #1e1b4b, #4f46e5);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.5); font-size: 11px;
+    }
+    .props-asset-actions { display: flex; border-top: 1px solid var(--color-border); }
+    .props-asset-actions button { flex: 1; padding: 5px; font-size: 11px; background: none; border: none; cursor: pointer; color: var(--color-text-muted); }
+    .props-asset-actions button:hover { background: var(--color-bg); }
+    .props-asset-actions button + button { border-left: 1px solid var(--color-border); }
+
+    .props-ai-assist {
+      background: #f5f3ff; border: 1px solid #ddd6fe;
+      border-radius: 6px; padding: 10px; margin-bottom: 10px;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+    }
+    .props-ai-assist:hover { background: #ede9fe; border-color: #c4b5fd; }
+    .props-ai-assist svg { width: 14px; height: 14px; color: var(--color-ai); flex-shrink: 0; }
+    .props-ai-assist-text { font-size: 12px; font-weight: 600; color: var(--color-ai); }
+    .props-ai-assist-sub { font-size: 11px; color: #7c3aed; opacity: 0.75; }
+
+    .props-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--color-border);
+      display: flex; flex-direction: column; gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Empty properties ── */
+    .props-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; padding: 24px; text-align: center;
+      color: var(--color-text-muted);
+    }
+    .props-empty svg { width: 36px; height: 36px; margin-bottom: 10px; opacity: 0.3; }
+    .props-empty-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--color-text); }
+    .props-empty-sub { font-size: 12px; }
+
+    /* ── Layout selector overlay ── */
+    .layout-select-overlay {
+      position: absolute; inset: 0;
+      background: rgba(15,15,30,0.6);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .layout-select-box {
+      background: white; border-radius: 12px;
+      padding: 28px; width: 540px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .layout-select-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .layout-select-sub { font-size: 13px; color: var(--color-text-muted); margin-bottom: 20px; }
+    .layout-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .layout-option {
+      border: 2px solid var(--color-border);
+      border-radius: 8px; padding: 16px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .layout-option:hover { border-color: var(--color-brand); background: rgba(99,102,241,0.02); }
+    .layout-option.selected { border-color: var(--color-brand); background: rgba(99,102,241,0.04); }
+    .layout-option-preview {
+      height: 72px; border-radius: 5px; background: #f5f5f9;
+      margin-bottom: 10px; overflow: hidden; position: relative;
+      display: flex; flex-direction: column; gap: 3px; padding: 4px;
+    }
+    .lp-bar { border-radius: 2px; background: rgba(99,102,241,0.2); }
+    .layout-option-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+    .layout-option-zones { font-size: 11px; color: var(--color-text-muted); }
+
+    /* Status bar */
+    .designer-statusbar {
+      height: 24px; background: #f8f8fc;
+      border-top: 1px solid var(--color-border);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 12px;
+      font-size: 11px; color: var(--color-text-muted);
+      flex-shrink: 0;
+    }
+    .statusbar-item { display: flex; align-items: center; gap: 4px; }
+    .statusbar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════ DESIGNER SHELL ══════════════ -->
+<div class="designer-shell">
+
+  <!-- Designer Topbar — three-group layout: LEFT | CENTER | RIGHT -->
+  <div class="designer-topbar">
+
+    <!-- LEFT: Back + Mode switcher -->
+    <div class="tb-left">
+      <a href="site-structure.html" style="color:var(--color-text-muted);display:flex;align-items:center;padding:4px 4px;border-radius:4px;" data-tooltip="Back to Site Structure">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <div style="display:flex;border:1px solid var(--color-border);border-radius:6px;overflow:hidden">
+        <button id="mode-btn-layouts" onclick="setDesignerMode('layouts',this)"
+          style="padding:5px 10px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--color-brand);color:white;display:flex;align-items:center;gap:4px;white-space:nowrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+          Layouts
+        </button>
+        <button id="mode-btn-templates" onclick="setDesignerMode('templates',this)"
+          style="padding:5px 10px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--color-surface);color:var(--color-text-muted);border-left:1px solid var(--color-border);display:flex;align-items:center;gap:4px;white-space:nowrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Templates
+        </button>
+      </div>
+    </div>
+
+    <!-- CENTER: Context info — flexible, truncates gracefully -->
+    <div class="tb-center">
+      <div class="designer-page-icon" id="designer-mode-icon" style="flex-shrink:0">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+      </div>
+      <div style="min-width:0;flex-shrink:1">
+        <div class="designer-page-name" id="designer-context-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Default Layout</div>
+        <div class="designer-page-url" id="designer-context-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Global shell · 5 templates</div>
+      </div>
+	    <!-- Status bar -->
+  <div class="designer-statusbar">
+    <div class="statusbar-item"><div class="statusbar-dot"></div> Draft — unsaved changes</div>
+    <div class="statusbar-item">5 components · 6 zones</div>
+    <div class="statusbar-item">Last saved 2 min ago</div>
+    <div style="margin-left:auto;" class="statusbar-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;color:var(--color-ai);"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+      AI ready
+    </div>
+  </div>
+      <!-- Entry picker — shown in Template mode only -->
+      <div id="preview-entry-picker" style="display:none;align-items:center;gap:6px;flex-shrink:0;margin-left:8px">
+        <span style="font-size:11px;color:var(--color-text-muted);font-weight:600;white-space:nowrap">Entry:</span>
+        <select style="font-size:12px;padding:4px 8px;border:1px solid var(--color-border);border-radius:5px;background:white;max-width:130px" onchange="updatePreviewEntry(this.value)">
+          <option>— wireframe —</option>
+          <option selected>Nike Air Max 2024</option>
+          <option>Adidas Ultra Boost</option>
+          <option>New Balance 990</option>
+        </select>
+      </div>
+      <!-- Bound content-type badge — shown in Template mode only -->
+      <div id="bound-ct-badge" style="display:none;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;background:#f5f3ff;border:1px solid #ddd6fe;flex-shrink:0">
+        <svg fill="none" viewBox="0 0 24 24" stroke="#7c3aed" stroke-width="2" style="width:11px;height:11px;"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+        <span style="font-size:11px;font-weight:700;color:#7c3aed;white-space:nowrap" id="bound-ct-label">Bound: Landing Page</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Viewport, Zoom, Undo/Redo, Save/Publish — always visible -->
+    <div class="tb-right">
+      <div class="viewport-toggle">
+        <button class="viewport-btn active" data-tooltip="Desktop" onclick="setViewport('desktop',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8M12 18v2"/></svg>
+        </button>
+        <button class="viewport-btn" data-tooltip="Tablet" onclick="setViewport('tablet',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
+        </button>
+        <button class="viewport-btn" data-tooltip="Mobile" onclick="setViewport('mobile',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
+        </button>
+      </div>
+      <div class="designer-topbar-sep"></div>
+      <div class="zoom-ctrl">
+        <button onclick="changeZoom(-10)">−</button>
+        <span id="zoom-label">100%</span>
+        <button onclick="changeZoom(10)">+</button>
+      </div>
+      <div class="designer-topbar-sep"></div>
+      <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Undo">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h10a7 7 0 010 14H9m-6-14l4-4M3 10l4 4"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-sm btn-icon" data-tooltip="Redo">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 10H11a7 7 0 000 14h4m6-14l-4-4m4 4l-4 4"/></svg>
+      </button>
+      <div class="designer-topbar-sep"></div>
+      <button class="preview-mode-btn" onclick="togglePreview()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        Preview
+      </button>
+      <button class="btn btn-secondary btn-sm">Save Draft</button>
+      <button class="btn btn-primary btn-sm">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+        Publish
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Designer Body -->
+  <div class="designer-body">
+
+    <!-- ── LEFT: Panel ── -->
+    <div class="palette-panel">
+
+      <!-- Global Layouts list (shown in layouts mode) -->
+      <div id="layouts-list-panel" style="border-bottom:1px solid var(--color-border);">
+        <div style="padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--color-text-muted);display:flex;justify-content:space-between;align-items:center">
+          Global Layouts
+          <button class="btn btn-primary btn-sm" style="font-size:10px;padding:3px 8px">+ New</button>
+        </div>
+        <div style="padding:0 8px 8px">
+          <div onclick="selectGlobalLayout(this,'Default Layout')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;background:var(--color-brand-light);border:1px solid rgba(99,102,241,0.3);margin-bottom:3px;cursor:pointer">
+            <div style="width:24px;height:24px;border-radius:4px;background:var(--color-brand);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:var(--color-brand)">Default Layout</div>
+              <div style="font-size:10px;color:var(--color-text-muted)">5 templates · header + footer</div>
+            </div>
+          </div>
+          <div onclick="selectGlobalLayout(this,'Marketing Layout')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;border:1px solid transparent;margin-bottom:3px;cursor:pointer" onmouseover="this.style.background='var(--color-bg)'" onmouseout="this.style.background=''">
+            <div style="width:24px;height:24px;border-radius:4px;background:#e0e7ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#4f46e5" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;">Marketing Layout</div>
+              <div style="font-size:10px;color:var(--color-text-muted)">2 templates · full-bleed</div>
+            </div>
+          </div>
+          <div onclick="selectGlobalLayout(this,'Minimal Layout')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;border:1px solid transparent;cursor:pointer" onmouseover="this.style.background='var(--color-bg)'" onmouseout="this.style.background=''">
+            <div style="width:24px;height:24px;border-radius:4px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#6b7280" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;">Minimal Layout</div>
+              <div style="font-size:10px;color:var(--color-text-muted)">1 template · no footer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Templates list (shown in templates mode, hidden by default) -->
+      <div id="templates-list-panel" style="display:none;border-bottom:1px solid var(--color-border);">
+        <div style="padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--color-text-muted);display:flex;justify-content:space-between;align-items:center">
+          Page Templates
+          <button class="btn btn-primary btn-sm" style="font-size:10px;padding:3px 8px">+ New</button>
+        </div>
+        <div style="padding:0 8px 8px">
+          <div onclick="selectTemplate(this,'Landing')" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;border:1px solid rgba(99,102,241,0.3);background:var(--color-brand-light);margin-bottom:3px;cursor:pointer">
+            <div style="width:24px;height:24px;border-radius:4px;background:var(--color-brand);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:var(--color-brand)">Landing</div>
+              <div style="font-size:10px;color:var(--color-text-muted)">4 pages · unbound</div>
+            </div>
+          </div>
+          <div onclick="selectTemplate(this,'Blog Post')" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;border:1px solid transparent;margin-bottom:3px;cursor:pointer" onmouseover="this.style.background='var(--color-bg)'" onmouseout="this.style.background=''">
+            <div style="width:24px;height:24px;border-radius:4px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;">Blog Post</div>
+              <div style="font-size:10px;color:var(--color-text-muted)">24 entries · Blog Post type</div>
+            </div>
+          </div>
+          <div onclick="selectTemplate(this,'Product Detail')" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;border:1px solid transparent;cursor:pointer" onmouseover="this.style.background='var(--color-bg)'" onmouseout="this.style.background=''">
+            <div style="width:24px;height:24px;border-radius:4px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#d97706" stroke-width="2" style="width:12px;height:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;">Product Detail</div>
+              <div style="font-size:10px;color:var(--color-text-muted)">147 entries · Product type</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="palette-header">
+        <div class="palette-title" id="palette-title">Layout Zones</div>
+        <div class="palette-search">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input placeholder="Search…">
+        </div>
+      </div>
+      <div class="palette-body">
+
+        <div class="palette-section">
+          <div class="palette-section-label">Layout</div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'HeroBanner')">
+            <div class="palette-item-icon" style="background:#dbeafe;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2" style="width:14px;height:14px;"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">HeroBanner</div>
+              <div class="palette-item-fields">6 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'VideoHero')">
+            <div class="palette-item-icon" style="background:#111827;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#6b7280" stroke-width="2" style="width:14px;height:14px;"><polygon points="5,3 19,12 5,21"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">VideoHero</div>
+              <div class="palette-item-fields">5 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="palette-section">
+          <div class="palette-section-label">Content</div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'CardGrid')">
+            <div class="palette-item-icon" style="background:#d1fae5;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">CardGrid</div>
+              <div class="palette-item-fields">5 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'RichTextBlock')">
+            <div class="palette-item-icon" style="background:#ede9fe;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#7c3aed" stroke-width="2" style="width:14px;height:14px;"><path d="M4 6h16M4 10h16M4 14h12M4 18h8"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">RichTextBlock</div>
+              <div class="palette-item-fields">4 fields · AI</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'FeatureSection')">
+            <div class="palette-item-icon" style="background:#fef3c7;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#d97706" stroke-width="2" style="width:14px;height:14px;"><path d="M4 6h7M13 6h7M4 10h4M10 10h10M4 14h7M13 14h7M4 18h4M10 18h10"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">FeatureSection</div>
+              <div class="palette-item-fields">7 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'TestimonialsCarousel')">
+            <div class="palette-item-icon" style="background:#fdf4ff;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#9333ea" stroke-width="2" style="width:14px;height:14px;"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">Testimonials</div>
+              <div class="palette-item-fields">5 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'CTABanner')">
+            <div class="palette-item-icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);">
+              <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" style="width:14px;height:14px;"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">CTABanner</div>
+              <div class="palette-item-fields">6 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="palette-section">
+          <div class="palette-section-label">Media</div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'ImageGallery')">
+            <div class="palette-item-icon" style="background:#fef3c7;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#d97706" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">ImageGallery</div>
+              <div class="palette-item-fields">4 fields · AI alt</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="palette-section">
+          <div class="palette-section-label">Navigation</div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'NavBar')">
+            <div class="palette-item-icon" style="background:#1e1b4b;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#c7d2fe" stroke-width="2" style="width:14px;height:14px;"><path d="M4 6h16M4 12h16M4 18h8"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">NavBar</div>
+              <div class="palette-item-fields">6 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'Footer')">
+            <div class="palette-item-icon" style="background:#111827;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#6b7280" stroke-width="2" style="width:14px;height:14px;"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">Footer</div>
+              <div class="palette-item-fields">7 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="palette-section">
+          <div class="palette-section-label">Interactive</div>
+          <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'FAQAccordion')">
+            <div class="palette-item-icon" style="background:#fce7f3;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="#db2777" stroke-width="2" style="width:14px;height:14px;"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+              <div class="palette-item-name">FAQAccordion</div>
+              <div class="palette-item-fields">3 fields</div>
+            </div>
+            <div class="palette-drag-hint">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM8 22a2 2 0 100-4 2 2 0 000 4zM16 6a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4z"/></svg>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /palette-body -->
+    </div><!-- /palette-panel -->
+
+    <!-- ── CENTRE: Canvas ── -->
+    <div class="canvas-wrap" id="canvas-wrap">
+
+      <!-- Layout selector overlay (shown on first load / change layout) -->
+      <div class="layout-select-overlay" id="layout-overlay" style="display:none;">
+        <div class="layout-select-box">
+          <div class="layout-select-title">Choose Page Layout</div>
+          <div class="layout-select-sub">Select the zone structure for this page. You can change it later.</div>
+          <div class="layout-options">
+            <!-- Landing -->
+            <div class="layout-option selected" onclick="selectLayout('landing',this)">
+              <div class="layout-option-preview">
+                <div class="lp-bar" style="height:14px;width:100%;"></div>
+                <div class="lp-bar" style="height:20px;width:100%;background:rgba(99,102,241,0.3);"></div>
+                <div class="lp-bar" style="height:10px;width:100%;"></div>
+                <div class="lp-bar" style="height:10px;width:100%;"></div>
+                <div class="lp-bar" style="height:10px;width:100%;background:rgba(99,102,241,0.1);"></div>
+              </div>
+              <div class="layout-option-name">Landing</div>
+              <div class="layout-option-zones">header · hero · features · content · cta · footer</div>
+            </div>
+            <!-- Full Width -->
+            <div class="layout-option" onclick="selectLayout('full',this)">
+              <div class="layout-option-preview">
+                <div class="lp-bar" style="height:14px;width:100%;"></div>
+                <div class="lp-bar" style="height:34px;width:100%;background:rgba(99,102,241,0.15);"></div>
+                <div class="lp-bar" style="height:10px;width:100%;"></div>
+              </div>
+              <div class="layout-option-name">Full Width</div>
+              <div class="layout-option-zones">header · content · footer</div>
+            </div>
+            <!-- Blog -->
+            <div class="layout-option" onclick="selectLayout('blog',this)">
+              <div class="layout-option-preview">
+                <div class="lp-bar" style="height:14px;width:100%;"></div>
+                <div style="display:flex;gap:3px;flex:1;">
+                  <div class="lp-bar" style="flex:3;height:38px;background:rgba(99,102,241,0.15);"></div>
+                  <div class="lp-bar" style="flex:1;height:38px;background:rgba(99,102,241,0.08);"></div>
+                </div>
+                <div class="lp-bar" style="height:10px;width:100%;"></div>
+              </div>
+              <div class="layout-option-name">Blog Article</div>
+              <div class="layout-option-zones">header · content (2/3) · sidebar (1/3) · footer</div>
+            </div>
+            <!-- Blank -->
+            <div class="layout-option" onclick="selectLayout('blank',this)">
+              <div class="layout-option-preview" style="align-items:center;justify-content:center;">
+                <div style="font-size:22px;color:#d1d5db;">+</div>
+              </div>
+              <div class="layout-option-name">Blank</div>
+              <div class="layout-option-zones">Free-form — add any zones</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button class="btn btn-secondary" onclick="closeLayoutSelector()">Cancel</button>
+            <button class="btn btn-primary" onclick="applyLayout()">Apply Layout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvas-ruler">
+        <div class="canvas-ruler-label" id="canvas-ruler-label">Global Layout Canvas — Default Layout</div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af;">
+          <span id="canvas-context-badge" style="padding:2px 7px;border-radius:10px;background:#f3f4f6;font-size:10px;font-weight:700;color:#6b7280">GLOBAL LAYOUT</span>
+          <span id="comp-count">5 components</span>
+          <span>·</span>
+          <span id="canvas-context-info">5 templates using this layout</span>
+        </div>
+      </div>
+
+      <!-- The actual page frame -->
+      <div class="canvas-frame" id="canvas-frame">
+
+        <!-- header-zone: NavBar placed -->
+        <div class="page-zone" data-zone="header-zone"
+             ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,'header-zone')" ondragleave="zoneDragLeave(event)">
+          <div class="zone-label">header-zone</div>
+          <div class="placed-comp selected" onclick="selectComp('NavBar','header-zone',this)">
+            <div class="placed-comp-toolbar">
+              <span class="toolbar-name">NavBar</span>
+              <button data-tooltip="Move up">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg>
+              </button>
+              <button data-tooltip="Move down">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <button data-tooltip="Duplicate">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16H4a2 2 0 01-2-2V4a2 2 0 012-2h10a2 2 0 012 2v0"/></svg>
+              </button>
+              <button data-tooltip="Remove" style="color:#fca5a5;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <!-- NavBar render -->
+            <div class="render-navbar">
+              <div class="render-navbar-logo">
+                <div class="render-navbar-logo-mark">A</div>
+                Acme Corp
+              </div>
+              <div class="render-navbar-links">
+                <span class="render-navbar-link">Home</span>
+                <span class="render-navbar-link">Products</span>
+                <span class="render-navbar-link">About</span>
+                <span class="render-navbar-link">Blog</span>
+              </div>
+              <div class="render-navbar-cta">Get Started</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- hero-zone: HeroBanner placed -->
+        <div class="page-zone" data-zone="hero-zone"
+             ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,'hero-zone')" ondragleave="zoneDragLeave(event)">
+          <div class="zone-label">hero-zone</div>
+          <div class="placed-comp" onclick="selectComp('HeroBanner','hero-zone',this)">
+            <div class="placed-comp-toolbar">
+              <span class="toolbar-name">HeroBanner</span>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16H4a2 2 0 01-2-2V4a2 2 0 012-2h10a2 2 0 012 2v0"/></svg></button>
+              <button style="color:#fca5a5;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="render-hero">
+              <h1>Build faster, smarter websites with MicroCMS</h1>
+              <p>The modular, AI-infused headless CMS for modern teams. Structured content. Powerful APIs. Visual page design.</p>
+              <div class="render-hero-ctas">
+                <div class="render-hero-btn-primary">Start free trial</div>
+                <div class="render-hero-btn-secondary">Watch demo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- features-zone: CardGrid placed -->
+        <div class="page-zone" data-zone="features-zone"
+             ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,'features-zone')" ondragleave="zoneDragLeave(event)">
+          <div class="zone-label">features-zone</div>
+          <div class="placed-comp" onclick="selectComp('CardGrid','features-zone',this)">
+            <div class="placed-comp-toolbar">
+              <span class="toolbar-name">CardGrid</span>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16H4a2 2 0 01-2-2V4a2 2 0 012-2h10a2 2 0 012 2v0"/></svg></button>
+              <button style="color:#fca5a5;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="render-cardgrid">
+              <div class="render-cardgrid-heading">Everything you need to manage content</div>
+              <div class="render-cardgrid-sub">Purpose-built for modern content teams</div>
+              <div class="render-cardgrid-grid">
+                <div class="render-card">
+                  <div class="render-card-icon">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                  </div>
+                  <div class="render-card-title">AI-Infused Authoring</div>
+                  <div class="render-card-desc">Generate, rewrite, and translate content with one click using built-in AI assistance.</div>
+                </div>
+                <div class="render-card">
+                  <div class="render-card-icon">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+                  </div>
+                  <div class="render-card-title">Structured Content</div>
+                  <div class="render-card-desc">Define flexible content types and serve data via REST or GraphQL APIs.</div>
+                </div>
+                <div class="render-card">
+                  <div class="render-card-icon">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                  </div>
+                  <div class="render-card-title">Multi-Site Management</div>
+                  <div class="render-card-desc">Manage multiple websites and tenants from a single, unified workspace.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- content-zone: EMPTY (drop target) -->
+        <div class="page-zone empty" data-zone="content-zone"
+             ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,'content-zone')" ondragleave="zoneDragLeave(event)">
+          <div class="zone-label">content-zone</div>
+          <div class="zone-add-hint">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+            Drop a component here or click to browse
+          </div>
+        </div>
+
+        <!-- cta-zone: CTABanner placed -->
+        <div class="page-zone" data-zone="cta-zone"
+             ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,'cta-zone')" ondragleave="zoneDragLeave(event)">
+          <div class="zone-label">cta-zone</div>
+          <div class="placed-comp" onclick="selectComp('CTABanner','cta-zone',this)">
+            <div class="placed-comp-toolbar">
+              <span class="toolbar-name">CTABanner</span>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16H4a2 2 0 01-2-2V4a2 2 0 012-2h10a2 2 0 012 2v0"/></svg></button>
+              <button style="color:#fca5a5;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="render-cta">
+              <h2>Ready to transform your content workflow?</h2>
+              <p>Join 2,000+ teams already building with MicroCMS. Start your free 14-day trial today.</p>
+              <div class="render-cta-btns">
+                <div class="render-cta-btn-white">Start free trial</div>
+                <div class="render-cta-btn-outline">Talk to sales</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- footer-zone: Footer placed -->
+        <div class="page-zone" data-zone="footer-zone"
+             ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,'footer-zone')" ondragleave="zoneDragLeave(event)">
+          <div class="zone-label">footer-zone</div>
+          <div class="placed-comp" onclick="selectComp('Footer','footer-zone',this)">
+            <div class="placed-comp-toolbar">
+              <span class="toolbar-name">Footer</span>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 15l7-7 7 7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+              <button><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16H4a2 2 0 01-2-2V4a2 2 0 012-2h10a2 2 0 012 2v0"/></svg></button>
+              <button style="color:#fca5a5;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="render-footer">
+              <div class="render-footer-grid">
+                <div>
+                  <div class="render-footer-brand">
+                    <div class="render-footer-brand-mark">M</div>
+                    MicroCMS
+                  </div>
+                  <div class="render-footer-desc">The modular, AI-infused headless CMS for modern teams building great digital experiences.</div>
+                </div>
+                <div>
+                  <div class="render-footer-col-title">Product</div>
+                  <span class="render-footer-link">Features</span>
+                  <span class="render-footer-link">Pricing</span>
+                  <span class="render-footer-link">Changelog</span>
+                  <span class="render-footer-link">Roadmap</span>
+                </div>
+                <div>
+                  <div class="render-footer-col-title">Developers</div>
+                  <span class="render-footer-link">Docs</span>
+                  <span class="render-footer-link">API Reference</span>
+                  <span class="render-footer-link">GraphQL</span>
+                  <span class="render-footer-link">SDKs</span>
+                </div>
+                <div>
+                  <div class="render-footer-col-title">Company</div>
+                  <span class="render-footer-link">About</span>
+                  <span class="render-footer-link">Blog</span>
+                  <span class="render-footer-link">Careers</span>
+                  <span class="render-footer-link">Contact</span>
+                </div>
+              </div>
+              <div class="render-footer-bottom">
+                <span>© 2026 MicroCMS. All rights reserved.</span>
+                <div style="display:flex;gap:16px;">
+                  <span class="render-footer-link">Privacy</span>
+                  <span class="render-footer-link">Terms</span>
+                  <span class="render-footer-link">Cookies</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /canvas-frame -->
+    </div><!-- /canvas-wrap -->
+
+    <!-- ── RIGHT: Properties Panel ── -->
+    <div class="props-panel">
+      <div class="props-header" id="props-header">
+        <div class="props-comp-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h12M4 18h8"/></svg>
+        </div>
+        <div>
+          <div class="props-comp-name" id="props-comp-name">NavBar</div>
+          <div class="props-comp-type" id="props-comp-type">Navigation · header-zone</div>
+        </div>
+      </div>
+
+      <div class="props-body" id="props-body">
+
+        <!-- NavBar fields (default selected) -->
+        <div id="props-navbar">
+          <div class="props-section">
+            <div class="props-section-title">Content</div>
+
+            <div class="props-field">
+              <div class="props-field-label">
+                Brand Name <span class="req">*</span>
+                <span class="loc-badge">EN</span>
+              </div>
+              <input class="props-input" value="Acme Corp">
+            </div>
+
+            <div class="props-field">
+              <div class="props-field-label">Logo</div>
+              <div class="props-asset-picker">
+                <div class="props-asset-preview">
+                  <span>Logo.svg</span>
+                </div>
+                <div class="props-asset-actions">
+                  <button>Replace</button>
+                  <button>Browse</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="props-field">
+              <div class="props-field-label">Nav Links</div>
+              <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input class="props-input" value="Home" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm btn-icon" style="flex-shrink:0;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input class="props-input" value="Products" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm btn-icon" style="flex-shrink:0;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input class="props-input" value="About" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm btn-icon" style="flex-shrink:0;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input class="props-input" value="Blog" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm btn-icon" style="flex-shrink:0;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" style="width:100%;">+ Add Link</button>
+            </div>
+
+            <div class="props-field">
+              <div class="props-field-label">CTA Label <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Get Started">
+            </div>
+
+            <div class="props-field">
+              <div class="props-field-label">CTA URL</div>
+              <input class="props-input" value="/signup">
+            </div>
+          </div>
+
+          <div class="props-section">
+            <div class="props-section-title">Behaviour</div>
+            <div class="props-field">
+              <div class="props-field-label">Position</div>
+              <select class="props-select">
+                <option selected>Sticky (scrolls with page)</option>
+                <option>Fixed (always visible)</option>
+                <option>Static</option>
+              </select>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Background</div>
+              <select class="props-select">
+                <option selected>Dark (brand)</option>
+                <option>Light</option>
+                <option>Transparent</option>
+              </select>
+            </div>
+          </div>
+        </div><!-- /props-navbar -->
+
+        <!-- Hero fields (hidden by default) -->
+        <div id="props-hero" style="display:none;">
+          <div class="props-ai-assist">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <div>
+              <div class="props-ai-assist-text">AI: Generate headline</div>
+              <div class="props-ai-assist-sub">Suggest heading & subheading from page context</div>
+            </div>
+          </div>
+          <div class="props-section">
+            <div class="props-section-title">Content</div>
+            <div class="props-field">
+              <div class="props-field-label">Heading <span class="req">*</span> <span class="loc-badge">EN</span></div>
+              <textarea class="props-textarea">Build faster, smarter websites with MicroCMS</textarea>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Subheading <span class="loc-badge">EN</span></div>
+              <textarea class="props-textarea">The modular, AI-infused headless CMS for modern teams.</textarea>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Background Image</div>
+              <div class="props-asset-picker">
+                <div class="props-asset-preview">
+                  hero-bg.jpg
+                </div>
+                <div class="props-asset-actions">
+                  <button>Replace</button>
+                  <button>Remove</button>
+                </div>
+              </div>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">CTA Primary Label <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Start free trial">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">CTA Primary URL</div>
+              <input class="props-input" value="/signup">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">CTA Secondary Label <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Watch demo">
+            </div>
+          </div>
+          <div class="props-section">
+            <div class="props-section-title">
+              Field Bindings
+              <span style="font-size:9px;background:#f5f3ff;color:#7c3aed;padding:2px 5px;border-radius:3px;font-weight:700">TEMPLATE MODE</span>
+            </div>
+            <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:8px;line-height:1.5">Map component props to content type fields. The same template renders differently for each entry.</div>
+            <div id="bindings-panel">
+              <!-- Binding row -->
+              <div style="display:grid;grid-template-columns:1fr 14px 1fr;align-items:center;gap:4px;margin-bottom:6px">
+                <div style="font-size:11px;font-weight:600;padding:5px 7px;background:#f3f4f6;border-radius:4px;text-align:center;border:1px solid var(--color-border)">heading</div>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--color-brand)"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <select style="font-size:11px;padding:4px 6px;border:1px solid var(--color-brand);border-radius:4px;background:#f5f3ff;color:#7c3aed;font-weight:600">
+                  <option>entry.headline</option><option>entry.title</option><option>entry.name</option><option>— static —</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 14px 1fr;align-items:center;gap:4px;margin-bottom:6px">
+                <div style="font-size:11px;font-weight:600;padding:5px 7px;background:#f3f4f6;border-radius:4px;text-align:center;border:1px solid var(--color-border)">subheading</div>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--color-brand)"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <select style="font-size:11px;padding:4px 6px;border:1px solid var(--color-brand);border-radius:4px;background:#f5f3ff;color:#7c3aed;font-weight:600">
+                  <option>entry.subheadline</option><option>entry.summary</option><option>entry.description</option><option>— static —</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 14px 1fr;align-items:center;gap:4px;margin-bottom:6px">
+                <div style="font-size:11px;font-weight:600;padding:5px 7px;background:#f3f4f6;border-radius:4px;text-align:center;border:1px solid var(--color-border)">backgroundImage</div>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--color-brand)"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <select style="font-size:11px;padding:4px 6px;border:1px solid var(--color-brand);border-radius:4px;background:#f5f3ff;color:#7c3aed;font-weight:600">
+                  <option>entry.featuredImage</option><option>entry.heroImage</option><option>entry.coverPhoto</option><option>— static —</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 14px 1fr;align-items:center;gap:4px;margin-bottom:6px">
+                <div style="font-size:11px;font-weight:600;padding:5px 7px;background:#f3f4f6;border-radius:4px;text-align:center;border:1px solid var(--color-border)">ctaPrimaryLabel</div>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#9ca3af"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <select style="font-size:11px;padding:4px 6px;border:1px solid var(--color-border);border-radius:4px;background:white;color:var(--color-text-muted)">
+                  <option>— static —</option><option>entry.ctaLabel</option><option>entry.buttonText</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- CardGrid fields (hidden) -->
+        <div id="props-cardgrid" style="display:none;">
+          <div class="props-section">
+            <div class="props-section-title">Content</div>
+            <div class="props-field">
+              <div class="props-field-label">Section Heading <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Everything you need to manage content">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Subheading <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Purpose-built for modern content teams">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Columns</div>
+              <select class="props-select">
+                <option>2</option>
+                <option selected>3</option>
+                <option>4</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;margin-top:4px;">
+              <div style="font-size:11.5px;font-weight:600;">Cards (3)</div>
+              <button class="btn btn-secondary btn-sm">+ Add Card</button>
+            </div>
+            <div style="font-size:12px;color:var(--color-text-muted);background:var(--color-bg);padding:8px;border-radius:5px;">
+              Click a card in the canvas to edit its content, icon, and link individually.
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA fields (hidden) -->
+        <div id="props-cta" style="display:none;">
+          <div class="props-ai-assist">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <div>
+              <div class="props-ai-assist-text">AI: Improve copy</div>
+              <div class="props-ai-assist-sub">Rewrite heading for higher conversion</div>
+            </div>
+          </div>
+          <div class="props-section">
+            <div class="props-section-title">Content</div>
+            <div class="props-field">
+              <div class="props-field-label">Heading <span class="req">*</span> <span class="loc-badge">EN</span></div>
+              <textarea class="props-textarea">Ready to transform your content workflow?</textarea>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Subtext <span class="loc-badge">EN</span></div>
+              <textarea class="props-textarea">Join 2,000+ teams already building with MicroCMS.</textarea>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Primary Button Label <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Start free trial">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Primary Button URL</div>
+              <input class="props-input" value="/signup">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Secondary Button Label <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="Talk to sales">
+            </div>
+          </div>
+          <div class="props-section">
+            <div class="props-section-title">Style</div>
+            <div class="props-field">
+              <div class="props-field-label">Background</div>
+              <select class="props-select">
+                <option selected>Brand gradient</option>
+                <option>Dark</option>
+                <option>Light</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer fields (hidden) -->
+        <div id="props-footer" style="display:none;">
+          <div class="props-section">
+            <div class="props-section-title">Content</div>
+            <div class="props-field">
+              <div class="props-field-label">Brand Name</div>
+              <input class="props-input" value="MicroCMS">
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Tagline <span class="loc-badge">EN</span></div>
+              <textarea class="props-textarea" style="min-height:50px;">The modular, AI-infused headless CMS for modern teams.</textarea>
+            </div>
+            <div class="props-field">
+              <div class="props-field-label">Copyright Text <span class="loc-badge">EN</span></div>
+              <input class="props-input" value="© 2026 MicroCMS. All rights reserved.">
+            </div>
+          </div>
+          <div class="props-section">
+            <div class="props-section-title">Link Columns (4)</div>
+            <div style="font-size:12px;color:var(--color-text-muted);background:var(--color-bg);padding:8px;border-radius:5px;">
+              Manage footer columns and link groups in the detailed footer editor.
+            </div>
+            <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:8px;">Edit Footer Columns</button>
+          </div>
+        </div>
+
+		  <div class="props-footer">
+			<button class="btn btn-secondary btn-sm" style="width:100%;">
+			  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+			  View in Component Library
+			</button>
+			<div style="display:flex;gap:6px;">
+			  <button class="btn btn-danger btn-sm" style="flex:1;">Remove</button>
+			  <button class="btn btn-primary btn-sm" style="flex:1;">Apply Changes</button>
+			</div>
+		  </div>
+		</div><!-- /props-panel -->
+      </div><!-- /props-body -->
+
+
+  </div><!-- /designer-body -->
+
+
+
+</div><!-- /designer-shell -->
+
+<script>
+  var currentZoom = 100;
+  var currentComp = 'NavBar';
+
+  /* ── Zone drag ── */
+  function paletteDragStart(e, compName) {
+    e.dataTransfer.setData('comp', compName);
+  }
+  function zoneDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  }
+  function zoneDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+  function zoneDrop(e, zone) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    var comp = e.dataTransfer.getData('comp');
+    if (comp) {
+      alert('Drop "' + comp + '" into ' + zone + '.\n\nIn the real designer, this adds the component to the zone and opens its properties in the right panel.');
+    }
+  }
+
+  /* ── Select component ── */
+  function selectComp(name, zone, el) {
+    // Deselect all
+    document.querySelectorAll('.placed-comp').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+
+    currentComp = name;
+    document.getElementById('props-comp-name').textContent = name;
+    document.getElementById('props-comp-type').textContent = zone;
+
+    // Hide all props sections
+    ['props-navbar','props-hero','props-cardgrid','props-cta','props-footer'].forEach(id => {
+      var el2 = document.getElementById(id);
+      if (el2) el2.style.display = 'none';
+    });
+
+    // Show relevant section
+    var map = {
+      'NavBar':    'props-navbar',
+      'HeroBanner':'props-hero',
+      'CardGrid':  'props-cardgrid',
+      'CTABanner': 'props-cta',
+      'Footer':    'props-footer'
+    };
+    var panelId = map[name];
+    if (panelId) {
+      var panel = document.getElementById(panelId);
+      if (panel) panel.style.display = 'block';
+    }
+  }
+
+  /* ── Viewport ── */
+  function setViewport(vp, el) {
+    document.querySelectorAll('.viewport-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    var frame = document.getElementById('canvas-frame');
+    var wrap  = document.getElementById('canvas-wrap');
+    frame.classList.remove('tablet','mobile');
+    wrap.classList.remove('viewport-tablet','viewport-mobile');
+    if (vp === 'tablet') { frame.classList.add('tablet'); wrap.classList.add('viewport-tablet'); }
+    if (vp === 'mobile') { frame.classList.add('mobile'); wrap.classList.add('viewport-mobile'); }
+  }
+
+  /* ── Zoom ── */
+  function changeZoom(delta) {
+    currentZoom = Math.min(200, Math.max(50, currentZoom + delta));
+    document.getElementById('zoom-label').textContent = currentZoom + '%';
+    var wrap = document.getElementById('canvas-wrap');
+    wrap.style.zoom = (currentZoom / 100);
+  }
+
+  /* ── Layout selector ── */
+  function showLayoutSelector() {
+    document.getElementById('layout-overlay').style.display = 'flex';
+  }
+  function closeLayoutSelector() {
+    document.getElementById('layout-overlay').style.display = 'none';
+  }
+  function selectLayout(name, el) {
+    document.querySelectorAll('.layout-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+  function applyLayout() {
+    closeLayoutSelector();
+  }
+
+  /* ── Preview ── */
+  function togglePreview() {
+    var labels = document.querySelectorAll('.zone-label');
+    var toolbars = document.querySelectorAll('.placed-comp-toolbar');
+    var zones = document.querySelectorAll('.page-zone');
+    var isPreview = document.body.dataset.preview === 'true';
+    if (!isPreview) {
+      labels.forEach(l => l.style.display = 'none');
+      toolbars.forEach(t => t.style.display = 'none');
+      zones.forEach(z => { z.style.border = 'none'; });
+      document.body.dataset.preview = 'true';
+    } else {
+      labels.forEach(l => l.style.display = '');
+      toolbars.forEach(t => t.style.display = '');
+      zones.forEach(z => { z.style.border = ''; });
+      document.body.dataset.preview = 'false';
+    }
+  }
+
+  /* ── Designer Mode ── */
+  function setDesignerMode(mode, btn) {
+    var isLayouts = mode === 'layouts';
+    // Mode buttons
+    document.getElementById('mode-btn-layouts').style.background = isLayouts ? 'var(--color-brand)' : 'var(--color-surface)';
+    document.getElementById('mode-btn-layouts').style.color = isLayouts ? 'white' : 'var(--color-text-muted)';
+    document.getElementById('mode-btn-templates').style.background = !isLayouts ? 'var(--color-brand)' : 'var(--color-surface)';
+    document.getElementById('mode-btn-templates').style.color = !isLayouts ? 'white' : 'var(--color-text-muted)';
+    // Side panels
+    document.getElementById('layouts-list-panel').style.display = isLayouts ? '' : 'none';
+    document.getElementById('templates-list-panel').style.display = !isLayouts ? '' : 'none';
+    document.getElementById('palette-title').textContent = isLayouts ? 'Layout Zones' : 'Components';
+    // Topbar context
+    document.getElementById('preview-entry-picker').style.display = !isLayouts ? 'flex' : 'none';
+    document.getElementById('bound-ct-badge').style.display = !isLayouts ? 'flex' : 'none';
+    // Canvas info
+    if (isLayouts) {
+      document.getElementById('canvas-ruler-label').textContent = 'Global Layout Canvas — Default Layout';
+      document.getElementById('canvas-context-badge').textContent = 'GLOBAL LAYOUT';
+      document.getElementById('canvas-context-badge').style.background = '#ede9fe';
+      document.getElementById('canvas-context-badge').style.color = '#7c3aed';
+      document.getElementById('canvas-context-info').textContent = '5 templates using this layout';
+      document.getElementById('designer-context-name').textContent = 'Default Layout';
+      document.getElementById('designer-context-sub').textContent = 'Global shell · 5 templates';
+    } else {
+      document.getElementById('canvas-ruler-label').textContent = 'Template Canvas — Landing';
+      document.getElementById('canvas-context-badge').textContent = 'PAGE TEMPLATE';
+      document.getElementById('canvas-context-badge').style.background = '#f5f3ff';
+      document.getElementById('canvas-context-badge').style.color = '#7c3aed';
+      document.getElementById('canvas-context-info').textContent = 'Unbound · 4 pages using this template';
+      document.getElementById('designer-context-name').textContent = 'Landing Template';
+      document.getElementById('designer-context-sub').textContent = 'Content zone · 4 pages';
+    }
+  }
+
+  function selectGlobalLayout(el, name) {
+    document.querySelectorAll('#layouts-list-panel > div > div[onclick]').forEach(d => {
+      d.style.background = ''; d.style.border = '1px solid transparent';
+    });
+    el.style.background = 'var(--color-brand-light)';
+    el.style.border = '1px solid rgba(99,102,241,0.3)';
+    document.getElementById('canvas-ruler-label').textContent = 'Global Layout Canvas — ' + name;
+    document.getElementById('designer-context-name').textContent = name;
+  }
+
+  function selectTemplate(el, name) {
+    document.querySelectorAll('#templates-list-panel > div > div[onclick]').forEach(d => {
+      d.style.background = ''; d.style.border = '1px solid transparent';
+    });
+    el.style.background = 'var(--color-brand-light)';
+    el.style.border = '1px solid rgba(99,102,241,0.3)';
+    document.getElementById('canvas-ruler-label').textContent = 'Template Canvas — ' + name;
+    document.getElementById('designer-context-name').textContent = name + ' Template';
+    if (name === 'Blog Post') {
+      document.getElementById('bound-ct-label').textContent = 'Bound: Blog Post';
+      document.getElementById('canvas-context-info').textContent = '24 entries · Blog Post type';
+    } else if (name === 'Product Detail') {
+      document.getElementById('bound-ct-label').textContent = 'Bound: Product';
+      document.getElementById('canvas-context-info').textContent = '147 entries · Product type';
+    } else {
+      document.getElementById('bound-ct-label').textContent = 'Bound: Landing Page';
+      document.getElementById('canvas-context-info').textContent = 'Unbound · 4 pages using this template';
+    }
+  }
+
+  function updatePreviewEntry(val) {
+    // In a real designer, this would hydrate the canvas with entry data
+  }
+</script>
+</body>
+</html>

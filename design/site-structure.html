@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MicroCMS — Site Structure</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Layout ── */
+    .ia-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 300px;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+    .ia-tree-panel {
+      border-right: 1px solid var(--color-border);
+      background: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .ia-canvas {
+      overflow-y: auto;
+      background: var(--color-bg);
+      padding: 24px;
+    }
+    .ia-detail-panel {
+      border-left: 1px solid var(--color-border);
+      background: white;
+      overflow-y: auto;
+    }
+
+    /* ── Site Switcher ── */
+    .site-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .site-tab.active {
+      color: var(--color-brand);
+      border-bottom-color: var(--color-brand);
+    }
+    .site-tab:hover { color: var(--color-text); }
+    .site-tab-emoji { font-size: 16px; }
+
+    /* ── Tree ── */
+    .tree-search { padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
+    .tree-body { overflow-y: auto; flex: 1; padding: 8px 0; }
+
+    .tree-node {
+      user-select: none;
+    }
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 8px 5px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+      position: relative;
+    }
+    .tree-row:hover { background: var(--color-bg); }
+    .tree-row.selected { background: var(--color-brand-light); }
+    .tree-row.selected .tree-label { color: var(--color-brand-dark); font-weight: 600; }
+
+    .tree-toggle {
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: var(--color-text-muted);
+      flex-shrink: 0; border-radius: 3px;
+      transition: transform 0.15s;
+    }
+    .tree-toggle.open { transform: rotate(90deg); }
+    .tree-toggle.leaf { opacity: 0; pointer-events: none; }
+
+    .tree-icon { font-size: 14px; flex-shrink: 0; }
+    .tree-label { font-size: 13px; flex: 1; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tree-status { flex-shrink: 0; }
+    .tree-drag { opacity: 0; cursor: grab; color: var(--color-text-muted); font-size: 12px; padding: 0 4px; }
+    .tree-row:hover .tree-drag { opacity: 1; }
+    .tree-add { opacity: 0; font-size: 11px; color: var(--color-brand); font-weight: 700; padding: 1px 5px; border-radius: 4px; }
+    .tree-add:hover { background: var(--color-brand-light); }
+    .tree-row:hover .tree-add { opacity: 1; }
+
+    .tree-children {
+      padding-left: 20px;
+      border-left: 1px dashed #e5e7eb;
+      margin-left: 20px;
+    }
+
+    /* ── Status dots in tree ── */
+    .sdot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .sdot-pub  { background: #10b981; }
+    .sdot-draft{ background: #9ca3af; }
+    .sdot-pend { background: #f59e0b; }
+    .sdot-arch { background: #d1d5db; }
+
+    /* ── Canvas: Breadcrumb trail ── */
+    .ia-breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--color-text-muted);
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .ia-breadcrumb span { cursor: pointer; }
+    .ia-breadcrumb span:hover { color: var(--color-brand); text-decoration: underline; }
+    .ia-breadcrumb .sep { opacity: 0.4; }
+    .ia-breadcrumb .here { color: var(--color-text); font-weight: 600; cursor: default; }
+    .ia-breadcrumb .here:hover { text-decoration: none; }
+
+    /* ── Canvas: Page cards ── */
+    .ia-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .ia-page-card {
+      background: white;
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .ia-page-card:hover {
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.12);
+      transform: translateY(-1px);
+    }
+    .ia-page-card.selected {
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+    }
+    .ia-page-card.has-children::after {
+      content: '';
+      position: absolute;
+      bottom: -16px; left: 50%;
+      transform: translateX(-50%);
+      width: 2px; height: 16px;
+      background: var(--color-border);
+    }
+    .ia-card-icon { font-size: 24px; margin-bottom: 8px; }
+    .ia-card-title { font-size: 13.5px; font-weight: 700; color: var(--color-text); margin-bottom: 3px; truncate; }
+    .ia-card-slug { font-size: 11px; color: var(--color-text-muted); font-family: monospace; margin-bottom: 8px; }
+    .ia-card-meta { display: flex; align-items: center; justify-content: space-between; }
+    .ia-card-type { font-size: 10px; color: var(--color-text-muted); }
+    .ia-card-actions {
+      position: absolute; top: 8px; right: 8px;
+      display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s;
+    }
+    .ia-page-card:hover .ia-card-actions { opacity: 1; }
+    .ia-action-btn {
+      width: 22px; height: 22px; border-radius: 4px;
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; cursor: pointer; line-height: 1;
+    }
+    .ia-action-btn:hover { background: var(--color-brand-light); border-color: var(--color-brand); }
+
+    /* ── Add page card ── */
+    .ia-add-card {
+      background: transparent;
+      border: 2px dashed #d1d5db;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 110px;
+      transition: all 0.15s;
+      color: var(--color-text-muted);
+      font-size: 13px;
+    }
+    .ia-add-card:hover {
+      border-color: var(--color-brand);
+      color: var(--color-brand);
+      background: rgba(99,102,241,0.03);
+    }
+
+    /* ── Full-depth tree view (list mode) ── */
+    .ia-list-table td, .ia-list-table th { padding: 9px 14px; }
+    .ia-indent { display: inline-block; }
+    .ia-row-hover:hover { background: #fafafe; cursor: pointer; }
+
+    /* ── Detail panel ── */
+    .dp-section { padding: 14px 16px; border-bottom: 1px solid var(--color-border); }
+    .dp-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 8px; }
+    .dp-field-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 5px 0; border-bottom: 1px solid #f3f4f6; }
+    .dp-field-row:last-child { border: none; }
+
+    /* ── View toggle ── */
+    .view-toggle { display: flex; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+    .view-btn { padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: white; color: var(--color-text-muted); transition: all 0.1s; }
+    .view-btn.active { background: var(--color-brand); color: white; }
+
+    /* ── Legend ── */
+    .legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--color-text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap" style="overflow:hidden">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <span class="current">Site Structure</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-icon-btn" data-tooltip="Notifications">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      </button>
+      <div class="user-avatar">MK</div>
+    </div>
+  </header>
+
+  <div class="ia-layout">
+
+    <!-- ── LEFT: Hierarchical Tree Panel ── -->
+    <div class="ia-tree-panel">
+      <!-- Site tabs -->
+      <div style="display:flex;border-bottom:1px solid var(--color-border);overflow-x:auto">
+        <button class="site-tab active" onclick="switchSite(this,'www')">
+          <span class="site-tab-emoji">🌐</span> www
+        </button>
+        <button class="site-tab" onclick="switchSite(this,'docs')">
+          <span class="site-tab-emoji">📖</span> docs
+        </button>
+        <button class="site-tab" onclick="switchSite(this,'blog')">
+          <span class="site-tab-emoji">📝</span> blog
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="tree-search">
+        <div class="search-input-wrap" style="max-width:100%">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="form-input" placeholder="Find page…" style="font-size:12.5px;padding:6px 8px 6px 28px" oninput="filterTree(this.value)" />
+        </div>
+      </div>
+
+      <!-- Tree -->
+      <div class="tree-body" id="tree-www">
+        <!-- Root -->
+        <div class="tree-node">
+          <div class="tree-row selected" onclick="selectNode(this,'Home')">
+            <span class="tree-drag">⠿</span>
+            <span class="tree-toggle open">▶</span>
+            <span class="tree-icon">🏠</span>
+            <span class="tree-label">Home</span>
+            <span class="sdot sdot-pub" title="Published"></span>
+            <span class="tree-add" onclick="event.stopPropagation();openAddModal('Home')">+</span>
+          </div>
+          <div class="tree-children">
+
+            <div class="tree-node">
+              <div class="tree-row" onclick="selectNode(this,'About')">
+                <span class="tree-drag">⠿</span>
+                <span class="tree-toggle open">▶</span>
+                <span class="tree-icon">📄</span>
+                <span class="tree-label">About</span>
+                <span class="sdot sdot-pub"></span>
+                <span class="tree-add" onclick="event.stopPropagation();openAddModal('About')">+</span>
+              </div>
+              <div class="tree-children">
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Our Story')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle leaf">▶</span>
+                    <span class="tree-icon">📄</span>
+                    <span class="tree-label">Our Story</span>
+                    <span class="sdot sdot-pub"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Team')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle leaf">▶</span>
+                    <span class="tree-icon">📄</span>
+                    <span class="tree-label">Team</span>
+                    <span class="sdot sdot-pub"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Careers')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle open">▶</span>
+                    <span class="tree-icon">📄</span>
+                    <span class="tree-label">Careers</span>
+                    <span class="sdot sdot-draft"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                  <div class="tree-children">
+                    <div class="tree-node">
+                      <div class="tree-row" onclick="selectNode(this,'Open Roles')">
+                        <span class="tree-drag">⠿</span>
+                        <span class="tree-toggle leaf">▶</span>
+                        <span class="tree-icon">📄</span>
+                        <span class="tree-label">Open Roles</span>
+                        <span class="sdot sdot-draft"></span>
+                        <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tree-node">
+              <div class="tree-row" onclick="selectNode(this,'Product')">
+                <span class="tree-drag">⠿</span>
+                <span class="tree-toggle open">▶</span>
+                <span class="tree-icon">📦</span>
+                <span class="tree-label">Product</span>
+                <span class="sdot sdot-pub"></span>
+                <span class="tree-add" onclick="event.stopPropagation();openAddModal('Product')">+</span>
+              </div>
+              <div class="tree-children">
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Features')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle leaf">▶</span>
+                    <span class="tree-icon">📄</span>
+                    <span class="tree-label">Features</span>
+                    <span class="sdot sdot-pub"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Pricing')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle leaf">▶</span>
+                    <span class="tree-icon">💰</span>
+                    <span class="tree-label">Pricing</span>
+                    <span class="sdot sdot-pub"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Changelog')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle open">▶</span>
+                    <span class="tree-icon">📋</span>
+                    <span class="tree-label">Changelog</span>
+                    <span class="sdot sdot-pub"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                  <div class="tree-children">
+                    <div class="tree-row" onclick="selectNode(this,'v1.0 — April 2026')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">📄</span><span class="tree-label">v1.0 — April 2026</span><span class="sdot sdot-pub"></span></div>
+                    <div class="tree-row" onclick="selectNode(this,'v0.9 — March 2026')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">📄</span><span class="tree-label">v0.9 — March 2026</span><span class="sdot sdot-pub"></span></div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" onclick="selectNode(this,'Integrations')">
+                    <span class="tree-drag">⠿</span>
+                    <span class="tree-toggle leaf">▶</span>
+                    <span class="tree-icon">🔌</span>
+                    <span class="tree-label">Integrations</span>
+                    <span class="sdot sdot-pend"></span>
+                    <span class="tree-add" onclick="event.stopPropagation()">+</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tree-node">
+              <div class="tree-row" onclick="selectNode(this,'Resources')">
+                <span class="tree-drag">⠿</span>
+                <span class="tree-toggle open">▶</span>
+                <span class="tree-icon">📚</span>
+                <span class="tree-label">Resources</span>
+                <span class="sdot sdot-pub"></span>
+                <span class="tree-add" onclick="event.stopPropagation();openAddModal('Resources')">+</span>
+              </div>
+              <div class="tree-children">
+                <div class="tree-row" onclick="selectNode(this,'Case Studies')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">🏆</span><span class="tree-label">Case Studies</span><span class="sdot sdot-pub"></span><span class="tree-add" onclick="event.stopPropagation()">+</span></div>
+                <div class="tree-row" onclick="selectNode(this,'Webinars')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">🎥</span><span class="tree-label">Webinars</span><span class="sdot sdot-draft"></span><span class="tree-add" onclick="event.stopPropagation()">+</span></div>
+                <div class="tree-row" onclick="selectNode(this,'White Papers')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">📰</span><span class="tree-label">White Papers</span><span class="sdot sdot-pub"></span><span class="tree-add" onclick="event.stopPropagation()">+</span></div>
+              </div>
+            </div>
+
+            <div class="tree-node">
+              <div class="tree-row" onclick="selectNode(this,'Legal')">
+                <span class="tree-drag">⠿</span>
+                <span class="tree-toggle open">▶</span>
+                <span class="tree-icon">⚖️</span>
+                <span class="tree-label">Legal</span>
+                <span class="sdot sdot-pub"></span>
+                <span class="tree-add" onclick="event.stopPropagation()">+</span>
+              </div>
+              <div class="tree-children">
+                <div class="tree-row" onclick="selectNode(this,'Privacy Policy')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">📄</span><span class="tree-label">Privacy Policy</span><span class="sdot sdot-pub"></span></div>
+                <div class="tree-row" onclick="selectNode(this,'Terms of Service')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">📄</span><span class="tree-label">Terms of Service</span><span class="sdot sdot-pub"></span></div>
+                <div class="tree-row" onclick="selectNode(this,'Cookie Policy')"><span class="tree-drag">⠿</span><span class="tree-toggle leaf">▶</span><span class="tree-icon">📄</span><span class="tree-label">Cookie Policy</span><span class="sdot sdot-pub"></span></div>
+              </div>
+            </div>
+
+            <div class="tree-node">
+              <div class="tree-row" onclick="selectNode(this,'Contact')">
+                <span class="tree-drag">⠿</span>
+                <span class="tree-toggle leaf">▶</span>
+                <span class="tree-icon">✉️</span>
+                <span class="tree-label">Contact</span>
+                <span class="sdot sdot-pub"></span>
+                <span class="tree-add" onclick="event.stopPropagation()">+</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Tree Footer -->
+      <div style="padding:10px 12px;border-top:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center">
+        <span class="text-xs text-muted">21 pages · depth 4</span>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal('Root')">+ Add Page</button>
+      </div>
+    </div>
+
+    <!-- ── CENTRE: Canvas ── -->
+    <div class="ia-canvas">
+
+      <!-- Toolbar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div class="ia-breadcrumb">
+          <span onclick="drillUp('Home')">🏠 Home</span>
+          <span class="sep">/</span>
+          <span class="here">Product</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="legend">
+            <div class="legend-item"><span class="sdot sdot-pub"></span> Published</div>
+            <div class="legend-item"><span class="sdot sdot-draft"></span> Draft</div>
+            <div class="legend-item"><span class="sdot sdot-pend"></span> Pending</div>
+            <div class="legend-item"><span class="sdot sdot-arch"></span> Archived</div>
+          </div>
+          <div class="view-toggle">
+            <button class="view-btn active" onclick="setView('card',this)">⊞ Cards</button>
+            <button class="view-btn" onclick="setView('list',this)">☰ List</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD VIEW -->
+      <div id="view-card">
+        <!-- Parent context card -->
+        <div style="margin-bottom:8px">
+          <div class="ia-page-card" style="background:#f8faff;border-color:#c7d2fe;margin-bottom:4px;cursor:default">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:22px">📦</span>
+              <div style="flex:1">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6366f1;margin-bottom:2px">Current Page</div>
+                <div style="font-size:15px;font-weight:800">Product</div>
+                <div style="font-family:monospace;font-size:11px;color:var(--color-text-muted)">/product</div>
+              </div>
+              <span class="badge badge-published">Published</span>
+              <a href="entry-editor.html" class="btn btn-secondary btn-sm">Edit ↗</a>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:11px;color:var(--color-text-muted);margin-bottom:16px">▼ Child pages (5)</div>
+        </div>
+
+        <div class="ia-card-grid">
+
+          <div class="ia-page-card selected" onclick="selectCard(this,'Features')">
+            <div class="ia-card-actions">
+              <div class="ia-action-btn" title="Edit" onclick="event.stopPropagation();window.location='entry-editor.html'">✏️</div>
+              <div class="ia-action-btn" title="Add child" onclick="event.stopPropagation();openAddModal('Features')">+</div>
+              <div class="ia-action-btn" title="Move">⠿</div>
+            </div>
+            <div class="ia-card-icon">⭐</div>
+            <div class="ia-card-title">Features</div>
+            <div class="ia-card-slug">/product/features</div>
+            <div class="ia-card-meta">
+              <span class="ia-card-type">Landing Page</span>
+              <span class="sdot sdot-pub" title="Published"></span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--color-text-muted)">0 children · v3</div>
+          </div>
+
+          <div class="ia-page-card" onclick="selectCard(this,'Pricing')">
+            <div class="ia-card-actions">
+              <div class="ia-action-btn" title="Edit" onclick="event.stopPropagation();window.location='entry-editor.html'">✏️</div>
+              <div class="ia-action-btn" title="Add child" onclick="event.stopPropagation();openAddModal('Pricing')">+</div>
+              <div class="ia-action-btn" title="Move">⠿</div>
+            </div>
+            <div class="ia-card-icon">💰</div>
+            <div class="ia-card-title">Pricing</div>
+            <div class="ia-card-slug">/product/pricing</div>
+            <div class="ia-card-meta">
+              <span class="ia-card-type">Landing Page</span>
+              <span class="sdot sdot-pub"></span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--color-text-muted)">0 children · v5</div>
+          </div>
+
+          <div class="ia-page-card has-children" onclick="drillDown('Changelog')">
+            <div class="ia-card-actions">
+              <div class="ia-action-btn" title="Edit" onclick="event.stopPropagation();window.location='entry-editor.html'">✏️</div>
+              <div class="ia-action-btn" title="Add child" onclick="event.stopPropagation();openAddModal('Changelog')">+</div>
+              <div class="ia-action-btn" title="Move">⠿</div>
+            </div>
+            <div class="ia-card-icon">📋</div>
+            <div class="ia-card-title">Changelog</div>
+            <div class="ia-card-slug">/product/changelog</div>
+            <div class="ia-card-meta">
+              <span class="ia-card-type">Index Page</span>
+              <span class="sdot sdot-pub"></span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:#6366f1;font-weight:600">↓ 12 children</div>
+          </div>
+
+          <div class="ia-page-card" onclick="selectCard(this,'Integrations')">
+            <div class="ia-card-actions">
+              <div class="ia-action-btn" title="Edit" onclick="event.stopPropagation()">✏️</div>
+              <div class="ia-action-btn" title="Add child" onclick="event.stopPropagation()">+</div>
+              <div class="ia-action-btn" title="Move">⠿</div>
+            </div>
+            <div class="ia-card-icon">🔌</div>
+            <div class="ia-card-title">Integrations</div>
+            <div class="ia-card-slug">/product/integrations</div>
+            <div class="ia-card-meta">
+              <span class="ia-card-type">Landing Page</span>
+              <span class="sdot sdot-pend"></span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--color-warning)">Pending review</div>
+          </div>
+
+          <div class="ia-page-card" onclick="selectCard(this,'Security')">
+            <div class="ia-card-actions">
+              <div class="ia-action-btn" title="Edit" onclick="event.stopPropagation()">✏️</div>
+              <div class="ia-action-btn" title="Add child" onclick="event.stopPropagation()">+</div>
+              <div class="ia-action-btn" title="Move">⠿</div>
+            </div>
+            <div class="ia-card-icon">🔒</div>
+            <div class="ia-card-title">Security</div>
+            <div class="ia-card-slug">/product/security</div>
+            <div class="ia-card-meta">
+              <span class="ia-card-type">Landing Page</span>
+              <span class="sdot sdot-draft"></span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--color-text-muted)">Draft · 0 children</div>
+          </div>
+
+          <div class="ia-add-card" onclick="openAddModal('Product')">
+            <div style="font-size:22px;margin-bottom:6px">＋</div>
+            <div style="font-weight:600;font-size:13px">Add child page</div>
+            <div style="font-size:11px;margin-top:2px">under Product</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- LIST VIEW -->
+      <div id="view-list" style="display:none">
+        <div class="card">
+          <div class="table-wrap">
+            <table class="ia-list-table">
+              <thead>
+                <tr>
+                  <th>Page / Hierarchy</th>
+                  <th>Slug</th>
+                  <th>Content Type</th>
+                  <th>Status</th>
+                  <th>Depth</th>
+                  <th>Children</th>
+                  <th>Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="ia-row-hover" onclick="selectListRow(this,'Home')">
+                  <td><span class="ia-indent">🏠</span> <strong>Home</strong></td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/</td>
+                  <td><span class="tag">Landing Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">0</td><td class="text-muted">6</td><td class="text-muted">2 hr ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover" onclick="selectListRow(this,'About')">
+                  <td><span class="ia-indent" style="padding-left:16px">└ 📄</span> About</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/about</td>
+                  <td><span class="tag">Landing Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">1</td><td class="text-muted">3</td><td class="text-muted">3 days ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ 📄</span> Our Story</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/about/our-story</td>
+                  <td><span class="tag">Content Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">0</td><td class="text-muted">1 wk ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ 📄</span> Team</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/about/team</td>
+                  <td><span class="tag">Content Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">0</td><td class="text-muted">1 wk ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ 📄</span> Careers</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/about/careers</td>
+                  <td><span class="tag">Content Page</span></td>
+                  <td><span class="badge badge-draft"><span class="badge-dot"></span>Draft</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">1</td><td class="text-muted">Today</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover" onclick="selectListRow(this,'Product')">
+                  <td><span class="ia-indent" style="padding-left:16px">└ 📦</span> <strong>Product</strong></td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/product</td>
+                  <td><span class="tag">Landing Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">1</td><td class="text-muted">5</td><td class="text-muted">Yesterday</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ ⭐</span> Features</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/product/features</td>
+                  <td><span class="tag">Landing Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">0</td><td class="text-muted">2 days ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ 💰</span> Pricing</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/product/pricing</td>
+                  <td><span class="tag">Landing Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">0</td><td class="text-muted">3 days ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ 📋</span> Changelog</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/product/changelog</td>
+                  <td><span class="tag">Index Page</span></td>
+                  <td><span class="badge badge-published"><span class="badge-dot"></span>Published</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">12</td><td class="text-muted">1 hr ago</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+                <tr class="ia-row-hover">
+                  <td><span class="ia-indent" style="padding-left:32px">└ 🔌</span> Integrations</td>
+                  <td class="text-muted" style="font-family:monospace;font-size:12px">/product/integrations</td>
+                  <td><span class="tag">Landing Page</span></td>
+                  <td><span class="badge badge-pending"><span class="badge-dot"></span>Pending</span></td>
+                  <td class="text-muted">2</td><td class="text-muted">0</td><td class="text-muted">Today</td>
+                  <td class="td-actions"><a href="entry-editor.html" class="btn btn-ghost btn-sm btn-icon">✏️</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT: Detail Panel ── -->
+    <div class="ia-detail-panel" id="detail-panel">
+
+      <!-- Page header -->
+      <div class="dp-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:15px;font-weight:800" id="dp-page-title">⭐ Features</span>
+          <span class="badge badge-published">Published</span>
+        </div>
+
+        <!-- Page type pills -->
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <div id="dp-type-static" onclick="setPageType('static')"
+            style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:2px solid var(--color-brand);background:var(--color-brand-light);cursor:pointer;font-size:11px;font-weight:700;color:var(--color-brand)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            Static Page
+          </div>
+          <div id="dp-type-collection" onclick="setPageType('collection')"
+            style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:2px solid var(--color-border);background:white;cursor:pointer;font-size:11px;font-weight:700;color:var(--color-text-muted)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+            Collection Route
+          </div>
+        </div>
+
+        <!-- CTAs -->
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <a href="entry-editor.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center" id="dp-content-btn">✏️ Edit Content</a>
+          <button class="btn btn-secondary btn-sm" onclick="window.open('#')">Preview ↗</button>
+        </div>
+        <a href="page-designer.html" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;display:flex">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Edit Template in Designer
+        </a>
+      </div>
+
+      <!-- Page Structure -->
+      <div class="dp-section">
+        <div class="dp-label">Page Structure</div>
+
+        <!-- Global Layout -->
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:var(--color-text);margin-bottom:4px">Global Layout</div>
+          <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:var(--color-brand)"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            <span style="font-size:12px;font-weight:600;flex:1">Default Layout</span>
+            <button onclick="alert('Layout picker: choose which global shell (header/footer) this page uses.')" style="font-size:11px;color:var(--color-brand);background:none;border:none;cursor:pointer;font-weight:600">Change</button>
+          </div>
+          <div style="font-size:10.5px;color:var(--color-text-muted);margin-top:3px;padding:0 2px">Header · Footer · Nav inherited from this layout</div>
+        </div>
+
+        <!-- Page Template -->
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--color-text);margin-bottom:4px">Page Template</div>
+          <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:#7c3aed"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            <span style="font-size:12px;font-weight:600;flex:1">Landing · hero · features · cta</span>
+            <button onclick="alert('Template picker: choose the content zone structure for this page.')" style="font-size:11px;color:var(--color-brand);background:none;border:none;cursor:pointer;font-weight:600">Change</button>
+          </div>
+          <div style="font-size:10.5px;color:var(--color-text-muted);margin-top:3px;padding:0 2px">Used by 4 pages · <a href="page-designer.html" style="color:var(--color-brand)">Edit template →</a></div>
+        </div>
+      </div>
+
+      <!-- Static: Linked Entry -->
+      <div class="dp-section" id="dp-static-section">
+        <div class="dp-label">Linked Entry</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg)">
+          <div style="width:28px;height:28px;border-radius:6px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2" style="width:13px;height:13px;"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Features Page Entry</div>
+            <div style="font-size:10.5px;color:var(--color-text-muted)">Landing Page · Published</div>
+          </div>
+          <a href="entry-editor.html" style="font-size:11px;color:var(--color-brand);font-weight:600;text-decoration:none;flex-shrink:0">Edit ↗</a>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px;justify-content:center" onclick="alert('Replace linked entry or create a new one for this page.')">↔ Change Entry</button>
+      </div>
+
+      <!-- Collection Route: content type + pattern -->
+      <div class="dp-section" id="dp-collection-section" style="display:none">
+        <div class="dp-label">Collection Route</div>
+        <div class="dp-field-row"><span class="text-muted">Content Type</span><span class="tag">Blog Post</span></div>
+        <div class="dp-field-row"><span class="text-muted">Route Pattern</span><span style="font-family:monospace;font-size:11px">/blog/[slug]</span></div>
+        <div class="dp-field-row">
+          <span class="text-muted">Entries</span>
+          <span style="color:var(--color-brand);font-weight:600;cursor:pointer" onclick="window.location='entry-list.html'">24 posts →</span>
+        </div>
+        <div style="margin-top:6px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;font-size:11.5px;color:#0369a1;line-height:1.5">
+          Each Blog Post entry automatically gets a page at <code style="font-family:monospace;font-size:10.5px">/blog/[slug]</code>. No per-page authoring needed.
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px;justify-content:center" onclick="window.location='entry-list.html'">Browse Entries →</button>
+      </div>
+
+      <!-- Page info -->
+      <div class="dp-section">
+        <div class="dp-label">Page Info</div>
+        <div class="dp-field-row"><span class="text-muted">Slug</span><span style="font-family:monospace;font-size:11.5px">/product/features</span></div>
+        <div class="dp-field-row"><span class="text-muted">Version</span><span>v3</span></div>
+        <div class="dp-field-row"><span class="text-muted">Author</span><span>MK</span></div>
+        <div class="dp-field-row"><span class="text-muted">Last Modified</span><span>Apr 18, 2026</span></div>
+        <div class="dp-field-row"><span class="text-muted">Published</span><span>Apr 15, 2026</span></div>
+      </div>
+
+      <!-- Locales -->
+      <div class="dp-section">
+        <div class="dp-label">Locales</div>
+        <div class="dp-field-row"><span>🇺🇸 en-US</span><span class="badge badge-published" style="font-size:10px">Published</span></div>
+        <div class="dp-field-row"><span>🇫🇷 fr-FR</span><span class="badge badge-published" style="font-size:10px">Published</span></div>
+        <div class="dp-field-row"><span>🇩🇪 de-DE</span><span class="badge badge-draft" style="font-size:10px">Draft</span></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%;justify-content:center">+ Add Locale</button>
+      </div>
+
+      <!-- SEO -->
+      <div class="dp-section">
+        <div class="dp-label">SEO</div>
+        <div class="dp-field-row"><span class="text-muted">Meta Title</span><span style="font-size:11.5px;text-align:right;max-width:160px">MicroCMS Features — Everything you need</span></div>
+        <div class="dp-field-row"><span class="text-muted">Slug</span><span style="font-family:monospace;font-size:11px">features</span></div>
+        <div class="dp-field-row"><span class="text-muted">Canonical</span><span style="font-size:11px">www.acmecorp.io/product/features</span></div>
+      </div>
+
+      <!-- Hierarchy -->
+      <div class="dp-section">
+        <div class="dp-label">Hierarchy</div>
+        <div style="font-size:12.5px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px">🏠</span><span class="text-muted">Home</span></div>
+          <div style="padding-left:16px;display:flex;align-items:center;gap:6px;border-left:2px solid var(--color-border)"><span style="font-size:14px">📦</span><span class="text-muted">Product</span></div>
+          <div style="padding-left:32px;display:flex;align-items:center;gap:6px;border-left:2px solid var(--color-brand)"><span style="font-size:14px">⭐</span><strong>Features</strong></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm">↑ Move Up</button>
+          <button class="btn btn-secondary btn-sm">↓ Move Down</button>
+          <button class="btn btn-secondary btn-sm">Reparent…</button>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="dp-section" style="border:none">
+        <div class="dp-label">Actions</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-secondary btn-sm" style="justify-content:flex-start">📋 Duplicate page</button>
+          <button class="btn btn-secondary btn-sm" style="justify-content:flex-start">🔗 Copy URL</button>
+          <button class="btn btn-secondary btn-sm" style="justify-content:flex-start">📦 Archive</button>
+          <button class="btn btn-danger btn-sm" style="justify-content:flex-start">🗑️ Delete page</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ Modal: Add Page ══ -->
+<div class="modal-backdrop" id="modal-add-page" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Page</div>
+      <button class="modal-close" onclick="document.getElementById('modal-add-page').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Parent Page</label>
+        <input class="form-input" id="modal-parent-label" readonly style="background:#f9fafb;color:var(--color-text-muted)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Page Title <span class="req">*</span></label>
+        <input class="form-input" placeholder="e.g. Enterprise Plan" id="new-page-title" oninput="autoSlug(this.value)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL Slug <span class="req">*</span></label>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span class="text-muted text-sm" id="slug-prefix">/product/</span>
+          <input class="form-input" id="new-page-slug" placeholder="enterprise-plan" style="flex:1" />
+        </div>
+      </div>
+
+      <!-- Page Type -->
+      <div class="form-group">
+        <label class="form-label">Page Type <span class="req">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div id="modal-type-static" onclick="modalSetType('static')"
+            style="padding:10px 12px;border:2px solid var(--color-brand);border-radius:8px;cursor:pointer;background:var(--color-brand-light)">
+            <div style="font-size:12px;font-weight:700;color:var(--color-brand);margin-bottom:2px">Static Page</div>
+            <div style="font-size:11px;color:var(--color-text-muted)">One URL, one entry. About, Pricing, Home…</div>
+          </div>
+          <div id="modal-type-collection" onclick="modalSetType('collection')"
+            style="padding:10px 12px;border:2px solid var(--color-border);border-radius:8px;cursor:pointer;background:white">
+            <div style="font-size:12px;font-weight:700;color:var(--color-text);margin-bottom:2px">Collection Route</div>
+            <div style="font-size:11px;color:var(--color-text-muted)">One template, many entries. Blog, Products…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Static: entry option -->
+      <div id="modal-static-opts">
+        <div class="form-group">
+          <label class="form-label">Linked Entry</label>
+          <select class="form-select">
+            <option value="">— Create new entry automatically —</option>
+            <option>Home Page Entry</option>
+            <option>About Page Entry</option>
+          </select>
+          <div class="form-hint">An entry stores the page content. One will be created if not selected.</div>
+        </div>
+      </div>
+
+      <!-- Collection: content type + route -->
+      <div id="modal-collection-opts" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Content Type <span class="req">*</span></label>
+          <select class="form-select">
+            <option>Blog Post</option>
+            <option>Product</option>
+            <option>Case Study</option>
+            <option>Documentation</option>
+            <option>Event</option>
+          </select>
+          <div class="form-hint">Each entry of this type automatically gets a page via the route below.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Route Pattern <span class="req">*</span></label>
+          <input class="form-input" value="/blog/[slug]" placeholder="/blog/[slug]" />
+          <div class="form-hint">Use <code>[slug]</code> as the dynamic segment resolved from each entry.</div>
+        </div>
+      </div>
+
+      <!-- Global Layout -->
+      <div class="form-group">
+        <label class="form-label">Global Layout</label>
+        <select class="form-select">
+          <option>Default Layout (header · footer · nav)</option>
+          <option>Marketing Layout (full-bleed header)</option>
+          <option>Minimal Layout (no footer)</option>
+          <option>Blank (no shell)</option>
+        </select>
+        <div class="form-hint">Defines the header, footer, and navigation shell shared across pages.</div>
+      </div>
+
+      <!-- Page Template -->
+      <div class="form-group">
+        <label class="form-label">Page Template</label>
+        <select class="form-select">
+          <option>Landing (hero · features · content · cta)</option>
+          <option>Content Page (full-width body)</option>
+          <option>Blog Article (content + sidebar)</option>
+          <option>Product Detail (gallery · specs · pricing)</option>
+          <option>Blank (free-form zones)</option>
+        </select>
+        <div class="form-hint">Defines the content zone structure. Shared across pages using this template.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Initial Status</label>
+        <select class="form-select">
+          <option>Draft</option>
+          <option>Published</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-add-page').style.display='none'">Cancel</button>
+      <button class="btn btn-primary">Create Page</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var currentPageType = 'static';
+
+  function switchSite(btn, site) {
+    document.querySelectorAll('.site-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function selectNode(row, label) {
+    document.querySelectorAll('.tree-row').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+    document.getElementById('dp-page-title').textContent =
+      (label === 'Home' ? '🏠 ' : label === 'Product' ? '📦 ' : '📄 ') + label;
+  }
+
+  function selectCard(card, label) {
+    document.querySelectorAll('.ia-page-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+
+  function selectListRow(row, label) {
+    document.querySelectorAll('.ia-row-hover').forEach(r => r.style.background = '');
+    row.style.background = '#fafaff';
+  }
+
+  function drillDown(name) {
+    document.querySelector('.ia-breadcrumb').innerHTML =
+      `<span onclick="drillUp('Home')">🏠 Home</span>
+       <span class="sep">/</span>
+       <span onclick="drillUp('Product')">Product</span>
+       <span class="sep">/</span>
+       <span class="here">${name}</span>`;
+    alert('Prototype: drilling into "' + name + '" would show its child pages.');
+  }
+
+  function drillUp(name) {
+    document.querySelector('.ia-breadcrumb').innerHTML =
+      `<span onclick="">🏠 Home</span>
+       <span class="sep">/</span>
+       <span class="here">${name}</span>`;
+  }
+
+  function setView(type, btn) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-card').style.display = type === 'card' ? 'block' : 'none';
+    document.getElementById('view-list').style.display  = type === 'list'  ? 'block' : 'none';
+  }
+
+  function openAddModal(parent) {
+    document.getElementById('modal-parent-label').value = parent;
+    document.getElementById('slug-prefix').textContent = '/' + parent.toLowerCase().replace(/ /g,'-') + '/';
+    document.getElementById('new-page-title').value = '';
+    document.getElementById('new-page-slug').value  = '';
+    document.getElementById('modal-add-page').style.display = 'flex';
+    modalSetType('static');
+  }
+
+  function autoSlug(title) {
+    document.getElementById('new-page-slug').value =
+      title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+
+  function filterTree(q) {
+    document.querySelectorAll('.tree-row').forEach(row => {
+      const label = row.querySelector('.tree-label');
+      if (!label) return;
+      const match = !q || label.textContent.toLowerCase().includes(q.toLowerCase());
+      row.closest('.tree-node').style.display = match ? '' : 'none';
+    });
+  }
+
+  function setPageType(type) {
+    currentPageType = type;
+    var staticPill = document.getElementById('dp-type-static');
+    var collPill   = document.getElementById('dp-type-collection');
+    var staticSec  = document.getElementById('dp-static-section');
+    var collSec    = document.getElementById('dp-collection-section');
+    var contentBtn = document.getElementById('dp-content-btn');
+
+    if (type === 'static') {
+      staticPill.style.border = '2px solid var(--color-brand)';
+      staticPill.style.background = 'var(--color-brand-light)';
+      staticPill.style.color = 'var(--color-brand)';
+      collPill.style.border = '2px solid var(--color-border)';
+      collPill.style.background = 'white';
+      collPill.style.color = 'var(--color-text-muted)';
+      staticSec.style.display = '';
+      collSec.style.display = 'none';
+      contentBtn.textContent = '✏️ Edit Content';
+      contentBtn.href = 'entry-editor.html';
+    } else {
+      collPill.style.border = '2px solid var(--color-brand)';
+      collPill.style.background = 'var(--color-brand-light)';
+      collPill.style.color = 'var(--color-brand)';
+      staticPill.style.border = '2px solid var(--color-border)';
+      staticPill.style.background = 'white';
+      staticPill.style.color = 'var(--color-text-muted)';
+      staticSec.style.display = 'none';
+      collSec.style.display = '';
+      contentBtn.textContent = '📋 Browse Entries';
+      contentBtn.href = 'entry-list.html';
+    }
+  }
+
+  function modalSetType(type) {
+    var staticCard = document.getElementById('modal-type-static');
+    var collCard   = document.getElementById('modal-type-collection');
+    var staticOpts = document.getElementById('modal-static-opts');
+    var collOpts   = document.getElementById('modal-collection-opts');
+
+    if (type === 'static') {
+      staticCard.style.border = '2px solid var(--color-brand)';
+      staticCard.style.background = 'var(--color-brand-light)';
+      collCard.style.border = '2px solid var(--color-border)';
+      collCard.style.background = 'white';
+      staticOpts.style.display = '';
+      collOpts.style.display = 'none';
+    } else {
+      collCard.style.border = '2px solid var(--color-brand)';
+      collCard.style.background = 'var(--color-brand-light)';
+      staticCard.style.border = '2px solid var(--color-border)';
+      staticCard.style.background = 'white';
+      staticOpts.style.display = 'none';
+      collOpts.style.display = '';
+    }
+  }
+</script>
+</body>
+</html>

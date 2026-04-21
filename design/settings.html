@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MicroCMS — Settings</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    .settings-layout { display:grid; grid-template-columns:220px 1fr; gap:0; min-height:calc(100vh - 56px); }
+    .settings-nav { border-right:1px solid var(--color-border); background:white; padding:16px 12px; position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto; }
+    .settings-content { padding:28px 32px; max-width:760px; }
+    .settings-nav-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; font-size:13px; font-weight:500; color:var(--color-text-muted); cursor:pointer; margin-bottom:2px; text-decoration:none; }
+    .settings-nav-item:hover { background:var(--color-bg); color:var(--color-text); }
+    .settings-nav-item.active { background:var(--color-brand-light); color:var(--color-brand-dark); font-weight:600; }
+    .settings-nav-item svg { width:15px; height:15px; flex-shrink:0; }
+    .settings-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--color-text-muted); padding:10px 10px 4px; }
+    .setting-row { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:18px 0; border-bottom:1px solid var(--color-border); }
+    .setting-row:last-child { border-bottom:none; }
+    .setting-info { flex:1; }
+    .setting-label { font-size:13.5px; font-weight:600; color:var(--color-text); margin-bottom:3px; }
+    .setting-desc { font-size:12.5px; color:var(--color-text-muted); line-height:1.5; }
+    .setting-control { flex-shrink:0; min-width:160px; text-align:right; }
+    .user-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--color-border); }
+    .user-row:last-child { border-bottom:none; }
+    .user-info { flex:1; }
+    .user-name { font-size:13.5px; font-weight:600; }
+    .user-email { font-size:12px; color:var(--color-text-muted); }
+    .role-select { font-size:12px; padding:4px 8px; border:1px solid var(--color-border); border-radius:5px; background:white; }
+    .plugin-row { display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid var(--color-border); }
+    .plugin-row:last-child { border-bottom:none; }
+    .plugin-icon { width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .plugin-info { flex:1; }
+    .plugin-name { font-size:13.5px; font-weight:600; }
+    .plugin-desc { font-size:12px; color:var(--color-text-muted); margin-top:1px; }
+    .plugin-meta { font-size:11px; color:var(--color-text-muted); margin-top:3px; }
+    .webhook-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--color-border); }
+    .webhook-row:last-child { border-bottom:none; }
+    .key-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--color-border); font-size:13px; }
+    .key-row:last-child { border-bottom:none; }
+    .key-value { font-family:monospace; font-size:12px; background:var(--color-bg); padding:4px 10px; border-radius:5px; border:1px solid var(--color-border); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .provider-card { border:2px solid var(--color-border); border-radius:10px; padding:14px 16px; cursor:pointer; transition:all 0.15s; }
+    .provider-card:hover { border-color:var(--color-brand); }
+    .provider-card.selected { border-color:var(--color-brand); background:var(--color-brand-light); }
+    .provider-logo { font-size:28px; margin-bottom:6px; }
+    .provider-name { font-size:13px; font-weight:700; }
+    .provider-note { font-size:11px; color:var(--color-text-muted); margin-top:2px; }
+    .section-title { font-size:17px; font-weight:800; color:var(--color-text); margin-bottom:4px; }
+    .section-desc { font-size:13px; color:var(--color-text-muted); margin-bottom:22px; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-mark">M</div>
+    <span class="sidebar-logo-name">MicroCMS</span>
+    <span class="sidebar-logo-badge">v2</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Workspace</div>
+    <a href="index.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="site-management.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Sites
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="site-structure.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M9 17v-4M12 17v-6M15 17v-2"/></svg>
+      Site Structure
+      <span class="nav-badge">3 sites</span>
+    </a>
+    <a href="content-types.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+      Content Types
+    </a>
+    <a href="entry-list.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h4M7 4h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Entries
+      <span class="nav-badge">142</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Design</div>
+    <a href="component-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      Component Library
+      <span class="nav-badge">12</span>
+    </a>
+    <a href="page-designer.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Page Designer
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Media</div>
+    <a href="media-library.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Media Library
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI</div>
+    <a href="ai-copilot.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      AI Copilot
+      <span class="nav-badge ai">AI</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Config</div>
+    <a href="settings.html" class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant-pill">
+      <div class="tenant-avatar">AC</div>
+      <div>
+        <div class="tenant-name">Acme Corp</div>
+        <div class="tenant-plan">Pro Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-breadcrumb">
+      <a href="index.html">Home</a><span class="sep">/</span>
+      <span class="current">Settings</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="user-avatar">MK</div>
+    </div>
+  </header>
+
+  <div class="settings-layout">
+
+    <!-- Settings Nav -->
+    <div class="settings-nav">
+      <div class="settings-section-label">Tenant</div>
+      <a href="#general" class="settings-nav-item active" onclick="showSection('general',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        General
+      </a>
+      <a href="#users" class="settings-nav-item" onclick="showSection('users',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Users &amp; Roles
+      </a>
+      <a href="#api" class="settings-nav-item" onclick="showSection('api',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        API Keys
+      </a>
+      <a href="#webhooks" class="settings-nav-item" onclick="showSection('webhooks',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        Webhooks
+      </a>
+      <a href="#plugins" class="settings-nav-item" onclick="showSection('plugins',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Plugins
+      </a>
+      <div class="settings-section-label">AI</div>
+      <a href="#ai-providers" class="settings-nav-item" onclick="showSection('ai-providers',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        AI Providers
+      </a>
+      <a href="#ai-budget" class="settings-nav-item" onclick="showSection('ai-budget',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Budgets &amp; Limits
+      </a>
+      <a href="#ai-safety" class="settings-nav-item" onclick="showSection('ai-safety',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Safety &amp; Governance
+      </a>
+      <div class="settings-section-label">Security</div>
+      <a href="#security" class="settings-nav-item" onclick="showSection('security',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Auth &amp; Security
+      </a>
+    </div>
+
+    <!-- Settings Content -->
+    <div style="overflow-y:auto;padding:28px 32px">
+
+      <!-- ── GENERAL ── -->
+      <div id="section-general">
+        <div class="section-title">General</div>
+        <div class="section-desc">Basic tenant information and configuration.</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Tenant Name</div>
+                <div class="setting-desc">Displayed in the admin UI and outbound emails.</div>
+              </div>
+              <div class="setting-control"><input class="form-input" value="Acme Corp" style="width:200px" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Tenant Slug</div>
+                <div class="setting-desc">Used in API path segments. Cannot be changed after creation.</div>
+              </div>
+              <div class="setting-control">
+                <input class="form-input" value="acme-corp" style="width:200px" disabled />
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Primary Domain</div>
+                <div class="setting-desc">The canonical domain for tenant resolution.</div>
+              </div>
+              <div class="setting-control"><input class="form-input" value="acmecorp.io" style="width:200px" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Default Locale</div>
+                <div class="setting-desc">Fallback locale when a specific locale is not found.</div>
+              </div>
+              <div class="setting-control">
+                <select class="form-select" style="width:200px">
+                  <option selected>en-US</option><option>en-GB</option><option>fr-FR</option><option>de-DE</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Timezone</div>
+                <div class="setting-desc">Used for scheduled publish times displayed in the UI.</div>
+              </div>
+              <div class="setting-control">
+                <select class="form-select" style="width:200px">
+                  <option>UTC</option><option selected>UTC+5:30 (IST)</option><option>UTC-8 (PST)</option><option>UTC+1 (CET)</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;justify-content:flex-end">
+              <button class="btn btn-primary">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div style="margin-top:24px">
+          <div class="section-title" style="font-size:15px;color:var(--color-danger)">Danger Zone</div>
+          <div class="card" style="border-color:#fecaca">
+            <div class="card-body">
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Suspend Tenant</div>
+                  <div class="setting-desc">Temporarily disable all API access and authoring for this tenant.</div>
+                </div>
+                <div class="setting-control"><button class="btn btn-danger">Suspend</button></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Archive Tenant</div>
+                  <div class="setting-desc">Make tenant read-only. Data is retained for compliance.</div>
+                </div>
+                <div class="setting-control"><button class="btn btn-danger">Archive</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div id="section-users" style="display:none">
+        <div class="section-title">Users &amp; Roles</div>
+        <div class="section-desc">Manage team members and their permissions for this tenant.</div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <span class="card-title">Team Members</span>
+            <button class="btn btn-primary btn-sm">+ Invite User</button>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="user-row">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white">MK</div>
+              <div class="user-info">
+                <div class="user-name">Manas K <span style="font-size:11px;background:#e0e7ff;color:#4338ca;padding:1px 6px;border-radius:10px;margin-left:6px">You</span></div>
+                <div class="user-email">manas.mk@gmail.com · MFA ✓</div>
+              </div>
+              <select class="role-select"><option selected>Tenant Admin</option><option>Editor</option><option>Author</option></select>
+              <button class="btn btn-ghost btn-sm btn-icon" disabled>🗑️</button>
+            </div>
+            <div class="user-row">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white">JD</div>
+              <div class="user-info">
+                <div class="user-name">Jane Doe</div>
+                <div class="user-email">jane.doe@acmecorp.io · MFA ✓</div>
+              </div>
+              <select class="role-select"><option>Tenant Admin</option><option selected>Editor</option><option>Author</option></select>
+              <button class="btn btn-ghost btn-sm btn-icon">🗑️</button>
+            </div>
+            <div class="user-row">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white">SA</div>
+              <div class="user-info">
+                <div class="user-name">Sam Archer</div>
+                <div class="user-email">s.archer@acmecorp.io · MFA ✗</div>
+              </div>
+              <select class="role-select"><option>Tenant Admin</option><option>Editor</option><option selected>Author</option></select>
+              <button class="btn btn-ghost btn-sm btn-icon">🗑️</button>
+            </div>
+            <div class="user-row" style="border:none">
+              <div style="width:36px;height:36px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:13px;color:#9ca3af">?</div>
+              <div class="user-info">
+                <div class="user-name" style="color:var(--color-text-muted)">Pending invite</div>
+                <div class="user-email">dev@acmecorp.io · Sent 2 days ago</div>
+              </div>
+              <span class="badge badge-pending">Pending</span>
+              <button class="btn btn-ghost btn-sm">Resend</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role Matrix -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Role Permissions Matrix</span><button class="btn btn-secondary btn-sm">Edit Roles</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Capability</th>
+                  <th style="text-align:center">Tenant Admin</th>
+                  <th style="text-align:center">Approver</th>
+                  <th style="text-align:center">Editor</th>
+                  <th style="text-align:center">Author</th>
+                  <th style="text-align:center">Reader</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Manage users</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+                <tr><td>Manage content types</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+                <tr><td>Publish entries</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+                <tr><td>Edit any entry</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+                <tr><td>Edit own entries</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td></tr>
+                <tr><td>Read published</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PLUGINS ── -->
+      <div id="section-plugins" style="display:none">
+        <div class="section-title">Plugins</div>
+        <div class="section-desc">Extend MicroCMS with certified plugins. All plugins are signature-verified and run in isolated contexts.</div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Installed Plugins</span>
+            <button class="btn btn-secondary btn-sm">Browse Plugin Registry</button>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="plugin-row">
+              <div class="plugin-icon" style="background:#f0fdf4">🔔</div>
+              <div class="plugin-info">
+                <div class="plugin-name">Slack Notifier <span class="badge badge-published" style="font-size:10px">Active</span></div>
+                <div class="plugin-desc">Send Slack notifications on entry publish and approval.</div>
+                <div class="plugin-meta">v1.2.0 · Acme Inc. · Capabilities: network.outbound, events.subscribe</div>
+              </div>
+              <div class="toggle on"><div class="toggle-thumb"></div></div>
+              <button class="btn btn-ghost btn-sm">Configure</button>
+            </div>
+            <div class="plugin-row">
+              <div class="plugin-icon" style="background:#eff6ff">🎨</div>
+              <div class="plugin-info">
+                <div class="plugin-name">Color Picker Field <span class="badge badge-published" style="font-size:10px">Active</span></div>
+                <div class="plugin-desc">Adds a hex color picker custom field type to content types.</div>
+                <div class="plugin-meta">v2.0.1 · MicroCMS Official · Capabilities: field.type</div>
+              </div>
+              <div class="toggle on"><div class="toggle-thumb"></div></div>
+              <button class="btn btn-ghost btn-sm">Configure</button>
+            </div>
+            <div class="plugin-row">
+              <div class="plugin-icon" style="background:#fff7ed">🦠</div>
+              <div class="plugin-info">
+                <div class="plugin-name">ClamAV Scanner <span class="badge badge-published" style="font-size:10px">Active</span></div>
+                <div class="plugin-desc">Virus scanning on media upload via ClamAV TCP adapter.</div>
+                <div class="plugin-meta">v1.0.3 · MicroCMS Official · Capabilities: storage.scan</div>
+              </div>
+              <div class="toggle on"><div class="toggle-thumb"></div></div>
+              <button class="btn btn-ghost btn-sm">Configure</button>
+            </div>
+            <div class="plugin-row" style="border:none">
+              <div class="plugin-icon" style="background:#fef2f2">📊</div>
+              <div class="plugin-info">
+                <div class="plugin-name">Google Analytics Bridge <span class="badge badge-draft" style="font-size:10px">Inactive</span></div>
+                <div class="plugin-desc">Pushes content events to GA4 on publish.</div>
+                <div class="plugin-meta">v1.1.0 · ThirdParty Labs · Capabilities: network.outbound</div>
+              </div>
+              <div class="toggle"><div class="toggle-thumb"></div></div>
+              <button class="btn btn-ghost btn-sm">Configure</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WEBHOOKS ── -->
+      <div id="section-webhooks" style="display:none">
+        <div class="section-title">Webhooks</div>
+        <div class="section-desc">Receive real-time HTTP callbacks when content events occur.</div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Subscriptions</span>
+            <button class="btn btn-primary btn-sm">+ New Webhook</button>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="webhook-row">
+              <div style="flex:1">
+                <div class="font-semibold" style="font-size:13.5px">Frontend Revalidation</div>
+                <div class="text-xs text-muted" style="margin-top:2px">https://acmecorp.io/api/revalidate · entry.published, entry.unpublished</div>
+              </div>
+              <span class="badge badge-published">Active</span>
+              <span class="text-xs text-muted">Last: 2 min ago ✓</span>
+              <button class="btn btn-ghost btn-sm">Edit</button>
+            </div>
+            <div class="webhook-row">
+              <div style="flex:1">
+                <div class="font-semibold" style="font-size:13.5px">Search Reindex</div>
+                <div class="text-xs text-muted" style="margin-top:2px">https://search.acmecorp.io/index · entry.published, asset.uploaded</div>
+              </div>
+              <span class="badge badge-published">Active</span>
+              <span class="text-xs text-muted">Last: 1 hr ago ✓</span>
+              <button class="btn btn-ghost btn-sm">Edit</button>
+            </div>
+            <div class="webhook-row" style="border:none">
+              <div style="flex:1">
+                <div class="font-semibold" style="font-size:13.5px">Slack Digest (via plugin)</div>
+                <div class="text-xs text-muted" style="margin-top:2px">https://hooks.slack.com/... · entry.pending_review</div>
+              </div>
+              <span class="badge badge-draft">Inactive</span>
+              <span class="text-xs text-muted">Last: 2 days ago</span>
+              <button class="btn btn-ghost btn-sm">Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── API KEYS ── -->
+      <div id="section-api" style="display:none">
+        <div class="section-title">API Keys</div>
+        <div class="section-desc">Machine credentials for server-to-server API access. Treat secrets like passwords — never expose in client-side code.</div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">API Clients</span>
+            <button class="btn btn-primary btn-sm">+ New API Client</button>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+            <div class="key-row">
+              <div style="flex:1">
+                <div class="font-semibold" style="font-size:13px">Next.js Frontend</div>
+                <div class="text-xs text-muted">Scopes: content.read · Created Apr 10</div>
+              </div>
+              <div class="key-value">mk_live_ac_••••••••••••••••••••••••••••4f2a</div>
+              <button class="btn btn-secondary btn-sm">Copy</button>
+              <button class="btn btn-danger btn-sm">Revoke</button>
+            </div>
+            <div class="key-row">
+              <div style="flex:1">
+                <div class="font-semibold" style="font-size:13px">CI/CD Deploy Bot</div>
+                <div class="text-xs text-muted">Scopes: content.read, content.write · Created Mar 22</div>
+              </div>
+              <div class="key-value">mk_live_ac_••••••••••••••••••••••••••••9c1d</div>
+              <button class="btn btn-secondary btn-sm">Copy</button>
+              <button class="btn btn-danger btn-sm">Revoke</button>
+            </div>
+            <div class="key-row" style="border:none">
+              <div style="flex:1">
+                <div class="font-semibold" style="font-size:13px">Mobile App (iOS/Android)</div>
+                <div class="text-xs text-muted">Scopes: content.read · Expires Apr 10, 2027</div>
+              </div>
+              <div class="key-value">mk_live_ac_••••••••••••••••••••••••••••b83e</div>
+              <button class="btn btn-secondary btn-sm">Copy</button>
+              <button class="btn btn-danger btn-sm">Revoke</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI PROVIDERS ── -->
+      <div id="section-ai-providers" style="display:none">
+        <div class="section-title">AI Providers</div>
+        <div class="section-desc">Select which AI providers are active for this tenant. The system picks the best match based on model tier, data-residency, and availability.</div>
+
+        <div class="alert alert-info" style="margin-bottom:20px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Provider swap requires only a configuration change — no code changes required. <a href="#" style="color:var(--color-info);font-weight:600">ADR-011</a></span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+          <div class="provider-card selected">
+            <div class="provider-logo">🤖</div>
+            <div class="provider-name">Anthropic Claude</div>
+            <div class="provider-note">claude-sonnet-4-6 (default)</div>
+          </div>
+          <div class="provider-card selected">
+            <div class="provider-logo">🔵</div>
+            <div class="provider-name">Azure OpenAI</div>
+            <div class="provider-note">gpt-4o · EU West</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-logo">🟢</div>
+            <div class="provider-name">OpenAI</div>
+            <div class="provider-note">gpt-4o · US East</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-logo">🟠</div>
+            <div class="provider-name">Amazon Bedrock</div>
+            <div class="provider-note">claude-haiku · ap-south-1</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-logo">🧠</div>
+            <div class="provider-name">Ollama (Self-hosted)</div>
+            <div class="provider-note">llama3 · localhost</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-logo">⚡</div>
+            <div class="provider-name">Google Vertex</div>
+            <div class="provider-note">gemini-1.5-pro</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Feature → Model Tier Overrides</span></div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr><th>Feature</th><th>Default Tier</th><th>Your Override</th><th>Active Model</th></tr></thead>
+              <tbody>
+                <tr><td>Draft Generation</td><td><span class="badge badge-approved">Strong</span></td><td><select class="form-select" style="width:110px;padding:3px 6px;font-size:12px"><option selected>Strong</option><option>Balanced</option><option>Fast</option></select></td><td class="text-muted text-sm">claude-opus-4-6</td></tr>
+                <tr><td>Rewrite / Tone</td><td><span class="badge badge-pending">Balanced</span></td><td><select class="form-select" style="width:110px;padding:3px 6px;font-size:12px"><option>Strong</option><option selected>Balanced</option><option>Fast</option></select></td><td class="text-muted text-sm">claude-sonnet-4-6</td></tr>
+                <tr><td>Summarize</td><td><span class="badge badge-draft">Fast</span></td><td><select class="form-select" style="width:110px;padding:3px 6px;font-size:12px"><option>Strong</option><option>Balanced</option><option selected>Fast</option></select></td><td class="text-muted text-sm">claude-haiku-4-5</td></tr>
+                <tr><td>Translation</td><td><span class="badge badge-pending">Balanced</span></td><td><select class="form-select" style="width:110px;padding:3px 6px;font-size:12px"><option>Strong</option><option selected>Balanced</option><option>Fast</option></select></td><td class="text-muted text-sm">claude-sonnet-4-6</td></tr>
+                <tr><td>SEO Suggestions</td><td><span class="badge badge-pending">Balanced</span></td><td><select class="form-select" style="width:110px;padding:3px 6px;font-size:12px"><option>Strong</option><option selected>Balanced</option><option>Fast</option></select></td><td class="text-muted text-sm">claude-sonnet-4-6</td></tr>
+                <tr><td>Alt Text / Tagging</td><td><span class="badge badge-draft">Fast</span></td><td><select class="form-select" style="width:110px;padding:3px 6px;font-size:12px"><option>Strong</option><option>Balanced</option><option selected>Fast</option></select></td><td class="text-muted text-sm">claude-haiku-4-5</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI BUDGETS ── -->
+      <div id="section-ai-budget" style="display:none">
+        <div class="section-title">AI Budgets &amp; Limits</div>
+        <div class="section-desc">Control AI spend per tenant and per user. Hard caps return HTTP 429 with Retry-After.</div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><span class="card-title">Tenant Monthly Budget</span></div>
+          <div class="card-body">
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Monthly Cost Cap</div><div class="setting-desc">Hard stop when exceeded. Returns 429 to all AI calls for this tenant.</div></div>
+              <div class="setting-control" style="display:flex;align-items:center;gap:6px">
+                <span class="text-muted">$</span><input class="form-input" value="20.00" style="width:90px" /><span class="text-muted">/ month</span>
+              </div>
+            </div>
+            <div style="margin:16px 0">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="text-sm font-semibold">April 2026</span>
+                <span class="text-sm font-semibold text-muted">$8.42 used of $20.00</span>
+              </div>
+              <div class="progress-bar" style="height:10px"><div class="progress-fill brand" style="width:42%"></div></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Hard Stop</div><div class="setting-desc">When ON, AI features are blocked once the budget is exhausted.</div></div>
+              <div class="setting-control"><div class="toggle on"><div class="toggle-thumb"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Per-User Daily Cap</span></div>
+          <div class="card-body">
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Daily Token Cap per User</div><div class="setting-desc">Prevents a single user from consuming the entire budget.</div></div>
+              <div class="setting-control" style="display:flex;align-items:center;gap:6px">
+                <input class="form-input" value="50000" style="width:100px" /><span class="text-muted">tokens / day</span>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Daily Cost Cap per User</div></div>
+              <div class="setting-control" style="display:flex;align-items:center;gap:6px">
+                <span class="text-muted">$</span><input class="form-input" value="2.00" style="width:90px" /><span class="text-muted">/ day</span>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;justify-content:flex-end"><button class="btn btn-primary">Save Budget Settings</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI SAFETY ── -->
+      <div id="section-ai-safety" style="display:none">
+        <div class="section-title">AI Safety &amp; Governance</div>
+        <div class="section-desc">Configure safety filters, PII redaction, prompt injection detection, and data-residency rules.</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">PII Redaction (Pre-call)</div><div class="setting-desc">Automatically redact names, emails, phone numbers before sending to AI provider.</div></div>
+              <div class="setting-control"><div class="toggle on"><div class="toggle-thumb"></div></div></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Prompt Injection Detection</div><div class="setting-desc">Block attempts to override system instructions via user-supplied content.</div></div>
+              <div class="setting-control"><div class="toggle on"><div class="toggle-thumb"></div></div></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Safety Post-Filter</div><div class="setting-desc">Run AI output through a safety classifier before returning to users.</div></div>
+              <div class="setting-control"><div class="toggle on"><div class="toggle-thumb"></div></div></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Grounded-only Mode</div><div class="setting-desc">Copilot must cite a retrieved source for factual claims or decline.</div></div>
+              <div class="setting-control"><div class="toggle on"><div class="toggle-thumb"></div></div></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Data Residency Region</div><div class="setting-desc">Only call AI providers in the selected region. Non-compliant providers are blocked.</div></div>
+              <div class="setting-control">
+                <select class="form-select" style="width:160px">
+                  <option>Any region</option>
+                  <option selected>EU only</option>
+                  <option>US only</option>
+                  <option>AP only</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Prompt/Response Audit Retention</div><div class="setting-desc">How long to keep AI request logs (minimum 90 days per NFR-13).</div></div>
+              <div class="setting-control">
+                <select class="form-select" style="width:160px">
+                  <option>90 days</option>
+                  <option selected>180 days</option>
+                  <option>1 year</option>
+                  <option>2 years</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;justify-content:flex-end"><button class="btn btn-primary">Save Safety Settings</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AUTH / SECURITY ── -->
+      <div id="section-security" style="display:none">
+        <div class="section-title">Auth &amp; Security</div>
+        <div class="section-desc">Session policies, MFA requirements, and token configuration.</div>
+        <div class="card">
+          <div class="card-body">
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Require MFA for Admins</div><div class="setting-desc">Tenant Admins and Approvers must enrol TOTP or WebAuthn.</div></div>
+              <div class="setting-control"><div class="toggle on"><div class="toggle-thumb"></div></div></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Session Idle Timeout</div><div class="setting-desc">Automatically sign out users who are inactive.</div></div>
+              <div class="setting-control">
+                <select class="form-select" style="width:150px">
+                  <option>15 minutes</option>
+                  <option selected>30 minutes</option>
+                  <option>1 hour</option>
+                  <option>4 hours</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Absolute Session Timeout</div><div class="setting-desc">Force re-authentication after this period regardless of activity.</div></div>
+              <div class="setting-control">
+                <select class="form-select" style="width:150px">
+                  <option>4 hours</option>
+                  <option selected>12 hours</option>
+                  <option>24 hours</option>
+                  <option>7 days</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">External OIDC Provider</div><div class="setting-desc">Use your own identity provider (Okta, Keycloak, Azure AD) instead of the built-in one.</div></div>
+              <div class="setting-control"><button class="btn btn-secondary btn-sm">Configure SSO</button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Allowed IP Ranges</div><div class="setting-desc">Restrict admin UI access to specific CIDR blocks.</div></div>
+              <div class="setting-control"><input class="form-input" placeholder="0.0.0.0/0" style="width:180px" /></div>
+            </div>
+            <div style="margin-top:16px;display:flex;justify-content:flex-end"><button class="btn btn-primary">Save Security Settings</button></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function showSection(id, el) {
+    document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+    document.getElementById('section-' + id).style.display = 'block';
+    document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    event.preventDefault();
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <AssemblyName>MicroCMS.Api</AssemblyName>
+    <RootNamespace>MicroCMS.Api</RootNamespace>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+  </PropertyGroup>
+
+  <!-- REST controllers and filters — NO direct reference to Infrastructure -->
+  <ItemGroup>
+    <ProjectReference Include="..\MicroCMS.Application\MicroCMS.Application.csproj" />
+    <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- API versioning -->
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+    <!-- OpenAPI / Swagger docs -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    <!-- Problem Details RFC 7807 -->
+    <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
+    <!-- Rate limiting (built-in in .NET 8, but policy helpers) -->
+    <PackageReference Include="Microsoft.AspNetCore.RateLimiting" Version="8.0.6" />
+    <!-- JWT auth -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+    <!-- CORS -->
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <!-- Observability -->
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.9.0-rc.1" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
+    <!-- Analyzers -->
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.0.90307">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
