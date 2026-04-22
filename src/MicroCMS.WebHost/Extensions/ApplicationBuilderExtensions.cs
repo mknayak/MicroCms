@@ -1,28 +1,69 @@
+using Hellang.Middleware.ProblemDetails;
+
 namespace MicroCMS.WebHost.Extensions;
 
 internal static class ApplicationBuilderExtensions
 {
     internal static WebApplication UseSecurityMiddleware(this WebApplication app)
     {
-        // TODO: HSTS, HTTPS redirection, correlation ID, tenant resolution (Sprint 2)
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHsts();
+            app.UseHttpsRedirection();
+        }
+
+        app.UseCors();
+        app.UseRateLimiter();
+
+        // Correlation ID header forwarded through the pipeline
+        app.Use(async (ctx, next) =>
+        {
+            var correlationId = ctx.Request.Headers["X-Correlation-ID"].FirstOrDefault()
+                ?? Guid.NewGuid().ToString();
+            ctx.Response.Headers["X-Correlation-ID"] = correlationId;
+
+            // Security headers
+            ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            ctx.Response.Headers["X-Frame-Options"] = "DENY";
+            ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            await next();
+        });
+
         return app;
     }
 
     internal static WebApplication UseApiMiddleware(this WebApplication app)
     {
-        // TODO: Problem details, routing, auth, controllers, Swagger (Sprint 2)
+        app.UseProblemDetails();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI(opt =>
+            {
+                opt.SwaggerEndpoint("/swagger/v1/swagger.json", "MicroCMS API v1");
+                opt.RoutePrefix = "swagger";
+            });
+        }
+
         return app;
     }
 
     internal static WebApplication UseGraphQlMiddleware(this WebApplication app)
     {
-        // TODO: Hot Chocolate endpoint (Sprint 4)
+        // TODO: Hot Chocolate endpoint (Sprint 9)
         return app;
     }
 
     internal static WebApplication UseHealthCheckEndpoints(this WebApplication app)
     {
-        // TODO: /health/live and /health/ready (Sprint 2)
+        app.MapHealthChecks("/health/live");
+        app.MapHealthChecks("/health/ready");
         return app;
     }
 }
