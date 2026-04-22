@@ -46,6 +46,8 @@
     <!-- Background jobs -->
     <PackageReference Include="Quartz" Version="3.9.0" />
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.9.0" />
+    <!-- Password hashing (BCrypt work factor 12, enhanced with SHA-384 pre-hash) -->
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <!-- Identity / OIDC integration -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
     <!-- Outbox / messaging primitives -->

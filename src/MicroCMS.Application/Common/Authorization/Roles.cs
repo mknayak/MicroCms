@@ -8,7 +8,8 @@ public static class Roles
 {
     public const string SystemAdmin  = "SystemAdmin";
     public const string TenantAdmin  = "TenantAdmin";
-    public const string Editor       = "Editor";
+    public const string Editor     = "Editor";
+    public const string Approver     = "Approver";
     public const string Author       = "Author";
     public const string Viewer       = "Viewer";
 }

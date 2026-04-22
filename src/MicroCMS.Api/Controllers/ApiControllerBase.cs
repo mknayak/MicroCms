@@ -35,6 +35,9 @@ public abstract class ApiControllerBase : ControllerBase
     protected IActionResult NoContentOrProblem(Result result) =>
         result.IsSuccess ? NoContent() : ToProblem(result.Error);
 
+    /// <summary>Converts a domain error to a problem-details result (for use outside OkOrProblem wrappers).</summary>
+  protected IActionResult ToProblemResult(Error error) => ToProblem(error);
+
     private IActionResult ToProblem(Error error) =>
         Problem(title: error.Code, detail: error.Message, statusCode: ErrorTypeToStatus(error.Type));
 

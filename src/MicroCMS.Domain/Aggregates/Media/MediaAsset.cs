@@ -52,6 +52,8 @@ public TenantId TenantId { get; private set; }
     public Guid UploadedBy { get; private set; }
     public MediaAssetStatus Status { get; private set; }
     public string? AltText { get; private set; }
+    public string? AiAltText { get; private set; }
+    public AssetVisibility Visibility { get; private set; } = AssetVisibility.Public;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public IReadOnlyList<string> Tags => _tags.AsReadOnly();
@@ -123,6 +125,23 @@ public TenantId TenantId { get; private set; }
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>Sets AI-generated alt text; can be overridden by manual <see cref="UpdateAltText"/> (GAP-14).</summary>
+    public void SetAiAltText(string aiAltText)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(aiAltText, nameof(aiAltText));
+        EnsureAvailable();
+        AiAltText = aiAltText.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Toggles the asset's public/private visibility (GAP-16).</summary>
+  public void SetVisibility(AssetVisibility visibility)
+    {
+ EnsureAvailable();
+      Visibility = visibility;
+    UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SetTags(IEnumerable<string> tags)
     {
         EnsureAvailable();
@@ -154,8 +173,7 @@ public TenantId TenantId { get; private set; }
     {
         if (Status != required)
         {
-            throw new InvalidStateTransitionException(
-                "MediaAsset", Status.ToString(), operation);
+            throw new InvalidStateTransitionException("MediaAsset", Status.ToString(), operation);
         }
     }
 }

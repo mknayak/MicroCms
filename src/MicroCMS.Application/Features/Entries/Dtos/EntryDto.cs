@@ -1,9 +1,6 @@
 namespace MicroCMS.Application.Features.Entries.Dtos;
 
-/// <summary>
-/// Full representation of an <see cref="MicroCMS.Domain.Aggregates.Content.Entry"/>,
-/// returned by GetEntry and CreateEntry/UpdateEntry commands.
-/// </summary>
+/// <summary>Full representation of an <see cref="MicroCMS.Domain.Aggregates.Content.Entry"/>.</summary>
 public sealed record EntryDto(
     Guid Id,
     Guid TenantId,
@@ -19,4 +16,13 @@ public sealed record EntryDto(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? PublishedAt,
     DateTimeOffset? ScheduledPublishAt,
-    DateTimeOffset? ScheduledUnpublishAt);
+    DateTimeOffset? ScheduledUnpublishAt,
+    Guid? FolderId,
+    SeoMetadataDto? Seo);
+
+/// <summary>SEO metadata sub-DTO used within <see cref="EntryDto"/> (GAP-08).</summary>
+public sealed record SeoMetadataDto(
+    string? MetaTitle,
+    string? MetaDescription,
+    string? CanonicalUrl,
+    string? OgImage);

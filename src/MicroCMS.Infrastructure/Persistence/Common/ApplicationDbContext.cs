@@ -1,9 +1,14 @@
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Domain.Aggregates.Ai;
+using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Identity;
 using MicroCMS.Domain.Aggregates.Media;
+using MicroCMS.Domain.Aggregates.Pages;
+using MicroCMS.Domain.Aggregates.Plugins;
 using MicroCMS.Domain.Aggregates.Taxonomy;
 using MicroCMS.Domain.Aggregates.Tenant;
+using MicroCMS.Domain.Aggregates.Webhooks;
 using MicroCMS.Infrastructure.Persistence.Common.Interceptors;
 using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
@@ -47,14 +52,28 @@ public sealed class ApplicationDbContext : DbContext
     // ── DbSets ────────────────────────────────────────────────────────────
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantSecuritySettings> TenantSecuritySettings => Set<TenantSecuritySettings>();
+    public DbSet<Site> Sites => Set<Site>();
+    public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
+    public DbSet<ApiClient> ApiClients => Set<ApiClient>();
     public DbSet<ContentType> ContentTypes => Set<ContentType>();
     public DbSet<Entry> Entries => Set<Entry>();
+    public DbSet<Folder> Folders => Set<Folder>();
+    public DbSet<Page> Pages => Set<Page>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<MediaFolder> MediaFolders => Set<MediaFolder>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
+    public DbSet<Component> Components => Set<Component>();
+    public DbSet<PageTemplate> PageTemplates => Set<PageTemplate>();
+    public DbSet<CopilotConversation> CopilotConversations => Set<CopilotConversation>();
+    public DbSet<AiProviderSettings> AiProviderSettings => Set<AiProviderSettings>();
+    public DbSet<Plugin> Plugins => Set<Plugin>();
 
     // ── Model configuration ───────────────────────────────────────────────
 
@@ -96,25 +115,18 @@ public sealed class ApplicationDbContext : DbContext
 
     private void ApplyGlobalQueryFilters(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ContentType>()
-            .HasQueryFilter(ct => IsTenantVisible(ct.TenantId));
-
-        modelBuilder.Entity<Entry>()
-            .HasQueryFilter(e => IsTenantVisible(e.TenantId));
-
-        modelBuilder.Entity<MediaAsset>()
-            .HasQueryFilter(a => IsTenantVisible(a.TenantId));
-
-        modelBuilder.Entity<MediaFolder>()
-            .HasQueryFilter(f => IsTenantVisible(f.TenantId));
-
-        modelBuilder.Entity<Category>()
-            .HasQueryFilter(c => IsTenantVisible(c.TenantId));
-
-        modelBuilder.Entity<Tag>()
-            .HasQueryFilter(t => IsTenantVisible(t.TenantId));
-
-        modelBuilder.Entity<User>()
-            .HasQueryFilter(u => IsTenantVisible(u.TenantId));
+        modelBuilder.Entity<ContentType>().HasQueryFilter(ct => IsTenantVisible(ct.TenantId));
+        modelBuilder.Entity<Entry>().HasQueryFilter(e => IsTenantVisible(e.TenantId));
+        modelBuilder.Entity<Folder>().HasQueryFilter(f => IsTenantVisible(f.TenantId));
+        modelBuilder.Entity<Page>().HasQueryFilter(p => IsTenantVisible(p.TenantId));
+        modelBuilder.Entity<MediaAsset>().HasQueryFilter(a => IsTenantVisible(a.TenantId));
+        modelBuilder.Entity<MediaFolder>().HasQueryFilter(f => IsTenantVisible(f.TenantId));
+        modelBuilder.Entity<Category>().HasQueryFilter(c => IsTenantVisible(c.TenantId));
+        modelBuilder.Entity<Tag>().HasQueryFilter(t => IsTenantVisible(t.TenantId));
+        modelBuilder.Entity<User>().HasQueryFilter(u => IsTenantVisible(u.TenantId));
+        modelBuilder.Entity<WebhookSubscription>().HasQueryFilter(w => IsTenantVisible(w.TenantId));
+        modelBuilder.Entity<Component>().HasQueryFilter(c => IsTenantVisible(c.TenantId));
+        modelBuilder.Entity<ApiClient>().HasQueryFilter(a => IsTenantVisible(a.TenantId));
+        modelBuilder.Entity<TenantSecuritySettings>().HasQueryFilter(t => IsTenantVisible(t.TenantId));
     }
 }

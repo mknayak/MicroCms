@@ -9,6 +9,7 @@ using MicroCMS.Domain.Specifications.Tenant;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
+using TenantSettingsVo = MicroCMS.Domain.ValueObjects.TenantSettings;
 
 namespace MicroCMS.Application.Features.Tenants.Handlers;
 
@@ -26,7 +27,7 @@ internal sealed class CreateTenantCommandHandler(
             throw new ConflictException("Tenant", request.Slug);
 
         var locale = Locale.Create(request.DefaultLocale);
-        var settings = TenantSettings.Create(request.DisplayName, locale, timeZoneId: request.TimeZoneId, aiEnabled: request.AiEnabled);
+        var settings = TenantSettingsVo.Create(request.DisplayName, locale, timeZoneId: request.TimeZoneId, aiEnabled: request.AiEnabled);
         var tenant = Domain.Aggregates.Tenant.Tenant.Create(slug, settings);
 
         await tenantRepo.AddAsync(tenant, cancellationToken);
@@ -41,9 +42,9 @@ internal sealed class UpdateTenantSettingsCommandHandler(
     public async Task<Result<TenantDto>> Handle(UpdateTenantSettingsCommand request, CancellationToken cancellationToken)
     {
         var tenant = await tenantRepo.GetByIdAsync(new TenantId(request.TenantId), cancellationToken)
-                ?? throw new NotFoundException(nameof(Tenant), request.TenantId);
+                ?? throw new NotFoundException(nameof(Domain.Aggregates.Tenant.Tenant), request.TenantId);
 
-        var newSettings = TenantSettings.Create(
+        var newSettings = TenantSettingsVo.Create(
                 request.DisplayName,
                 Locale.Create(request.DefaultLocale),
                 timeZoneId: request.TimeZoneId,
@@ -63,7 +64,7 @@ internal sealed class AddSiteCommandHandler(
     public async Task<Result<SiteDto>> Handle(AddSiteCommand request, CancellationToken cancellationToken)
     {
         var tenant = await tenantRepo.GetByIdAsync(new TenantId(request.TenantId), cancellationToken)
-                ?? throw new NotFoundException(nameof(Tenant), request.TenantId);
+                ?? throw new NotFoundException(nameof(Domain.Aggregates.Tenant.Tenant), request.TenantId);
 
         var site = tenant.AddSite(
                 request.Name,

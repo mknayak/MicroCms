@@ -22,9 +22,9 @@ namespace MicroCMS.Infrastructure.Identity;
 internal sealed class HttpContextCurrentUser : ICurrentUser
 {
     private const string TenantIdClaimType = "tenant_id";
-    private const string SubjectClaimType = ClaimTypes.NameIdentifier;
-    private const string EmailClaimType = ClaimTypes.Email;
-    private const string RoleClaimType = ClaimTypes.Role;
+    private const string SubjectClaimType = ClaimTypes.NameIdentifier; // mapped from "sub" by JwtBearer middleware
+    private const string EmailClaimType = "email";                     // JwtBearer maps "email" → ClaimTypes.Email; use short form
+    private const string RoleClaimType = "role";                       // custom claim — short form matches JWT token
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -57,7 +57,8 @@ internal sealed class HttpContextCurrentUser : ICurrentUser
     }
 
     public string? Email =>
-        User?.FindFirst(EmailClaimType)?.Value;
+        User?.FindFirst(EmailClaimType)?.Value
+        ?? User?.FindFirst(ClaimTypes.Email)?.Value; // fallback for mapped claim
 
     public IReadOnlyList<string> Roles =>
         User?.FindAll(RoleClaimType)

@@ -15,6 +15,11 @@ public static class ContentPolicies
     public const string EntryDelete    = "Entry.Delete";
     public const string EntryPublish   = "Entry.Publish";
     public const string EntrySchedule  = "Entry.Schedule";
+    public const string EntryReview    = "Entry.Review";
+    public const string EntryExport    = "Entry.Export";
+
+    // ── Folder policies ────────────────────────────────────────────────────
+    public const string FolderManage   = "Folder.Manage";
 
     // ── ContentType policies ───────────────────────────────────────────────
     public const string ContentTypeRead   = "ContentType.Read";

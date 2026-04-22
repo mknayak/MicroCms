@@ -1,10 +1,10 @@
 # MicroCMS — Development Plan
 
-**Version:** 1.4
+**Version:** 1.5
 **Last Updated:** 2026-04-22
 **Sprint Cadence:** 2 weeks
-**Target GA:** Sprint 14 (28 sprints = ~7 months from kickoff)
-**Current Status:** Sprint 5 complete — entering Sprint 6 (Identity & OAuth2)
+**Target GA:** Sprint 16 (~8.5 months from kickoff)
+**Current Status:** Sprint 5 complete — entering Sprint 6 (Admin UI)
 
 ---
 
@@ -69,103 +69,118 @@ Deliverables:
 - `UnitOfWork` wrapping `SaveChangesAsync`; domain events written to outbox atomically. ✅
 - `DomainEventsToOutboxInterceptor` — `SaveChangesInterceptor` serialising domain events to `OutboxMessage` rows. ✅
 - `OutboxMessage` entity (type, content, tenantId, retry tracking). ✅
-- `SpecificationEvaluator` translating `ISpecification<T>` to EF Core LINQ (criteria → includes → ordering → paging). ✅
-- SQLite initial migration (`Persistence/Sqlite/Migrations/`). ✅
-- PostgreSQL initial migration (`Persistence/PostgreSql/Migrations/`). ✅
-- `ApplicationDbContextFactory` (design-time factory for `dotnet ef`). ✅
-- `HttpContextCurrentUser` resolving `UserId`, `TenantId`, `Email`, `Roles` from JWT claims. ✅
-- `SystemDateTimeProvider` (`IDateTimeProvider` production implementation). ✅
-- `DependencyInjection.AddInfrastructure()` — provider-switching (SQLite/PostgreSQL), all repositories, UoW, ICurrentUser, IDateTimeProvider. ✅
-- Infrastructure integration tests (`Testcontainers.PostgreSql`): CRUD round-trip, multi-tenant isolation (cross-tenant reads return zero rows), outbox atomicity. ✅
+- `SpecificationEvaluator` translating `ISpecification<T>` to EF Core LINQ. ✅
+- SQLite and PostgreSQL initial migrations. ✅
+- `ApplicationDbContextFactory` (design-time factory). ✅
+- `HttpContextCurrentUser`, `SystemDateTimeProvider`. ✅
+- `DependencyInjection.AddInfrastructure()`. ✅
+- Infrastructure integration tests (Testcontainers.PostgreSql). ✅
 
 Security items:
-- Parameterised queries only — no raw SQL string concatenation anywhere in Infrastructure. ✅
-- Tenant filter applied globally via `HasQueryFilter` (instance-field pattern); cannot be bypassed without `IgnoreQueryFilters()` which must be paired with a `SystemAdmin` role assertion at the call site. ✅
-- Cross-tenant isolation verified by integration tests (`MultiTenantIsolationTests`). ✅
+- Parameterised queries only. ✅
+- Tenant filter via `HasQueryFilter`; cross-tenant isolation verified by integration tests. ✅
 
 ### Sprint 3 — Application Layer: Content CQRS ✅ DONE
 **Goal:** All content CRUD operations implemented end-to-end through Application layer.
 
 Deliverables:
-- `ICommand<T>` / `ICommand` / `IQuery<T>` marker interfaces distinguishing commands from read-only queries. ✅
-- Commands: `CreateEntryCommand`, `UpdateEntryCommand`, `PublishEntryCommand`, `UnpublishEntryCommand`, `DeleteEntryCommand`, `SchedulePublishCommand`, `RollbackEntryVersionCommand`. ✅
-- Queries: `GetEntryQuery`, `ListEntriesQuery` (paginated), `GetEntryVersionsQuery`. ✅
-- FluentValidation validators for `CreateEntry`, `UpdateEntry`, `SchedulePublish` (slug format, JSON validity, date ordering). ✅
-- `UnitOfWorkBehavior` — calls `SaveChangesAsync` after command handlers only (queries skipped). ✅
-- `EntryDto`, `EntryListItemDto`, `EntryVersionDto` + Mapperly source-generated `EntryMapper`. ✅
-- `EntryBySlugAndSiteSpec` for slug-uniqueness enforcement; `EntriesBySiteSpec` with paged/count overloads. ✅
-- `HasPolicyAttribute`, `ContentPolicies`, `Roles`, `RolePermissions` constants. ✅
-- `IApplicationAuthorizationService` + `DefaultApplicationAuthorizationService` (role→policy mapping, all-or-nothing evaluation). ✅
-- `AuthorizationBehavior` — checks `[HasPolicy]` attribute; throws `MissingPolicyException` if absent (fail-secure), `UnauthorizedException` (401) or `ForbiddenException` (403) on failure. ✅
-- `Application/DependencyInjection.AddApplication()` — registers MediatR with ordered pipeline, FluentValidation, authorization service. ✅
-- Application unit tests: `CreateEntryCommandHandlerTests`, `UpdateEntryCommandHandlerTests`, `PublishEntryCommandHandlerTests`, `DeleteEntryCommandHandlerTests`, `GetEntryQueryHandlerTests`, `ListEntriesQueryHandlerTests`, `GetEntryVersionsQueryHandlerTests`, `AuthorizationBehaviorTests`, `RolePermissionsTests`, `DefaultApplicationAuthorizationServiceTests`, `CreateEntryCommandValidatorTests`. ✅
+- `ICommand<T>` / `ICommand` / `IQuery<T>` marker interfaces. ✅
+- Entry commands + queries + validators + handlers. ✅
+- MediatR pipeline: `LoggingBehavior → AuthorizationBehavior → ValidationBehavior → UnitOfWorkBehavior → Handler`. ✅
+- `HasPolicyAttribute`, `ContentPolicies`, `Roles`, `RolePermissions`. ✅
+- `AuthorizationBehavior` — fail-secure (missing policy throws at runtime). ✅
+- `Application/DependencyInjection.AddApplication()`. ✅
+- 57 application unit tests. ✅
 
 Security items:
-- `AuthorizationBehavior` added to pipeline at position 2 (after logging, before validation) — evaluates `[HasPolicy]` attributes on the request type before the handler is invoked. ✅
-- Every command/query requires at least one `[HasPolicy]` decoration; absence throws `MissingPolicyException` at runtime (fail-secure default). ✅
-- `UnauthorizedException` (HTTP 401) vs `ForbiddenException` (HTTP 403) cleanly separated — maps to distinct HTTP codes in Sprint 4. ✅
-- Role-to-policy mapping lives in `RolePermissions` (single source of truth); new roles only need to be added there. ✅
+- Every command/query requires `[HasPolicy]`; absence is a runtime error. ✅
+- `UnauthorizedException` (401) vs `ForbiddenException` (403) cleanly separated. ✅
 
 ### Sprint 4 — REST API + Swagger ✅ DONE
 **Goal:** Full HTTP API surface for content, tenants, and media, ready for consumer integration.
 
 Deliverables:
-- `ApiControllerBase` with `OkOrProblem` / `CreatedOrProblem` / `NoContentOrProblem` Result-unwrapping helpers. ✅
-- `TenantsController` — CRUD + site management (`POST /`, `GET /`, `GET /{id}`, `PUT /{id}/settings`, `POST /{id}/sites`). ✅
-- `ContentTypesController` — schema definition (`POST /`, `GET /`, `GET /{id}`, `POST /{id}/fields`, `DELETE /{id}/fields/{fieldId}`, `POST /{id}/publish`, `POST /{id}/archive`). ✅
-- `EntriesController` — CRUD, publish/unpublish, schedule, rollback, version history. ✅
-- `MediaController` — register asset, list, get, patch metadata, delete. ✅
-- `TaxonomyController` — categories and tags CRUD. ✅
-- Application feature handlers for all of the above (Tenants, ContentTypes, Media, Taxonomy). ✅
+- `ApiControllerBase` with `OkOrProblem` / `CreatedOrProblem` / `NoContentOrProblem` helpers. ✅
+- `TenantsController`, `ContentTypesController`, `EntriesController`, `MediaController`, `TaxonomyController`. ✅
+- Application feature handlers for all domains (Tenants, ContentTypes, Media, Taxonomy). ✅
 - Domain specifications: `ContentTypesBySiteSpec`, `MediaAssetsBySiteSpec`, `TaxonomyBySiteSpec`, `AllTenantsSpec`. ✅
-- `ConflictException` → HTTP 409; `QuotaExceededException` → HTTP 429 in Problem Details. ✅
-- API versioning (`/api/v1/`) with Asp.Versioning. ✅
-- Swagger / OpenAPI 3.0 with JWT Bearer security definition. ✅
-- Problem Details (RFC 7807) middleware — maps all domain and application exceptions. ✅
-- Rate limiting: token-bucket per tenant-ID / IP (ASP.NET Core built-in). ✅
-- JWT bearer authentication + CORS configured in `AddSecurityServices`. ✅
+- `ConflictException` → 409; `QuotaExceededException` → 429 in Problem Details. ✅
+- API versioning (`/api/v1/`), Swagger/OpenAPI 3.0 with JWT Bearer security definition. ✅
+- Problem Details (RFC 7807) middleware. ✅
+- Rate limiting: token-bucket per tenant-ID / IP. ✅
+- JWT bearer authentication + CORS. ✅
 - Health check endpoints (`/health/live`, `/health/ready`). ✅
-- `WebHost/Extensions/ServiceCollectionExtensions.cs` and `ApplicationBuilderExtensions.cs` fully implemented. ✅
-- Contract tests (`MicroCMS.Api.ContractTests`): 11 tests passing. ✅
+- WebHost wiring fully implemented. ✅
+- 11 contract tests passing. ✅
 
 Security items:
 - All endpoints annotated with `[Authorize]`. ✅
-- HSTS and HTTPS redirect enforced in non-Development environments. ✅
-- Correlation ID middleware echoes `X-Correlation-ID` on every response. ✅
-- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` headers set globally. ✅
+- HSTS, HTTPS redirect, correlation ID, security response headers. ✅
 
 ---
 
-## Phase 2 — Multi-Tenancy, Auth & Media (Sprints 5–7)
+## Phase 2 — Multi-Tenancy & Admin UI (Sprints 5–6)
 
 ### Sprint 5 — Multi-Tenancy Hardening ✅ DONE
 **Goal:** Tenant isolation tested under adversarial conditions; tenant onboarding flow complete.
 
 Deliverables:
-- `ITenantResolver` interface + `SubdomainTenantResolver` implementation — subdomain extraction from `Host` header, `X-Tenant-Slug` escape header trusted only for `SystemAdmin` role (SSRF/spoofing guard). ✅
-- LRU cache in `SubdomainTenantResolver` — `ConcurrentDictionary` with 5-minute TTL and 1 024-entry cap. ✅
-- `TenantResolutionMiddleware` — runs early in pipeline, writes resolved `TenantId` to `HttpContext.Items`; exempts `/health`, `/swagger`, `/metrics`. ✅
-- `ITenantOnboardingService` interface + `TenantOnboardingService` implementation — atomically provisions: Tenant (Provisioning→Active), default site, admin `User` with `Publisher` role. ✅
-- `OnboardTenantCommand` + handler — wired to `ITenantOnboardingService`. ✅
-- `IQuotaService` interface + `QuotaService` implementation — enforces `MaxUsers`, `MaxSites`, `MaxContentTypes` (zero = unlimited). ✅
-- `QuotaExceededException` → HTTP 429 mapped in Problem Details middleware. ✅
-- `TenantAdminController` (`/api/v1/admin/tenants`) — `GET /`, `GET /{id}`, `POST /onboard`, `POST /`, `PUT /{id}/settings`, `POST /{id}/sites`. ✅
-- `UsersController` (`/api/v1/users`) — `GET /`, `GET /{id}`, `POST /invite`, `POST /{id}/roles`, `DELETE /{id}/roles/{roleId}`, `POST /{id}/deactivate`. ✅
-- User management commands/queries: `InviteUserCommand`, `AssignRoleCommand`, `RevokeRoleCommand`, `DeactivateUserCommand`, `ListUsersQuery`, `GetUserQuery`. ✅
-- `UserSpecs`: `AllUsersPagedSpec`, `AllUsersCountSpec`, `UserByEmailSpec`. ✅
-- Infrastructure integration test `TenantIsolationAdversarialTests` — 3 new tests: cross-tenant read isolation, full onboarding entity verification, quota unlimited path. ✅
-- Contract tests extended — 11 passing: health probes, 401 on all protected routes, security headers, correlation ID, spoofed `X-Tenant-Slug` ignored for non-admin. ✅
+- `SubdomainTenantResolver` — subdomain → TenantId with LRU cache (5-min TTL, 1 024-entry cap). ✅
+- `TenantResolutionMiddleware` — resolves tenant early in pipeline; exempts `/health`, `/swagger`, `/metrics`. ✅
+- `TenantOnboardingService` — atomically provisions Tenant (Provisioning→Active) + default site + admin User. ✅
+- `OnboardTenantCommand` + handler. ✅
+- `QuotaService` — enforces `MaxUsers`, `MaxSites`, `MaxContentTypes` (zero = unlimited). ✅
+- `QuotaExceededException` → HTTP 429. ✅
+- `TenantAdminController` (`/api/v1/admin/tenants`) — full CRUD + onboard + site management. ✅
+- `UsersController` (`/api/v1/users`) — invite, assign/revoke roles, deactivate. ✅
+- User management commands/queries + `UserSpecs`. ✅
+- 3 adversarial integration tests (cross-tenant isolation, onboarding, quota). ✅
+- Contract tests extended to 11 (401 on all protected routes, security headers, correlation ID, spoof guard). ✅
 
 Security items:
-- `X-Tenant-Slug` header only honoured when JWT role = `SystemAdmin`; all other callers silently fall through to subdomain resolution. ✅
-- `TenantResolutionMiddleware` registered after CORS and rate-limiter, before authentication, so tenant context is set before auth evaluates it. ✅
-- `ApiWebApplicationFactory` in contract tests uses in-process SQLite (no Docker required) with unique DB per factory instance to prevent cross-test pollution. ✅
+- `X-Tenant-Slug` header only honoured for `SystemAdmin` JWT role. ✅
+- `TenantResolutionMiddleware` registered before authentication. ✅
 
 Implementation notes:
-- Schema-per-tenant migration runner (`IMigrationRunner`) deferred to Sprint 6 — requires identity layer to be in place first.
-- Outbox `TenantId` validation on dispatch deferred to Sprint 10 (Webhooks sprint) when the dispatcher is implemented.
+- Schema-per-tenant `IMigrationRunner` deferred to Sprint 7 (requires identity layer). ✅
+- Outbox `TenantId` validation on dispatch deferred to Sprint 12 (Webhooks). ✅
 
-### Sprint 6 — Identity & OAuth2
+### Sprint 6 — Admin UI (React)
+**Goal:** Fully functional browser-based admin portal backed by the REST API; served from `MicroCMS.Admin.WebHost`.
+
+Tech stack: **React 18 + Vite + TypeScript + Tailwind CSS + TanStack Query + React Hook Form + Zod**.
+
+Deliverables:
+- Vite + React + TypeScript scaffold inside `src/MicroCMS.Admin.WebHost/ClientApp/`.
+- ASP.NET Core SPA proxy in `MicroCMS.Admin.WebHost` serving the Vite dev server in Development and the built `dist/` in Production.
+- Authentication: JWT login form → stores access token in `sessionStorage`; auto-attaches `Authorization: Bearer` header via Axios interceptor.
+- **Dashboard** — tenant summary cards (entry count, media usage, user count).
+- **Content Types** — list, create, add/remove fields (drag-to-reorder), publish, archive.
+- **Entries** — paginated list with status filter; rich text editor (TipTap) for body fields; publish / unpublish / schedule workflow buttons; version history drawer.
+- **Media Library** — grid/list toggle, drag-and-drop upload (calls `POST /api/v1/media`), alt-text and tag editor, delete confirmation.
+- **Taxonomy** — category tree with parent/child drag-and-drop; flat tag list.
+- **Users** — invite user, assign/revoke role per site, deactivate.
+- **Tenant Settings** — display name, locales, timezone, AI toggle, logo upload.
+- Shared API client layer (`src/api/`) auto-generated from OpenAPI spec using `openapi-typescript-codegen`.
+- React Router v6 with lazy-loaded routes.
+- Global error boundary → maps API Problem Details to toast notifications.
+- Responsive layout (sidebar nav, mobile hamburger).
+- Storybook for UI component catalogue.
+- Vitest + React Testing Library unit tests for all form components and API hooks (≥ 80% coverage).
+- Playwright E2E smoke tests: login → create content type → create entry → publish.
+
+Security items:
+- JWT stored in `sessionStorage` (not `localStorage`) to limit XSS exposure.
+- CSRF not applicable (SPA + Bearer token, no cookies).
+- All API calls go through the Axios interceptor; token never logged or exposed in URLs.
+- Content Security Policy header set in `MicroCMS.Admin.WebHost` (`script-src 'self'`).
+- Logout clears `sessionStorage` and invalidates the token server-side (Sprint 7 identity layer will add revocation).
+
+---
+
+## Phase 3 — Identity, Auth & Media (Sprints 7–8)
+
+### Sprint 7 — Identity & OAuth2
 **Goal:** Full OAuth2/OIDC authentication and role-based authorization in place.
 
 Deliverables:
@@ -175,6 +190,8 @@ Deliverables:
 - `AuthorizationPolicies` constants class (all policies declared in one place).
 - Permission-based authorization for content operations (Author/Editor/Approver/Publisher).
 - API Keys for server-to-server (`/api/v1/apikeys` endpoint).
+- Schema-per-tenant `IMigrationRunner` on onboarding (deferred from Sprint 5).
+- Admin UI updated: replace mock JWT login with real OIDC PKCE flow.
 
 Security items:
 - PKCE required for all authorization code flows.
@@ -182,7 +199,7 @@ Security items:
 - API key hashed (SHA-256) at rest; never logged.
 - Brute-force lockout on login (`ILoginAttemptService`).
 
-### Sprint 7 — Media Library
+### Sprint 8 — Media Library
 **Goal:** File upload pipeline with virus scanning, image transforms, and multi-provider storage.
 
 Deliverables:
@@ -194,17 +211,18 @@ Deliverables:
 - Folder hierarchy API.
 - Bulk operations (move, delete, retag).
 - Integration tests with Testcontainers (MinIO for S3-compatible).
+- Admin UI Media Library updated to use signed URLs and show scan status badge.
 
 Security items:
 - MIME type sniffing on upload (read magic bytes, not just extension).
-- Virus scan result is mandatory before asset becomes `Available`; upload is quarantined on failure.
+- Virus scan result mandatory before asset becomes `Available`; quarantined on failure.
 - Signed URLs include tenant scope in HMAC payload; cross-tenant URL reuse rejected.
 
 ---
 
-## Phase 3 — Search, Caching & GraphQL (Sprints 8–9)
+## Phase 4 — Search, Caching & GraphQL (Sprints 9–11)
 
-### Sprint 8 — Search and Cache
+### Sprint 9 — Search and Cache
 **Goal:** Full-text and faceted search operational; two-tier cache cutting DB load.
 
 Deliverables:
@@ -215,12 +233,13 @@ Deliverables:
 - Cache invalidation by tag (invalidate all entries for a tenant on bulk publish).
 - Cache-aside pattern in read query handlers.
 - Redis integration tests using Testcontainers.
+- Admin UI global search bar wired to `/api/v1/search`.
 
 Security items:
 - Search queries tenant-scoped in OpenSearch index alias; cross-tenant queries blocked.
 - Cache keys include tenant ID to prevent cross-tenant cache poisoning.
 
-### Sprint 9 — GraphQL API
+### Sprint 10 — GraphQL API
 **Goal:** Hot Chocolate GraphQL endpoint with dynamic schema auto-generated from content types.
 
 Deliverables:
@@ -237,27 +256,59 @@ Security items:
 - Introspection disabled in production unless `SystemAdmin` role present.
 - Same JWT bearer + tenant-scoped authorization as REST.
 
+### Sprint 11 — Headless Starter & TypeScript SDK
+**Goal:** First-class headless consumer experience — TypeScript SDK and a production-ready Next.js starter template consuming the GraphQL API.
+
+Deliverables:
+- **`@microcms/sdk`** TypeScript package (`packages/sdk/`):
+  - `MicroCmsClient` class — wraps REST and GraphQL endpoints.
+  - Auto-generated types from OpenAPI spec (`openapi-typescript`).
+  - Typed GraphQL query builder for content-type-specific queries.
+  - `useEntry`, `useEntries`, `useMedia`, `useSearch` React hooks (TanStack Query wrappers).
+  - `getEntry`, `getEntries` server-side fetch helpers (for Next.js SSR/ISR).
+  - Full JSDoc + TypeScript declaration files.
+  - 100% unit test coverage (Vitest).
+  - Published to npm as `@microcms/sdk`.
+- **`microcms-nextjs-starter`** Next.js 14 app (`packages/nextjs-starter/`):
+  - App Router with ISR (`revalidate`) for published entries.
+  - Dynamic routes: `[contentType]/[slug]` rendered from entry `FieldsJson`.
+  - Image optimisation via `next/image` with signed URL support.
+  - Tailwind CSS styling; dark mode toggle.
+  - Sitemap and robots.txt auto-generated from published entries.
+  - Preview mode wired to draft entries via `X-Preview-Token` header.
+  - Lighthouse score ≥ 95 (performance, accessibility, SEO).
+- Live demo deployment config (Vercel `vercel.json`).
+- `README.md` quickstart: "from `onboard` API call to live website in 5 minutes".
+- Playwright E2E tests: homepage → entry page → search → 404 handling.
+
+Security items:
+- SDK uses read-only API key (from Sprint 7) for public content; never exposes admin JWT.
+- Preview token scoped to tenant + short TTL (15 min); stored server-side in encrypted cookie.
+- `next/headers` CSP policy set; no inline scripts.
+
 ---
 
-## Phase 4 — Webhooks, Events & Plugin System (Sprints 10–11)
+## Phase 5 — Webhooks, Events & Plugin System (Sprints 12–13)
 
-### Sprint 10 — Webhooks and Outbox
+### Sprint 12 — Webhooks and Outbox
 **Goal:** Reliable event delivery to external consumers with at-least-once guarantee.
 
 Deliverables:
 - Outbox table + `OutboxDispatcher` background worker (Quartz.NET job).
+- Outbox `TenantId` validation on dispatch (deferred from Sprint 5).
 - Webhook subscription management API (`/api/v1/webhooks/subscriptions`).
 - `WebhookDispatcher` service: HTTP POST with HMAC-SHA256 signature header.
 - Retry policy with exponential back-off (Polly).
 - Dead-letter queue for failed deliveries (stored in DB, admin API to replay).
-- Webhook events for all significant domain events (entry published, media uploaded, tenant created, etc.).
+- Webhook events for all significant domain events.
+- Admin UI: webhook subscription CRUD screen.
 
 Security items:
 - Webhook payloads signed with `X-MicroCMS-Signature: sha256=<hmac>` header.
-- Subscriber endpoints must use HTTPS (enforced at subscription creation time).
-- SSRF protection: destination URL validated against allowlist / blocklist of private IP ranges.
+- Subscriber endpoints must use HTTPS.
+- SSRF protection: destination URL validated against private IP blocklist.
 
-### Sprint 11 — Plugin System
+### Sprint 13 — Plugin System
 **Goal:** Plugins load/unload without restart; capability gate prevents privilege escalation.
 
 Deliverables:
@@ -268,17 +319,18 @@ Deliverables:
 - Plugin enable/disable per tenant.
 - Sample plugin: `AuditLogPlugin` demonstrating the full contract.
 - Plugin sandbox tests (assert that a plugin cannot access infrastructure beyond its grants).
+- Admin UI: plugin marketplace screen (list, enable/disable, manifest viewer).
 
 Security items:
 - Assembly signature verification (strong name or Authenticode) before load.
-- Plugins run in their own `AssemblyLoadContext`; cannot access types outside their granted interfaces.
+- Plugins run in their own `AssemblyLoadContext`.
 - Capability grant stored in DB per tenant; runtime capability check on every plugin call.
 
 ---
 
-## Phase 5 — AI Module (Sprints 12–13)
+## Phase 6 — AI Module (Sprints 14–15)
 
-### Sprint 12 — AI Core + Provider Adapters
+### Sprint 14 — AI Core + Provider Adapters
 **Goal:** All four AI interfaces operational with at least AzureOpenAI and Ollama adapters; budget enforcement live.
 
 Deliverables:
@@ -287,17 +339,18 @@ Deliverables:
 - `BudgetService`: tracks token usage per tenant/user; returns `429` when limit exceeded.
 - `PiiRedactor`: strips PII from prompts before dispatch; regex + NER-based.
 - `PromptLibrary`: CRUD for system and tenant-level prompts with semantic versioning.
-- `StructuredOutputValidator`: validates AI response against JSON Schema; runs repair loop (max 2 retries).
+- `StructuredOutputValidator`: validates AI response against JSON Schema; repair loop (max 2 retries).
 - Concrete adapters: `AzureOpenAICompletionProvider`, `OllamaCompletionProvider`.
 - AI feature handlers: draft generation, rewrite, summarization, SEO assistance, translation.
+- Admin UI: AI settings screen (provider config, budget limits, prompt library CRUD).
 - Application unit tests for orchestrator and budget service.
 
 Security items:
 - Provider registry blocks calls to non-compliant regions per tenant's data-residency policy.
-- Prompt injection detection on user-supplied content before it enters any prompt.
-- All AI calls and responses audit-logged with tenant + user scope; PII redacted in logs.
+- Prompt injection detection on user-supplied content.
+- All AI calls and responses audit-logged; PII redacted in logs.
 
-### Sprint 13 — RAG, Semantic Search & AI Safety
+### Sprint 15 — RAG, Semantic Search & AI Safety
 **Goal:** Vector search and copilot features operational; safety pipeline enforced end-to-end.
 
 Deliverables:
@@ -311,17 +364,19 @@ Deliverables:
 - Media intelligence: alt-text, tag suggestions via vision model.
 - Feedback endpoint: thumbs-up/down + comment on AI output.
 - PgVector and Qdrant vector store adapters.
+- Admin UI: copilot chat panel embedded in entry editor; AI usage analytics dashboard.
+- SDK updated: `useCopilot` hook and `generateDraft` helper for Next.js starter.
 
 Security items:
 - Retrieved content from tenant index only; no cross-tenant vector leakage.
-- Jailbreak detector on user messages in copilot (prompt injection classifier).
+- Jailbreak detector on user messages in copilot.
 - AI audit log retention ≥ 90 days; separate table, separate backup policy.
 
 ---
 
-## Phase 6 — Observability, Performance & GA (Sprint 14)
+## Phase 7 — Observability, Performance & GA (Sprint 16)
 
-### Sprint 14 — Observability, Hardening & GA Readiness
+### Sprint 16 — Observability, Hardening & GA Readiness
 **Goal:** All NFRs met; system observable, performant, and security-audited.
 
 Deliverables:
@@ -334,52 +389,60 @@ Deliverables:
 - OWASP ZAP scan run; all critical findings resolved.
 - Dependency vulnerability scan (`dotnet list package --vulnerable`).
 - E2E test suite covering all happy paths and key error paths.
-- Docker multi-stage build (distroless runtime image).
+- Docker multi-stage build (distroless runtime image + separate Admin UI image).
 - Helm chart with resource limits, liveness/readiness probes, HPA config.
 - GitHub Actions CI/CD pipeline: build → unit test → integration test → coverage → architecture test → SAST → container build → push.
+- Admin UI: production build optimisation (bundle analysis, lazy loading audit).
+- SDK: final API freeze, semver tag, npm publish workflow.
 
 Security items:
 - Final review of all `[Authorize]` policies — no endpoint without explicit policy.
 - Secrets rotation runbook documented.
-- Third-party dependency licenses audited.
+- Third-party dependency licenses audited (backend + frontend).
 - Security headers verified with securityheaders.com / OWASP guidance.
 
 ---
 
 ## Sprint Progress Tracker
 
-| Sprint | Phase | Status | Completed |
-|--------|-------|--------|-----------|
-| 0 | Foundation | ✅ Done | 2026-04-21 |
-| 1 | Foundation | ✅ Done | 2026-04-21 |
-| 2 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
-| 3 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
-| 4 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
-| 5 | Multi-Tenancy, Auth & Media | ✅ Done | 2026-04-22 |
-| 6 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
-| 7 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
-| 8 | Search, Caching & GraphQL | 🔲 Not started | — |
-| 9 | Search, Caching & GraphQL | 🔲 Not started | — |
-| 10 | Webhooks, Events & Plugins | 🔲 Not started | — |
-| 11 | Webhooks, Events & Plugins | 🔲 Not started | — |
-| 12 | AI Module | 🔲 Not started | — |
-| 13 | AI Module | 🔲 Not started | — |
-| 14 | Observability & GA | 🔲 Not started | — |
+| Sprint | Phase | Title | Status | Completed |
+|--------|-------|-------|--------|-----------|
+| 0 | Foundation | Project Scaffolding | ✅ Done | 2026-04-21 |
+| 1 | Foundation | Core Domain Model | ✅ Done | 2026-04-21 |
+| 2 | Infrastructure & REST API | Persistence & EF Core | ✅ Done | 2026-04-22 |
+| 3 | Infrastructure & REST API | Application CQRS | ✅ Done | 2026-04-22 |
+| 4 | Infrastructure & REST API | REST API + Swagger | ✅ Done | 2026-04-22 |
+| 5 | Multi-Tenancy & Admin UI | Multi-Tenancy Hardening | ✅ Done | 2026-04-22 |
+| 6 | Multi-Tenancy & Admin UI | Admin UI (React) | 🔲 Not started | — |
+| 7 | Identity, Auth & Media | Identity & OAuth2 | 🔲 Not started | — |
+| 8 | Identity, Auth & Media | Media Library | 🔲 Not started | — |
+| 9 | Search, Caching & GraphQL | Search and Cache | 🔲 Not started | — |
+| 10 | Search, Caching & GraphQL | GraphQL API | 🔲 Not started | — |
+| 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
+| 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
+| 13 | Webhooks, Events & Plugins | Plugin System | 🔲 Not started | — |
+| 14 | AI Module | AI Core + Provider Adapters | 🔲 Not started | — |
+| 15 | AI Module | RAG, Semantic Search & AI Safety | 🔲 Not started | — |
+| 16 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
 
 ---
 
 ## Test Coverage Summary by Sprint
 
-| Sprint | New Test Projects Active | Coverage Target | Status |
-|--------|--------------------------|-----------------|--------|
+| Sprint | Test Projects Active | Coverage Target | Status |
+|--------|----------------------|-----------------|--------|
 | 0 | Architecture.Tests | Stub rules only | ✅ 5 tests |
 | 1 | Domain.UnitTests | ≥ 80% Domain | ✅ 127 tests |
 | 2 | Infrastructure.IntegrationTests | ≥ 80% Infrastructure | ✅ 9 tests (Docker required) |
 | 3 | Application.UnitTests | ≥ 80% Application | ✅ 57 tests |
 | 4 | Api.ContractTests | ≥ 80% API layer | ✅ 11 tests |
 | 5 | Infrastructure.IntegrationTests (adversarial) | Cross-tenant isolation | ✅ 3 new tests (Docker required) |
-| 12 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
-| 14 | E2E.Tests | All happy paths | 🔲 |
+| 6 | Vitest + React Testing Library | ≥ 80% UI components | 🔲 |
+| 6 | Playwright (Admin UI smoke) | Login → publish flow | 🔲 |
+| 11 | Vitest (SDK unit tests) | 100% SDK coverage | 🔲 |
+| 11 | Playwright (Headless starter E2E) | Homepage → entry → search | 🔲 |
+| 14 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
+| 16 | E2E.Tests | All happy paths | 🔲 |
 
 ---
 
@@ -387,9 +450,10 @@ Security items:
 
 | Item | Deferred To | Reason |
 |------|-------------|--------|
-| Schema-per-tenant `IMigrationRunner` | Sprint 6 | Requires identity layer to generate per-tenant credentials |
-| Outbox `TenantId` validation on dispatch | Sprint 10 | Dispatcher not yet implemented |
-| Real virus-scan pipeline (ClamAV) for `MediaAsset` | Sprint 7 | Sprint 4 marks assets Available immediately as placeholder |
+| Schema-per-tenant `IMigrationRunner` | Sprint 7 | Requires identity layer for per-tenant credentials |
+| Outbox `TenantId` validation on dispatch | Sprint 12 | Dispatcher not yet implemented |
+| Real virus-scan pipeline (ClamAV) for `MediaAsset` | Sprint 8 | Sprint 4 marks assets Available immediately as placeholder |
+| Token revocation on Admin UI logout | Sprint 7 | Requires identity layer revocation endpoint |
 
 ---
 

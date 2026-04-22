@@ -1,11 +1,19 @@
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Features.ApiClients.Commands;
+using MicroCMS.Application.Features.Entries.Queries.Preview;
 using MicroCMS.Application.Services;
+using MicroCMS.Domain.Aggregates.Ai;
+using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Identity;
 using MicroCMS.Domain.Aggregates.Media;
+using MicroCMS.Domain.Aggregates.Pages;
+using MicroCMS.Domain.Aggregates.Plugins;
 using MicroCMS.Domain.Aggregates.Taxonomy;
 using MicroCMS.Domain.Aggregates.Tenant;
+using MicroCMS.Domain.Aggregates.Webhooks;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Services;
 using MicroCMS.Infrastructure.Identity;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Tenancy;
@@ -84,25 +92,48 @@ public static class DependencyInjection
 
     private static void RegisterRepositories(IServiceCollection services)
     {
-        // Tenant aggregate
+        // Tenant
         services.AddScoped<IRepository<Tenant, TenantId>, EfRepository<Tenant, TenantId>>();
+        services.AddScoped<IRepository<TenantSecuritySettings, TenantSecuritySettingsId>, EfRepository<TenantSecuritySettings, TenantSecuritySettingsId>>();
 
-        // Content aggregates
+// Sites
+  services.AddScoped<IRepository<Site, SiteId>, EfRepository<Site, SiteId>>();
+        services.AddScoped<IRepository<SiteSettings, SiteId>, EfRepository<SiteSettings, SiteId>>();
+        services.AddScoped<IRepository<ApiClient, ApiClientId>, EfRepository<ApiClient, ApiClientId>>();
+
+        // Content
         services.AddScoped<IRepository<ContentType, ContentTypeId>, EfRepository<ContentType, ContentTypeId>>();
-        services.AddScoped<IRepository<Entry, EntryId>, EfRepository<Entry, EntryId>>();
+   services.AddScoped<IRepository<Entry, EntryId>, EfRepository<Entry, EntryId>>();
+        services.AddScoped<IRepository<Folder, FolderId>, EfRepository<Folder, FolderId>>();
 
-        // Media aggregates
+   // Pages
+        services.AddScoped<IRepository<Page, PageId>, EfRepository<Page, PageId>>();
+
+      // Media
         services.AddScoped<IRepository<MediaAsset, MediaAssetId>, EfRepository<MediaAsset, MediaAssetId>>();
+   services.AddScoped<IRepository<MediaFolder, Guid>, EfRepository<MediaFolder, Guid>>();
 
-        // Taxonomy aggregates
-        services.AddScoped<IRepository<Category, CategoryId>, EfRepository<Category, CategoryId>>();
+        // Taxonomy
+      services.AddScoped<IRepository<Category, CategoryId>, EfRepository<Category, CategoryId>>();
         services.AddScoped<IRepository<Tag, TagId>, EfRepository<Tag, TagId>>();
 
-        // Media folder
-        services.AddScoped<IRepository<MediaFolder, Guid>, EfRepository<MediaFolder, Guid>>();
+     // Identity
+     services.AddScoped<IRepository<User, UserId>, EfRepository<User, UserId>>();
+     services.AddScoped<IRepository<RefreshToken, RefreshTokenId>, EfRepository<RefreshToken, RefreshTokenId>>();
+     services.AddScoped<IRepository<LoginAttempt, LoginAttemptId>, EfRepository<LoginAttempt, LoginAttemptId>>();
 
-        // Identity aggregates
-        services.AddScoped<IRepository<User, UserId>, EfRepository<User, UserId>>();
+ // Webhooks
+      services.AddScoped<IRepository<WebhookSubscription, WebhookSubscriptionId>, EfRepository<WebhookSubscription, WebhookSubscriptionId>>();
+
+     // Content pipeline services
+        services.AddScoped<IRepository<Component, ComponentId>, EfRepository<Component, ComponentId>>();
+
+        // AI
+      services.AddScoped<IRepository<CopilotConversation, CopilotConversationId>, EfRepository<CopilotConversation, CopilotConversationId>>();
+        services.AddScoped<IRepository<AiProviderSettings, AiProviderSettingsId>, EfRepository<AiProviderSettings, AiProviderSettingsId>>();
+
+        // Plugins
+        services.AddScoped<IRepository<Plugin, PluginId>, EfRepository<Plugin, PluginId>>();
     }
 
     private static void RegisterCoreServices(IServiceCollection services)
@@ -110,19 +141,22 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<ISecretHasher, Sha256SecretHasher>();
     }
 
-    /// <summary>Sprint 5 — tenant resolution, quota enforcement, onboarding.</summary>
+    /// <summary>Sprint 5 — tenancy services: subdomain resolver, resolution middleware, and quota enforcement.</summary>
     private static void RegisterTenancyServices(IServiceCollection services)
     {
         services.AddScoped<ITenantResolver, SubdomainTenantResolver>();
         services.AddScoped<IQuotaService, QuotaService>();
-        services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
+        services.AddTransient<TenantResolutionMiddleware>();
     }
 
     private static bool IsDevEnvironment(IConfiguration configuration) =>
-        string.Equals(
-            configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT"),
-            "Development",
-            StringComparison.OrdinalIgnoreCase);
+      string.Equals(
+  configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT"),
+   "Development",
+      StringComparison.OrdinalIgnoreCase);
 }

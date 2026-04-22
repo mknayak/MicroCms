@@ -1,0 +1,776 @@
+﻿
+MicroCMS
+Design Screen vs Implementation Gap Analysis
+Sprints 1–5  |  April 2026
+Version 1.0  |  Author: MK
+
+
+15
+Design Screens Analysed
+28
+Feature Gaps Identified
+4
+Partially Implemented
+6–12
+Target Sprints
+
+
+This document cross-references all 15 HTML design screens against the backend implemented in Sprints 1–5 and identifies every feature visible in the UI that is absent or only partially implemented in the current codebase.
+
+1. Executive Summary
+This gap analysis compares the fifteen UI design screens of MicroCMS v2 against the backend code delivered in Sprints 1–5. Sprints 1–5 established the foundational domain model (Site, ContentType, Entry, MediaAsset, Taxonomy), the Infrastructure layer (EF Core, PostgreSQL, Repository, UnitOfWork, Outbox), and the Application layer (MediatR CQRS pipeline, FluentValidation, Mapperly, authorization behaviours, full Entry CRUD with version history and scheduling).
+While the core content management backbone is solid, the design screens reveal a substantial set of features — spanning AI assistance, page design tooling, component library, media enrichment, webhook infrastructure, and rich tenant/site configuration — that are not yet implemented. Twenty-eight distinct feature gaps have been identified and catalogued below, with priority and effort estimates to guide sprint planning.
+
+1.1  What Sprints 1–5 Delivered
+The following areas are implemented and tested:
+Domain Model: Site, ContentType (field schema stub), Entry (status machine, versioning, scheduling), MediaAsset, Taxonomy, OutboxMessage — all with strongly-typed IDs
+Infrastructure: EF Core 8 with global multi-tenant query filter, Outbox interceptor, SQLite & PostgreSQL migrations, Repository<T>, UnitOfWork, Testcontainers integration tests
+Application CQRS: MediatR 12 pipeline (Logging → Authorization → Validation → UnitOfWork), ICommand/IQuery markers, FluentValidation, Mapperly DTOs
+Entry Commands: Create, Update, Publish, Unpublish, Delete, SchedulePublish, RollbackToVersion
+Entry Queries: GetEntry, ListEntries (paged), GetEntryVersions
+Authorization: Role-based policies (SystemAdmin, TenantAdmin, Editor, Author, Viewer), HasPolicyAttribute, fail-secure MissingPolicyException
+Unit Tests: 50+ tests covering all command/query handlers, validators, authorization behaviours, and role permissions
+
+
+2. Gap Overview by Design Screen
+The table below lists every design screen, the primary features it exposes, and whether the corresponding backend feature is implemented.
+
+Design Screen
+Key Features Shown
+Backend Status
+Gap Summary
+
+index.html
+Dashboard stats, activity feed, scheduled queue, AI usage, needs-review
+Partial
+Stats API, AI usage, cancel-schedule missing
+
+entry-list.html
+Folder tree, field schema tabs, locale coverage, API preview (REST+GraphQL)
+Partial
+Folders, typed fields, coverage matrix, GraphQL missing
+
+entry-editor.html
+TipTap RTE, AI assist, SEO/SERP preview, quality checks, version history
+Partial
+AI assist, SEO fields, quality checks, SERP missing
+
+content-types.html
+Content type grid, create modal with field types
+Partial
+FieldDefinitions on ContentType stub — no typed schema
+
+media-library.html
+Upload with virus scan, AI alt-text, image variants, signed URLs
+Missing
+Virus scan, alt-text, variants, signed URLs all missing
+
+site-management.html
+Site cards with environments, 4-step new-site wizard
+Missing
+Site environments entity, wizard steps missing
+
+site-settings.html
+Per-site domains, CORS, locales, API keys, webhooks
+Missing
+SiteSettings aggregate entirely missing
+
+site-structure.html
+Hierarchical page tree, static/collection page types
+Missing
+Page aggregate, parent-child hierarchy missing
+
+page-designer.html
+Visual drag-and-drop page builder, component palette, zones, viewport
+Missing
+Page Designer subsystem entirely missing
+
+component-library.html
+Component cards, zones, field definitions, usage tracking
+Missing
+Component aggregate entirely missing
+
+component-editor.html
+Component schema editor, field types, zone assignment
+Missing
+ComponentSchema missing
+
+component-item-list.html
+List of component instances
+Missing
+ComponentItem entity missing
+
+component-item-editor.html
+Form for editing component instance fields
+Missing
+ComponentItem CRUD missing
+
+ai-copilot.html
+RAG chat, grounded mode, tool use (create_entry, schedule_publish), history
+Missing
+AI Copilot subsystem entirely missing
+
+settings.html
+Tenant: general, users & roles, API keys, webhooks, plugins, AI providers, budgets, safety, security
+Missing
+Most tenant settings aggregates missing
+
+
+
+3. Detailed Gap Catalogue
+Each gap is classified with a Priority (Critical / High / Medium / Low) and an effort estimate in sprint-story-points (S = Small ≤3 pts, M = Medium 5–8 pts, L = Large 13+ pts). Target sprint numbers are indicative and should be confirmed with the team.
+
+3.1  Content Model & Schema
+GAP-01: Typed Field System on ContentType
+The design shows nine distinct field types on each ContentType: Text, Rich Text, Asset Reference, Entry Reference, Taxonomy Reference, Component, DateTime, Boolean, Integer, and JSON. The current domain model stores fields as an opaque FieldsJson blob on Entry and ContentType has no enforced field definitions.
+Missing: FieldDefinition value object, ContentType.AddField/RemoveField domain methods, field type enum, validation of FieldsJson against the schema at command time.
+
+GAP-02: Entry Folder Hierarchy
+The entry-list screen shows a collapsible folder tree allowing content to be organised into custom hierarchical folders per site. No Folder entity exists in the domain.
+Missing: Folder aggregate with ParentFolderId, Entry.FolderId FK, CreateFolder / MoveEntry commands, GetFolderTree query.
+
+GAP-03: Rich Text / Structured Content (Portable Text)
+The entry editor uses TipTap v2 and the API preview tab shows content stored as Portable Text (structured JSON blocks). The current FieldsJson is untyped; there is no Rich Text field type with dedicated block serialisation.
+Missing: Rich Text FieldType value object, Portable Text block schema, TipTap-to-PortableText serialiser (typically handled client-side but the API contract must specify the format).
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-01: Typed Field Definitions on ContentType
+Missing
+Critical
+L
+Sprint 6
+
+GAP-02: Entry Folder / Category Hierarchy
+Missing
+High
+M
+Sprint 6
+
+GAP-03: Rich Text / Portable Text field type
+Missing
+High
+M
+Sprint 6
+
+
+3.2  Entry Management
+GAP-04: Bulk Operations
+The entry list screen exposes checkboxes for bulk Publish, Unpublish, Export, and Delete. Only individual entry commands are implemented.
+Missing: BulkPublishEntriesCommand, BulkUnpublishEntriesCommand, BulkDeleteEntriesCommand with appropriate authorization and domain validation.
+
+GAP-05: Entry Export
+A CSV/JSON export button is visible in the entry list toolbar. No export command or export format specification exists.
+Missing: ExportEntriesQuery returning a structured CSV/JSON stream, content-type negotiation on the delivery API endpoint.
+
+GAP-06: Cancel Scheduled Publish
+The dashboard shows a Scheduled Publish Queue with a Cancel action per row. SchedulePublishCommand exists but CancelScheduledPublishCommand does not.
+Missing: CancelScheduledPublishCommand — sets entry.PublishAt = null, entry.UnpublishAt = null, transitions status back to Draft.
+
+GAP-07: Approval Workflow Transitions
+The settings screen shows an Approver role not present in the current Roles constants. The design also shows workflow steps (Draft → In Review → Approved → Published) and Reject / Request Changes actions.
+Missing: Roles.Approver, SubmitForReviewCommand, ApproveEntryCommand, RejectEntryCommand, domain state transitions, ContentPolicies.EntryReview policy.
+
+GAP-08: SEO / SERP Preview Fields
+The entry editor shows a dedicated SEO panel with editable Meta Title and Meta Description, character counters (60 and 160 chars), and a live SERP preview card. No SEO fields exist on the Entry aggregate.
+Missing: SeoMetadata value object (MetaTitle, MetaDescription, CanonicalUrl, OgImage) on Entry; UpdateSeoMetadataCommand; SERP preview is client-only but the API must return the SEO fields in EntryDto.
+
+GAP-09: Quality Checks
+The entry editor toolbar shows a Quality Checks panel: grammar score, readability grade, and PII detection. This requires AI integration.
+Missing: RunQualityChecksQuery, integration with an AI provider for grammar/readability, basic regex-based PII detection service.
+
+GAP-10: Preview Mode / Signed Preview URLs
+Site Settings shows a Preview URL Template ({slug}/{locale}/{secret}) and the entry editor has a Preview button. No preview token mechanism exists.
+Missing: GeneratePreviewTokenCommand producing a signed short-lived JWT, per-site PreviewUrlTemplate configuration, GetEntryByPreviewTokenQuery bypassing the Published status check.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-04: Bulk Publish / Unpublish / Delete
+Missing
+High
+M
+Sprint 7
+
+GAP-05: Entry Export (CSV / JSON)
+Missing
+Medium
+S
+Sprint 7
+
+GAP-06: Cancel Scheduled Publish
+Missing
+High
+S
+Sprint 6
+
+GAP-07: Approval Workflow (Approver role + cmds)
+Missing
+High
+M
+Sprint 7
+
+GAP-08: SEO Metadata Fields on Entry
+Missing
+High
+S
+Sprint 6
+
+GAP-09: Quality Checks (grammar, readability, PII)
+Missing
+Medium
+M
+Sprint 9
+
+GAP-10: Preview Mode & Signed Preview URLs
+Missing
+High
+M
+Sprint 8
+
+
+
+3.3  Localization & Internationalization
+GAP-11: Locale Coverage Matrix
+The entry list shows a Localization tab with a coverage matrix (% translated per locale) and bulk indicators. The Entry aggregate stores locale as a field, but no coverage calculation query exists.
+Missing: GetLocalizationCoverageQuery returning translated-vs-total per locale per ContentType; CoverageDto in the Application layer.
+
+GAP-12: Per-Site Locale Fallback Chain Configuration
+Site Settings → Locales shows a draggable locale list, fallback chain ordering, fallback behaviour selector (return default / return null / return 404), and RTL auto-detection toggle. The domain has a LocaleFallbackChain service but no UI/API surface to configure it per site.
+Missing: SiteLocaleConfiguration value object (ordered locale list, fallback mode, RTL enabled), UpdateSiteLocalesCommand.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-11: Locale Coverage Matrix query
+Missing
+Medium
+S
+Sprint 7
+
+GAP-12: Per-site locale fallback chain config
+Missing
+Medium
+S
+Sprint 7
+
+
+3.4  Media Library
+GAP-13: Image Variants / Responsive Transforms
+The Media Library asset detail panel shows auto-generated variants: 100×100 thumbnail, 300×300 small, 800×600 medium, and original. No image transform or variant entity exists.
+Missing: AssetVariant entity or value object, IImageTransformService, variant generation on upload (or on-demand via URL parameter), VariantDto in MediaAssetDto.
+
+GAP-14: AI Alt-Text Generation
+The media upload modal and asset detail panel both show AI-generated alt text with a Regenerate button. No AI integration exists for media.
+Missing: GenerateAltTextCommand calling an AI vision model, storing the result in MediaAsset.AiAltText, manual override support.
+
+GAP-15: Virus Scanning (ClamAV)
+The upload modal shows a scanning indicator and the Settings → Plugins panel shows ClamAV Scanner as an installed plugin. No virus scan step exists in the upload pipeline.
+Missing: IVirusScanService interface, ClamAvVirusScanService infrastructure implementation, quarantine status on MediaAsset (Pending / Clean / Infected), scan step in the upload command handler.
+
+GAP-16: Asset Visibility & Signed URLs
+The asset detail panel has a Public/Private toggle. Private assets should require a signed URL with expiry. No visibility field or signed URL generation exists.
+Missing: MediaAsset.Visibility enum (Public/Private), GenerateSignedUrlQuery returning a time-limited signed URL, IStorageSigningService in Infrastructure.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-13: Image Variants & Responsive Transforms
+Missing
+High
+L
+Sprint 8
+
+GAP-14: AI Alt-Text Generation on Upload
+Missing
+Medium
+M
+Sprint 9
+
+GAP-15: Virus Scanning via ClamAV Plugin
+Missing
+High
+M
+Sprint 8
+
+GAP-16: Asset Visibility & Signed URLs
+Missing
+High
+S
+Sprint 8
+
+
+
+3.5  Site Management & Infrastructure
+GAP-17: Site Environments (Production / Staging / Preview)
+Each site card shows multiple environments with URLs and SSL status. The Site aggregate has no Environment entity or value object.
+Missing: SiteEnvironment value object (type: Production/Staging/Preview/Dev, url, sslStatus, isLive), Site.Environments collection, AddEnvironment / UpdateEnvironment commands.
+
+GAP-18: Per-Site Settings Aggregate
+Site Settings exposes: General (name, timezone, date format, feature toggles for versioning, workflow, scheduling, preview, AI), Domains & CORS, Locales, API Keys, Webhooks, and a Danger Zone. No SiteSettings aggregate exists.
+Missing: SiteSettings aggregate (or value object on Site) containing feature flags, preview URL template, CORS origins, UpdateSiteSettingsCommand.
+
+GAP-19: Webhook Subscriptions
+Both Tenant Settings and Site Settings show webhook subscriptions with event lists (entry.published, entry.pending_review, asset.uploaded, etc.), HMAC-SHA256 signing, retry logic, and delivery logs.
+Missing: WebhookSubscription aggregate, WebhookEvent domain event dispatcher, HMAC signing in IWebhookDispatcher, delivery log entity, CreateWebhook / UpdateWebhook / DeleteWebhook commands.
+
+GAP-20: API Client Management (per Site)
+Site Settings → API Keys shows three key types: Delivery (read-only published), Management (full read/write), and Preview (read draft). The current authorization uses JWT roles only; no API client entity exists.
+Missing: ApiClient aggregate (name, keyType, hashedSecret, scopes, expiresAt), CreateApiClient / RevokeApiClient / RegenerateApiClient commands, scope-based authorization in AuthorizationBehavior.
+
+GAP-21: Site Structure / Page Hierarchy
+The site-structure screen shows a full hierarchical page tree per site (Home > Product > Features), with static pages and collection routes, page type assignment, linked entries, breadcrumb, and depth tracking.
+Missing: Page aggregate (parentId, slug, pageType: Static/Collection, linkedEntryId, collectionContentTypeId, routePattern), CreatePage / MovePage / DeletePage commands, GetSiteTree query.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-17: Site Environments (Prod/Staging/Preview)
+Missing
+High
+S
+Sprint 7
+
+GAP-18: Per-Site Settings Aggregate
+Missing
+High
+M
+Sprint 7
+
+GAP-19: Webhook Subscriptions & Dispatcher
+Missing
+High
+L
+Sprint 8
+
+GAP-20: API Client Management (Delivery/Mgmt/Preview)
+Missing
+High
+M
+Sprint 8
+
+GAP-21: Site Structure / Page Hierarchy
+Missing
+High
+L
+Sprint 9
+
+
+
+3.6  Component Library & Page Designer
+GAP-22: Component Library
+The component-library screen shows reusable UI rendering blocks (HeroBanner, CardGrid, RichTextBlock, ImageGallery, etc.) with categories, zone assignments, field definitions (per-component schema), variant counts, and usage counts across pages.
+Missing: Component aggregate (name, key, category, renderingTemplate, fields: FieldDefinition[], allowedZones: string[]), ComponentItem aggregate (filled field values per instance), CreateComponent / UpdateComponentSchema / DeleteComponent commands, GetComponentLibrary query, usage tracking.
+
+GAP-23: Page Designer
+The page-designer screen is a full visual editor: left Component Palette (draggable), centre Canvas (zones with dropped component instances), right Properties panel. Supports desktop/tablet/mobile viewport previews, zoom, and a preview mode.
+Missing: PageTemplate aggregate (zone definitions, ordered component placements), GetPageTemplate / UpdatePageTemplate commands, viewport metadata (readonly), zone-to-component-placement relationship.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-22: Component Library (Component + ComponentItem)
+Missing
+Medium
+L
+Sprint 10
+
+GAP-23: Page Designer (Template + Placement model)
+Missing
+Medium
+L
+Sprint 10
+
+
+3.7  AI Subsystem
+GAP-24: AI Copilot (RAG Chat)
+The ai-copilot screen shows a full conversational assistant grounded on published content (RAG), conversation history, active tool chips (create_entry, schedule_publish, tag_media), source citations with similarity scores, a grounded-only mode toggle, and session statistics (tokens used, cost).
+Missing: CopilotConversation aggregate (messages, grounding mode), IVectorSearchService for RAG retrieval, tool execution adapter, ConversationHistory repository, AI provider abstraction (ILlmService).
+
+GAP-25: Inline AI Writing Assist in Entry Editor
+The entry editor has an AI Assist side panel with actions: Draft from prompt, Rewrite, Change Tone, Summarize, and Continue. These are all missing.
+Missing: DraftContentCommand, RewriteContentCommand, ChangeToneCommand, SummarizeContentCommand — all delegating to ILlmService with appropriate system prompts and entry field context.
+
+GAP-26: AI Translation
+The entry list Localization tab shows a Translate button per locale, and the AI Copilot history includes a 'Translate FAQ to French' session. No translation command exists.
+Missing: TranslateEntryLocaleCommand(entryId, sourceLocale, targetLocale) calling an AI translation model and storing the result as a new locale variant of the entry.
+
+GAP-27: AI Provider Management & Budgets
+Settings → AI Providers shows six providers (Anthropic Claude, Azure OpenAI, OpenAI, Amazon Bedrock, Ollama, Google Vertex) with per-feature model tier overrides. Settings → AI Budgets shows monthly cost cap, per-user daily token cap, and a hard-stop toggle. Settings → AI Safety shows PII redaction, prompt injection detection, safety post-filter, grounded-only mode, data residency, and audit log retention.
+Missing: AiProviderSettings aggregate, AiModelTierOverride value object per feature, AiBudget aggregate (monthlyCap, perUserDailyCap, hardStop, currentSpend), AiSafetyConfig value object, IAiUsageTracker, token usage recording per request, ILlmService abstraction with provider routing logic.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-24: AI Copilot (RAG chat with tool invocation)
+Missing
+Medium
+L
+Sprint 11
+
+GAP-25: Inline AI Writing Assist (Draft/Rewrite/Tone/Summarize)
+Missing
+High
+M
+Sprint 9
+
+GAP-26: AI Translation Command
+Missing
+Medium
+S
+Sprint 9
+
+GAP-27: AI Provider Mgmt, Budgets & Safety Config
+Missing
+High
+L
+Sprint 9
+
+
+
+3.8  Tenant Administration & Security
+GAP-28: Tenant Settings Aggregates
+The Settings screen covers: General (tenant name, slug, domain, default locale, timezone, suspend/archive), Users & Roles (invite flow, MFA status, role matrix with Approver role, custom role editing), API Keys (tenant-level with scopes), Webhooks, Plugin Registry (installed plugins with capabilities: network.outbound, events.subscribe, field.type, storage.scan), and Auth & Security (require MFA for admins, session idle/absolute timeout, external OIDC/SSO, IP allowlist).
+Missing: TenantSettings aggregate; UserInvitation aggregate (email, role, expiresAt, token); Plugin aggregate (name, version, author, capabilities, signature, isActive); SecurityConfig value object (requireMfaForAdmins, sessionIdleTimeout, absoluteSessionTimeout, allowedIpRanges, externalOidcConfig); InviteUser / AcceptInvitation / RevokeInvitation commands.
+
+GAP-29: GraphQL API
+The entry-list API Preview tab shows a GraphQL tab with a query playground. No GraphQL endpoint is planned in Sprints 1–5, nor is it mentioned in the current development plan.
+Missing: Hot Chocolate or Strawberry Shake GraphQL schema, delivery-only query types for entries and assets, pagination cursors, per-content-type field resolution, introspection endpoint.
+
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-28: Tenant Settings (security, plugins, invite, SSO)
+Missing
+High
+L
+Sprint 10
+
+GAP-29: GraphQL Delivery API
+Missing
+Medium
+L
+Sprint 12
+
+
+
+4. Consolidated Gap Table
+All 29 identified gaps ordered by priority and then by recommended delivery sprint.
+
+Feature / Gap
+Status
+Priority
+Effort
+Target Sprint
+
+GAP-01: Typed Field System (ContentType schema)
+Missing
+Critical
+L
+Sprint 6
+
+GAP-02: Entry Folder Hierarchy
+Missing
+High
+M
+Sprint 6
+
+GAP-06: Cancel Scheduled Publish
+Missing
+High
+S
+Sprint 6
+
+GAP-08: SEO Metadata Fields on Entry
+Missing
+High
+S
+Sprint 6
+
+GAP-04: Bulk Publish / Unpublish / Delete
+Missing
+High
+M
+Sprint 7
+
+GAP-07: Approval Workflow (Approver role + commands)
+Missing
+High
+M
+Sprint 7
+
+GAP-03: Rich Text / Portable Text field type
+Missing
+High
+M
+Sprint 7
+
+GAP-17: Site Environments (Prod/Staging/Preview)
+Missing
+High
+S
+Sprint 7
+
+GAP-18: Per-Site Settings Aggregate
+Missing
+High
+M
+Sprint 7
+
+GAP-15: Virus Scanning via ClamAV Plugin
+Missing
+High
+M
+Sprint 8
+
+GAP-16: Asset Visibility & Signed URLs
+Missing
+High
+S
+Sprint 8
+
+GAP-19: Webhook Subscriptions & Dispatcher
+Missing
+High
+L
+Sprint 8
+
+GAP-20: API Client Management (Delivery/Mgmt/Preview)
+Missing
+High
+M
+Sprint 8
+
+GAP-10: Preview Mode & Signed Preview URLs
+Missing
+High
+M
+Sprint 8
+
+GAP-13: Image Variants & Responsive Transforms
+Missing
+High
+L
+Sprint 8
+
+GAP-25: Inline AI Writing Assist
+Missing
+High
+M
+Sprint 9
+
+GAP-27: AI Provider Mgmt, Budgets & Safety Config
+Missing
+High
+L
+Sprint 9
+
+GAP-21: Site Structure / Page Hierarchy
+Missing
+High
+L
+Sprint 9
+
+GAP-28: Tenant Settings (security, plugins, invite, SSO)
+Missing
+High
+L
+Sprint 10
+
+GAP-05: Entry Export (CSV / JSON)
+Missing
+Medium
+S
+Sprint 7
+
+GAP-11: Locale Coverage Matrix query
+Missing
+Medium
+S
+Sprint 7
+
+GAP-12: Per-site locale fallback chain config
+Missing
+Medium
+S
+Sprint 7
+
+GAP-09: Quality Checks (grammar, readability, PII)
+Missing
+Medium
+M
+Sprint 9
+
+GAP-14: AI Alt-Text Generation on Upload
+Missing
+Medium
+M
+Sprint 9
+
+GAP-26: AI Translation Command
+Missing
+Medium
+S
+Sprint 9
+
+GAP-22: Component Library (Component + ComponentItem)
+Missing
+Medium
+L
+Sprint 10
+
+GAP-23: Page Designer (Template + Placement model)
+Missing
+Medium
+L
+Sprint 10
+
+GAP-24: AI Copilot (RAG chat with tool invocation)
+Missing
+Medium
+L
+Sprint 11
+
+GAP-29: GraphQL Delivery API
+Missing
+Medium
+L
+Sprint 12
+
+
+
+5. Recommended Sprint Roadmap
+The following sprint allocations are recommendations based on dependency ordering and impact. Each sprint assumes a two-week cadence.
+
+Sprint
+Feature Gaps
+Theme
+
+Sprint 6
+GAP-01 Typed Fields · GAP-02 Folders · GAP-06 Cancel Schedule · GAP-08 SEO Metadata
+Content Model Hardening
+
+Sprint 7
+GAP-03 Rich Text · GAP-04 Bulk Ops · GAP-05 Export · GAP-07 Approval · GAP-11/12 Locale · GAP-17/18 Site Settings
+Workflow & Site Config
+
+Sprint 8
+GAP-10 Preview URLs · GAP-13 Image Variants · GAP-15 Virus Scan · GAP-16 Signed URLs · GAP-19 Webhooks · GAP-20 API Clients
+Media & Delivery Infra
+
+Sprint 9
+GAP-09 Quality Checks · GAP-14 AI Alt-Text · GAP-21 Site Structure · GAP-25 AI Writing · GAP-26 AI Translate · GAP-27 AI Settings
+AI & Page Structure
+
+Sprint 10
+GAP-22 Component Library · GAP-23 Page Designer · GAP-28 Tenant Settings
+Design System & Admin
+
+Sprint 11
+GAP-24 AI Copilot (RAG)
+AI Copilot
+
+Sprint 12
+GAP-29 GraphQL API
+API Layer Expansion
+
+
+
+6. Architecture Notes for Gap Remediation
+The following principles should guide implementation of the identified gaps, consistent with the existing codebase conventions established in Sprints 1–5.
+
+6.1  Domain Model Extensions
+Each new aggregate (Component, Page, WebhookSubscription, ApiClient, etc.) must follow the existing pattern: strongly-typed ID record struct, private field constructor, static Create() factory, domain events via RaiseDomainEvent(), IRepository<T, TId> registration.
+Value objects (SeoMetadata, SiteEnvironment, AiBudget, SecurityConfig) must be immutable record types in MicroCMS.Domain, placed in the relevant ValueObjects subfolder.
+FieldDefinition for the typed field system should be a value object in Domain.Aggregates.Content, with a FieldType enum and an optional ValidationRules value object.
+
+6.2  Application Layer
+Every new command and query must carry [HasPolicy(ContentPolicies.XxxYyy)] — no exceptions. Use the existing fail-secure authorization pattern.
+AI-related commands (DraftContent, TranslateEntryLocale, GenerateAltText) should declare ICommand<string> or ICommand<AiResultDto> and route through the pipeline in the normal way. The AI provider call belongs in the handler, not a behavior.
+Bulk commands (BulkPublishEntries, BulkDeleteEntries) should iterate individual domain methods to preserve invariants — do not bypass the Entry state machine.
+
+6.3  Infrastructure
+ILlmService abstraction should follow the Adapter pattern: one interface, multiple infrastructure implementations (AnthropicLlmService, AzureOpenAiLlmService, etc.), selected via IOptions<AiProviderSettings> at runtime. This matches the design's ADR-011 'provider swap requires only a configuration change'.
+ClamAV integration should be an IVirusScanService in Infrastructure, invoked from the UploadMediaAssetCommandHandler, not as middleware. The plugin architecture shown in the design maps to DI plugin assemblies.
+Webhook dispatch should be triggered by domain events via the Outbox pattern already implemented: a BackgroundService reads OutboxMessages of type 'domain-event' and dispatches to registered WebhookSubscriptions.
+
+6.4  Security Considerations
+Preview tokens: use a short-lived HMAC-SHA256 signed JWT (max 1 hour), never stored in DB — stateless verification on the server using a per-site secret.
+API client secrets: store only the bcrypt hash, never the plaintext. The raw key is shown exactly once on creation (same pattern as GitHub PATs).
+Webhook HMAC signing: sign the entire payload with HMAC-SHA256 using the per-site webhook secret. Include X-MicroCMS-Signature and X-MicroCMS-Timestamp headers to prevent replay attacks.
+AI PII redaction: run a regex-based pre-processor on content before sending to any AI provider. Log redaction events to the audit log without storing the redacted values.
+
+6.5  Complexity & Test Coverage
+Cyclomatic complexity ≤ 10 per method (project constraint). Bulk commands should delegate to a private helper that handles a single entry to keep the loop body simple.
+All new command handlers must have unit tests using NSubstitute + FluentAssertions + xUnit, following the Arrange/Act/Assert pattern established in Sprint 3.
+AI service integration tests should use recorded cassettes (VCR pattern) or a test double implementing ILlmService to avoid network calls in CI.
+
+
+7. Appendix — Sprint 1–5 Implementation Inventory
+The following lists what is confirmed implemented and tested as of Sprint 5.
+
+Domain Layer (MicroCMS.Domain)
+Aggregates: Site, ContentType, Entry (with EntryVersion), MediaAsset, Taxonomy, OutboxMessage
+Value Objects: Slug, Locale, EntryStatus, LocaleFallbackChain, Taxonomy.Term
+Strongly-typed IDs: TenantId, SiteId, ContentTypeId, EntryId, EntryVersionId, MediaAssetId, TaxonomyId
+Domain Services: LocaleFallbackChain
+Specifications: EntryBySlugAndSiteSpec, EntriesBySiteSpec (paged + non-paged)
+Repository interfaces: IRepository<T, TId>
+
+Infrastructure Layer (MicroCMS.Infrastructure)
+EF Core 8 ApplicationDbContext with multi-tenant global query filter, DomainEvents SaveChanges interceptor, Outbox interceptor
+Entity type configurations for all aggregates
+SQLite and PostgreSQL EF migrations
+Repository<T, TId> implementation, UnitOfWork
+ICurrentUser (ClaimsPrincipal extraction), IDateTimeProvider (UTC)
+Testcontainers integration tests (PostgreSQL container)
+
+Application Layer (MicroCMS.Application)
+MediatR 12 pipeline: LoggingBehavior → AuthorizationBehavior → ValidationBehavior → UnitOfWorkBehavior → Handler
+Authorization: HasPolicyAttribute, ContentPolicies constants, Roles constants, RolePermissions dictionary, DefaultApplicationAuthorizationService, UnauthorizedException, ForbiddenException, MissingPolicyException
+Entry Commands: CreateEntry, UpdateEntry, PublishEntry, UnpublishEntry, DeleteEntry, SchedulePublish, RollbackEntryVersion (all with validators)
+Entry Queries: GetEntry, ListEntries (paged), GetEntryVersions
+DTOs: EntryDto, EntryListItemDto, EntryVersionDto
+Mappers: EntryMapper (Riok.Mapperly source-generated)
+Shared: PagedList<T>, Result<T>/Result/Error pattern
+
+Test Coverage
+50+ unit tests across command handlers, query handlers, validators, authorization behavior, RolePermissions, DefaultApplicationAuthorizationService
+Test project: MicroCMS.Application.UnitTests (xUnit, NSubstitute, FluentAssertions)
+Infrastructure integration tests using Testcontainers for PostgreSQL
+
+End of Document — MicroCMS Design Gap Analysis v1.0
+

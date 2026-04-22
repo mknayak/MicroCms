@@ -36,6 +36,7 @@ public sealed class Entry : AggregateRoot<EntryId>
         CurrentVersionNumber = 0;
         CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
+        Seo = SeoMetadata.Empty;
     }
 
     public TenantId TenantId { get; private set; }
@@ -53,6 +54,8 @@ public sealed class Entry : AggregateRoot<EntryId>
     public DateTimeOffset? ScheduledPublishAt { get; private set; }
     public DateTimeOffset? ScheduledUnpublishAt { get; private set; }
     public IReadOnlyList<EntryVersion> Versions => _versions.AsReadOnly();
+    public SeoMetadata Seo { get; private set; } = null!;
+    public FolderId? FolderId { get; private set; }
 
     // ── Factory ────────────────────────────────────────────────────────────
 
@@ -63,13 +66,15 @@ public sealed class Entry : AggregateRoot<EntryId>
         Slug slug,
         Locale locale,
         Guid authorId,
-        string fieldsJson = "{}")
+        string fieldsJson = "{}",
+        FolderId? folderId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fieldsJson, nameof(fieldsJson));
 
         var entry = new Entry(EntryId.New(), tenantId, siteId, contentTypeId, slug, locale, authorId)
         {
-            FieldsJson = fieldsJson
+            FieldsJson = fieldsJson,
+            FolderId = folderId
         };
 
         entry.SnapshotVersion(authorId, changeNote: "Initial draft");
@@ -94,6 +99,21 @@ public sealed class Entry : AggregateRoot<EntryId>
     {
         EnsureEditable();
         Slug = newSlug;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Updates SEO metadata fields on the entry (GAP-08).</summary>
+    public void UpdateSeoMetadata(SeoMetadata seo)
+    {
+        ArgumentNullException.ThrowIfNull(seo, nameof(seo));
+        Seo = seo;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Moves the entry into a folder or to the site root (GAP-02).</summary>
+    public void MoveToFolder(FolderId? folderId)
+    {
+        FolderId = folderId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -184,6 +204,19 @@ public sealed class Entry : AggregateRoot<EntryId>
         ScheduledPublishAt = publishAt;
         ScheduledUnpublishAt = unpublishAt;
         Status = EntryStatus.Scheduled;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void CancelScheduledPublish()
+    {
+        if (Status != EntryStatus.Scheduled)
+        {
+            throw new InvalidStateTransitionException("Entry", Status.ToString(), "CancelScheduledPublish");
+        }
+
+        ScheduledPublishAt = null;
+        ScheduledUnpublishAt = null;
+        Status = EntryStatus.Approved;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

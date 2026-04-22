@@ -37,6 +37,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Problem Details RFC 7807 (used in composition root AddApiServices) -->
+    <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
+    <!-- API versioning (used in composition root AddApiServices) -->
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+    <!-- OpenAPI / Swagger (used in composition root AddApiServices) -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    <!-- JWT auth (used in composition root AddSecurityServices) -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
     <!-- Serilog sinks -->
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />

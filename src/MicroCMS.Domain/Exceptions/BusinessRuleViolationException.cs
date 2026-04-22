@@ -7,7 +7,7 @@ namespace MicroCMS.Domain.Exceptions;
 public sealed class BusinessRuleViolationException : DomainException
 {
     public BusinessRuleViolationException(string ruleName, string message)
-        : base($"[{ruleName}] {message}")
+     : base($"[{ruleName}] {message}")
     {
         RuleName = ruleName;
     }

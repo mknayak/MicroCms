@@ -1,5 +1,6 @@
 using MicroCMS.Application.Features.Entries.Dtos;
 using MicroCMS.Domain.Aggregates.Content;
+using MicroCMS.Domain.ValueObjects;
 using Riok.Mapperly.Abstractions;
 
 namespace MicroCMS.Application.Features.Entries.Mappers;
@@ -12,13 +13,26 @@ namespace MicroCMS.Application.Features.Entries.Mappers;
 public static partial class EntryMapper
 {
     /// <summary>Maps an <see cref="Entry"/> aggregate to its full DTO representation.</summary>
-    [MapProperty(nameof(Entry.Id) + "." + nameof(Entry.Id.Value), nameof(EntryDto.Id))]
-    [MapProperty(nameof(Entry.TenantId) + "." + nameof(Entry.TenantId.Value), nameof(EntryDto.TenantId))]
-    [MapProperty(nameof(Entry.SiteId) + "." + nameof(Entry.SiteId.Value), nameof(EntryDto.SiteId))]
-    [MapProperty(nameof(Entry.ContentTypeId) + "." + nameof(Entry.ContentTypeId.Value), nameof(EntryDto.ContentTypeId))]
-    [MapProperty(nameof(Entry.Slug) + "." + nameof(Entry.Slug.Value), nameof(EntryDto.Slug))]
-    [MapProperty(nameof(Entry.Locale) + "." + nameof(Entry.Locale.Value), nameof(EntryDto.Locale))]
-    public static partial EntryDto ToDto(Entry entry);
+    public static EntryDto ToDto(Entry entry) => new(
+        entry.Id.Value,
+        entry.TenantId.Value,
+        entry.SiteId.Value,
+        entry.ContentTypeId.Value,
+        entry.Slug.Value,
+        entry.Locale.Value,
+        entry.AuthorId,
+        entry.Status.ToString(),
+        entry.CurrentVersionNumber,
+        entry.FieldsJson,
+        entry.CreatedAt,
+        entry.UpdatedAt,
+        entry.PublishedAt,
+        entry.ScheduledPublishAt,
+        entry.ScheduledUnpublishAt,
+        entry.FolderId?.Value,
+        entry.Seo is { } seo
+            ? new SeoMetadataDto(seo.MetaTitle, seo.MetaDescription, seo.CanonicalUrl, seo.OgImage)
+            : null);
 
     /// <summary>Maps an <see cref="Entry"/> aggregate to a lightweight list item DTO.</summary>
     [MapProperty(nameof(Entry.Id) + "." + nameof(Entry.Id.Value), nameof(EntryListItemDto.Id))]

@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Entities;
+using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
@@ -12,6 +13,8 @@ namespace MicroCMS.Domain.Aggregates.Tenant;
 public sealed class Site : Entity<SiteId>
 {
     public const int MaxNameLength = 100;
+
+    private readonly List<SiteEnvironment> _environments = [];
 
     private Site() { } // EF Core
 
@@ -33,6 +36,7 @@ public sealed class Site : Entity<SiteId>
     public CustomDomain? CustomDomain { get; private set; }
     public bool IsActive { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
+    public IReadOnlyList<SiteEnvironment> Environments => _environments.AsReadOnly();
 
     internal static Site Create(
         TenantId tenantId,
@@ -79,4 +83,15 @@ public sealed class Site : Entity<SiteId>
 
         IsActive = true;
     }
+
+    /// <summary>Adds or replaces a deployment environment of a given type (GAP-17).</summary>
+    public void AddEnvironment(EnvironmentType type, string url, bool isLive = false)
+    {
+      _environments.RemoveAll(e => e.Type == type);
+        _environments.Add(SiteEnvironment.Create(type, url, isLive));
+    }
+
+    /// <summary>Removes an environment by type (GAP-17).</summary>
+    public void RemoveEnvironment(EnvironmentType type) =>
+        _environments.RemoveAll(e => e.Type == type);
 }

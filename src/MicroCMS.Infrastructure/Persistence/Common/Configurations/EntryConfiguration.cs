@@ -67,6 +67,21 @@ internal sealed class EntryConfiguration : IEntityTypeConfiguration<Entry>
         builder.Property(e => e.ScheduledPublishAt);
         builder.Property(e => e.ScheduledUnpublishAt);
 
+        // ── GAP-02: FolderId ───────────────────────────────────────────────
+        builder.Property(e => e.FolderId)
+            .HasConversion(
+                id => id.HasValue ? id.Value.Value : (Guid?)null,
+                value => value.HasValue ? new FolderId(value.Value) : (FolderId?)null);
+
+        // ── GAP-08: SeoMetadata owned entity ──────────────────────────────
+        builder.OwnsOne(e => e.Seo, seo =>
+        {
+            seo.Property(s => s.MetaTitle).HasMaxLength(SeoMetadata.MaxMetaTitleLength).HasColumnName("SeoMetaTitle");
+            seo.Property(s => s.MetaDescription).HasMaxLength(SeoMetadata.MaxMetaDescriptionLength).HasColumnName("SeoMetaDescription");
+            seo.Property(s => s.CanonicalUrl).HasMaxLength(500).HasColumnName("SeoCanonicalUrl");
+            seo.Property(s => s.OgImage).HasMaxLength(500).HasColumnName("SeoOgImage");
+        });
+
         // Unique: slug per site per locale (content invariant in same locale must have unique slug)
         builder.HasIndex(e => new { e.SiteId, e.Locale, e.Slug }).IsUnique();
 
@@ -88,19 +103,8 @@ internal sealed class EntryConfiguration : IEntityTypeConfiguration<Entry>
             version.Property(v => v.VersionNumber).IsRequired();
             version.Property(v => v.AuthorId).IsRequired();
 
-            version.Property(v => v.FieldsJson)
-                .HasColumnType("nvarchar(max)")
+            version.Property(v => v.FieldsJson).HasColumnType("nvarchar(max)")
                 .IsRequired();
-
-            version.Property(v => v.ChangeNote)
-                .HasMaxLength(500);
-
-            version.Property(v => v.CreatedAt).IsRequired();
-
-            // Version number must be unique within an entry
-            version.HasIndex("EntryId", "VersionNumber").IsUnique();
         });
-
-        builder.Ignore(e => e.DomainEvents);
     }
 }

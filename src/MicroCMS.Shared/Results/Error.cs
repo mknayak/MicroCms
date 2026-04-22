@@ -24,15 +24,20 @@ public sealed record Error(string Code, string Message, ErrorType Type = ErrorTy
 
     public static Error Forbidden(string code, string message) =>
         new(code, message, ErrorType.Forbidden);
+
+    public static Error Unexpected(string code, string message) =>
+        new(code, message, ErrorType.Unexpected);
 }
 
+/// <summary>Categorises the nature of an <see cref="Error"/> for HTTP status mapping.</summary>
 public enum ErrorType
 {
-    None,
-    Failure,
-    NotFound,
-    Validation,
-    Conflict,
-    Unauthorized,
-    Forbidden
+    None        = 0,
+    Failure     = 1,
+    NotFound    = 2,
+    Validation  = 3,
+    Conflict    = 4,
+    Unauthorized = 5,
+    Forbidden   = 6,
+    Unexpected  = 7,
 }

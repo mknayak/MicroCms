@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Hellang.Middleware.ProblemDetails;
 using MicroCMS.Application;
 using MicroCMS.Application.Common.Exceptions;
+using MicroCMS.Application.Common.Security;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,15 +13,27 @@ using System.Threading.RateLimiting;
 
 namespace MicroCMS.WebHost.Extensions;
 
+/// <summary>
+/// Builder-level DI extension methods for the MicroCMS composition root.
+/// Each method handles one vertical concern; cyclomatic complexity per method stays low.
+/// </summary>
 internal static class ServiceCollectionExtensions
 {
-    internal static WebApplicationBuilder AddLoggingAndTelemetry(this WebApplicationBuilder builder)
+    // ── Logging / Telemetry ───────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddLoggingAndTelemetry(
+        this WebApplicationBuilder builder)
     {
-      // TODO: Serilog + OpenTelemetry registration (Sprint 14)
+        // TODO Sprint 14 – Serilog structured logging + OpenTelemetry traces/metrics
+        // builder.Host.UseSerilog(...);
+        // builder.Services.AddOpenTelemetry()...;
         return builder;
     }
 
-    internal static WebApplicationBuilder AddSecurityServices(this WebApplicationBuilder builder)
+    // ── Security ──────────────────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddSecurityServices(
+        this WebApplicationBuilder builder)
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
         var secret = jwtSection["Secret"] ?? "dev-secret-change-in-production-min32chars!!";
@@ -28,201 +41,216 @@ internal static class ServiceCollectionExtensions
         var audience = jwtSection["Audience"] ?? "microcms-api";
 
         builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
-   {
-         opt.TokenValidationParameters = new TokenValidationParameters
- {
-   ValidateIssuer = true,
-        ValidateAudience = true,
-           ValidateLifetime = true,
-    ValidateIssuerSigningKey = true,
-   ValidIssuer = issuer,
-            ValidAudience = audience,
-         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret))
-};
-   });
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(opt =>
+            {
+                opt.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = issuer,
+                    ValidAudience = audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+                    ClockSkew = TimeSpan.FromSeconds(30),
+                };
+            });
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(opt =>
+        {
+            // All JWT-authenticated users must pass the TenantMember baseline
+            opt.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+
+            // Content workflow policies — role claim checks
+            opt.AddPolicy(AuthorizationPolicies.TenantMember,
+                p => p.RequireAuthenticatedUser());
+
+            opt.AddPolicy(AuthorizationPolicies.TenantAdmin,
+                p => p.RequireClaim("role", "TenantAdmin"));
+
+            opt.AddPolicy(AuthorizationPolicies.ContentAuthor,
+                p => p.RequireClaim("role", "Author", "Editor", "Approver", "Publisher", "TenantAdmin"));
+
+            opt.AddPolicy(AuthorizationPolicies.ContentEditor,
+                p => p.RequireClaim("role", "Editor", "Approver", "Publisher", "TenantAdmin"));
+
+            opt.AddPolicy(AuthorizationPolicies.ContentApprover,
+                p => p.RequireClaim("role", "Approver", "Publisher", "TenantAdmin"));
+
+            opt.AddPolicy(AuthorizationPolicies.ContentPublisher,
+                p => p.RequireClaim("role", "Publisher", "TenantAdmin"));
+
+            // API key policy — authenticated via API key scheme (header X-Api-Key)
+            opt.AddPolicy(AuthorizationPolicies.ApiKey,
+                p => p.RequireClaim("auth_method", "api_key"));
+        });
 
         builder.Services.AddCors(opt =>
             opt.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+                policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
         builder.Services.AddRateLimiter(opt =>
         {
             opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-   opt.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
-   {
-        var tenantId = ctx.User?.FindFirst("tenant_id")?.Value ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon";
-          return RateLimitPartition.GetTokenBucketLimiter(tenantId, _ => new TokenBucketRateLimiterOptions
-          {
-       TokenLimit = 600,
-   TokensPerPeriod = 600,
-        ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-    AutoReplenishment = true
-       });
-            });
-     });
+            opt.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+            {
+                var partitionKey = ctx.User?.FindFirst("tenant_id")?.Value
+                    ?? ctx.Connection.RemoteIpAddress?.ToString()
+                    ?? "anon";
 
-      return builder;
+                return RateLimitPartition.GetTokenBucketLimiter(partitionKey, _ =>
+                    new TokenBucketRateLimiterOptions
+                    {
+                        TokenLimit = 200,
+                        TokensPerPeriod = 200,
+                        ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 10,
+                    });
+            });
+        });
+
+        return builder;
     }
 
-    internal static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
+    // ── Application layer ─────────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddApplicationServices(
+        this WebApplicationBuilder builder)
     {
         builder.Services.AddApplication();
         return builder;
     }
 
-    internal static WebApplicationBuilder AddInfrastructureServices(this WebApplicationBuilder builder)
+    // ── Infrastructure layer ──────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddInfrastructureServices(
+        this WebApplicationBuilder builder)
     {
         builder.Services.AddInfrastructure(builder.Configuration);
         return builder;
     }
 
-    internal static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
+    // ── REST API layer ────────────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddApiServices(
+        this WebApplicationBuilder builder)
     {
-   builder.Services
- .AddControllers()
-        .AddApplicationPart(typeof(MicroCMS.Api.AssemblyReference).Assembly);
+        builder.Services
+            .AddControllers()
+            .AddApplicationPart(typeof(MicroCMS.Api.AssemblyReference).Assembly);
 
         builder.Services
             .AddApiVersioning(opt =>
             {
-    opt.DefaultApiVersion = new ApiVersion(1, 0);
-       opt.AssumeDefaultVersionWhenUnspecified = true;
-     opt.ReportApiVersions = true;
- })
+                opt.DefaultApiVersion = new ApiVersion(1, 0);
+                opt.AssumeDefaultVersionWhenUnspecified = true;
+                opt.ReportApiVersions = true;
+            })
             .AddApiExplorer(opt =>
             {
-    opt.GroupNameFormat = "'v'VVV";
-     opt.SubstituteApiVersionInUrl = true;
-    });
+                opt.GroupNameFormat = "'v'VVV";
+                opt.SubstituteApiVersionInUrl = true;
+            });
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(opt =>
         {
-          opt.SwaggerDoc("v1", new OpenApiInfo
+            opt.SwaggerDoc("v1", new OpenApiInfo
             {
-            Title = "MicroCMS API",
-  Version = "v1",
-    Description = "Headless CMS REST API"
-        });
-
-   opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-     {
-              Name = "Authorization",
-          Type = SecuritySchemeType.Http,
-     Scheme = "bearer",
-                BearerFormat = "JWT",
-          In = ParameterLocation.Header,
-    Description = "Enter your JWT token."
+                Title = "MicroCMS API",
+                Version = "v1",
+                Description = "Headless CMS REST API",
             });
 
-          opt.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-  {
-    new OpenApiSecurityScheme
-          {
-    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-             },
-          Array.Empty<string>()
-  }
-      });
+            opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Enter JWT token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer",
+            });
+
+            opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer",
+                        },
+                    },
+                    Array.Empty<string>()
+                },
+            });
         });
 
-        // RFC 7807 Problem Details — map domain and application exceptions
         builder.Services.AddProblemDetails(opt =>
         {
-    opt.IncludeExceptionDetails = (_, _) =>
-           builder.Environment.IsDevelopment();
-
-            opt.Map<NotFoundException>(ex =>
-   new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status404NotFound)
-  {
-         Title = "Not Found",
-         Detail = ex.Message
-                });
-
-  opt.Map<ConflictException>(ex =>
-           new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status409Conflict)
-           {
-        Title = "Conflict",
-         Detail = ex.Message
-         });
-
-            opt.Map<ValidationException>(ex =>
-            {
-     var pd = new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status422UnprocessableEntity)
-          {
-          Title = "Validation Failed",
-       Detail = "One or more validation errors occurred."
-     };
-   pd.Extensions["errors"] = ex.Errors;
-     return pd;
-      });
-
-   opt.Map<UnauthorizedException>(_ =>
-       new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status401Unauthorized)
-          {
-         Title = "Unauthorized"
-    });
-
-            opt.Map<ForbiddenException>(ex =>
-     new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status403Forbidden)
-  {
-         Title = "Forbidden",
-          Detail = ex.Message
-        });
-
-         opt.Map<BusinessRuleViolationException>(ex =>
-     new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status422UnprocessableEntity)
-                {
-                    Title = ex.RuleName,
-             Detail = ex.Message
-  });
-
-      opt.Map<DomainException>(ex =>
-         new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status422UnprocessableEntity)
-      {
-Title = "Domain Rule Violation",
-    Detail = ex.Message
-        });
-
-       opt.Map<QuotaExceededException>(ex =>
-     new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status429TooManyRequests)
-                {
-      Title = "Quota Exceeded",
-      Detail = ex.Message
-   });
-
+            opt.MapToStatusCode<NotFoundException>(StatusCodes.Status404NotFound);
+            opt.MapToStatusCode<ConflictException>(StatusCodes.Status409Conflict);
+            opt.MapToStatusCode<ForbiddenException>(StatusCodes.Status403Forbidden);
+            opt.MapToStatusCode<UnauthorizedException>(StatusCodes.Status401Unauthorized);
+            opt.MapToStatusCode<ValidationException>(StatusCodes.Status422UnprocessableEntity);
+            opt.MapToStatusCode<DomainException>(StatusCodes.Status400BadRequest);
             opt.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
-  });
+        });
 
         return builder;
     }
 
-    internal static WebApplicationBuilder AddGraphQlServices(this WebApplicationBuilder builder)
+    // ── GraphQL layer ─────────────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddGraphQlServices(
+        this WebApplicationBuilder builder)
     {
-        // TODO: Hot Chocolate dynamic schema (Sprint 9)
+        // TODO Sprint 9 – wire Hot Chocolate schema, query/mutation types, and data loaders
+        // builder.Services.AddGraphQLServer()
+        //     .AddQueryType<Query>()
+        //     .AddMutationType<Mutation>()
+        //     .AddFiltering()
+        //     .AddSorting()
+        //     .AddProjections()
+        //     .AddAuthorization();
         return builder;
     }
 
-  internal static WebApplicationBuilder AddPluginHosting(this WebApplicationBuilder builder)
-    {
-        // TODO: AssemblyLoadContext plugin loader (Sprint 11)
-   return builder;
-    }
+    // ── Plugin hosting ────────────────────────────────────────────────────
 
-    internal static WebApplicationBuilder AddAiServices(this WebApplicationBuilder builder)
+    internal static WebApplicationBuilder AddPluginHosting(
+        this WebApplicationBuilder builder)
     {
-        // TODO: AI provider registry, orchestrator, budget service (Sprint 12)
+        // TODO Sprint 10 – load plugin manifests from the configured directory,
+        // create AssemblyLoadContexts, call IPlugin.ConfigureServices for each.
         return builder;
     }
 
-    internal static WebApplicationBuilder AddHealthChecks(this WebApplicationBuilder builder)
+    // ── AI services ───────────────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddAiServices(
+        this WebApplicationBuilder builder)
     {
-        builder.Services.AddHealthChecks();
-    return builder;
+        // TODO Sprint 11 – register ILlmService routing, provider factories,
+        // usage tracker, and budget enforcer from MicroCMS.Ai.Core.
+        return builder;
+    }
+
+    // ── Health checks ─────────────────────────────────────────────────────
+
+    internal static WebApplicationBuilder AddHealthChecks(
+        this WebApplicationBuilder builder)
+    {
+        builder.Services
+            .AddHealthChecks()
+            .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
+
+        return builder;
     }
 }

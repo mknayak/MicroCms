@@ -50,6 +50,22 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt).IsRequired();
         builder.Property(u => u.UpdatedAt).IsRequired();
 
+        // ── Password credential (nullable for OIDC-only accounts) ─────────
+        builder.Property(u => u.PasswordHash)
+            .HasMaxLength(72) // bcrypt output is always ≤ 72 chars
+            .IsRequired(false);
+
+        builder.Property(u => u.PasswordChangedAt)
+            .IsRequired(false);
+
+        // ── Brute-force lockout ───────────────────────────────────────────
+        builder.Property(u => u.FailedLoginAttempts)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        builder.Property(u => u.LockoutEnd)
+            .IsRequired(false);
+
         // ── Roles (owned collection in separate table) ─────────────────────
         builder.OwnsMany(u => u.Roles, role =>
         {
