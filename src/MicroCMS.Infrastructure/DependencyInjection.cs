@@ -14,6 +14,8 @@ using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Aggregates.Webhooks;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Services;
+using MicroCMS.Infrastructure.Ai;
+using MicroCMS.Infrastructure.Content;
 using MicroCMS.Infrastructure.Identity;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Tenancy;
@@ -140,18 +142,22 @@ public static class DependencyInjection
     {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
-        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
-        services.AddScoped<ITokenService, JwtTokenService>();
+  services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+      services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ISecretHasher, Sha256SecretHasher>();
+     services.AddScoped<ILlmService, NullLlmService>();
+        services.AddScoped<IPreviewSecretProvider, SiteIdPreviewSecretProvider>();
     }
 
     /// <summary>Sprint 5 — tenancy services: subdomain resolver, resolution middleware, and quota enforcement.</summary>
     private static void RegisterTenancyServices(IServiceCollection services)
     {
         services.AddScoped<ITenantResolver, SubdomainTenantResolver>();
-        services.AddScoped<IQuotaService, QuotaService>();
-        services.AddTransient<TenantResolutionMiddleware>();
+      services.AddScoped<IQuotaService, QuotaService>();
+        // TenantResolutionMiddleware is NOT registered here — it is activated by
+        // app.UseMiddleware<TenantResolutionMiddleware>() which injects RequestDelegate automatically.
+        services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
     }
 
     private static bool IsDevEnvironment(IConfiguration configuration) =>

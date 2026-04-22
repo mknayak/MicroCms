@@ -2,11 +2,6 @@ using Microsoft.AspNetCore.SpaServices.Extensions;
 
 namespace MicroCMS.Admin.WebHost.Extensions;
 
-/// <summary>
-/// Registers and configures the Vite-powered React SPA.
-/// In Development:  proxies to the Vite dev server (http://localhost:5174).
-/// In Production:   serves the pre-built assets from ClientApp/dist/.
-/// </summary>
 internal static class SpaExtensions
 {
     private const string SpaSourcePath = "ClientApp";
@@ -16,32 +11,47 @@ internal static class SpaExtensions
     {
         builder.Services.AddSpaStaticFiles(configuration =>
         {
-            // Production: serve from the build output directory
             configuration.RootPath = $"{SpaSourcePath}/dist";
-        });
+     });
 
         return builder;
     }
 
     internal static WebApplication UseAdminSpa(this WebApplication app)
     {
-        // Serve static files from ClientApp/dist in production
-        if (!app.Environment.IsDevelopment())
+      var viteRunning = app.Environment.IsDevelopment() && IsViteRunning();
+
+        // Serve static files from dist/ whenever Vite is not proxying
+        if (!viteRunning)
         {
-            app.UseSpaStaticFiles();
-        }
+    app.UseSpaStaticFiles();
+      }
 
         app.UseSpa(spa =>
         {
             spa.Options.SourcePath = SpaSourcePath;
 
-            if (app.Environment.IsDevelopment())
-            {
-                // Proxy all unmatched requests to the Vite dev server
-                spa.UseProxyToSpaDevelopmentServer(ViteDevServerUrl);
-            }
+            if (viteRunning)
+   {
+        spa.UseProxyToSpaDevelopmentServer(ViteDevServerUrl);
+    }
         });
 
         return app;
+ }
+
+    /// <summary>Quick TCP probe to check whether the Vite dev server is listening.</summary>
+    private static bool IsViteRunning()
+    {
+   try
+    {
+using var client = new System.Net.Sockets.TcpClient();
+        client.Connect("localhost", 5174);
+            return true;
+        }
+  catch
+     {
+         return false;
+        }
     }
 }

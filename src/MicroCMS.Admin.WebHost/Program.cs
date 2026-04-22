@@ -10,10 +10,12 @@ builder.AddAdminApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddAdminSpaServices();
 builder.AddAdminHealthChecks();
+builder.AddAdminApiProxy();
 
 var app = builder.Build();
 
 app.UseAdminSecurityMiddleware();
+app.UseAdminApiProxy();
 app.UseAdminSpa();
 
 await app.RunAsync();
