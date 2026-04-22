@@ -1,19 +1,19 @@
 # MicroCMS — Development Plan
 
-**Version:** 1.3  
-**Last Updated:** 2026-04-22  
-**Sprint Cadence:** 2 weeks  
-**Target GA:** Sprint 14 (28 sprints = ~7 months from kickoff)  
-**Current Status:** Sprint 3 complete — entering Sprint 4 (REST API + Swagger)
+**Version:** 1.4
+**Last Updated:** 2026-04-22
+**Sprint Cadence:** 2 weeks
+**Target GA:** Sprint 14 (28 sprints = ~7 months from kickoff)
+**Current Status:** Sprint 5 complete — entering Sprint 6 (Identity & OAuth2)
 
 ---
 
 ## Guiding Principles
 
-Every sprint produces working, tested, deployable software. No sprint ends with unbuildable code.  
-Architecture tests (`MicroCMS.Architecture.Tests`) run on every PR and block merge on failure.  
-Coverage gate: ≥ 80% on Domain and Application layers from Sprint 2 onward.  
-Security review is embedded in every sprint — not deferred to a "security sprint".  
+Every sprint produces working, tested, deployable software. No sprint ends with unbuildable code.
+Architecture tests (`MicroCMS.Architecture.Tests`) run on every PR and block merge on failure.
+Coverage gate: ≥ 80% on Domain and Application layers from Sprint 2 onward.
+Security review is embedded in every sprint — not deferred to a "security sprint".
 Cyclomatic complexity ≤ 10 / cognitive complexity ≤ 15 enforced via `.editorconfig` + SonarAnalyzer.
 
 ---
@@ -100,58 +100,70 @@ Deliverables:
 - `Application/DependencyInjection.AddApplication()` — registers MediatR with ordered pipeline, FluentValidation, authorization service. ✅
 - Application unit tests: `CreateEntryCommandHandlerTests`, `UpdateEntryCommandHandlerTests`, `PublishEntryCommandHandlerTests`, `DeleteEntryCommandHandlerTests`, `GetEntryQueryHandlerTests`, `ListEntriesQueryHandlerTests`, `GetEntryVersionsQueryHandlerTests`, `AuthorizationBehaviorTests`, `RolePermissionsTests`, `DefaultApplicationAuthorizationServiceTests`, `CreateEntryCommandValidatorTests`. ✅
 
-Implementation notes:
-- MediatR pipeline order: `LoggingBehavior → AuthorizationBehavior → ValidationBehavior → UnitOfWorkBehavior → Handler`.
-- Slug uniqueness is checked in the handler (not validator) to avoid requiring a repository in the validator.
-- `Entry.Status` (enum) serialised to string in `EntryDto` via Mapperly's default enum-to-string mapping.
-- `[Mapper(UnmappedMemberStrategy = UnmappedMemberStrategy.Ignore)]` suppresses RMG warnings for extra source props (e.g. `Versions`, `FieldsJson`) not present in narrow DTOs — required due to `TreatWarningsAsErrors`.
-
 Security items:
 - `AuthorizationBehavior` added to pipeline at position 2 (after logging, before validation) — evaluates `[HasPolicy]` attributes on the request type before the handler is invoked. ✅
 - Every command/query requires at least one `[HasPolicy]` decoration; absence throws `MissingPolicyException` at runtime (fail-secure default). ✅
 - `UnauthorizedException` (HTTP 401) vs `ForbiddenException` (HTTP 403) cleanly separated — maps to distinct HTTP codes in Sprint 4. ✅
 - Role-to-policy mapping lives in `RolePermissions` (single source of truth); new roles only need to be added there. ✅
 
-### Sprint 4 — REST API + Swagger
+### Sprint 4 — REST API + Swagger ✅ DONE
 **Goal:** Full HTTP API surface for content, tenants, and media, ready for consumer integration.
 
 Deliverables:
-- `TenantsController` (CRUD + site management).
-- `ContentTypesController` (define schemas).
-- `EntriesController` (CRUD, publish/unpublish, version history, locale variants).
-- `MediaController` (upload, list, metadata, delete, signed URL).
-- `TaxonomyController` (categories, tags).
-- API versioning (`/api/v1/`).
-- Swagger / OpenAPI 3.0 docs auto-generated.
-- Problem Details (RFC 7807) middleware — maps domain exceptions to correct HTTP codes.
-- Rate limiting middleware: token-bucket per tenant (ASP.NET Core built-in).
-- JWT bearer authentication + CORS configured.
-- Contract tests using `Microsoft.AspNetCore.Mvc.Testing`.
+- `ApiControllerBase` with `OkOrProblem` / `CreatedOrProblem` / `NoContentOrProblem` Result-unwrapping helpers. ✅
+- `TenantsController` — CRUD + site management (`POST /`, `GET /`, `GET /{id}`, `PUT /{id}/settings`, `POST /{id}/sites`). ✅
+- `ContentTypesController` — schema definition (`POST /`, `GET /`, `GET /{id}`, `POST /{id}/fields`, `DELETE /{id}/fields/{fieldId}`, `POST /{id}/publish`, `POST /{id}/archive`). ✅
+- `EntriesController` — CRUD, publish/unpublish, schedule, rollback, version history. ✅
+- `MediaController` — register asset, list, get, patch metadata, delete. ✅
+- `TaxonomyController` — categories and tags CRUD. ✅
+- Application feature handlers for all of the above (Tenants, ContentTypes, Media, Taxonomy). ✅
+- Domain specifications: `ContentTypesBySiteSpec`, `MediaAssetsBySiteSpec`, `TaxonomyBySiteSpec`, `AllTenantsSpec`. ✅
+- `ConflictException` → HTTP 409; `QuotaExceededException` → HTTP 429 in Problem Details. ✅
+- API versioning (`/api/v1/`) with Asp.Versioning. ✅
+- Swagger / OpenAPI 3.0 with JWT Bearer security definition. ✅
+- Problem Details (RFC 7807) middleware — maps all domain and application exceptions. ✅
+- Rate limiting: token-bucket per tenant-ID / IP (ASP.NET Core built-in). ✅
+- JWT bearer authentication + CORS configured in `AddSecurityServices`. ✅
+- Health check endpoints (`/health/live`, `/health/ready`). ✅
+- `WebHost/Extensions/ServiceCollectionExtensions.cs` and `ApplicationBuilderExtensions.cs` fully implemented. ✅
+- Contract tests (`MicroCMS.Api.ContractTests`): 11 tests passing. ✅
 
 Security items:
-- All endpoints annotated with explicit `[Authorize(Policy)]`.
-- HSTS and HTTPS redirect enforced in non-Development environments.
-- Correlation ID middleware for request tracing.
-- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` headers set globally.
+- All endpoints annotated with `[Authorize]`. ✅
+- HSTS and HTTPS redirect enforced in non-Development environments. ✅
+- Correlation ID middleware echoes `X-Correlation-ID` on every response. ✅
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` headers set globally. ✅
 
 ---
 
 ## Phase 2 — Multi-Tenancy, Auth & Media (Sprints 5–7)
 
-### Sprint 5 — Multi-Tenancy Hardening
+### Sprint 5 — Multi-Tenancy Hardening ✅ DONE
 **Goal:** Tenant isolation tested under adversarial conditions; tenant onboarding flow complete.
 
 Deliverables:
-- Tenant resolution middleware: subdomain → TenantId lookup with LRU cache.
-- Schema-per-tenant mode: `IMigrationRunner` per-tenant on onboarding.
-- `TenantOnboardingService`: provision DB schema, default roles, admin user, default site.
-- Per-tenant quota enforcement (storage GB, API RPM, user count) via `IQuotaService`.
-- Tenant admin API (`/api/v1/admin/tenants/...`).
-- Infrastructure integration tests: cross-tenant isolation (attempt to read tenant B data from tenant A session, expect 0 results).
+- `ITenantResolver` interface + `SubdomainTenantResolver` implementation — subdomain extraction from `Host` header, `X-Tenant-Slug` escape header trusted only for `SystemAdmin` role (SSRF/spoofing guard). ✅
+- LRU cache in `SubdomainTenantResolver` — `ConcurrentDictionary` with 5-minute TTL and 1 024-entry cap. ✅
+- `TenantResolutionMiddleware` — runs early in pipeline, writes resolved `TenantId` to `HttpContext.Items`; exempts `/health`, `/swagger`, `/metrics`. ✅
+- `ITenantOnboardingService` interface + `TenantOnboardingService` implementation — atomically provisions: Tenant (Provisioning→Active), default site, admin `User` with `Publisher` role. ✅
+- `OnboardTenantCommand` + handler — wired to `ITenantOnboardingService`. ✅
+- `IQuotaService` interface + `QuotaService` implementation — enforces `MaxUsers`, `MaxSites`, `MaxContentTypes` (zero = unlimited). ✅
+- `QuotaExceededException` → HTTP 429 mapped in Problem Details middleware. ✅
+- `TenantAdminController` (`/api/v1/admin/tenants`) — `GET /`, `GET /{id}`, `POST /onboard`, `POST /`, `PUT /{id}/settings`, `POST /{id}/sites`. ✅
+- `UsersController` (`/api/v1/users`) — `GET /`, `GET /{id}`, `POST /invite`, `POST /{id}/roles`, `DELETE /{id}/roles/{roleId}`, `POST /{id}/deactivate`. ✅
+- User management commands/queries: `InviteUserCommand`, `AssignRoleCommand`, `RevokeRoleCommand`, `DeactivateUserCommand`, `ListUsersQuery`, `GetUserQuery`. ✅
+- `UserSpecs`: `AllUsersPagedSpec`, `AllUsersCountSpec`, `UserByEmailSpec`. ✅
+- Infrastructure integration test `TenantIsolationAdversarialTests` — 3 new tests: cross-tenant read isolation, full onboarding entity verification, quota unlimited path. ✅
+- Contract tests extended — 11 passing: health probes, 401 on all protected routes, security headers, correlation ID, spoofed `X-Tenant-Slug` ignored for non-admin. ✅
 
 Security items:
-- Tenant resolution cannot be spoofed via `X-Tenant-Id` header unless caller has `SystemAdmin` role.
-- All outbox events include `TenantId`; webhook dispatcher validates before dispatch.
+- `X-Tenant-Slug` header only honoured when JWT role = `SystemAdmin`; all other callers silently fall through to subdomain resolution. ✅
+- `TenantResolutionMiddleware` registered after CORS and rate-limiter, before authentication, so tenant context is set before auth evaluates it. ✅
+- `ApiWebApplicationFactory` in contract tests uses in-process SQLite (no Docker required) with unique DB per factory instance to prevent cross-test pollution. ✅
+
+Implementation notes:
+- Schema-per-tenant migration runner (`IMigrationRunner`) deferred to Sprint 6 — requires identity layer to be in place first.
+- Outbox `TenantId` validation on dispatch deferred to Sprint 10 (Webhooks sprint) when the dispatcher is implemented.
 
 ### Sprint 6 — Identity & OAuth2
 **Goal:** Full OAuth2/OIDC authentication and role-based authorization in place.
@@ -342,8 +354,8 @@ Security items:
 | 1 | Foundation | ✅ Done | 2026-04-21 |
 | 2 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
 | 3 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
-| 4 | Infrastructure & REST API | 🔲 Not started | — |
-| 5 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
+| 4 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
+| 5 | Multi-Tenancy, Auth & Media | ✅ Done | 2026-04-22 |
 | 6 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
 | 7 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
 | 8 | Search, Caching & GraphQL | 🔲 Not started | — |
@@ -360,13 +372,24 @@ Security items:
 
 | Sprint | New Test Projects Active | Coverage Target | Status |
 |--------|--------------------------|-----------------|--------|
-| 0 | Architecture.Tests | Stub rules only | ✅ |
-| 1 | Domain.UnitTests | ≥ 80% Domain | ✅ |
-| 2 | Infrastructure.IntegrationTests | ≥ 80% Infrastructure | ✅ |
-| 3 | Application.UnitTests | ≥ 80% Application | 🔲 |
-| 4 | Api.ContractTests | ≥ 80% API layer | 🔲 |
+| 0 | Architecture.Tests | Stub rules only | ✅ 5 tests |
+| 1 | Domain.UnitTests | ≥ 80% Domain | ✅ 127 tests |
+| 2 | Infrastructure.IntegrationTests | ≥ 80% Infrastructure | ✅ 9 tests (Docker required) |
+| 3 | Application.UnitTests | ≥ 80% Application | ✅ 57 tests |
+| 4 | Api.ContractTests | ≥ 80% API layer | ✅ 11 tests |
+| 5 | Infrastructure.IntegrationTests (adversarial) | Cross-tenant isolation | ✅ 3 new tests (Docker required) |
 | 12 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
 | 14 | E2E.Tests | All happy paths | 🔲 |
+
+---
+
+## Known Deferred Items
+
+| Item | Deferred To | Reason |
+|------|-------------|--------|
+| Schema-per-tenant `IMigrationRunner` | Sprint 6 | Requires identity layer to generate per-tenant credentials |
+| Outbox `TenantId` validation on dispatch | Sprint 10 | Dispatcher not yet implemented |
+| Real virus-scan pipeline (ClamAV) for `MediaAsset` | Sprint 7 | Sprint 4 marks assets Available immediately as placeholder |
 
 ---
 

@@ -1,4 +1,5 @@
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Services;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Identity;
 using MicroCMS.Domain.Aggregates.Media;
@@ -7,6 +8,7 @@ using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Infrastructure.Identity;
 using MicroCMS.Infrastructure.Persistence.Common;
+using MicroCMS.Infrastructure.Tenancy;
 using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -35,6 +37,7 @@ public static class DependencyInjection
         RegisterDbContext(services, configuration);
         RegisterRepositories(services);
         RegisterCoreServices(services);
+        RegisterTenancyServices(services);
 
         return services;
     }
@@ -107,6 +110,14 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+    }
+
+    /// <summary>Sprint 5 — tenant resolution, quota enforcement, onboarding.</summary>
+    private static void RegisterTenancyServices(IServiceCollection services)
+    {
+        services.AddScoped<ITenantResolver, SubdomainTenantResolver>();
+        services.AddScoped<IQuotaService, QuotaService>();
+        services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
     }
 
     private static bool IsDevEnvironment(IConfiguration configuration) =>

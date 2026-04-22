@@ -1,4 +1,5 @@
 using Hellang.Middleware.ProblemDetails;
+using MicroCMS.Infrastructure.Tenancy;
 
 namespace MicroCMS.WebHost.Extensions;
 
@@ -15,19 +16,20 @@ internal static class ApplicationBuilderExtensions
         app.UseCors();
         app.UseRateLimiter();
 
-        // Correlation ID header forwarded through the pipeline
+        // Correlation ID + security headers
         app.Use(async (ctx, next) =>
         {
             var correlationId = ctx.Request.Headers["X-Correlation-ID"].FirstOrDefault()
                 ?? Guid.NewGuid().ToString();
             ctx.Response.Headers["X-Correlation-ID"] = correlationId;
-
-            // Security headers
             ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
             ctx.Response.Headers["X-Frame-Options"] = "DENY";
             ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             await next();
         });
+
+        // Sprint 5 — resolve tenant from subdomain early in the pipeline
+        app.UseMiddleware<TenantResolutionMiddleware>();
 
         return app;
     }

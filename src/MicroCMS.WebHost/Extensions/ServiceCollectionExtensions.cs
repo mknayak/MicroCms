@@ -189,6 +189,13 @@ Title = "Domain Rule Violation",
     Detail = ex.Message
         });
 
+       opt.Map<QuotaExceededException>(ex =>
+     new Hellang.Middleware.ProblemDetails.StatusCodeProblemDetails(StatusCodes.Status429TooManyRequests)
+                {
+      Title = "Quota Exceeded",
+      Detail = ex.Message
+   });
+
             opt.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
   });
 

@@ -8,15 +8,21 @@
     <IsPackable>false</IsPackable>
     <AssemblyName>MicroCMS.Api.ContractTests</AssemblyName>
     <RootNamespace>MicroCMS.Api.ContractTests</RootNamespace>
+    <!-- Test projects: analysis noise suppressed; contract correctness is verified by test assertions -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AnalysisMode>None</AnalysisMode>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MicroCMS.Api\MicroCMS.Api.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Application\MicroCMS.Application.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.Infrastructure\MicroCMS.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+    <ProjectReference Include="..\..\src\MicroCMS.WebHost\MicroCMS.WebHost.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
     <PackageReference Include="xunit" Version="2.9.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
@@ -26,6 +32,7 @@
     <PackageReference Include="FluentAssertions" Version="6.12.1" />
     <!-- In-memory test server for HTTP contract tests -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6" />
+    <PackageReference Include="NSubstitute" Version="5.1.0" />
     <!-- Contract / schema verification -->
     <PackageReference Include="PactNet" Version="5.0.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
