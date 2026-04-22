@@ -1,7 +1,7 @@
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Enums;
 
-namespace MicroCMS.Domain.Specifications.Tenant;
+namespace MicroCMS.Domain.Specifications.Tenants;
 
 /// <summary>Returns all tenants currently in Active status.</summary>
 public sealed class ActiveTenantsSpec : BaseSpecification<Tenant>

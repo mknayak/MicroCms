@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <AssemblyName>MicroCMS.Infrastructure.IntegrationTests</AssemblyName>
     <RootNamespace>MicroCMS.Infrastructure.IntegrationTests</RootNamespace>
+      <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

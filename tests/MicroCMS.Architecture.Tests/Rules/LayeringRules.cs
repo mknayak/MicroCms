@@ -18,7 +18,7 @@ public sealed class LayeringRules
     [Fact]
     public void Domain_ShouldNot_DependOn_Application()
     {
-        var result = Types.InAssembly(typeof(MicroCMS.Domain.Aggregates.AggregateRoot).Assembly)
+        var result = Types.InAssembly(typeof(MicroCMS.Domain.Aggregates.AggregateRoot<object>).Assembly)
             .ShouldNot()
             .HaveDependencyOn("MicroCMS.Application")
             .GetResult();
@@ -30,7 +30,7 @@ public sealed class LayeringRules
     [Fact]
     public void Domain_ShouldNot_DependOn_Infrastructure()
     {
-        var result = Types.InAssembly(typeof(MicroCMS.Domain.Aggregates.AggregateRoot).Assembly)
+        var result = Types.InAssembly(typeof(MicroCMS.Domain.Aggregates.AggregateRoot<object>).Assembly)
             .ShouldNot()
             .HaveDependencyOn("MicroCMS.Infrastructure")
             .GetResult();

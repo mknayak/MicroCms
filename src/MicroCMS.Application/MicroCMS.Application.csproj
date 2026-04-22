@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>12</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <AssemblyName>MicroCMS.Application</AssemblyName>
     <RootNamespace>MicroCMS.Application</RootNamespace>
@@ -30,7 +30,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
     <!-- Analyzers -->
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.0.90307">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

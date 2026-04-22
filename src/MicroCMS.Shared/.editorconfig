@@ -1,0 +1,21 @@
+# MicroCMS.Shared - Code Analysis Configuration
+
+root = false
+
+[*.cs]
+
+# CA1000: Do not declare static members on generic types
+# Suppressed for Result<T> and PagedList<T> as static factory methods are a well-established pattern
+dotnet_diagnostic.CA1000.severity = none
+
+# CA1716: Identifiers should not match keywords
+# Suppressed for 'Shared' namespace and 'Error' type - established naming conventions
+dotnet_diagnostic.CA1716.severity = none
+
+# CA2225: Operator overloads have named alternates
+# Suppressed for Result<T> implicit operator - FromValue provides the alternate
+dotnet_diagnostic.CA2225.severity = none
+
+# S4136: Method overloads should be adjacent  
+# Suppressed for Result pattern where generic/non-generic overloads are intentionally separated
+dotnet_diagnostic.S4136.severity = none

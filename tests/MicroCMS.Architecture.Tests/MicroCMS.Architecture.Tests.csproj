@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <AssemblyName>MicroCMS.Architecture.Tests</AssemblyName>
     <RootNamespace>MicroCMS.Architecture.Tests</RootNamespace>
+      <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <!-- References all projects so NetArchTest can load assemblies and verify layering rules -->

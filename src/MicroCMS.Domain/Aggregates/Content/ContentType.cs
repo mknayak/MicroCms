@@ -10,32 +10,30 @@ namespace MicroCMS.Domain.Aggregates.Content;
 /// Content type aggregate root. Defines the schema (set of fields) for entries.
 /// Handle is the machine-readable API name; displayName is shown in the admin UI.
 /// </summary>
-public sealed class ContentType : AggregateRoot
+public sealed class ContentType : AggregateRoot<ContentTypeId>
 {
     private readonly List<FieldDefinition> _fields = [];
 
-    private ContentType() { } // EF Core
+    private ContentType() : base() { } // EF Core
 
     private ContentType(
-        ContentTypeId id,
+     ContentTypeId id,
         TenantId tenantId,
-        SiteId siteId,
+  SiteId siteId,
         string handle,
         string displayName,
-        string? description)
-    {
-        Id = id;
+  string? description) : base(id)
+  {
         TenantId = tenantId;
         SiteId = siteId;
-        Handle = handle;
-        DisplayName = displayName;
+   Handle = handle;
+     DisplayName = displayName;
         Description = description;
         Status = ContentTypeStatus.Draft;
-        CreatedAt = DateTimeOffset.UtcNow;
+   CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public ContentTypeId Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public SiteId SiteId { get; private set; }
     public string Handle { get; private set; } = string.Empty;
@@ -44,7 +42,7 @@ public sealed class ContentType : AggregateRoot
     public ContentTypeStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
-    public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
+  public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
 
     public const int MaxHandleLength = 64;
     public const int MaxDisplayNameLength = 200;
@@ -122,7 +120,7 @@ public sealed class ContentType : AggregateRoot
     {
         EnsureNotArchived();
 
-        if (_fields.Any(f => f.Handle.Equals(handle.Trim(), StringComparison.OrdinalIgnoreCase)))
+        if (_fields.Exists(f => f.Handle.Equals(handle.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
             throw new BusinessRuleViolationException(
                 "ContentType.DuplicateFieldHandle",

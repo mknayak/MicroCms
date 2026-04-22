@@ -1,9 +1,10 @@
 # MicroCMS — Development Plan
 
-**Version:** 1.0  
-**Last Updated:** 2026-04-21  
+**Version:** 1.3  
+**Last Updated:** 2026-04-22  
 **Sprint Cadence:** 2 weeks  
-**Target GA:** Sprint 14 (28 sprints = ~7 months from kickoff)
+**Target GA:** Sprint 14 (28 sprints = ~7 months from kickoff)  
+**Current Status:** Sprint 3 complete — entering Sprint 4 (REST API + Swagger)
 
 ---
 
@@ -33,64 +34,83 @@ Cyclomatic complexity ≤ 10 / cognitive complexity ≤ 15 enforced via `.editor
 - Architecture test stubs with NetArchTest.
 - `appsettings.json` / `appsettings.Development.json`.
 
-### Sprint 1 — Core Domain Model
+### Sprint 1 — Core Domain Model ✅ DONE
 **Goal:** Full domain model for Content, Tenant, Identity, and Taxonomy aggregates — zero infrastructure dependencies.
 
 Deliverables:
-- `Tenant` aggregate root + value objects (`TenantSlug`, `TenantSettings`, `CustomDomain`).
-- `Site` entity within Tenant aggregate.
-- `ContentType` aggregate (field schema definitions, field type enum).
-- `Entry` aggregate (title, slug, status, locale, version chain, scheduled dates, author).
-- `EntryVersion` entity with diff support.
-- `MediaAsset` aggregate (file metadata, folder path, tags, EXIF).
-- `Taxonomy` aggregate (Category, Tag).
-- `User` / `Role` aggregates scoped to tenant.
-- Domain events for each significant state change (e.g. `EntryPublishedEvent`, `TenantCreatedEvent`).
-- Domain services: `SlugGenerator`, `LocaleFallbackChain`.
-- Specification classes for common queries.
-- Unit tests covering all aggregate invariants (≥ 80% coverage).
+- `Tenant` aggregate root + value objects (`TenantSlug`, `TenantSettings`, `CustomDomain`). ✅
+- `Site` entity within Tenant aggregate. ✅
+- `ContentType` aggregate (field schema definitions, field type enum). ✅
+- `Entry` aggregate (title, slug, status, locale, version chain, scheduled dates, author). ✅
+- `EntryVersion` entity with diff support. ✅
+- `MediaAsset` aggregate (file metadata, folder path, tags, EXIF). ✅
+- `Taxonomy` aggregate (Category, Tag). ✅
+- `User` / `Role` aggregates scoped to tenant. ✅
+- Domain events for each significant state change (e.g. `EntryPublishedEvent`, `TenantCreatedEvent`). ✅
+- Domain services: `SlugGenerator`, `LocaleFallbackChain`. ✅
+- Specification classes for common queries. ✅
+- Unit tests covering all aggregate invariants (≥ 80% coverage). ✅
 
 Security items:
-- All string value objects reject null/empty and enforce max-length invariants.
-- Slug sanitization: whitelist of allowed characters only.
+- All string value objects reject null/empty and enforce max-length invariants. ✅
+- Slug sanitization: whitelist of allowed characters only. ✅
 
 ---
 
 ## Phase 1 — Infrastructure & REST API (Sprints 2–4)
 
-### Sprint 2 — Persistence and EF Core
+### Sprint 2 — Persistence and EF Core ✅ DONE
 **Goal:** Working database layer with SQLite for development and PostgreSQL for CI.
 
 Deliverables:
-- `ApplicationDbContext` with multi-tenant query filter (row-level as default, schema-per-tenant toggle).
-- EF Core entity configurations for all aggregates.
-- `IRepository<T>` implementations using EF Core + Specification evaluator.
-- `UnitOfWork` implementation with outbox table.
-- SQLite and PostgreSQL migrations.
-- `SpecificationEvaluator` translating `ISpecification<T>` to EF Core LINQ.
-- Infrastructure integration tests using Testcontainers (PostgreSQL).
-- `ICurrentUser` implementation resolving from `IHttpContextAccessor` + JWT claims.
-- `IDateTimeProvider` implementation (`SystemDateTimeProvider`).
+- `ApplicationDbContext` with multi-tenant query filter (instance-field closure pattern — re-evaluated per query). ✅
+- EF Core entity type configurations for all 9 aggregates (owned entities, value converters, indexes). ✅
+- `EfRepository<T>` implementing `IRepository<TEntity, TId>` backed by EF Core. ✅
+- `UnitOfWork` wrapping `SaveChangesAsync`; domain events written to outbox atomically. ✅
+- `DomainEventsToOutboxInterceptor` — `SaveChangesInterceptor` serialising domain events to `OutboxMessage` rows. ✅
+- `OutboxMessage` entity (type, content, tenantId, retry tracking). ✅
+- `SpecificationEvaluator` translating `ISpecification<T>` to EF Core LINQ (criteria → includes → ordering → paging). ✅
+- SQLite initial migration (`Persistence/Sqlite/Migrations/`). ✅
+- PostgreSQL initial migration (`Persistence/PostgreSql/Migrations/`). ✅
+- `ApplicationDbContextFactory` (design-time factory for `dotnet ef`). ✅
+- `HttpContextCurrentUser` resolving `UserId`, `TenantId`, `Email`, `Roles` from JWT claims. ✅
+- `SystemDateTimeProvider` (`IDateTimeProvider` production implementation). ✅
+- `DependencyInjection.AddInfrastructure()` — provider-switching (SQLite/PostgreSQL), all repositories, UoW, ICurrentUser, IDateTimeProvider. ✅
+- Infrastructure integration tests (`Testcontainers.PostgreSql`): CRUD round-trip, multi-tenant isolation (cross-tenant reads return zero rows), outbox atomicity. ✅
 
 Security items:
-- Parameterised queries only — no raw SQL string concatenation.
-- Tenant filter applied globally via `HasQueryFilter`; cannot be bypassed without `IgnoreQueryFilters()` (used only in super-admin paths, which require `SystemAdmin` role check).
+- Parameterised queries only — no raw SQL string concatenation anywhere in Infrastructure. ✅
+- Tenant filter applied globally via `HasQueryFilter` (instance-field pattern); cannot be bypassed without `IgnoreQueryFilters()` which must be paired with a `SystemAdmin` role assertion at the call site. ✅
+- Cross-tenant isolation verified by integration tests (`MultiTenantIsolationTests`). ✅
 
-### Sprint 3 — Application Layer: Content CQRS
+### Sprint 3 — Application Layer: Content CQRS ✅ DONE
 **Goal:** All content CRUD operations implemented end-to-end through Application layer.
 
 Deliverables:
-- Commands: `CreateEntryCommand`, `UpdateEntryCommand`, `PublishEntryCommand`, `UnpublishEntryCommand`, `DeleteEntryCommand`, `SchedulePublishCommand`, `RollbackEntryVersionCommand`.
-- Queries: `GetEntryQuery`, `ListEntriesQuery` (paginated), `GetEntryVersionsQuery`.
-- FluentValidation validators for each command (input length, required fields, slug uniqueness).
-- `TransactionBehavior` wrapping command handlers in a DB transaction.
-- `UnitOfWorkBehavior` calling `SaveChangesAsync` after handler.
-- Domain event dispatch via `IEventBus` after commit.
-- Application unit tests with NSubstitute mocks (≥ 80%).
+- `ICommand<T>` / `ICommand` / `IQuery<T>` marker interfaces distinguishing commands from read-only queries. ✅
+- Commands: `CreateEntryCommand`, `UpdateEntryCommand`, `PublishEntryCommand`, `UnpublishEntryCommand`, `DeleteEntryCommand`, `SchedulePublishCommand`, `RollbackEntryVersionCommand`. ✅
+- Queries: `GetEntryQuery`, `ListEntriesQuery` (paginated), `GetEntryVersionsQuery`. ✅
+- FluentValidation validators for `CreateEntry`, `UpdateEntry`, `SchedulePublish` (slug format, JSON validity, date ordering). ✅
+- `UnitOfWorkBehavior` — calls `SaveChangesAsync` after command handlers only (queries skipped). ✅
+- `EntryDto`, `EntryListItemDto`, `EntryVersionDto` + Mapperly source-generated `EntryMapper`. ✅
+- `EntryBySlugAndSiteSpec` for slug-uniqueness enforcement; `EntriesBySiteSpec` with paged/count overloads. ✅
+- `HasPolicyAttribute`, `ContentPolicies`, `Roles`, `RolePermissions` constants. ✅
+- `IApplicationAuthorizationService` + `DefaultApplicationAuthorizationService` (role→policy mapping, all-or-nothing evaluation). ✅
+- `AuthorizationBehavior` — checks `[HasPolicy]` attribute; throws `MissingPolicyException` if absent (fail-secure), `UnauthorizedException` (401) or `ForbiddenException` (403) on failure. ✅
+- `Application/DependencyInjection.AddApplication()` — registers MediatR with ordered pipeline, FluentValidation, authorization service. ✅
+- Application unit tests: `CreateEntryCommandHandlerTests`, `UpdateEntryCommandHandlerTests`, `PublishEntryCommandHandlerTests`, `DeleteEntryCommandHandlerTests`, `GetEntryQueryHandlerTests`, `ListEntriesQueryHandlerTests`, `GetEntryVersionsQueryHandlerTests`, `AuthorizationBehaviorTests`, `RolePermissionsTests`, `DefaultApplicationAuthorizationServiceTests`, `CreateEntryCommandValidatorTests`. ✅
+
+Implementation notes:
+- MediatR pipeline order: `LoggingBehavior → AuthorizationBehavior → ValidationBehavior → UnitOfWorkBehavior → Handler`.
+- Slug uniqueness is checked in the handler (not validator) to avoid requiring a repository in the validator.
+- `Entry.Status` (enum) serialised to string in `EntryDto` via Mapperly's default enum-to-string mapping.
+- `[Mapper(UnmappedMemberStrategy = UnmappedMemberStrategy.Ignore)]` suppresses RMG warnings for extra source props (e.g. `Versions`, `FieldsJson`) not present in narrow DTOs — required due to `TreatWarningsAsErrors`.
 
 Security items:
-- `AuthorizationBehavior` added to pipeline — reads `[Authorize(Policy = "...")]` attribute on command and evaluates before handler runs.
-- Every command requires at least one explicit policy; absence throws `MissingPolicyException` at startup.
+- `AuthorizationBehavior` added to pipeline at position 2 (after logging, before validation) — evaluates `[HasPolicy]` attributes on the request type before the handler is invoked. ✅
+- Every command/query requires at least one `[HasPolicy]` decoration; absence throws `MissingPolicyException` at runtime (fail-secure default). ✅
+- `UnauthorizedException` (HTTP 401) vs `ForbiddenException` (HTTP 403) cleanly separated — maps to distinct HTTP codes in Sprint 4. ✅
+- Role-to-policy mapping lives in `RolePermissions` (single source of truth); new roles only need to be added there. ✅
 
 ### Sprint 4 — REST API + Swagger
 **Goal:** Full HTTP API surface for content, tenants, and media, ready for consumer integration.
@@ -314,17 +334,39 @@ Security items:
 
 ---
 
+## Sprint Progress Tracker
+
+| Sprint | Phase | Status | Completed |
+|--------|-------|--------|-----------|
+| 0 | Foundation | ✅ Done | 2026-04-21 |
+| 1 | Foundation | ✅ Done | 2026-04-21 |
+| 2 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
+| 3 | Infrastructure & REST API | ✅ Done | 2026-04-22 |
+| 4 | Infrastructure & REST API | 🔲 Not started | — |
+| 5 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
+| 6 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
+| 7 | Multi-Tenancy, Auth & Media | 🔲 Not started | — |
+| 8 | Search, Caching & GraphQL | 🔲 Not started | — |
+| 9 | Search, Caching & GraphQL | 🔲 Not started | — |
+| 10 | Webhooks, Events & Plugins | 🔲 Not started | — |
+| 11 | Webhooks, Events & Plugins | 🔲 Not started | — |
+| 12 | AI Module | 🔲 Not started | — |
+| 13 | AI Module | 🔲 Not started | — |
+| 14 | Observability & GA | 🔲 Not started | — |
+
+---
+
 ## Test Coverage Summary by Sprint
 
-| Sprint | New Test Projects Active | Coverage Target |
-|--------|--------------------------|-----------------|
-| 0 | Architecture.Tests | Stub rules only |
-| 1 | Domain.UnitTests | ≥ 80% Domain |
-| 2 | Infrastructure.IntegrationTests | ≥ 80% Application |
-| 3 | Application.UnitTests | ≥ 80% Application |
-| 4 | Api.ContractTests | ≥ 80% API layer |
-| 12 | Application.UnitTests (AI) | ≥ 80% Ai.Core |
-| 14 | E2E.Tests | All happy paths |
+| Sprint | New Test Projects Active | Coverage Target | Status |
+|--------|--------------------------|-----------------|--------|
+| 0 | Architecture.Tests | Stub rules only | ✅ |
+| 1 | Domain.UnitTests | ≥ 80% Domain | ✅ |
+| 2 | Infrastructure.IntegrationTests | ≥ 80% Infrastructure | ✅ |
+| 3 | Application.UnitTests | ≥ 80% Application | 🔲 |
+| 4 | Api.ContractTests | ≥ 80% API layer | 🔲 |
+| 12 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
+| 14 | E2E.Tests | All happy paths | 🔲 |
 
 ---
 

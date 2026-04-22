@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>12</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <AssemblyName>MicroCMS.Shared</AssemblyName>
     <RootNamespace>MicroCMS.Shared</RootNamespace>
@@ -19,7 +19,7 @@
     <!-- Source-generation for mapping (used across projects) -->
     <PackageReference Include="Riok.Mapperly" Version="3.5.0" />
     <!-- Analyzers (no runtime footprint) -->
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.0.90307">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

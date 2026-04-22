@@ -52,8 +52,11 @@ public sealed class Result<TValue>
             ? _value!
             : throw new InvalidOperationException("Cannot access Value on a failed result.");
 
-    public static Result<TValue> Success(TValue value) => new(value, true, Error.None);
-    public static Result<TValue> Failure(Error error) => new(false, error);
+    internal static Result<TValue> Success(TValue value) => new(value, true, Error.None);
+    internal static Result<TValue> Failure(Error error) => new(false, error);
 
-    public static implicit operator Result<TValue>(TValue value) => Success(value);
+    /// <summary>Named method for implicit conversion (CA2225).</summary>
+    public static Result<TValue> FromValue(TValue value) => Success(value);
+
+    public static implicit operator Result<TValue>(TValue value) => FromValue(value);
 }

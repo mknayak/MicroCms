@@ -11,19 +11,18 @@ namespace MicroCMS.Domain.Aggregates.Identity;
 /// Users are identified by their email address within a tenant.
 /// Role assignments determine what content workflow operations they may perform.
 /// </summary>
-public sealed class User : AggregateRoot
+public sealed class User : AggregateRoot<UserId>
 {
     private readonly List<Role> _roles = [];
 
-    private User() { } // EF Core
+    private User() : base() { } // EF Core
 
     private User(
         UserId id,
         TenantId tenantId,
         EmailAddress email,
-        PersonName displayName)
+        PersonName displayName) : base(id)
     {
-        Id = id;
         TenantId = tenantId;
         Email = email;
         DisplayName = displayName;
@@ -32,7 +31,6 @@ public sealed class User : AggregateRoot
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public UserId Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public EmailAddress Email { get; private set; } = null!;
     public PersonName DisplayName { get; private set; } = null!;

@@ -6,7 +6,7 @@ namespace MicroCMS.Application.Common.Behaviors;
 
 /// <summary>
 /// MediatR pipeline behavior that runs all registered <see cref="IValidator{T}"/>s
-/// before the handler is invoked. Throws <see cref="ValidationException"/> on failure.
+/// before the handler is invoked. Throws <see cref="Exceptions.ValidationException"/> on failure.
 /// </summary>
 public sealed class ValidationBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators)
@@ -35,7 +35,7 @@ public sealed class ValidationBehavior<TRequest, TResponse>(
 
         if (failures.Count != 0)
         {
-            throw new ValidationException(failures);
+            throw new Exceptions.ValidationException(failures);
         }
 
         return await next();

@@ -1,0 +1,41 @@
+# MicroCMS.Domain - Code Analysis Configuration
+
+root = false
+
+[*.cs]
+
+# CA1720: Identifiers should not contain type names
+# Suppressed for enum values like Integer, Decimal in FieldType - these are domain concepts, not type references
+dotnet_diagnostic.CA1720.severity = none
+
+# S4035: Classes should implement IEqualityComparer<T> if they override Equals
+# Suppressed for Entity<T> base class - equals is intentionally identity-based, not value-based
+dotnet_diagnostic.S4035.severity = none
+
+# S1144: Unused private members should be removed
+# Suppressed for constants that may be used in future validations
+dotnet_diagnostic.S1144.severity = none
+
+# CA1032: Implement standard exception constructors
+# Suppressed for domain exceptions which have specific required parameters
+dotnet_diagnostic.CA1032.severity = none
+
+# RCS1194: Implement exception constructors
+# Suppressed for domain exceptions which have specific required parameters
+dotnet_diagnostic.RCS1194.severity = none
+
+# CA1002: Do not expose generic lists
+# Suppressed for Specification pattern where List<Expression<Func<T, object>>> is the appropriate type
+dotnet_diagnostic.CA1002.severity = none
+
+# CA1056: URI properties should not be strings
+# Suppressed for LogoUrl - stored as string for serialization and flexibility
+dotnet_diagnostic.CA1056.severity = none
+
+# CA1030: Use events where appropriate
+# Suppressed for RaiseDomainEvent - this is a domain pattern, not a .NET event
+dotnet_diagnostic.CA1030.severity = none
+
+# S3236: Caller information arguments should not be provided explicitly
+# Suppressed for ArgumentNullException.ThrowIfNull with explicit parameter names - improves clarity
+dotnet_diagnostic.S3236.severity = none

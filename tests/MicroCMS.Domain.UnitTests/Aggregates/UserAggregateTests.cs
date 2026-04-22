@@ -5,6 +5,7 @@ using MicroCMS.Domain.Events.Identity;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Domain.UnitTests.Fixtures;
 using MicroCMS.Domain.ValueObjects;
+using MicroCMS.Shared.Ids;
 using Xunit;
 
 namespace MicroCMS.Domain.UnitTests.Aggregates;

@@ -8,12 +8,12 @@ namespace MicroCMS.Domain.Aggregates.Taxonomy;
 /// Category aggregate root. Supports hierarchical trees via optional <see cref="ParentId"/>.
 /// Categories are site-scoped and can be assigned to entries of any content type.
 /// </summary>
-public sealed class Category : AggregateRoot
+public sealed class Category : AggregateRoot<CategoryId>
 {
     public const int MaxNameLength = 200;
     public const int MaxDescriptionLength = 500;
 
-    private Category() { } // EF Core
+    private Category() : base() { } // EF Core
 
     private Category(
         CategoryId id,
@@ -22,9 +22,8 @@ public sealed class Category : AggregateRoot
         string name,
         Slug slug,
         CategoryId? parentId,
-        string? description)
+        string? description) : base(id)
     {
-        Id = id;
         TenantId = tenantId;
         SiteId = siteId;
         Name = name;
@@ -35,7 +34,6 @@ public sealed class Category : AggregateRoot
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public CategoryId Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public SiteId SiteId { get; private set; }
     public string Name { get; private set; } = string.Empty;

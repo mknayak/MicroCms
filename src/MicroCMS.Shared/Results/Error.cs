@@ -3,7 +3,10 @@ namespace MicroCMS.Shared.Results;
 /// <summary>
 /// Represents a typed, structured error returned by domain and application operations.
 /// </summary>
+// CA1716: 'Error' is a reserved keyword in VB - suppressed as this is a well-established pattern
+#pragma warning disable CA1716
 public sealed record Error(string Code, string Message, ErrorType Type = ErrorType.Failure)
+#pragma warning restore CA1716
 {
     public static readonly Error None = new(string.Empty, string.Empty, ErrorType.None);
 

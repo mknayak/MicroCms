@@ -12,35 +12,33 @@ namespace MicroCMS.Domain.Aggregates.Media;
 /// Storage location is intentionally kept as a provider-neutral string key
 /// so the Infrastructure layer can interpret it as a local path, S3 key, etc.
 /// </summary>
-public sealed class MediaAsset : AggregateRoot
+public sealed class MediaAsset : AggregateRoot<MediaAssetId>
 {
     private readonly List<string> _tags = [];
 
-    private MediaAsset() { } // EF Core
+    private MediaAsset() : base() { } // EF Core
 
     private MediaAsset(
         MediaAssetId id,
-        TenantId tenantId,
-        SiteId siteId,
+      TenantId tenantId,
+  SiteId siteId,
         AssetMetadata metadata,
-        string storageKey,
+  string storageKey,
         Guid? folderId,
-        Guid uploadedBy)
+        Guid uploadedBy) : base(id)
     {
-        Id = id;
-        TenantId = tenantId;
-        SiteId = siteId;
-        Metadata = metadata;
-        StorageKey = storageKey;
+  TenantId = tenantId;
+   SiteId = siteId;
+  Metadata = metadata;
+    StorageKey = storageKey;
         FolderId = folderId;
-        UploadedBy = uploadedBy;
-        Status = MediaAssetStatus.Uploading;
+     UploadedBy = uploadedBy;
+   Status = MediaAssetStatus.Uploading;
         CreatedAt = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
+ UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public MediaAssetId Id { get; private set; }
-    public TenantId TenantId { get; private set; }
+public TenantId TenantId { get; private set; }
     public SiteId SiteId { get; private set; }
     public AssetMetadata Metadata { get; private set; } = null!;
 

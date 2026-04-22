@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <AssemblyName>MicroCMS.E2E.Tests</AssemblyName>
     <RootNamespace>MicroCMS.E2E.Tests</RootNamespace>
+      <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

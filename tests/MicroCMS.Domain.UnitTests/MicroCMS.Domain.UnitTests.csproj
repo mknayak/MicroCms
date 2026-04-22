@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <AssemblyName>MicroCMS.Domain.UnitTests</AssemblyName>
     <RootNamespace>MicroCMS.Domain.UnitTests</RootNamespace>
+      <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

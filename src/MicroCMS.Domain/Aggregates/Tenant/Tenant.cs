@@ -10,19 +10,18 @@ namespace MicroCMS.Domain.Aggregates.Tenant;
 /// Tenant aggregate root. A tenant is the top-level isolation boundary.
 /// All content, users, settings, and quotas belong to a specific tenant.
 /// </summary>
-public sealed class Tenant : AggregateRoot
+public sealed class Tenant : AggregateRoot<TenantId>
 {
     private readonly List<Site> _sites = [];
 
-    private Tenant() { } // EF Core
+    private Tenant() : base() { } // EF Core
 
     private Tenant(
         TenantId id,
         TenantSlug slug,
         TenantSettings settings,
-        TenantQuota quota)
+        TenantQuota quota) : base(id)
     {
-        Id = id;
         Slug = slug;
         Settings = settings;
         Quota = quota;
@@ -31,7 +30,6 @@ public sealed class Tenant : AggregateRoot
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public TenantId Id { get; private set; }
     public TenantSlug Slug { get; private set; } = null!;
     public TenantSettings Settings { get; private set; } = null!;
     public TenantQuota Quota { get; private set; } = null!;

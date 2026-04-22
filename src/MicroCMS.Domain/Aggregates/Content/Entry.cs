@@ -11,11 +11,11 @@ namespace MicroCMS.Domain.Aggregates.Content;
 /// Manages the full lifecycle: Draft → PendingApproval → Approved → Published / Unpublished.
 /// Supports versioning (FR-CM-5), localisation (FR-CM-8), and scheduling (FR-CM-4).
 /// </summary>
-public sealed class Entry : AggregateRoot
+public sealed class Entry : AggregateRoot<EntryId>
 {
     private readonly List<EntryVersion> _versions = [];
 
-    private Entry() { } // EF Core
+    private Entry() : base() { } // EF Core
 
     private Entry(
         EntryId id,
@@ -24,9 +24,8 @@ public sealed class Entry : AggregateRoot
         ContentTypeId contentTypeId,
         Slug slug,
         Locale locale,
-        Guid authorId)
+        Guid authorId) : base(id)
     {
-        Id = id;
         TenantId = tenantId;
         SiteId = siteId;
         ContentTypeId = contentTypeId;
@@ -39,7 +38,6 @@ public sealed class Entry : AggregateRoot
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public EntryId Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public SiteId SiteId { get; private set; }
     public ContentTypeId ContentTypeId { get; private set; }

@@ -3,7 +3,9 @@ namespace MicroCMS.Shared.Primitives;
 /// <summary>
 /// Immutable paginated result container returned by query handlers.
 /// </summary>
+#pragma warning disable CA1000 // Do not declare static members on generic types - acceptable for factory pattern
 public sealed class PagedList<T>
+#pragma warning restore CA1000
 {
     public IReadOnlyList<T> Items { get; }
     public int Page { get; }
