@@ -5,6 +5,13 @@ namespace MicroCMS.Application.Features.Media.Mappers;
 
 public static class MediaMapper
 {
+    public static MediaFolderDto ToFolderDto(MediaFolder f) => new(
+        f.Id,
+        f.TenantId.Value,
+        f.SiteId.Value,
+        f.Name,
+        f.ParentFolderId);
+
     public static MediaAssetDto ToDto(MediaAsset a) => new(
         a.Id.Value,
         a.TenantId.Value,

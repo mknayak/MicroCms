@@ -1,10 +1,10 @@
 # MicroCMS — Development Plan
 
-**Version:** 1.5
-**Last Updated:** 2026-04-22
+**Version:** 1.6
+**Last Updated:** 2026-04-23
 **Sprint Cadence:** 2 weeks
 **Target GA:** Sprint 16 (~8.5 months from kickoff)
-**Current Status:** Sprint 5 complete — entering Sprint 6 (Admin UI)
+**Current Status:** Sprint 9 in progress — Search and Cache infrastructure scaffolded
 
 ---
 
@@ -226,18 +226,23 @@ Security items:
 **Goal:** Full-text and faceted search operational; two-tier cache cutting DB load.
 
 Deliverables:
-- `ISearchService` with OpenSearch adapter.
-- Entry indexing on publish/unpublish events (via `IDomainEvent` handler).
-- Full-text search endpoint (`/api/v1/search`).
-- Two-tier cache: L1 `IMemoryCache` (process-local), L2 Redis.
-- Cache invalidation by tag (invalidate all entries for a tenant on bulk publish).
-- Cache-aside pattern in read query handlers.
-- Redis integration tests using Testcontainers.
-- Admin UI global search bar wired to `/api/v1/search`.
+- `ISearchService` + `SearchEntryDocument` / `SearchRequest` / `SearchResults` DTOs (Application layer). ✅
+- `OpenSearchService` adapter (Infrastructure) — tenant-partitioned alias `entries-{tenantId}`. ✅
+- `NullSearchService` fallback so the app boots without an OpenSearch cluster. ✅
+- `SearchEntriesQuery` + handler (`/api/v1/search` via `SearchController`). ✅
+- `EntrySearchIndexerEventHandler` — indexes on publish/update, removes on unpublish/archive. ✅
+- `DomainEventNotification<T>` wrapper — lets MediatR dispatch pure domain events without Domain depending on MediatR. ✅
+- Two-tier cache: L1 `IMemoryCache` (process-local) + optional L2 Redis via `TwoTierCacheService`. ✅
+- Cache invalidation by tag (in-memory tag→key index). ✅
+- `CacheKeys` / `CacheTags` helpers — every key includes the tenantId. ✅
+- Provider-driven DI: `Cache:Provider` = `None` | `Redis`, `Search:Provider` = `None` | `OpenSearch`. ✅
+- Cache-aside pattern in read query handlers. 🔲
+- Redis integration tests using Testcontainers. 🔲
+- Admin UI global search bar wired to `/api/v1/search`. 🔲
 
 Security items:
-- Search queries tenant-scoped in OpenSearch index alias; cross-tenant queries blocked.
-- Cache keys include tenant ID to prevent cross-tenant cache poisoning.
+- Search queries tenant-scoped in OpenSearch index alias; cross-tenant queries blocked. ✅
+- Cache keys include tenant ID to prevent cross-tenant cache poisoning. ✅
 
 ### Sprint 10 — GraphQL API
 **Goal:** Hot Chocolate GraphQL endpoint with dynamic schema auto-generated from content types.
@@ -413,10 +418,10 @@ Security items:
 | 3 | Infrastructure & REST API | Application CQRS | ✅ Done | 2026-04-22 |
 | 4 | Infrastructure & REST API | REST API + Swagger | ✅ Done | 2026-04-22 |
 | 5 | Multi-Tenancy & Admin UI | Multi-Tenancy Hardening | ✅ Done | 2026-04-22 |
-| 6 | Multi-Tenancy & Admin UI | Admin UI (React) | 🔲 Not started | — |
-| 7 | Identity, Auth & Media | Identity & OAuth2 | 🔲 Not started | — |
-| 8 | Identity, Auth & Media | Media Library | 🔲 Not started | — |
-| 9 | Search, Caching & GraphQL | Search and Cache | 🔲 Not started | — |
+| 6 | Multi-Tenancy & Admin UI | Admin UI (React) | ✅ Done | 2026-04-22 |
+| 7 | Identity, Auth & Media | Identity & OAuth2 | ✅ Done | 2026-04-22 |
+| 8 | Identity, Auth & Media | Media Library | ✅ Done | 2026-04-22 |
+| 9 | Search, Caching & GraphQL | Search and Cache | 🟡 In progress | — |
 | 10 | Search, Caching & GraphQL | GraphQL API | 🔲 Not started | — |
 | 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
 | 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
@@ -437,6 +442,8 @@ Security items:
 | 3 | Application.UnitTests | ≥ 80% Application | ✅ 57 tests |
 | 4 | Api.ContractTests | ≥ 80% API layer | ✅ 11 tests |
 | 5 | Infrastructure.IntegrationTests (adversarial) | Cross-tenant isolation | ✅ 3 new tests (Docker required) |
+| 8 | Infrastructure.IntegrationTests (MinIO) | Storage provider round-trip | ✅ 9 new tests (Docker required) |
+| 8 | Application.UnitTests (Media) | Upload, bulk ops, folder CRUD | ✅ 14 new tests |
 | 6 | Vitest + React Testing Library | ≥ 80% UI components | 🔲 |
 | 6 | Playwright (Admin UI smoke) | Login → publish flow | 🔲 |
 | 11 | Vitest (SDK unit tests) | 100% SDK coverage | 🔲 |
@@ -452,7 +459,7 @@ Security items:
 |------|-------------|--------|
 | Schema-per-tenant `IMigrationRunner` | Sprint 7 | Requires identity layer for per-tenant credentials |
 | Outbox `TenantId` validation on dispatch | Sprint 12 | Dispatcher not yet implemented |
-| Real virus-scan pipeline (ClamAV) for `MediaAsset` | Sprint 8 | Sprint 4 marks assets Available immediately as placeholder |
+| Real virus-scan pipeline (ClamAV) for `MediaAsset` | ~~Sprint 8~~ ✅ Done | `MediaScanJob` + `ClamAvScanner` TCP client implemented |
 | Token revocation on Admin UI logout | Sprint 7 | Requires identity layer revocation endpoint |
 
 ---

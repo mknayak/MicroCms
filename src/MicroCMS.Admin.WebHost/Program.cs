@@ -20,5 +20,8 @@ app.UseAdminSpa();
 
 await app.RunAsync();
 
-// Expose for WebApplicationFactory
-public partial class Program { }
+// Expose for WebApplicationFactory — scoped to avoid ambiguity with MicroCMS.WebHost.Program
+namespace MicroCMS.Admin.WebHost
+{
+    public partial class Program { }
+}
