@@ -189,11 +189,14 @@ export interface EntryListParams extends PaginationParams {
 
 export type MediaType = 'image' | 'video' | 'audio' | 'document' | 'other';
 
+export type MediaAssetStatus = 'Uploading' | 'PendingScan' | 'Available' | 'Quarantined' | 'Deleted';
+
 export interface MediaAsset {
   id: string;
   fileName: string;
   contentType: string;
   mediaType: MediaType;
+  status?: MediaAssetStatus;
   url: string;
   signedUrl?: string;
   thumbnailUrl?: string;
@@ -305,4 +308,30 @@ export interface ProblemDetails {
   status?: number;
   detail?: string;
   errors?: Record<string, string[]>;
+}
+
+// ─── Install ──────────────────────────────────────────────────────────────────
+
+export interface InstallStatusResponse {
+  isInstalled: boolean;
+  message: string;
+}
+
+export interface InstallRequest {
+  tenantSlug: string;
+  tenantDisplayName: string;
+  defaultLocale: string;
+  timeZoneId: string;
+  defaultSiteName: string;
+  adminEmail: string;
+  adminDisplayName: string;
+  adminPassword: string;
+}
+
+export interface InstallResult {
+  tenantId: string;
+  siteId: string;
+  adminUserId: string;
+  adminEmail: string;
+  message: string;
 }

@@ -22,6 +22,7 @@ using MicroCMS.Infrastructure.BackgroundJobs;
 using MicroCMS.Infrastructure.Caching;
 using MicroCMS.Infrastructure.Content;
 using MicroCMS.Infrastructure.Identity;
+using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Search;
 using MicroCMS.Infrastructure.Storage.AzureBlob;
@@ -161,12 +162,16 @@ public static class DependencyInjection
     {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
-  services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
-      services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ISecretHasher, Sha256SecretHasher>();
      services.AddScoped<ILlmService, NullLlmService>();
         services.AddScoped<IPreviewSecretProvider, SiteIdPreviewSecretProvider>();
+
+        // Tenancy / install
+        services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
+        services.AddScoped<IInstallationStateService, InstallationStateService>();
     }
 
     /// <summary>Sprint 5 — tenancy services: subdomain resolver, resolution middleware, and quota enforcement.</summary>

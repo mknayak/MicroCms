@@ -1,5 +1,6 @@
 using Hellang.Middleware.ProblemDetails;
 using MicroCMS.Api.Middleware;
+using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Tenancy;
 
 namespace MicroCMS.WebHost.Extensions;
@@ -22,6 +23,11 @@ internal static class ApplicationBuilderExtensions
 
         app.UseCors();
         app.UseRateLimiter();
+
+        // Installation guard — must run before auth so unauthenticated install requests
+        // are allowed through, and all other requests are blocked with 503 until setup
+        // is complete.
+        app.UseMiddleware<InstallationGuardMiddleware>();
 
         // Correlation ID + baseline security response headers
         app.Use(async (ctx, next) =>
