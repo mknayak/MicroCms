@@ -78,15 +78,15 @@ public static class DependencyInjection
         IServiceCollection services,
         IConfiguration configuration)
     {
-        var provider = configuration.GetValue<string>("Database:Provider") ?? "Sqlite";
+   var provider = configuration.GetValue<string>("MicroCMS:Database:Provider") ?? "Sqlite";
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Data Source=microcms_dev.db";
+  ?? "Data Source=microcms_dev.db";
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            ConfigureDbProvider(options, provider, connectionString);
-            options.EnableSensitiveDataLogging(
-                sensitiveDataLoggingEnabled: IsDevEnvironment(configuration));
+       ConfigureDbProvider(options, provider, connectionString);
+   options.EnableSensitiveDataLogging(
+       sensitiveDataLoggingEnabled: IsDevEnvironment(configuration));
         });
     }
 
@@ -191,33 +191,26 @@ public static class DependencyInjection
         IServiceCollection services,
         IConfiguration configuration)
     {
-        // MIME type inspector (magic bytes — no external dependency)
         services.AddSingleton<IMimeTypeInspector, MimeTypeInspector>();
+    services.AddSingleton<IImageVariantService, ImageVariantService>();
 
-        // Image variant service (SixLabors.ImageSharp)
-        services.AddSingleton<IImageVariantService, ImageVariantService>();
-
-        // HMAC signing service for signed delivery URLs
         services.Configure<HmacSigningOptions>(
-            configuration.GetSection(HmacSigningOptions.SectionName));
-        services.AddScoped<IStorageSigningService, HmacStorageSigningService>();
+     configuration.GetSection(HmacSigningOptions.SectionName));
+   services.AddScoped<IStorageSigningService, HmacStorageSigningService>();
 
-        // ClamAV virus scanner — falls back to no-op when not enabled
         var clamAvEnabled = configuration.GetValue<bool>("ClamAv:Enabled");
         if (clamAvEnabled)
-        {
-            services.Configure<ClamAvOptions>(
-                configuration.GetSection(ClamAvOptions.SectionName));
+ {
+          services.Configure<ClamAvOptions>(configuration.GetSection(ClamAvOptions.SectionName));
             services.AddScoped<IClamAvScanner, ClamAvScanner>();
         }
-        else
-        {
-            services.AddScoped<IClamAvScanner, NoOpClamAvScanner>();
+      else
+     {
+     services.AddScoped<IClamAvScanner, NoOpClamAvScanner>();
         }
 
-        // Active storage provider chosen by configuration key "Storage:Provider"
-        var storageProvider = configuration.GetValue<string>("Storage:Provider") ?? "Filesystem";
-        RegisterStorageProvider(services, configuration, storageProvider);
+        var storageProvider = configuration.GetValue<string>("MicroCMS:Storage:Provider") ?? "Filesystem";
+      RegisterStorageProvider(services, configuration, storageProvider);
     }
 
     private static void RegisterStorageProvider(
@@ -263,48 +256,47 @@ public static class DependencyInjection
 
     /// <summary>Sprint 9 — Search and Cache infrastructure.</summary>
     private static void RegisterSearchAndCache(
-        IServiceCollection services,
+      IServiceCollection services,
         IConfiguration configuration)
     {
-    // ── Cache ──────────────────────────────────────────────────────────
+     // ── Cache ──────────────────────────────────────────────────────────
         services.AddMemoryCache();
-        services.Configure<CacheOptions>(configuration.GetSection(CacheOptions.SectionName));
+     services.Configure<CacheOptions>(configuration.GetSection($"MicroCMS:{CacheOptions.SectionName}"));
 
-        var cacheProvider = configuration.GetValue<string>($"{CacheOptions.SectionName}:Provider") ?? "None";
+        var cacheProvider = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:Provider") ?? "None";
         if (string.Equals(cacheProvider, "Redis", StringComparison.OrdinalIgnoreCase))
         {
-            var connectionString = configuration.GetValue<string>($"{CacheOptions.SectionName}:ConnectionString");
+    var connectionString = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:ConnectionString");
          if (!string.IsNullOrWhiteSpace(connectionString))
-       {
-     services.AddSingleton<IConnectionMultiplexer>(_ =>
-   ConnectionMultiplexer.Connect(connectionString));
-          }
+     {
+      services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
+   }
         }
 
- services.AddSingleton<MicroCMS.Application.Common.Interfaces.ICacheService, TwoTierCacheService>();
+        services.AddSingleton<MicroCMS.Application.Common.Interfaces.ICacheService, TwoTierCacheService>();
 
-        // ── Search ─────────────────────────────────────────────────────────
-        services.Configure<SearchOptions>(configuration.GetSection(SearchOptions.SectionName));
+  // ── Search ─────────────────────────────────────────────────────────
+        services.Configure<SearchOptions>(configuration.GetSection($"MicroCMS:{SearchOptions.SectionName}"));
 
-  var searchProvider = configuration.GetValue<string>($"{SearchOptions.SectionName}:Provider") ?? "None";
-    if (string.Equals(searchProvider, "OpenSearch", StringComparison.OrdinalIgnoreCase))
-        {
-          services.AddSingleton<OpenSearch.Client.IOpenSearchClient>(sp =>
-  {
-          var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value;
-     var pool = new OpenSearch.Net.SingleNodeConnectionPool(new Uri(opts.Endpoint));
-     var settings = new OpenSearch.Client.ConnectionSettings(pool);
-         if (!string.IsNullOrEmpty(opts.Username))
-        {
-    settings = settings.BasicAuthentication(opts.Username, opts.Password);
-        }
-        return new OpenSearch.Client.OpenSearchClient(settings);
-     });
-     services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, OpenSearchService>();
+        var searchProvider = configuration.GetValue<string>($"MicroCMS:{SearchOptions.SectionName}:Provider") ?? "None";
+        if (string.Equals(searchProvider, "OpenSearch", StringComparison.OrdinalIgnoreCase))
+     {
+   services.AddSingleton<OpenSearch.Client.IOpenSearchClient>(sp =>
+            {
+                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value;
+                var pool = new OpenSearch.Net.SingleNodeConnectionPool(new Uri(opts.Endpoint));
+         var settings = new OpenSearch.Client.ConnectionSettings(pool);
+      if (!string.IsNullOrEmpty(opts.Username))
+    {
+      settings = settings.BasicAuthentication(opts.Username, opts.Password);
+     }
+       return new OpenSearch.Client.OpenSearchClient(settings);
+      });
+   services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, OpenSearchService>();
   }
-  else
+        else
         {
-            services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, NullSearchService>();
+      services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, NullSearchService>();
         }
     }
 

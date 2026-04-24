@@ -52,15 +52,30 @@ public sealed class PageTemplate : AggregateRoot<PageTemplateId>
     var p = _placements.FirstOrDefault(x => x.Id == placementId)
     ?? throw new DomainException($"Placement '{placementId}' not found.");
   _placements.Remove(p);
-  _placements.Add(p with { SortOrder = newSortOrder });
+  _placements.Add(p.WithSortOrder(newSortOrder));
     _placements.Sort((a, b) => a.SortOrder.CompareTo(b.SortOrder));
        UpdatedAt = DateTimeOffset.UtcNow;
     }
 }
 
 /// <summary>An ordered component instance placed in a named zone on a page template.</summary>
-public sealed record ComponentPlacement(
-  Guid Id,
-    ComponentId ComponentId,
-    string Zone,
-    int SortOrder);
+public sealed class ComponentPlacement
+{
+  private ComponentPlacement() { } // EF Core
+
+    internal ComponentPlacement(Guid id, ComponentId componentId, string zone, int sortOrder)
+    {
+        Id = id;
+        ComponentId = componentId;
+     Zone = zone;
+        SortOrder = sortOrder;
+    }
+
+    public Guid Id { get; private set; }
+    public ComponentId ComponentId { get; private set; }
+    public string Zone { get; private set; } = string.Empty;
+    public int SortOrder { get; private set; }
+
+    internal ComponentPlacement WithSortOrder(int newSortOrder) =>
+        new(Id, ComponentId, Zone, newSortOrder);
+}

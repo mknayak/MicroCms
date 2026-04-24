@@ -91,16 +91,43 @@ public sealed class CopilotConversation : AggregateRoot<CopilotConversationId>
 public enum CopilotMessageRole { User, Assistant, Tool }
 
 /// <summary>A single message in a copilot conversation.</summary>
-public sealed record CopilotMessage(
-    Guid Id,
-  CopilotMessageRole Role,
-    string Content,
-  IReadOnlyList<CopilotCitation> Citations,
-    DateTimeOffset CreatedAt);
+public sealed class CopilotMessage
+{
+    private readonly List<CopilotCitation> _citations = [];
+
+    private CopilotMessage() { } // EF Core
+
+    internal CopilotMessage(Guid id, CopilotMessageRole role, string content, IEnumerable<CopilotCitation> citations, DateTimeOffset createdAt)
+    {
+    Id = id;
+        Role = role;
+        Content = content;
+    _citations.AddRange(citations);
+      CreatedAt = createdAt;
+    }
+
+    public Guid Id { get; private set; }
+public CopilotMessageRole Role { get; private set; }
+    public string Content { get; private set; } = string.Empty;
+    public IReadOnlyList<CopilotCitation> Citations => _citations.AsReadOnly();
+    public DateTimeOffset CreatedAt { get; private set; }
+}
 
 /// <summary>A source citation produced by RAG retrieval (GAP-24).</summary>
-public sealed record CopilotCitation(
-    Guid EntryId,
-    string Slug,
-    string Title,
-    double SimilarityScore);
+public sealed class CopilotCitation
+{
+    private CopilotCitation() { } // EF Core
+
+    public CopilotCitation(Guid entryId, string slug, string title, double similarityScore)
+    {
+        EntryId = entryId;
+        Slug = slug;
+        Title = title;
+SimilarityScore = similarityScore;
+    }
+
+    public Guid EntryId { get; private set; }
+    public string Slug { get; private set; } = string.Empty;
+    public string Title { get; private set; } = string.Empty;
+public double SimilarityScore { get; private set; }
+}
