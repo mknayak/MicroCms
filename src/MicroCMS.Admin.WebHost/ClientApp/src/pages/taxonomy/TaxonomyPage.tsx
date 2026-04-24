@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { taxonomyApi } from '@/api/taxonomy';
+import { useSite } from '@/contexts/SiteContext';
 import type { Category, Tag } from '@/types';
 import { ApiError } from '@/api/client';
 
@@ -26,37 +27,40 @@ type TagForm = z.infer<typeof tagSchema>;
 
 // ─── Category Tree ────────────────────────────────────────────────────────────
 
-function CategoryItem({ cat, depth = 0 }: { cat: Category; depth?: number }) {
+function CategoryItem({ cat, siteId, depth = 0 }: { cat: Category; siteId: string; depth?: number }) {
   const qc = useQueryClient();
-  const del = useMutation({
+  const deleteMut = useMutation({
     mutationFn: () => taxonomyApi.deleteCategory(cat.id),
-    onSuccess: () => { toast.success('Category deleted.'); void qc.invalidateQueries({ queryKey: ['categories'] }); },
+    onSuccess: () => {
+      toast.success('Category deleted.');
+      void qc.invalidateQueries({ queryKey: ['categories', siteId] });
+    },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
   });
 
-  return (
+return (
     <li>
       <div
         className="flex items-center justify-between rounded-lg py-1.5 hover:bg-slate-50"
         style={{ paddingLeft: `${depth * 16 + 12}px` }}
       >
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
           {depth > 0 && <span className="text-slate-300">└</span>}
           <span className="text-sm font-medium text-slate-800">{cat.name}</span>
-          <span className="font-mono text-xs text-slate-400">/{cat.slug}</span>
-          <span className="badge-slate">{cat.entryCount}</span>
-        </div>
+    <span className="font-mono text-xs text-slate-400">/{cat.slug}</span>
+  <span className="badge-slate">{cat.entryCount}</span>
+    </div>
         <button
-          onClick={() => { if (confirm(`Delete "${cat.name}"?`)) del.mutate(); }}
-          className="mr-2 text-xs text-red-400 hover:text-red-600"
+          onClick={() => { if (confirm(`Delete "${cat.name}"?`)) deleteMut.mutate(); }}
+   className="mr-2 text-xs text-red-400 hover:text-red-600"
         >
-          Delete
-        </button>
-      </div>
+     Delete
+      </button>
+   </div>
       {cat.children && cat.children.length > 0 && (
         <ul>
           {cat.children.map((child) => (
-            <CategoryItem key={child.id} cat={child} depth={depth + 1} />
+     <CategoryItem key={child.id} cat={child} siteId={siteId} depth={depth + 1} />
           ))}
         </ul>
       )}
@@ -64,53 +68,64 @@ function CategoryItem({ cat, depth = 0 }: { cat: Category; depth?: number }) {
   );
 }
 
+// ─── No-site guard ────────────────────────────────────────────────────────────
+
+function NoSiteSelected() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+      <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+      </svg>
+<p className="text-sm font-medium text-slate-500">No site selected. Choose a site from the top bar.</p>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TaxonomyPage() {
   const qc = useQueryClient();
+  const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
+  const siteId = selectedSiteId ?? '';
   const [activeTab, setActiveTab] = useState<'categories' | 'tags'>('categories');
 
   const { data: categories, isLoading: catsLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: taxonomyApi.getCategories,
+    queryKey: ['categories', siteId],
+    queryFn: () => taxonomyApi.getCategories(siteId),
+    enabled: !!siteId,
   });
 
   const { data: tags, isLoading: tagsLoading } = useQuery({
-    queryKey: ['tags'],
-    queryFn: taxonomyApi.getTags,
+    queryKey: ['tags', siteId],
+    queryFn: () => taxonomyApi.getTags(siteId),
+    enabled: !!siteId,
   });
 
-  // Category form
   const {
-    register: regCat,
-    handleSubmit: handleCat,
-    reset: resetCat,
+    register: regCat, handleSubmit: handleCat, reset: resetCat,
     formState: { errors: catErrors, isSubmitting: catSubmitting },
   } = useForm<CategoryForm>({ resolver: zodResolver(categorySchema) });
 
   const createCategoryMutation = useMutation({
-    mutationFn: (data: CategoryForm) => taxonomyApi.createCategory(data),
+    mutationFn: (data: CategoryForm) => taxonomyApi.createCategory({ siteId, ...data }),
     onSuccess: () => {
       toast.success('Category created.');
-      void qc.invalidateQueries({ queryKey: ['categories'] });
-      resetCat();
+      void qc.invalidateQueries({ queryKey: ['categories', siteId] });
+  resetCat();
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
 
-  // Tag form
   const {
-    register: regTag,
-    handleSubmit: handleTag,
-    reset: resetTag,
+    register: regTag, handleSubmit: handleTag, reset: resetTag,
     formState: { errors: tagErrors, isSubmitting: tagSubmitting },
   } = useForm<TagForm>({ resolver: zodResolver(tagSchema) });
 
   const createTagMutation = useMutation({
-    mutationFn: (data: TagForm) => taxonomyApi.createTag(data),
+    mutationFn: (data: TagForm) => taxonomyApi.createTag({ siteId, ...data }),
     onSuccess: () => {
       toast.success('Tag created.');
-      void qc.invalidateQueries({ queryKey: ['tags'] });
+      void qc.invalidateQueries({ queryKey: ['tags', siteId] });
       resetTag();
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
@@ -118,126 +133,139 @@ export default function TaxonomyPage() {
 
   const deleteTagMutation = useMutation({
     mutationFn: (id: string) => taxonomyApi.deleteTag(id),
-    onSuccess: () => { toast.success('Tag deleted.'); void qc.invalidateQueries({ queryKey: ['tags'] }); },
+    onSuccess: () => {
+      toast.success('Tag deleted.');
+      void qc.invalidateQueries({ queryKey: ['tags', siteId] });
+    },
   });
+
+  if (siteLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+))}
+      </div>
+    );
+  }
+
+  if (!siteId) return <NoSiteSelected />;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Taxonomy</h1>
-        <p className="mt-1 text-sm text-slate-500">Organise content with categories and tags.</p>
+   <p className="mt-1 text-sm text-slate-500">
+          Organise content for <span className="font-medium text-slate-700">{selectedSite?.name}</span> with categories and tags.
+        </p>
       </div>
 
       {/* Tabs */}
       <div className="border-b border-slate-200">
-        <nav className="-mb-px flex gap-4">
-          {(['categories', 'tags'] as const).map((tab) => (
-            <button
-              key={tab}
+     <nav className="-mb-px flex gap-4">
+        {(['categories', 'tags'] as const).map((tab) => (
+   <button
+    key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`border-b-2 pb-2 text-sm font-medium capitalize transition-colors ${
+           className={`border-b-2 pb-2 text-sm font-medium capitalize transition-colors ${
                 activeTab === tab
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
+? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+      }`}
             >
               {tab}
-            </button>
+         </button>
           ))}
         </nav>
       </div>
 
       {activeTab === 'categories' ? (
         <div className="grid grid-cols-3 gap-6">
-          {/* Tree */}
           <div className="col-span-2 card">
-            <h2 className="mb-4 text-base font-semibold text-slate-900">Category Tree</h2>
+        <h2 className="mb-4 text-base font-semibold text-slate-900">Category Tree</h2>
             {catsLoading ? (
-              <div className="space-y-2">
+ <div className="space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-8 animate-pulse rounded bg-slate-100" />)}
-              </div>
+      </div>
             ) : (
               <ul className="divide-y divide-slate-50">
-                {(categories ?? []).map((cat) => <CategoryItem key={cat.id} cat={cat} />)}
-              </ul>
+    {(categories ?? []).map((cat) => <CategoryItem key={cat.id} cat={cat} siteId={siteId} />)}
+     </ul>
             )}
           </div>
 
-          {/* New category form */}
-          <div className="card">
-            <h2 className="mb-4 text-base font-semibold text-slate-900">New Category</h2>
-            <form onSubmit={handleCat((v) => createCategoryMutation.mutate(v))} className="space-y-3">
-              <div>
-                <label className="form-label">Name</label>
-                <input className="form-input mt-1" {...regCat('name')} placeholder="Technology" />
-                {catErrors.name && <p className="form-error">{catErrors.name.message}</p>}
+        <div className="card">
+     <h2 className="mb-4 text-base font-semibold text-slate-900">New Category</h2>
+        <form onSubmit={handleCat((v) => createCategoryMutation.mutate(v))} className="space-y-3">
+      <div>
+         <label className="form-label">Name</label>
+      <input className="form-input mt-1" {...regCat('name')} placeholder="Technology" />
+            {catErrors.name && <p className="form-error">{catErrors.name.message}</p>}
               </div>
-              <div>
-                <label className="form-label">Slug</label>
-                <input className="form-input mt-1 font-mono" {...regCat('slug')} placeholder="technology" />
-                {catErrors.slug && <p className="form-error">{catErrors.slug.message}</p>}
-              </div>
-              <div>
-                <label className="form-label">Parent (optional)</label>
-                <select className="form-input mt-1" {...regCat('parentId')}>
+  <div>
+          <label className="form-label">Slug</label>
+          <input className="form-input mt-1 font-mono" {...regCat('slug')} placeholder="technology" />
+     {catErrors.slug && <p className="form-error">{catErrors.slug.message}</p>}
+    </div>
+    <div>
+              <label className="form-label">Parent (optional)</label>
+<select className="form-input mt-1" {...regCat('parentId')}>
                   <option value="">None (top-level)</option>
-                  {(categories ?? []).map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              <button type="submit" disabled={catSubmitting} className="btn-primary w-full justify-center">
-                {catSubmitting ? 'Creating…' : 'Create Category'}
-              </button>
+       {(categories ?? []).map((cat) => (
+   <option key={cat.id} value={cat.id}>{cat.name}</option>
+      ))}
+   </select>
+           </div>
+          <button type="submit" disabled={catSubmitting} className="btn-primary w-full justify-center">
+ {catSubmitting ? 'Creating…' : 'Create Category'}
+      </button>
             </form>
-          </div>
-        </div>
+      </div>
+   </div>
       ) : (
-        <div className="grid grid-cols-3 gap-6">
-          {/* Tags list */}
+  <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 card">
-            <h2 className="mb-4 text-base font-semibold text-slate-900">Tags</h2>
-            {tagsLoading ? (
+       <h2 className="mb-4 text-base font-semibold text-slate-900">Tags</h2>
+    {tagsLoading ? (
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-7 w-20 animate-pulse rounded-full bg-slate-200" />)}
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {(tags ?? []).map((tag: Tag) => (
-                  <span key={tag.id} className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
-                    #{tag.name}
-                    <span className="text-xs text-slate-400">({tag.entryCount})</span>
-                    <button
-                      onClick={() => { if (confirm(`Delete tag "${tag.name}"?`)) deleteTagMutation.mutate(tag.id); }}
-                      className="text-slate-300 hover:text-red-500"
-                      aria-label={`Delete ${tag.name}`}
-                    >×</button>
-                  </span>
-                ))}
-              </div>
-            )}
+        </div>
+         ) : (
+  <div className="flex flex-wrap gap-2">
+     {(tags ?? []).map((tag: Tag) => (
+       <span key={tag.id} className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
+         #{tag.name}
+           <span className="text-xs text-slate-400">({tag.entryCount})</span>
+    <button
+        onClick={() => { if (confirm(`Delete tag "${tag.name}"?`)) deleteTagMutation.mutate(tag.id); }}
+            className="text-slate-300 hover:text-red-500"
+ aria-label={`Delete ${tag.name}`}
+        >×</button>
+        </span>
+   ))}
+   </div>
+        )}
           </div>
 
-          {/* New tag form */}
-          <div className="card">
-            <h2 className="mb-4 text-base font-semibold text-slate-900">New Tag</h2>
+ <div className="card">
+        <h2 className="mb-4 text-base font-semibold text-slate-900">New Tag</h2>
             <form onSubmit={handleTag((v) => createTagMutation.mutate(v))} className="space-y-3">
-              <div>
-                <label className="form-label">Name</label>
-                <input className="form-input mt-1" {...regTag('name')} placeholder="React" />
-                {tagErrors.name && <p className="form-error">{tagErrors.name.message}</p>}
-              </div>
-              <div>
-                <label className="form-label">Slug</label>
-                <input className="form-input mt-1 font-mono" {...regTag('slug')} placeholder="react" />
-                {tagErrors.slug && <p className="form-error">{tagErrors.slug.message}</p>}
-              </div>
-              <button type="submit" disabled={tagSubmitting} className="btn-primary w-full justify-center">
-                {tagSubmitting ? 'Creating…' : 'Create Tag'}
-              </button>
-            </form>
-          </div>
+     <div>
+   <label className="form-label">Name</label>
+     <input className="form-input mt-1" {...regTag('name')} placeholder="React" />
+    {tagErrors.name && <p className="form-error">{tagErrors.name.message}</p>}
+           </div>
+    <div>
+       <label className="form-label">Slug</label>
+     <input className="form-input mt-1 font-mono" {...regTag('slug')} placeholder="react" />
+  {tagErrors.slug && <p className="form-error">{tagErrors.slug.message}</p>}
         </div>
+         <button type="submit" disabled={tagSubmitting} className="btn-primary w-full justify-center">
+   {tagSubmitting ? 'Creating…' : 'Create Tag'}
+</button>
+     </form>
+   </div>
+ </div>
       )}
     </div>
   );

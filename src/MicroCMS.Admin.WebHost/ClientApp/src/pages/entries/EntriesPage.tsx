@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { entriesApi } from '@/api/entries';
 import { contentTypesApi } from '@/api/contentTypes';
+import { useSite } from '@/contexts/SiteContext';
 import type { EntryListItem, EntryStatus } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -18,6 +19,9 @@ const STATUS_BADGE: Record<EntryStatus, string> = {
 
 export default function EntriesPage() {
   const qc = useQueryClient();
+  const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
+  const siteId = selectedSiteId ?? '';
+
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<EntryStatus | ''>('');
   const [contentTypeId, setContentTypeId] = useState('');
@@ -29,15 +33,17 @@ export default function EntriesPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['entries', { search, status, contentTypeId, page }],
+    queryKey: ['entries', { siteId, search, status, contentTypeId, page }],
     queryFn: () =>
       entriesApi.list({
+        siteId: siteId || undefined,
         search: search || undefined,
         status: status || undefined,
         contentTypeId: contentTypeId || undefined,
         pageNumber: page,
         pageSize: 20,
       }),
+    enabled: !!siteId,
   });
 
   const publishMutation = useMutation({
@@ -58,13 +64,41 @@ export default function EntriesPage() {
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
   });
 
+  if (siteLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!siteId) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+        <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+        <p className="text-sm font-medium text-slate-500">No site selected. Choose a site from the top bar.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Entries</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage your content entries.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Content entries for <span className="font-medium text-slate-700">{selectedSite?.name}</span>.
+          </p>
         </div>
         <Link to="/entries/new" className="btn-primary">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

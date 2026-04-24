@@ -181,6 +181,7 @@ export interface EntryVersion {
 }
 
 export interface EntryListParams extends PaginationParams {
+  siteId?: string;
   contentTypeId?: string;
   status?: EntryStatus;
   locale?: string;
@@ -244,12 +245,14 @@ export interface Tag {
 }
 
 export interface CreateCategoryRequest {
+  siteId: string;
   name: string;
   slug: string;
   parentId?: string;
 }
 
 export interface CreateTagRequest {
+  siteId: string;
   name: string;
   slug: string;
 }
