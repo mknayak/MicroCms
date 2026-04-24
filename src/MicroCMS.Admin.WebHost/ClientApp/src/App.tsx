@@ -20,6 +20,9 @@ const MediaPage = lazy(() => import('@/pages/media/MediaPage'));
 const TaxonomyPage = lazy(() => import('@/pages/taxonomy/TaxonomyPage'));
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
+const PagesPage = lazy(() => import('@/pages/pages/PagesPage'));
+const TenantsPage = lazy(() => import('@/pages/tenants/TenantsPage'));
+const TenantDetailPage = lazy(() => import('@/pages/tenants/TenantDetailPage'));
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -133,6 +136,36 @@ export default function App() {
                       <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin']}>
                         <Suspense fallback={<PageLoader />}>
                           <SettingsPage />
+                        </Suspense>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/pages"
+                    element={
+                      <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Editor']}>
+                        <Suspense fallback={<PageLoader />}>
+                          <PagesPage />
+                        </Suspense>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/tenants"
+                    element={
+                      <ProtectedRoute requiredRoles={['SystemAdmin']}>
+                        <Suspense fallback={<PageLoader />}>
+                          <TenantsPage />
+                        </Suspense>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/tenants/:id"
+                    element={
+                      <ProtectedRoute requiredRoles={['SystemAdmin']}>
+                        <Suspense fallback={<PageLoader />}>
+                          <TenantDetailPage />
                         </Suspense>
                       </ProtectedRoute>
                     }

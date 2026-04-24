@@ -6,6 +6,7 @@ using MicroCMS.Application.Features.ContentTypes.Mappers;
 using MicroCMS.Application.Features.ContentTypes.Queries;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications;
 using MicroCMS.Domain.Specifications.Content;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Primitives;
@@ -31,15 +32,26 @@ internal sealed class ListContentTypesQueryHandler(
 {
  public async Task<Result<PagedList<ContentTypeListItemDto>>> Handle(ListContentTypesQuery request, CancellationToken cancellationToken)
     {
-   var siteId = new SiteId(request.SiteId);
-        var spec = new ContentTypesBySitePagedSpec(siteId, request.Page, request.PageSize);
-    var countSpec = new ContentTypesBySiteSpec(siteId);
+        ISpecification<ContentType> spec;
+        ISpecification<ContentType> countSpec;
 
-       var items = await repo.ListAsync(spec, cancellationToken);
+        if (request.SiteId.HasValue)
+    {
+var siteId = new SiteId(request.SiteId.Value);
+spec = new ContentTypesBySitePagedSpec(siteId, request.Page, request.PageSize);
+    countSpec = new ContentTypesBySiteSpec(siteId);
+        }
+        else
+{
+      spec = new AllContentTypesPagedSpec(request.Page, request.PageSize);
+         countSpec = new AllContentTypesCountSpec();
+        }
+
+        var items = await repo.ListAsync(spec, cancellationToken);
         var total = await repo.CountAsync(countSpec, cancellationToken);
 
         return Result.Success(PagedList<ContentTypeListItemDto>.Create(
-      items.Select(ContentTypeMapper.ToListItemDto),
- request.Page, request.PageSize, total));
+    items.Select(ContentTypeMapper.ToListItemDto),
+            request.Page, request.PageSize, total));
     }
 }

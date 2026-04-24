@@ -1,10 +1,12 @@
 using MediatR;
+using MicroCMS.Application.Common.Authorization;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Install.Commands;
 using MicroCMS.Application.Features.Install.Dtos;
 using MicroCMS.Application.Services;
 using MicroCMS.Domain.Aggregates.Identity;
+using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
@@ -52,7 +54,12 @@ internal sealed class InstallSystemCommandHandler(
 
         // Step 2 — load the new admin user and set their password in the same UoW scope
         var adminUser = await userRepo.GetByIdAsync(new UserId(onboardResult.AdminUserId), cancellationToken)
-?? throw new NotFoundException(nameof(User), onboardResult.AdminUserId);
+        ?? throw new NotFoundException(nameof(User), onboardResult.AdminUserId);
+
+        // Upgrade the install-time admin to SystemAdmin so they can manage all tenants.
+        // The onboarding service assigns TenantAdmin; for the very first install we need
+  // the higher privilege level that grants cross-tenant access in the Admin SPA.
+        adminUser.AssignRole(WorkflowRole.SystemAdmin, Roles.SystemAdmin);
 
         var hash = passwordHasher.Hash(request.AdminPassword);
    adminUser.SetPasswordHash(hash);

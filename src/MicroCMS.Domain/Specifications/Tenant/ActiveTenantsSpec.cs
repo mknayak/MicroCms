@@ -8,6 +8,6 @@ public sealed class ActiveTenantsSpec : BaseSpecification<MicroCMS.Domain.Aggreg
     public ActiveTenantsSpec()
         : base(t => t.Status == TenantStatus.Active)
     {
-        ApplyOrderBy(t => t.Slug.Value);
+        ApplyOrderBy(t => t.Slug);
     }
 }

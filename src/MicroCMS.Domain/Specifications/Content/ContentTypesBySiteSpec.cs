@@ -14,7 +14,7 @@ public sealed class ContentTypesBySiteSpec : BaseSpecification<ContentType>
     }
 }
 
-/// <summary>Paged overload — applies paging on top of the site filter.</summary>
+/// <summary>Paged overload â€” applies paging on top of the site filter.</summary>
 public sealed class ContentTypesBySitePagedSpec : BaseSpecification<ContentType>
 {
     public ContentTypesBySitePagedSpec(SiteId siteId, int page, int pageSize)
@@ -23,4 +23,21 @@ public sealed class ContentTypesBySitePagedSpec : BaseSpecification<ContentType>
         ApplyOrderBy(ct => ct.Handle);
         ApplyPaging((page - 1) * pageSize, pageSize);
     }
+}
+
+/// <summary>All content types for the current tenant (no site filter). Paged.</summary>
+public sealed class AllContentTypesPagedSpec : BaseSpecification<ContentType>
+{
+    public AllContentTypesPagedSpec(int page, int pageSize)
+        : base(_ => true)
+    {
+        ApplyOrderBy(ct => ct.Handle);
+        ApplyPaging((page - 1) * pageSize, pageSize);
+    }
+}
+
+/// <summary>Count-only version for the all-tenant list.</summary>
+public sealed class AllContentTypesCountSpec : BaseSpecification<ContentType>
+{
+    public AllContentTypesCountSpec() : base(_ => true) { }
 }

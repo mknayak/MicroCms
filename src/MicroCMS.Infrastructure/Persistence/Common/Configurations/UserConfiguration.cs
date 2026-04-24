@@ -66,6 +66,9 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LockoutEnd)
             .IsRequired(false);
 
+        builder.Property(u => u.LastLoginAt)
+            .IsRequired(false);
+
         // ── Roles (owned collection in separate table) ─────────────────────
         builder.OwnsMany(u => u.Roles, role =>
         {

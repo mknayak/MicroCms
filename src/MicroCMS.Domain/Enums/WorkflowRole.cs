@@ -19,5 +19,11 @@ public enum WorkflowRole
     Publisher = 3,
 
     /// <summary>Full control within a tenant: manage users, settings, content types.</summary>
-    TenantAdmin = 4
+    TenantAdmin = 4,
+
+    /// <summary>System-level super-admin: cross-tenant operations.</summary>
+    SystemAdmin = 5,
+
+    /// <summary>Read-only access to published content.</summary>
+    Viewer = 6,
 }

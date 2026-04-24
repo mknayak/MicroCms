@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { usersApi } from '@/api/users';
-import type { User, UserRole } from '@/types';
+import type { User } from '@/types';
 import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
 
 // ─── Roles ────────────────────────────────────────────────────────────────────
 
-const ALL_ROLES: UserRole[] = ['SystemAdmin', 'TenantAdmin', 'Editor', 'Author', 'Viewer'];
-
-const ROLE_BADGE: Record<UserRole, string> = {
+const ROLE_BADGE: Record<string, string> = {
   SystemAdmin: 'badge-red',
   TenantAdmin: 'badge-amber',
   Editor: 'badge-brand',
@@ -26,7 +24,6 @@ const ROLE_BADGE: Record<UserRole, string> = {
 const inviteSchema = z.object({
   email: z.string().email('Invalid email'),
   displayName: z.string().min(1, 'Display name is required'),
-  roles: z.array(z.enum(['SystemAdmin', 'TenantAdmin', 'Editor', 'Author', 'Viewer'])).min(1, 'At least one role required'),
 });
 
 type InviteForm = z.infer<typeof inviteSchema>;
@@ -35,18 +32,16 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<InviteForm>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { roles: ['Author'] },
   });
 
   const mutation = useMutation({
     mutationFn: (data: InviteForm) => usersApi.invite(data),
     onSuccess: () => {
-      toast.success('Invitation sent.');
+      toast.success('User invited.');
       void qc.invalidateQueries({ queryKey: ['users'] });
       onClose();
     },
@@ -70,35 +65,6 @@ function InviteModal({ onClose }: { onClose: () => void }) {
             <label className="form-label">Display Name</label>
             <input className="form-input mt-1" {...register('displayName')} placeholder="Jane Smith" />
             {errors.displayName && <p className="form-error">{errors.displayName.message}</p>}
-          </div>
-          <div>
-            <label className="form-label mb-2 block">Roles</label>
-            <Controller
-              control={control}
-              name="roles"
-              render={({ field }) => (
-                <div className="space-y-2">
-                  {ALL_ROLES.map((role) => (
-                    <label key={role} className="flex items-center gap-2 text-sm text-slate-700">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-slate-300 text-brand-600"
-                        checked={field.value.includes(role)}
-                        onChange={(e) => {
-                          field.onChange(
-                            e.target.checked
-                              ? [...field.value, role]
-                              : field.value.filter((r) => r !== role),
-                          );
-                        }}
-                      />
-                      {role}
-                    </label>
-                  ))}
-                </div>
-              )}
-            />
-            {errors.roles && <p className="form-error">{errors.roles.message}</p>}
           </div>
           <div className="flex justify-end gap-3">
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
@@ -183,8 +149,8 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {user.roles.map((role) => (
-                        <span key={role} className={ROLE_BADGE[role]}>{role}</span>
+                      {(user.roles ?? []).map((role) => (
+                        <span key={role} className={ROLE_BADGE[role] ?? 'badge-slate'}>{role}</span>
                       ))}
                     </div>
                   </td>

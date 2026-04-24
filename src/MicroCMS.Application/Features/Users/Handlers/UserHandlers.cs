@@ -30,7 +30,9 @@ internal static class UserMapper
         u.Roles.Select(r => new UserRoleDto(r.Id.Value, r.WorkflowRole.ToString(), r.Name, r.SiteId?.Value)).ToList().AsReadOnly());
 
     internal static UserListItemDto ToListItemDto(User u) =>
-        new(u.Id.Value, u.Email.Value, u.DisplayName.Value, u.IsActive, u.CreatedAt);
+      new(u.Id.Value, u.Email.Value, u.DisplayName.Value, u.IsActive, u.CreatedAt,
+        u.LastLoginAt,
+u.Roles.Select(r => r.Name).ToList().AsReadOnly());
 }
 
 // ── Query handlers ────────────────────────────────────────────────────────────
@@ -124,10 +126,25 @@ internal sealed class DeactivateUserCommandHandler(
     public async Task<Result<UserDto>> Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
     {
         var user = await repo.GetByIdAsync(new UserId(request.UserId), cancellationToken)
-       ?? throw new NotFoundException(nameof(User), request.UserId);
+   ?? throw new NotFoundException(nameof(User), request.UserId);
 
     user.Deactivate();
   repo.Update(user);
+return Result.Success(UserMapper.ToDto(user));
+    }
+}
+
+internal sealed class ReactivateUserCommandHandler(
+    IRepository<User, UserId> repo)
+    : IRequestHandler<ReactivateUserCommand, Result<UserDto>>
+{
+    public async Task<Result<UserDto>> Handle(ReactivateUserCommand request, CancellationToken cancellationToken)
+    {
+        var user = await repo.GetByIdAsync(new UserId(request.UserId), cancellationToken)
+          ?? throw new NotFoundException(nameof(User), request.UserId);
+
+  user.Reactivate();
+        repo.Update(user);
         return Result.Success(UserMapper.ToDto(user));
     }
 }

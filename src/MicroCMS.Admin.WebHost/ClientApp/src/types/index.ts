@@ -58,24 +58,26 @@ export interface ChangePasswordRequest {
 
 export interface Tenant {
   id: string;
-  name: string;
   slug: string;
-  subdomain: string;
-  logoUrl?: string;
-  timezone: string;
+  /** matches TenantDto.DisplayName */
+  displayName: string;
   defaultLocale: string;
-  locales: string[];
+  /** matches TenantDto.TimeZoneId */
+  timeZoneId: string;
   aiEnabled: boolean;
-  plan: string;
+  logoUrl?: string;
+  status: string;
   createdAt: string;
+  updatedAt: string;
+  sites: Site[];
 }
 
 export interface UpdateTenantRequest {
-  name: string;
-  timezone: string;
+  displayName: string;
   defaultLocale: string;
-  locales: string[];
+  timeZoneId: string;
   aiEnabled: boolean;
+  logoUrl?: string;
 }
 
 // ─── Content Types ────────────────────────────────────────────────────────────
@@ -260,7 +262,8 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
-  roles: UserRole[];
+  /** Matches UserListItemDto.Roles — array of role name strings e.g. "TenantAdmin" */
+  roles: string[];
   isActive: boolean;
   avatarUrl?: string;
   lastLoginAt?: string;
@@ -270,11 +273,10 @@ export interface User {
 export interface InviteUserRequest {
   email: string;
   displayName: string;
-  roles: UserRole[];
 }
 
 export interface UpdateUserRolesRequest {
-  roles: UserRole[];
+  roles: string[];
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -334,4 +336,119 @@ export interface InstallResult {
   adminUserId: string;
   adminEmail: string;
   message: string;
+}
+
+// ─── Pages ────────────────────────────────────────────────────────────────────
+
+export type PageType = 'Static' | 'Collection';
+
+export interface PageTreeNode {
+  id: string;
+  title: string;
+  slug: string;
+  pageType: PageType;
+  parentId?: string;
+  depth: number;
+  children: PageTreeNode[];
+}
+
+export interface PageDto {
+  id: string;
+  siteId: string;
+  title: string;
+  slug: string;
+  pageType: PageType;
+  parentId?: string;
+linkedEntryId?: string;
+  collectionContentTypeId?: string;
+  routePattern?: string;
+  depth: number;
+}
+
+export interface CreateStaticPageRequest {
+  siteId: string;
+  title: string;
+  slug: string;
+  parentId?: string;
+  linkedEntryId?: string;
+}
+
+export interface CreateCollectionPageRequest {
+  siteId: string;
+  title: string;
+  slug: string;
+  contentTypeId: string;
+  routePattern: string;
+  parentId?: string;
+}
+
+export interface MovePageRequest {
+  newParentId?: string;
+}
+
+// ─── Sites ────────────────────────────────────────────────────────────────────
+
+export interface Site {
+  id: string;
+  name: string;
+  handle: string;
+  defaultLocale: string;
+  isActive: boolean;
+  customDomain?: string;
+}
+
+export interface CreateSiteRequest {
+  name: string;
+  handle: string;
+  defaultLocale: string;
+}
+
+// ─── Tenant Admin (system-level) ──────────────────────────────────────────────
+
+export interface TenantListItem {
+  id: string;
+  slug: string;
+  displayName: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface TenantDetail {
+  id: string;
+  slug: string;
+  displayName: string;
+  defaultLocale: string;
+  timeZoneId: string;
+  aiEnabled: boolean;
+  logoUrl?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  sites: Site[];
+}
+
+export interface OnboardTenantRequest {
+  slug: string;
+  displayName: string;
+  defaultLocale: string;
+  timeZoneId: string;
+  adminEmail: string;
+  adminDisplayName: string;
+  defaultSiteName?: string;
+}
+
+export interface TenantOnboardingResult {
+  tenantId: string;
+  siteId: string;
+  adminUserId: string;
+  adminEmail: string;
+  message: string;
+}
+
+export interface UpdateTenantSettingsRequest {
+  displayName: string;
+  defaultLocale: string;
+  timeZoneId: string;
+  aiEnabled: boolean;
+  logoUrl?: string;
 }

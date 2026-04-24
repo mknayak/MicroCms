@@ -12,6 +12,7 @@ namespace MicroCMS.Api.Controllers;
 /// Requires <c>UserManage</c> policy (TenantAdmin or SystemAdmin roles).
 /// </summary>
 [Authorize]
+[Route("api/v{version:apiVersion}/admin/users")]
 public sealed class UsersController : ApiControllerBase
 {
     [HttpGet]
@@ -81,6 +82,16 @@ public sealed class UsersController : ApiControllerBase
     {
         var result = await Sender.Send(new DeactivateUserCommand(id), cancellationToken);
      return OkOrProblem(result);
+    }
+
+    /// <summary>Reactivates a previously deactivated user.</summary>
+    [HttpPost("{id:guid}/activate")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken = default)
+    {
+ var result = await Sender.Send(new ReactivateUserCommand(id), cancellationToken);
+        return OkOrProblem(result);
     }
 }
 

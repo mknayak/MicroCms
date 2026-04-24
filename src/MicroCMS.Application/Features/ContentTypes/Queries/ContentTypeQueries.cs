@@ -11,6 +11,6 @@ public sealed record GetContentTypeQuery(Guid ContentTypeId) : IQuery<ContentTyp
 
 [HasPolicy(ContentPolicies.ContentTypeRead)]
 public sealed record ListContentTypesQuery(
-    Guid SiteId,
+    Guid? SiteId,
     int Page = 1,
     int PageSize = 20) : IQuery<PagedList<ContentTypeListItemDto>>;

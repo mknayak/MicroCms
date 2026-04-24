@@ -14,7 +14,7 @@ public sealed class ContentTypesController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(PagedList<ContentTypeListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-        [FromQuery] Guid siteId,
+        [FromQuery] Guid? siteId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)

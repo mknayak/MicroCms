@@ -38,6 +38,7 @@ public sealed class User : AggregateRoot<UserId>
     public bool IsActive { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
+    public DateTimeOffset? LastLoginAt { get; private set; }
 
     // ── Password credential (nullable — external-IdP users have no local password) ───
     /// <summary>bcrypt hash of the user's password. Null for SSO/OIDC-only accounts.</summary>
@@ -162,6 +163,7 @@ public sealed class User : AggregateRoot<UserId>
     {
         FailedLoginAttempts = 0;
         LockoutEnd = null;
+        LastLoginAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
         RaiseDomainEvent(new UserLoggedInEvent(Id, TenantId, Email.Value, ipAddress));
     }

@@ -23,3 +23,6 @@ public sealed record RevokeRoleCommand(
 
 [HasPolicy(ContentPolicies.UserManage)]
 public sealed record DeactivateUserCommand(Guid UserId) : ICommand<UserDto>;
+
+[HasPolicy(ContentPolicies.UserManage)]
+public sealed record ReactivateUserCommand(Guid UserId) : ICommand<UserDto>;

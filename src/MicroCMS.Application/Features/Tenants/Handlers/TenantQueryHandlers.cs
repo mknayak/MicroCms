@@ -1,5 +1,6 @@
 using MediatR;
 using MicroCMS.Application.Common.Exceptions;
+using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Tenants.Dtos;
 using MicroCMS.Application.Features.Tenants.Mappers;
 using MicroCMS.Application.Features.Tenants.Queries;
@@ -40,4 +41,17 @@ internal sealed class ListTenantsQueryHandler(
    items.Select(TenantMapper.ToListItemDto),
      request.Page, request.PageSize, total));
   }
+}
+
+internal sealed class GetCurrentTenantQueryHandler(
+    IRepository<Domain.Aggregates.Tenant.Tenant, TenantId> tenantRepo,
+    ICurrentUser currentUser)
+  : IRequestHandler<GetCurrentTenantQuery, Result<TenantDto>>
+{
+    public async Task<Result<TenantDto>> Handle(GetCurrentTenantQuery request, CancellationToken cancellationToken)
+    {
+        var tenant = await tenantRepo.GetByIdAsync(currentUser.TenantId, cancellationToken)
+ ?? throw new NotFoundException(nameof(Tenant), currentUser.TenantId);
+        return Result.Success(TenantMapper.ToDto(tenant));
+    }
 }

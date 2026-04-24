@@ -1,3 +1,4 @@
+using MicroCMS.Application.Common.Authorization;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Services;
 using MicroCMS.Domain.Aggregates.Identity;
@@ -50,8 +51,8 @@ var site = tenant.AddSite(
         // Create admin user scoped to the new tenant
  var adminEmail = EmailAddress.Create(request.AdminEmail);
         var adminName = PersonName.Create(request.AdminDisplayName);
-     var adminUser = User.Create(tenant.Id, adminEmail, adminName);
-        adminUser.AssignRole(WorkflowRole.Publisher, "TenantAdmin");
+var adminUser = User.Create(tenant.Id, adminEmail, adminName);
+adminUser.AssignRole(WorkflowRole.TenantAdmin, Roles.TenantAdmin);
 
         await userRepo.AddAsync(adminUser, cancellationToken);
 

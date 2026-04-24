@@ -86,10 +86,13 @@ internal sealed class JwtTokenService : ITokenService
 
         foreach (var role in user.Roles)
         {
-            claims.Add(new Claim("role", role.WorkflowRole.ToString()));
+            // Emit the role Name (e.g. "TenantAdmin") — not WorkflowRole.ToString()
+            // so the claim value matches Roles.* constants used by RolePermissions
+            // and the Admin SPA sidebar filter.
+            claims.Add(new Claim("role", role.Name));
             if (role.SiteId.HasValue)
             {
-                claims.Add(new Claim($"site_role:{role.SiteId.Value}", role.WorkflowRole.ToString()));
+                claims.Add(new Claim($"site_role:{role.SiteId.Value}", role.Name));
             }
         }
 

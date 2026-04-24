@@ -21,4 +21,6 @@ public sealed record UserListItemDto(
     string Email,
     string DisplayName,
     bool IsActive,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? LastLoginAt,
+    IReadOnlyList<string> Roles);

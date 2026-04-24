@@ -33,6 +33,16 @@ public sealed class TenantAdminController : ApiControllerBase
         return OkOrProblem(result);
     }
 
+    /// <summary>Gets the current authenticated user's own tenant.</summary>
+    [HttpGet("current")]
+    [ProducesResponseType(typeof(TenantDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new GetCurrentTenantQuery(), cancellationToken);
+        return OkOrProblem(result);
+    }
+
     /// <summary>Gets a tenant by ID (SystemAdmin only).</summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(TenantDto), StatusCodes.Status200OK)]
