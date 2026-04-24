@@ -1,7 +1,9 @@
 using Hellang.Middleware.ProblemDetails;
 using MicroCMS.Api.Middleware;
 using MicroCMS.Infrastructure.Install;
+using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Tenancy;
+using Microsoft.EntityFrameworkCore;
 
 namespace MicroCMS.WebHost.Extensions;
 
@@ -11,6 +13,33 @@ namespace MicroCMS.WebHost.Extensions;
 /// </summary>
 internal static class ApplicationBuilderExtensions
 {
+    // ── Database initialisation ───────────────────────────────────────────
+
+    /// <summary>
+    /// Applies the database schema on startup.
+ /// - SQLite / development: <c>EnsureCreated</c> (fast, no migrations needed).
+    /// - PostgreSQL / production: <c>MigrateAsync</c> (runs pending EF Core migrations).
+    /// </summary>
+    internal static async Task UseDatabaseAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var config = app.Configuration;
+
+    var provider = config.GetValue<string>("MicroCMS:Database:Provider") ?? "Sqlite";
+
+        if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+  // EnsureCreated is fine for SQLite dev — creates the schema from the current model.
+            await db.Database.EnsureCreatedAsync();
+      }
+        else
+        {
+            // For real databases apply pending migrations (safe to call even when up-to-date).
+  await db.Database.MigrateAsync();
+      }
+ }
+
     // ── Security middleware ────────────────────────────────────────────────
 
     internal static WebApplication UseSecurityMiddleware(this WebApplication app)
@@ -68,7 +97,7 @@ internal static class ApplicationBuilderExtensions
             app.UseSwaggerUI(opt =>
             {
                 opt.SwaggerEndpoint("/swagger/v1/swagger.json", "MicroCMS API v1");
-                opt.RoutePrefix = "api-docs";
+                opt.RoutePrefix = "swagger";
             });
         }
 

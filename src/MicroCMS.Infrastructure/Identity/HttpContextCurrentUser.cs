@@ -21,9 +21,10 @@ namespace MicroCMS.Infrastructure.Identity;
 /// </summary>
 internal sealed class HttpContextCurrentUser : ICurrentUser
 {
+    // With MapInboundClaims = false, claim names match the JWT token exactly.
     private const string TenantIdClaimType = "tenant_id";
-    private const string SubjectClaimType = ClaimTypes.NameIdentifier; // mapped from "sub" by JwtBearer middleware
-    private const string EmailClaimType = "email";                     // JwtBearer maps "email" → ClaimTypes.Email; use short form
+    private const string SubjectClaimType = "sub";    // raw JWT "sub" claim — no longer remapped by JwtBearer
+    private const string EmailClaimType = "email";
     private const string RoleClaimType = "role";                       // custom claim — short form matches JWT token
 
     private readonly IHttpContextAccessor _httpContextAccessor;

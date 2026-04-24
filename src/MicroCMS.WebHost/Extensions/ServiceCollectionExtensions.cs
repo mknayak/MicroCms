@@ -44,6 +44,11 @@ internal static class ServiceCollectionExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(opt =>
             {
+                // Preserve original JWT claim names (e.g. "role", "sub", "tenant_id").
+                // Without this, the JwtBearer middleware remaps "role" → ClaimTypes.Role
+                // and "sub" → ClaimTypes.NameIdentifier, breaking ICurrentUser.Roles lookup.
+                opt.MapInboundClaims = false;
+
                 opt.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,

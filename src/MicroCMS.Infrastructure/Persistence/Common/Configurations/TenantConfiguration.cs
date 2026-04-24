@@ -139,6 +139,30 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             site.Property(s => s.CreatedAt).IsRequired();
 
             site.HasIndex("TenantId", "Handle").IsUnique();
+
+            // ── SiteEnvironments (owned collection inside owned Site) ─────
+            site.OwnsMany(s => s.Environments, env =>
+            {
+                env.ToTable("SiteEnvironments");
+                env.WithOwner().HasForeignKey("SiteId");
+                env.HasKey("SiteId", nameof(SiteEnvironment.Type));
+
+                env.Property(e => e.Type)
+                    .HasConversion<string>()
+                    .HasMaxLength(32)
+                    .IsRequired();
+
+                env.Property(e => e.Url)
+                    .HasMaxLength(500)
+                    .IsRequired();
+
+                env.Property(e => e.SslStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(32)
+                    .IsRequired();
+
+                env.Property(e => e.IsLive).IsRequired();
+            });
         });
 
         // Tenant inherits AggregateRoot which exposes DomainEvents — not persisted

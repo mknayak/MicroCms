@@ -1,3 +1,4 @@
+using MicroCMS.Application.Common.Attributes;
 using MicroCMS.Application.Common.Markers;
 using MicroCMS.Application.Features.Install.Dtos;
 
@@ -12,6 +13,7 @@ namespace MicroCMS.Application.Features.Install.Commands;
 /// <see cref="IInstallationStateService.IsInstalledAsync"/> returns <c>false</c>.
 /// The <c>InstallationGuardMiddleware</c> and <c>InstallController</c> enforce this together.
 /// </summary>
+[AllowAnonymousRequest]
 public sealed record InstallSystemCommand(
     // ── Tenant ────────────────────────────────────────────────────────────
     string TenantSlug,
@@ -22,4 +24,4 @@ public sealed record InstallSystemCommand(
     // ── Admin user ────────────────────────────────────────────────────────
     string AdminEmail,
     string AdminDisplayName,
-string AdminPassword) : ICommand<InstallResultDto>;
+    string AdminPassword) : ICommand<InstallResultDto>;

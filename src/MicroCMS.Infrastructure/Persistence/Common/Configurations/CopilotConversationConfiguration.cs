@@ -35,7 +35,7 @@ msg.ToTable("CopilotMessages");
  msg.HasKey(m => m.Id);
       msg.Property(m => m.Id).ValueGeneratedNever();
    msg.Property(m => m.Role).HasConversion<string>().HasMaxLength(32).IsRequired();
-            msg.Property(m => m.Content).HasColumnType("nvarchar(max)").IsRequired();
+            msg.Property(m => m.Content).IsRequired();
   msg.Property(m => m.CreatedAt).IsRequired();
 
      msg.OwnsMany(m => m.Citations, cit =>

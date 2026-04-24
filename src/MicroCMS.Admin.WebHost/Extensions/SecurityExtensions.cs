@@ -13,7 +13,7 @@ internal static class SecurityExtensions
     internal static WebApplicationBuilder AddAdminSecurityServices(this WebApplicationBuilder builder)
     {
         var jwtSection = builder.Configuration.GetSection("Jwt");
-        var key = Encoding.UTF8.GetBytes(jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured."));
+        var key = Encoding.UTF8.GetBytes(jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured."));
 
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -31,8 +31,15 @@ namespace MicroCMS.Infrastructure.Persistence.Common;
 public sealed class ApplicationDbContext : DbContext
 {
     // Nullable — null when invoked from design-time factory or background system jobs.
-    // Query filters are only applied when a valid, authenticated current user is present.
     private readonly ICurrentUser? _currentUser;
+
+    /// <summary>
+    /// Resolved once per context instance. <c>null</c> means "no filter" (migrations, background jobs).
+    /// EF Core captures this field reference and re-evaluates per query.
+    /// Using a single nullable field rather than a multi-operand expression keeps each
+    /// query-filter lambda to a single equality check, staying within complexity limits.
+    /// </summary>
+    private readonly TenantId? _tenantFilter;
 
     /// <summary>Design-time / migration constructor.</summary>
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -47,6 +54,8 @@ public sealed class ApplicationDbContext : DbContext
         : base(options)
     {
         _currentUser = currentUser;
+        // Only apply tenant isolation when there is a real authenticated user.
+        _tenantFilter = currentUser.IsAuthenticated ? currentUser.TenantId : null;
     }
 
     // ── DbSets ────────────────────────────────────────────────────────────
@@ -82,6 +91,7 @@ public sealed class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         ApplyGlobalQueryFilters(modelBuilder);
+        ApplySqliteDateTimeOffsetConverters(modelBuilder);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -94,39 +104,89 @@ public sealed class ApplicationDbContext : DbContext
 
     /// <summary>
     /// Registers row-level tenant query filters on every tenant-scoped entity.
+    /// Split into focused methods to keep cyclomatic complexity within the project limit.
     ///
-    /// IMPORTANT: the lambda captures <c>this._currentUser</c> by reference (because
-    /// <c>_currentUser</c> is an instance field accessed via the implicit <c>this</c>).
-    /// EF Core re-evaluates the lambda on every query, so each scope gets its own tenant scope.
-    /// This is the recommended EF Core pattern for per-request query filters.
+    /// IMPORTANT: the lambda captures <c>this._currentUser</c> by reference.
+    /// EF Core re-evaluates the lambda on every query execution.
+    /// When <c>_currentUser</c> is null or unauthenticated all rows are visible (migrations, background jobs).
     ///
-    /// When <c>_currentUser</c> is null or the user is not authenticated, the filter
-    /// evaluates to <c>true</c>, meaning all rows are visible. This applies to:
-    ///   - Design-time migrations
-    ///   - System-admin background jobs that inject a null/anonymous user
-    ///
-    /// DO NOT use <c>IgnoreQueryFilters()</c> without verifying the <c>SystemAdmin</c> role.
+    /// DO NOT extract the filter condition to a helper method — EF Core cannot translate
+    /// instance method calls to SQL. The expression must be inlined in each lambda.
     /// </summary>
-    // Helper method to reduce cyclomatic complexity in ApplyGlobalQueryFilters
-    private bool IsTenantVisible(TenantId tenantId)
-    {
-        return _currentUser == null || !_currentUser.IsAuthenticated || tenantId == _currentUser.TenantId;
-    }
-
     private void ApplyGlobalQueryFilters(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ContentType>().HasQueryFilter(ct => IsTenantVisible(ct.TenantId));
-        modelBuilder.Entity<Entry>().HasQueryFilter(e => IsTenantVisible(e.TenantId));
-        modelBuilder.Entity<Folder>().HasQueryFilter(f => IsTenantVisible(f.TenantId));
-        modelBuilder.Entity<Page>().HasQueryFilter(p => IsTenantVisible(p.TenantId));
-        modelBuilder.Entity<MediaAsset>().HasQueryFilter(a => IsTenantVisible(a.TenantId));
-        modelBuilder.Entity<MediaFolder>().HasQueryFilter(f => IsTenantVisible(f.TenantId));
-        modelBuilder.Entity<Category>().HasQueryFilter(c => IsTenantVisible(c.TenantId));
-        modelBuilder.Entity<Tag>().HasQueryFilter(t => IsTenantVisible(t.TenantId));
-        modelBuilder.Entity<User>().HasQueryFilter(u => IsTenantVisible(u.TenantId));
-        modelBuilder.Entity<WebhookSubscription>().HasQueryFilter(w => IsTenantVisible(w.TenantId));
-        modelBuilder.Entity<Component>().HasQueryFilter(c => IsTenantVisible(c.TenantId));
-        modelBuilder.Entity<ApiClient>().HasQueryFilter(a => IsTenantVisible(a.TenantId));
-        modelBuilder.Entity<TenantSecuritySettings>().HasQueryFilter(t => IsTenantVisible(t.TenantId));
+        ApplyContentFilters(modelBuilder);
+        ApplyMediaFilters(modelBuilder);
+        ApplyIdentityAndSecurityFilters(modelBuilder);
+        ApplyTaxonomyFilters(modelBuilder);
+    }
+
+    private void ApplyContentFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ContentType>().HasQueryFilter(ct => _tenantFilter == null || ct.TenantId == _tenantFilter);
+        modelBuilder.Entity<Entry>().HasQueryFilter(e => _tenantFilter == null || e.TenantId == _tenantFilter);
+        modelBuilder.Entity<Folder>().HasQueryFilter(f => _tenantFilter == null || f.TenantId == _tenantFilter);
+        modelBuilder.Entity<Page>().HasQueryFilter(p => _tenantFilter == null || p.TenantId == _tenantFilter);
+        modelBuilder.Entity<Component>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);
+    }
+
+    private void ApplyMediaFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<MediaAsset>().HasQueryFilter(a => _tenantFilter == null || a.TenantId == _tenantFilter);
+        modelBuilder.Entity<MediaFolder>().HasQueryFilter(f => _tenantFilter == null || f.TenantId == _tenantFilter);
+    }
+
+    private void ApplyIdentityAndSecurityFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>().HasQueryFilter(u => _tenantFilter == null || u.TenantId == _tenantFilter);
+        modelBuilder.Entity<ApiClient>().HasQueryFilter(a => _tenantFilter == null || a.TenantId == _tenantFilter);
+        modelBuilder.Entity<TenantSecuritySettings>().HasQueryFilter(t => _tenantFilter == null || t.TenantId == _tenantFilter);
+        modelBuilder.Entity<WebhookSubscription>().HasQueryFilter(w => _tenantFilter == null || w.TenantId == _tenantFilter);
+    }
+
+    private void ApplyTaxonomyFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Category>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);
+        modelBuilder.Entity<Tag>().HasQueryFilter(t => _tenantFilter == null || t.TenantId == _tenantFilter);
+    }
+
+    /// <summary>
+    /// SQLite cannot ORDER BY or compare <see cref="DateTimeOffset"/> columns stored as TEXT.
+    /// This method replaces every <see cref="DateTimeOffset"/> property with a
+    /// <c>long</c> (UTC ticks) representation so SQLite can sort them correctly.
+    /// This is a no-op on other providers (PostgreSQL, SQL Server) where
+    /// <see cref="DateTimeOffset"/> is a native type.
+    /// </summary>
+    private void ApplySqliteDateTimeOffsetConverters(ModelBuilder modelBuilder)
+    {
+        if (!Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) ?? true)
+            return;
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            ApplySqliteConvertersToEntity(entityType);
+    }
+
+    private static void ApplySqliteConvertersToEntity(Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType entityType)
+    {
+        foreach (var property in entityType.GetProperties())
+            ApplySqliteConverterToProperty(property);
+    }
+
+    private static void ApplySqliteConverterToProperty(Microsoft.EntityFrameworkCore.Metadata.IMutableProperty property)
+    {
+        if (property.ClrType == typeof(DateTimeOffset))
+        {
+            property.SetValueConverter(
+                new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTimeOffset, long>(
+                    dto => dto.UtcTicks,
+                    ticks => new DateTimeOffset(ticks, TimeSpan.Zero)));
+        }
+        else if (property.ClrType == typeof(DateTimeOffset?))
+        {
+            property.SetValueConverter(
+                new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTimeOffset?, long?>(
+                    dto => dto == null ? null : dto.Value.UtcTicks,
+                    ticks => ticks == null ? null : new DateTimeOffset(ticks.Value, TimeSpan.Zero)));
+        }
     }
 }

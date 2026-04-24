@@ -89,8 +89,7 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
             field.Property(f => f.Description)
                 .HasMaxLength(FieldDefinition.MaxDescriptionLength);
 
-            field.Property(f => f.ValidationJson)
-                .HasColumnType("nvarchar(max)");
+            field.Property(f => f.ValidationJson);
 
             // Handle must be unique within a content type
             field.HasIndex("ContentTypeId", "Handle").IsUnique();

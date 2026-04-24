@@ -81,8 +81,7 @@ internal sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAs
                     json => (IReadOnlyDictionary<string, string>)(
                         System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(
                             json, (System.Text.Json.JsonSerializerOptions?)null)
-                        ?? new Dictionary<string, string>()))
-                .HasColumnType("nvarchar(max)");
+                        ?? new Dictionary<string, string>()));
         });
 
         // ── Tags — map private backing field _tags via value converter ────

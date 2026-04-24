@@ -18,8 +18,6 @@
 
   <!-- Serves the Admin React SPA and acts as BFF -->
   <ItemGroup>
-    <ProjectReference Include="..\MicroCMS.Application\MicroCMS.Application.csproj" />
-    <ProjectReference Include="..\MicroCMS.Infrastructure\MicroCMS.Infrastructure.csproj" />
     <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
   </ItemGroup>
 

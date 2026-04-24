@@ -28,12 +28,18 @@ public sealed class AuthorizationBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var policies = GetDeclaredPolicies(typeof(TRequest));
+        var requestType = typeof(TRequest);
 
-        // Fail-secure: every request type must declare at least one policy.
+        // Explicitly anonymous requests bypass all checks (e.g. install, login).
+        if (IsAllowedAnonymous(requestType))
+            return next();
+
+        var policies = GetDeclaredPolicies(requestType);
+
+        // Fail-secure: every non-anonymous request type must declare at least one policy.
         if (policies.Length == 0)
         {
-            throw new MissingPolicyException(typeof(TRequest));
+            throw new MissingPolicyException(requestType);
         }
 
         if (!currentUser.IsAuthenticated)
@@ -51,6 +57,9 @@ public sealed class AuthorizationBehavior<TRequest, TResponse>(
 
         return next();
     }
+
+    private static bool IsAllowedAnonymous(Type requestType) =>
+        requestType.IsDefined(typeof(AllowAnonymousRequestAttribute), inherit: true);
 
     private static string[] GetDeclaredPolicies(Type requestType) =>
         requestType

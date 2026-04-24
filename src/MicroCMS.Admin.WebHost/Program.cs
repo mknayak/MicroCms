@@ -6,8 +6,6 @@ using MicroCMS.Admin.WebHost.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddAdminSecurityServices();
-builder.AddAdminApplicationServices();
-builder.AddInfrastructureServices();
 builder.AddAdminSpaServices();
 builder.AddAdminHealthChecks();
 builder.AddAdminApiProxy();

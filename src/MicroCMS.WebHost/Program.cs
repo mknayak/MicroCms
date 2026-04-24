@@ -6,6 +6,11 @@ using MicroCMS.WebHost.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration
+    .AddJsonFile("Configuration/appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"Configuration/appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
 builder.AddLoggingAndTelemetry();
 builder.AddSecurityServices();
 builder.AddApplicationServices();
@@ -17,6 +22,8 @@ builder.AddAiServices();
 builder.AddHealthChecks();
 
 var app = builder.Build();
+
+await app.UseDatabaseAsync();
 
 app.UseSecurityMiddleware();
 app.UseApiMiddleware();

@@ -51,12 +51,18 @@ internal sealed class InstallSystemCommandHandler(
         var onboardResult = await onboardingService.OnboardAsync(onboardRequest, cancellationToken);
 
         // Step 2 — load the new admin user and set their password in the same UoW scope
-      var adminUser = await userRepo.GetByIdAsync(new UserId(onboardResult.AdminUserId), cancellationToken)
-       ?? throw new NotFoundException(nameof(User), onboardResult.AdminUserId);
+        var adminUser = await userRepo.GetByIdAsync(new UserId(onboardResult.AdminUserId), cancellationToken)
+?? throw new NotFoundException(nameof(User), onboardResult.AdminUserId);
 
         var hash = passwordHasher.Hash(request.AdminPassword);
-        adminUser.SetPasswordHash(hash);
-  userRepo.Update(adminUser);
+   adminUser.SetPasswordHash(hash);
+
+        // NOTE: Do NOT call userRepo.Update(adminUser) here.
+        // FindAsync returns the same change-tracked instance that was added by the onboarding
+        // service (state = Added). Mutating the entity in-place is sufficient — EF Core will
+     // include the updated PasswordHash in the INSERT statement.
+        // Calling Update() would flip the state to Modified, causing EF Core to emit an UPDATE
+        // for a row that has not been inserted yet, which triggers a FK violation on UserRoles.
 
         // Step 3 — commit everything atomically
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -56,9 +56,8 @@ internal sealed class EntryConfiguration : IEntityTypeConfiguration<Entry>
 
         builder.Property(e => e.CurrentVersionNumber).IsRequired();
 
-        // FieldsJson can be large — use TEXT / nvarchar(max)
+        // FieldsJson can be large — provider picks appropriate large-text type
         builder.Property(e => e.FieldsJson)
-            .HasColumnType("nvarchar(max)")
             .IsRequired();
 
         builder.Property(e => e.CreatedAt).IsRequired();
@@ -103,7 +102,7 @@ internal sealed class EntryConfiguration : IEntityTypeConfiguration<Entry>
             version.Property(v => v.VersionNumber).IsRequired();
             version.Property(v => v.AuthorId).IsRequired();
 
-            version.Property(v => v.FieldsJson).HasColumnType("nvarchar(max)")
+            version.Property(v => v.FieldsJson)
                 .IsRequired();
         });
     }
