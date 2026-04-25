@@ -1,5 +1,11 @@
-import { get, post, put, del, apiClient } from './client';
-import type { MediaAsset, UpdateMediaAssetRequest, PagedResult, MediaListParams } from '@/types';
+import { get, post, put, patch, del, apiClient } from './client';
+import type {
+  MediaAsset,
+  MediaFolder,
+  UpdateMediaAssetRequest,
+  PagedResult,
+  MediaListParams,
+} from '@/types';
 
 export interface SignedUrlResponse {
   assetId: string;
@@ -54,4 +60,21 @@ export const mediaApi = {
 
   bulkRetag: (ids: string[], tags: string[]): Promise<void> =>
     post<void>('/media/bulk/retag', { assetIds: ids, tags }),
+
+  // ── Folder CRUD ────────────────────────────────────────────────────────
+
+  listFolders: (siteId: string, parentFolderId?: string): Promise<MediaFolder[]> =>
+    get<MediaFolder[]>('/media/folders', { params: { siteId, parentFolderId } }),
+
+  createFolder: (siteId: string, name: string, parentFolderId?: string): Promise<MediaFolder> =>
+    post<MediaFolder>('/media/folders', { siteId, name, parentFolderId }),
+
+  renameFolder: (id: string, newName: string): Promise<MediaFolder> =>
+    patch<MediaFolder>(`/media/folders/${id}/rename`, { newName }),
+
+  moveFolder: (id: string, newParentFolderId: string | null): Promise<MediaFolder> =>
+    patch<MediaFolder>(`/media/folders/${id}/move`, { newParentFolderId }),
+
+  deleteFolder: (id: string): Promise<void> =>
+    del(`/media/folders/${id}`),
 };

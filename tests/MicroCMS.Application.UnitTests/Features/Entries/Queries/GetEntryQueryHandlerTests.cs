@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MicroCMS.Application.Common.Exceptions;
+using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Entries.Queries.GetEntry;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Repositories;
@@ -16,6 +17,8 @@ namespace MicroCMS.Application.UnitTests.Features.Entries.Queries;
 public sealed class GetEntryQueryHandlerTests
 {
     private readonly IRepository<Entry, EntryId> _repository;
+    private readonly ICacheService _cache;
+    private readonly ICurrentUser _currentUser;
     private readonly GetEntryQueryHandler _sut;
 
     private readonly TenantId _tenantId = TenantId.New();
@@ -24,7 +27,15 @@ public sealed class GetEntryQueryHandlerTests
     public GetEntryQueryHandlerTests()
     {
         _repository = Substitute.For<IRepository<Entry, EntryId>>();
-        _sut = new GetEntryQueryHandler(_repository);
+        _cache = Substitute.For<ICacheService>();
+        _currentUser = Substitute.For<ICurrentUser>();
+        _currentUser.TenantId.Returns(_tenantId);
+
+        // Cache always misses in unit tests — handlers should fall through to the repository.
+        _cache.GetAsync<object>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+              .Returns((object?)null);
+
+        _sut = new GetEntryQueryHandler(_repository, _cache, _currentUser);
     }
 
     [Fact]

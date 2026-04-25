@@ -18,7 +18,7 @@ namespace MicroCMS.Infrastructure.Caching;
 /// pattern from §18.4 of the design. A restart loses the tag index — that is acceptable because
 /// cache entries are rebuilt on read.
 /// </summary>
-internal sealed class TwoTierCacheService : ICacheService
+public sealed class TwoTierCacheService : ICacheService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -136,4 +136,16 @@ internal sealed class TwoTierCacheService : ICacheService
     }
 
   private string PrefixedKey(string key) => _options.KeyPrefix + key;
+
+    public async Task SetWithTagAsync<T>(
+        string key,
+        T value,
+  string tag,
+       TimeSpan? expiry = null,
+        CancellationToken cancellationToken = default)
+   where T : class
+    {
+        await SetAsync(key, value, expiry, cancellationToken);
+        AssociateTag(key, tag);
+    }
 }

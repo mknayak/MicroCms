@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Entries.Queries.ListEntries;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Repositories;
@@ -16,7 +17,9 @@ namespace MicroCMS.Application.UnitTests.Features.Entries.Queries;
 public sealed class ListEntriesQueryHandlerTests
 {
     private readonly IRepository<Entry, EntryId> _repository;
-    private readonly ListEntriesQueryHandler _sut;
+    private readonly ICacheService _cache;
+    private readonly ICurrentUser _currentUser;
+  private readonly ListEntriesQueryHandler _sut;
 
     private readonly TenantId _tenantId = TenantId.New();
     private readonly SiteId _siteId = SiteId.New();
@@ -24,7 +27,15 @@ public sealed class ListEntriesQueryHandlerTests
     public ListEntriesQueryHandlerTests()
     {
         _repository = Substitute.For<IRepository<Entry, EntryId>>();
-        _sut = new ListEntriesQueryHandler(_repository);
+        _cache = Substitute.For<ICacheService>();
+        _currentUser = Substitute.For<ICurrentUser>();
+        _currentUser.TenantId.Returns(_tenantId);
+
+    // Cache always misses in unit tests.
+        _cache.GetAsync<object>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+.Returns((object?)null);
+
+        _sut = new ListEntriesQueryHandler(_repository, _cache, _currentUser);
     }
 
     [Fact]

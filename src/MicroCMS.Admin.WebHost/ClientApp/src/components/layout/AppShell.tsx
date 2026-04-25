@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { GlobalSearchBar } from './GlobalSearchBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSite } from '@/contexts/SiteContext';
 import toast from 'react-hot-toast';
@@ -74,6 +75,11 @@ export function AppShell() {
                 <span className="h-2 w-2 rounded-full bg-green-400" title="Active site" />
               </div>
             )}
+          </div>
+
+          {/* Centre: global search bar */}
+          <div className="mx-6 hidden flex-1 md:block">
+            <GlobalSearchBar />
           </div>
 
           {/* Right: user menu */}

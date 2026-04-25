@@ -140,10 +140,20 @@ public static class CacheKeys
 {
     public static string Entry(TenantId tenantId, EntryId entryId)
         => $"cms:{tenantId.Value}:entry:{entryId.Value}";
+
+    public static string EntryList(TenantId tenantId, Guid siteId, string? status, int page, int pageSize)
+        => $"cms:{tenantId.Value}:entries:{siteId}:{status ?? "all"}:{page}:{pageSize}";
+
+    public static string ContentType(TenantId tenantId, Guid contentTypeId)
+      => $"cms:{tenantId.Value}:contenttype:{contentTypeId}";
+
+    public static string ContentTypeList(TenantId tenantId, Guid? siteId, int page, int pageSize)
+        => $"cms:{tenantId.Value}:contenttypes:{siteId?.ToString() ?? "all"}:{page}:{pageSize}";
 }
 
 /// <summary>Centralised cache tag builders for bulk invalidation.</summary>
 public static class CacheTags
 {
     public static string TenantEntries(TenantId tenantId) => $"tenant:{tenantId.Value}:entries";
+    public static string TenantContentTypes(TenantId tenantId) => $"tenant:{tenantId.Value}:contenttypes";
 }

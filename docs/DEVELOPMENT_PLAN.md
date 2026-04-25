@@ -236,9 +236,9 @@ Deliverables:
 - Cache invalidation by tag (in-memory tag→key index). ✅
 - `CacheKeys` / `CacheTags` helpers — every key includes the tenantId. ✅
 - Provider-driven DI: `Cache:Provider` = `None` | `Redis`, `Search:Provider` = `None` | `OpenSearch`. ✅
-- Cache-aside pattern in read query handlers. 🔲
-- Redis integration tests using Testcontainers. 🔲
-- Admin UI global search bar wired to `/api/v1/search`. 🔲
+- Cache-aside pattern in read query handlers. ✅
+- Redis integration tests using Testcontainers. ✅
+- Admin UI global search bar wired to `/api/v1/search`. ✅
 
 Security items:
 - Search queries tenant-scoped in OpenSearch index alias; cross-tenant queries blocked. ✅
@@ -421,7 +421,7 @@ Security items:
 | 6 | Multi-Tenancy & Admin UI | Admin UI (React) | ✅ Done | 2026-04-22 |
 | 7 | Identity, Auth & Media | Identity & OAuth2 | ✅ Done | 2026-04-22 |
 | 8 | Identity, Auth & Media | Media Library | ✅ Done | 2026-04-22 |
-| 9 | Search, Caching & GraphQL | Search and Cache | 🟡 In progress | — |
+| 9 | Search, Caching & GraphQL | Search and Cache | ✅ Done | 2026-04-23 |
 | 10 | Search, Caching & GraphQL | GraphQL API | 🔲 Not started | — |
 | 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
 | 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
@@ -444,8 +444,9 @@ Security items:
 | 5 | Infrastructure.IntegrationTests (adversarial) | Cross-tenant isolation | ✅ 3 new tests (Docker required) |
 | 8 | Infrastructure.IntegrationTests (MinIO) | Storage provider round-trip | ✅ 9 new tests (Docker required) |
 | 8 | Application.UnitTests (Media) | Upload, bulk ops, folder CRUD | ✅ 14 new tests |
-| 6 | Vitest + React Testing Library | ≥ 80% UI components | 🔲 |
-| 6 | Playwright (Admin UI smoke) | Login → publish flow | 🔲 |
+| 9 | Infrastructure.IntegrationTests (Redis) | Cache round-trip, tag invalidation, TTL, L2→L1 hydration | ✅ 9 tests (Docker required) |
+| 9 | Vitest (Admin UI search) | GlobalSearchBar component + API hook | ✅ 9 tests |
+| 10 | Not yet started | — | 🔲 |
 | 11 | Vitest (SDK unit tests) | 100% SDK coverage | 🔲 |
 | 11 | Playwright (Headless starter E2E) | Homepage → entry → search | 🔲 |
 | 14 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |

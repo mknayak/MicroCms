@@ -15,6 +15,18 @@ public interface ICacheService
         CancellationToken cancellationToken = default)
         where T : class;
 
+    /// <summary>
+    /// Stores a value under <paramref name="key"/> and registers it under <paramref name="tag"/>
+    /// for bulk invalidation via <see cref="RemoveByTagAsync"/>.
+    /// </summary>
+    Task SetWithTagAsync<T>(
+        string key,
+        T value,
+        string tag,
+        TimeSpan? expiry = null,
+        CancellationToken cancellationToken = default)
+        where T : class;
+
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
 
     Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default);

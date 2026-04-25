@@ -24,164 +24,173 @@ const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
 const PagesPage = lazy(() => import('@/pages/pages/PagesPage'));
 const TenantsPage = lazy(() => import('@/pages/tenants/TenantsPage'));
 const TenantDetailPage = lazy(() => import('@/pages/tenants/TenantDetailPage'));
+const SearchResultsPage = lazy(() => import('@/pages/search/SearchResultsPage'));
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <InstallProvider>
-        <AuthProvider>
-          <SiteProvider>
-            <ErrorBoundary>
-              <InstallGate>
-                <Routes>
-                  {/* Install — anonymous, only reachable when not yet installed */}
-                  <Route path="/install" element={<InstallPage />} />
+    return (
+        <BrowserRouter>
+            <InstallProvider>
+                <AuthProvider>
+                    <SiteProvider>
+                        <ErrorBoundary>
+                            <InstallGate>
+                                <Routes>
+                                    {/* Install — anonymous, only reachable when not yet installed */}
+                                    <Route path="/install" element={<InstallPage />} />
 
-                  {/* Public */}
-                  <Route path="/login" element={<LoginPage />} />
+                                    {/* Public */}
+                                    <Route path="/login" element={<LoginPage />} />
 
-                  {/* Protected */}
-                  <Route
-                    element={
-                      <ProtectedRoute>
-                        <AppShell />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route
-                      path="/"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <DashboardPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/content-types"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ContentTypesPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/content-types/new"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ContentTypeEditPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/content-types/:id/edit"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ContentTypeEditPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/entries"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <EntriesPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/entries/new"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <EntryEditorPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/entries/:id/edit"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <EntryEditorPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/media"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <MediaPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/taxonomy"
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <TaxonomyPage />
-                        </Suspense>
-                      }
-                    />
-                    <Route
-                      path="/users"
-                      element={
-                        <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin']}>
-                          <Suspense fallback={<PageLoader />}>
-                            <UsersPage />
-                          </Suspense>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin']}>
-                          <Suspense fallback={<PageLoader />}>
-                            <SettingsPage />
-                          </Suspense>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/pages"
-                      element={
-                        <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Editor']}>
-                          <Suspense fallback={<PageLoader />}>
-                            <PagesPage />
-                          </Suspense>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/tenants"
-                      element={
-                        <ProtectedRoute requiredRoles={['SystemAdmin']}>
-                          <Suspense fallback={<PageLoader />}>
-                            <TenantsPage />
-                          </Suspense>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/tenants/:id"
-                      element={
-                        <ProtectedRoute requiredRoles={['SystemAdmin']}>
-                          <Suspense fallback={<PageLoader />}>
-                            <TenantDetailPage />
-                          </Suspense>
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Route>
+                                    {/* Protected */}
+                                    <Route
+                                        element={
+                                            <ProtectedRoute>
+                                                <AppShell />
+                                            </ProtectedRoute>
+                                        }
+                                    >
+                                        <Route
+                                            path="/"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <DashboardPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/content-types"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ContentTypesPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/content-types/new"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ContentTypeEditPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/content-types/:id/edit"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ContentTypeEditPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/entries"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <EntriesPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/entries/new"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <EntryEditorPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/entries/:id/edit"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <EntryEditorPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/media"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <MediaPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/taxonomy"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <TaxonomyPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/users"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <UsersPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/settings"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <SettingsPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/pages"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Editor']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <PagesPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/tenants"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <TenantsPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/tenants/:id"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <TenantDetailPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/search"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <SearchResultsPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                    </Route>
 
-                  {/* Fallback */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </InstallGate>
-            </ErrorBoundary>
-          </SiteProvider>
-        </AuthProvider>
-      </InstallProvider>
-    </BrowserRouter>
-  );
+                                    {/* Fallback */}
+                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                </Routes>
+                            </InstallGate>
+                        </ErrorBoundary>
+                    </SiteProvider>
+                </AuthProvider>
+            </InstallProvider>
+        </BrowserRouter>
+    );
 }

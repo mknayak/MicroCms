@@ -5,6 +5,8 @@ import type {
   ContentType,
   EntryListItem,
   DashboardStats,
+  SearchResults,
+  MediaFolder,
 } from '@/types';
 
 const BASE = '/api/v1';
@@ -77,9 +79,61 @@ const mockStats: DashboardStats = {
   contentTypes: 5,
 };
 
+// ─── Search ───────────────────────────────────────────────────────────────────
+
+const mockSearchResults: SearchResults = {
+  hits: [
+    {
+      entryId: 'entry-1',
+      siteId: 'site-1',
+      contentTypeId: 'ct-1',
+      slug: 'hello-world',
+      locale: 'en',
+      status: 'Published',
+      title: 'Hello World',
+      excerpt: 'This is a test entry excerpt.',
+      score: 0.987,
+      publishedAt: '2025-01-10T00:00:00Z',
+    },
+  ],
+  totalCount: 1,
+  page: 1,
+  pageSize: 8,
+};
+
+// ─── Media Folders ────────────────────────────────────────────────────────────
+
+const mockMediaFolders: MediaFolder[] = [
+  {
+    id: 'folder-1',
+    siteId: 'site-1',
+    name: 'Images',
+    assetCount: 4,
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'folder-2',
+    siteId: 'site-1',
+    name: 'Documents',
+    assetCount: 2,
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+];
+
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export const handlers = [
+  // Search
+  http.get(`${BASE}/search`, ({ request }) => {
+    const q = new URL(request.url).searchParams.get('query') ?? '';
+    if (!q || q.trim().length < 2) {
+      return HttpResponse.json<SearchResults>({ hits: [], totalCount: 0, page: 1, pageSize: 8 });
+    }
+    return HttpResponse.json(mockSearchResults);
+  }),
+
   // Auth
   http.post(`${BASE}/auth/login`, async ({ request }) => {
     const body = await request.json() as { email: string; password: string };
@@ -182,4 +236,24 @@ export const handlers = [
       createdAt: '2025-01-01T00:00:00Z',
     }),
   ),
+
+  // Media Folders
+  http.get(`${BASE}/media/folders`, () => HttpResponse.json(mockMediaFolders)),
+  http.post(`${BASE}/media/folders`, async ({ request }) => {
+    const body = await request.json() as { name: string; siteId: string };
+    const newFolder: MediaFolder = {
+      id: `folder-${Date.now()}`,
+      siteId: body.siteId,
+      name: body.name,
+      assetCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    return HttpResponse.json(newFolder, { status: 201 });
+  }),
+  http.patch(`${BASE}/media/folders/:id/rename`, async ({ request }) => {
+    const body = await request.json() as { newName: string };
+    return HttpResponse.json({ ...mockMediaFolders[0], name: body.newName });
+  }),
+  http.delete(`${BASE}/media/folders/:id`, () => new HttpResponse(null, { status: 204 })),
 ];

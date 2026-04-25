@@ -220,10 +220,31 @@ export interface UpdateMediaAssetRequest {
   folderId?: string;
 }
 
+export interface MediaFolder {
+  id: string;
+  siteId: string;
+  name: string;
+  parentFolderId?: string;
+  assetCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMediaFolderRequest {
+  siteId: string;
+  name: string;
+  parentFolderId?: string;
+}
+
+export interface RenameMediaFolderRequest {
+  newName: string;
+}
+
 export interface MediaListParams extends PaginationParams {
   search?: string;
   mediaType?: MediaType;
   folderId?: string;
+  siteId?: string;
 }
 
 // ─── Taxonomy ─────────────────────────────────────────────────────────────────
@@ -454,4 +475,36 @@ export interface UpdateTenantSettingsRequest {
   timeZoneId: string;
   aiEnabled: boolean;
   logoUrl?: string;
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+
+export interface SearchHit {
+  entryId: string;
+  siteId: string;
+  contentTypeId: string;
+  slug: string;
+  locale: string;
+  status: string;
+  title?: string;
+  excerpt?: string;
+  score: number;
+  publishedAt?: string;
+}
+
+export interface SearchResults {
+  hits: SearchHit[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SearchParams {
+  query: string;
+  siteId?: string;
+  contentTypeId?: string;
+  locale?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
 }
