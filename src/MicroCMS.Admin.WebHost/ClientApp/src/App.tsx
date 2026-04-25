@@ -25,6 +25,10 @@ const PagesPage = lazy(() => import('@/pages/pages/PagesPage'));
 const TenantsPage = lazy(() => import('@/pages/tenants/TenantsPage'));
 const TenantDetailPage = lazy(() => import('@/pages/tenants/TenantDetailPage'));
 const SearchResultsPage = lazy(() => import('@/pages/search/SearchResultsPage'));
+const ComponentLibraryPage = lazy(() => import('@/pages/components/ComponentLibraryPage'));
+const ComponentEditorPage = lazy(() => import('@/pages/components/ComponentEditorPage'));
+const ComponentItemListPage = lazy(() => import('@/pages/components/ComponentItemListPage'));
+const ComponentItemEditorPage = lazy(() => import('@/pages/components/ComponentItemEditorPage'));
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -178,6 +182,38 @@ export default function App() {
                                             element={
                                                 <Suspense fallback={<PageLoader />}>
                                                     <SearchResultsPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/components"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ComponentLibraryPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/components/:id/edit"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ComponentEditorPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/components/:id/items"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ComponentItemListPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/components/:id/items/:itemId"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ComponentItemEditorPage />
                                                 </Suspense>
                                             }
                                         />

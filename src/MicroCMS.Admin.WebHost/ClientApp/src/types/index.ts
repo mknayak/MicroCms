@@ -508,3 +508,122 @@ export interface SearchParams {
   page?: number;
   pageSize?: number;
 }
+
+// ─── Component System ─────────────────────────────────────────────────────────
+
+export type ComponentCategory =
+  | 'Layout'
+  | 'Content'
+| 'Media'
+  | 'Navigation'
+  | 'Interactive'
+  | 'Commerce';
+
+export type ComponentFieldType =
+  | 'ShortText'
+  | 'LongText'
+  | 'RichText'
+  | 'Number'
+  | 'Boolean'
+  | 'DateTime'
+  | 'URL'
+  | 'AssetRef'
+  | 'EntryRef'
+  | 'JSON'
+  | 'ComponentRef';
+
+export interface ComponentFieldDefinition {
+  id: string;
+  handle: string;
+  label: string;
+  fieldType: ComponentFieldType;
+  isRequired: boolean;
+  isLocalized: boolean;
+  isIndexed: boolean;
+  sortOrder: number;
+  description?: string;
+}
+
+export interface ComponentDto {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  name: string;
+  key: string;
+  description?: string;
+  category: ComponentCategory;
+  zones: string[];
+  usageCount: number;
+  itemCount: number;
+  fields: ComponentFieldDefinition[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComponentListItem {
+  id: string;
+name: string;
+  key: string;
+  description?: string;
+  category: ComponentCategory;
+  zones: string[];
+  usageCount: number;
+  itemCount: number;
+  fieldCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateComponentRequest {
+  siteId: string;
+  name: string;
+  key: string;
+  description?: string;
+  category: ComponentCategory;
+zones: string[];
+  fields?: Omit<ComponentFieldDefinition, 'id'>[];
+}
+
+export interface UpdateComponentRequest {
+  name: string;
+  description?: string;
+  category: ComponentCategory;
+  zones: string[];
+  fields: ComponentFieldDefinition[];
+}
+
+export interface ComponentItemDto {
+  id: string;
+  componentId: string;
+  componentName: string;
+  componentKey: string;
+  tenantId: string;
+  siteId: string;
+  title: string;
+  status: 'Draft' | 'Published' | 'Archived';
+  fieldsJson: Record<string, unknown>;
+  usedOnPages: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateComponentItemRequest {
+  title: string;
+fieldsJson: Record<string, unknown>;
+}
+
+export interface UpdateComponentItemRequest {
+  title: string;
+  fieldsJson: Record<string, unknown>;
+}
+
+export interface ComponentListParams extends PaginationParams {
+  siteId?: string;
+  category?: ComponentCategory;
+  search?: string;
+}
+
+export interface ComponentItemListParams extends PaginationParams {
+  status?: 'Draft' | 'Published' | 'Archived';
+  search?: string;
+}

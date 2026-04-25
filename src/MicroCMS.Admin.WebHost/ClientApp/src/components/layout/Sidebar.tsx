@@ -79,11 +79,25 @@ const NAV_SECTIONS: NavSection[] = [
         label: 'Content Types',
         href: '/content-types',
         icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" />,
+ },
+    ],
+  },
+
+  // 4 ── Design — component system
+  {
+    title: 'Design',
+    items: [
+      {
+    label: 'Component Library',
+        href: '/components',
+        icon: (
+          <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        ),
       },
     ],
   },
 
-  // 4 ── Tenant Management
+  // 5 ── Tenant Management
   {
     title: 'Tenant Management',
     roles: ['SystemAdmin', 'TenantAdmin'],
