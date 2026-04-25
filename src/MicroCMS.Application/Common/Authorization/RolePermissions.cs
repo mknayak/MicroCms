@@ -32,6 +32,8 @@ public static class RolePermissions
             ContentPolicies.TenantManage,
             ContentPolicies.UserManage,
             ContentPolicies.SystemAdmin,
+            ContentPolicies.ComponentRead,
+            ContentPolicies.ComponentManage,
         },
 
         [Roles.TenantAdmin] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -54,6 +56,8 @@ public static class RolePermissions
             ContentPolicies.TaxonomyManage,
             ContentPolicies.TenantManage,
             ContentPolicies.UserManage,
+            ContentPolicies.ComponentRead,
+            ContentPolicies.ComponentManage,
         },
 
         [Roles.Editor] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -69,6 +73,8 @@ public static class RolePermissions
             ContentPolicies.MediaRead,
             ContentPolicies.MediaUpload,
             ContentPolicies.TaxonomyRead,
+            ContentPolicies.ComponentRead,
+            ContentPolicies.ComponentManage,
         },
 
         [Roles.Approver] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -78,6 +84,7 @@ public static class RolePermissions
             ContentPolicies.ContentTypeRead,
             ContentPolicies.MediaRead,
             ContentPolicies.TaxonomyRead,
+            ContentPolicies.ComponentRead,
         },
 
         [Roles.Author] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -89,6 +96,7 @@ public static class RolePermissions
             ContentPolicies.MediaRead,
             ContentPolicies.MediaUpload,
             ContentPolicies.TaxonomyRead,
+            ContentPolicies.ComponentRead,
         },
 
         [Roles.Viewer] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -97,6 +105,7 @@ public static class RolePermissions
             ContentPolicies.ContentTypeRead,
             ContentPolicies.MediaRead,
             ContentPolicies.TaxonomyRead,
+            ContentPolicies.ComponentRead,
         },
     };
 

@@ -1,10 +1,11 @@
 import { get, post, put, del } from './client';
 import type {
   ComponentDto,
-ComponentListItem,
+  ComponentListItem,
   ComponentItemDto,
   CreateComponentRequest,
   UpdateComponentRequest,
+  UpdateComponentTemplateRequest,
   CreateComponentItemRequest,
   UpdateComponentItemRequest,
   PagedResult,
@@ -26,6 +27,9 @@ export const componentsApi = {
 
   update: (id: string, data: UpdateComponentRequest): Promise<ComponentDto> =>
     put<ComponentDto>(`/components/${id}`, data),
+
+  updateTemplate: (id: string, data: UpdateComponentTemplateRequest): Promise<ComponentDto> =>
+    put<ComponentDto>(`/components/${id}/template`, data),
 
   delete: (id: string): Promise<void> =>
     del(`/components/${id}`),

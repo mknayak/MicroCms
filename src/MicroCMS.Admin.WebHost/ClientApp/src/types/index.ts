@@ -532,6 +532,12 @@ export type ComponentFieldType =
   | 'JSON'
   | 'ComponentRef';
 
+export type RenderingTemplateType =
+  | 'RazorPartial'
+  | 'Handlebars'
+  | 'React'
+  | 'WebComponent';
+
 export interface ComponentFieldDefinition {
   id: string;
   handle: string;
@@ -555,6 +561,8 @@ export interface ComponentDto {
   zones: string[];
   usageCount: number;
   itemCount: number;
+  templateType: RenderingTemplateType;
+  templateContent?: string;
   fields: ComponentFieldDefinition[];
   createdAt: string;
   updatedAt: string;
@@ -562,7 +570,7 @@ export interface ComponentDto {
 
 export interface ComponentListItem {
   id: string;
-name: string;
+  name: string;
   key: string;
   description?: string;
   category: ComponentCategory;
@@ -570,6 +578,7 @@ name: string;
   usageCount: number;
   itemCount: number;
   fieldCount: number;
+  templateType: RenderingTemplateType;
   createdAt: string;
   updatedAt: string;
 }
@@ -580,7 +589,7 @@ export interface CreateComponentRequest {
   key: string;
   description?: string;
   category: ComponentCategory;
-zones: string[];
+  zones: string[];
   fields?: Omit<ComponentFieldDefinition, 'id'>[];
 }
 
@@ -590,6 +599,11 @@ export interface UpdateComponentRequest {
   category: ComponentCategory;
   zones: string[];
   fields: ComponentFieldDefinition[];
+}
+
+export interface UpdateComponentTemplateRequest {
+  templateType: RenderingTemplateType;
+  templateContent?: string;
 }
 
 export interface ComponentItemDto {
@@ -609,7 +623,7 @@ export interface ComponentItemDto {
 
 export interface CreateComponentItemRequest {
   title: string;
-fieldsJson: Record<string, unknown>;
+  fieldsJson: Record<string, unknown>;
 }
 
 export interface UpdateComponentItemRequest {

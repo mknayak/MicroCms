@@ -79,6 +79,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
     public DbSet<Component> Components => Set<Component>();
+    public DbSet<ComponentItem> ComponentItems => Set<ComponentItem>();
     public DbSet<PageTemplate> PageTemplates => Set<PageTemplate>();
     public DbSet<CopilotConversation> CopilotConversations => Set<CopilotConversation>();
     public DbSet<AiProviderSettings> AiProviderSettings => Set<AiProviderSettings>();
@@ -128,6 +129,7 @@ public sealed class ApplicationDbContext : DbContext
         modelBuilder.Entity<Folder>().HasQueryFilter(f => _tenantFilter == null || f.TenantId == _tenantFilter);
         modelBuilder.Entity<Page>().HasQueryFilter(p => _tenantFilter == null || p.TenantId == _tenantFilter);
         modelBuilder.Entity<Component>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);
+        modelBuilder.Entity<ComponentItem>().HasQueryFilter(ci => _tenantFilter == null || ci.TenantId == _tenantFilter);
     }
 
     private void ApplyMediaFilters(ModelBuilder modelBuilder)

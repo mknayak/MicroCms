@@ -4,8 +4,10 @@ using MicroCMS.Application;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Security;
 using MicroCMS.Domain.Exceptions;
+using MicroCMS.GraphQL;
 using MicroCMS.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -216,14 +218,12 @@ internal static class ServiceCollectionExtensions
     internal static WebApplicationBuilder AddGraphQlServices(
         this WebApplicationBuilder builder)
     {
-        // TODO Sprint 9 – wire Hot Chocolate schema, query/mutation types, and data loaders
-        // builder.Services.AddGraphQLServer()
-        //     .AddQueryType<Query>()
-        //     .AddMutationType<Mutation>()
-        //     .AddFiltering()
-        //     .AddSorting()
-        //     .AddProjections()
-        //     .AddAuthorization();
+        // Wire the Hot Chocolate schema including subscriptions, persisted queries,
+        // auth, depth limits, and data loaders.
+        // Note: UseWebSockets() is called in the pipeline (ApplicationBuilderExtensions)
+        // before MapGraphQL so the HC subscription transport picks it up automatically.
+        builder.Services.AddGraphQlSchema();
+
         return builder;
     }
 

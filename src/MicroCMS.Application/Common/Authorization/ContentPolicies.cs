@@ -38,4 +38,8 @@ public static class ContentPolicies
     public const string TenantManage  = "Tenant.Manage";
     public const string UserManage    = "User.Manage";
     public const string SystemAdmin   = "System.Admin";
+
+    // ── Component policies ─────────────────────────────────────────────────
+    public const string ComponentRead   = "Component.Read";
+    public const string ComponentManage = "Component.Manage";
 }

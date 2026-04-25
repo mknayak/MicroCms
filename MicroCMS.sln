@@ -68,6 +68,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "design", "design", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		design\ai-copilot.html = design\ai-copilot.html
+		design\component-editor.html = design\component-editor.html
+		design\component-item-editor.html = design\component-item-editor.html
+		design\component-item-list.html = design\component-item-list.html
+		design\component-library.html = design\component-library.html
+		design\content-types.html = design\content-types.html
+		design\entry-editor.html = design\entry-editor.html
+		design\entry-list.html = design\entry-list.html
+		design\index.html = design\index.html
+		design\media-library.html = design\media-library.html
+		design\page-designer.html = design\page-designer.html
+		design\settings.html = design\settings.html
+		design\site-management.html = design\site-management.html
+		design\site-settings.html = design\site-settings.html
+		design\site-structure.html = design\site-structure.html
+		design\styles.css = design\styles.css
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -214,6 +234,7 @@ Global
 		{C0000001-0000-0000-0000-000000000004} = {A2000001-0000-0000-0000-000000000000}
 		{C0000001-0000-0000-0000-000000000005} = {A2000001-0000-0000-0000-000000000000}
 		{C0000001-0000-0000-0000-000000000006} = {A2000001-0000-0000-0000-000000000000}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44986D17-0D6A-445F-8DAD-B9652B1466E4}

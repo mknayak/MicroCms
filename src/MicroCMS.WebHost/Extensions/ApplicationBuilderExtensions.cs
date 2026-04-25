@@ -110,9 +110,19 @@ internal static class ApplicationBuilderExtensions
 
     internal static WebApplication UseGraphQlMiddleware(this WebApplication app)
     {
-        // TODO Sprint 9 – map Hot Chocolate GraphQL endpoint
-        // app.MapGraphQL("/graphql");
-        return app;
+        // WebSockets must be enabled before MapGraphQL so subscription transports work.
+        app.UseWebSockets();
+
+  // Mount the Hot Chocolate endpoint at /graphql.
+        // Banana Cake Pop (HC IDE) is served alongside in Development for interactive exploration.
+        app.MapGraphQL("/graphql");
+
+        if (app.Environment.IsDevelopment())
+   {
+    app.MapBananaCakePop("/graphql/ui");
+   }
+
+      return app;
     }
 
     // ── Health check endpoints ────────────────────────────────────────────

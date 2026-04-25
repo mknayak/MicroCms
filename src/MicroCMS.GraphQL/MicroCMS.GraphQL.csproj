@@ -23,8 +23,10 @@
   <ItemGroup>
     <!-- Hot Chocolate 13 -->
     <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="13.9.11" />
     <PackageReference Include="HotChocolate.Data" Version="13.9.11" />
     <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.PersistedQueries.FileSystem" Version="13.9.11" />
     <!-- JWT auth (reused from API layer) -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
     <!-- Observability -->

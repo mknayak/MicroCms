@@ -1,10 +1,10 @@
 # MicroCMS — Development Plan
 
 **Version:** 1.6
-**Last Updated:** 2026-04-23
+**Last Updated:** 2026-04-25
 **Sprint Cadence:** 2 weeks
 **Target GA:** Sprint 16 (~8.5 months from kickoff)
-**Current Status:** Sprint 9 in progress — Search and Cache infrastructure scaffolded
+**Current Status:** Sprint 10 complete — GraphQL API operational; Sprint 11 next
 
 ---
 
@@ -244,22 +244,32 @@ Security items:
 - Search queries tenant-scoped in OpenSearch index alias; cross-tenant queries blocked. ✅
 - Cache keys include tenant ID to prevent cross-tenant cache poisoning. ✅
 
-### Sprint 10 — GraphQL API
+### Sprint 10 — GraphQL API ✅ DONE
 **Goal:** Hot Chocolate GraphQL endpoint with dynamic schema auto-generated from content types.
 
 Deliverables:
-- Dynamic schema builder: generates GraphQL types from `ContentType` field definitions at runtime.
-- Resolvers for `entry`, `entries`, `media`, `taxonomy` queries.
-- Mutations for content CRUD (mirrors REST API).
-- Subscriptions for `entryPublished` events via WebSocket.
-- DataLoader for N+1 resolution.
-- Persisted queries support.
-- GraphQL-specific contract tests.
+- Dynamic schema builder: generates GraphQL types from `ContentType` field definitions at runtime. ✅
+- Resolvers for `entry`, `entries`, `media`, `taxonomy` queries. ✅
+- Mutations for content CRUD (mirrors REST API). ✅
+- Subscriptions for `entryPublished` events via WebSocket. ✅
+- DataLoader for N+1 resolution. ✅
+- Persisted queries support. ✅
+- GraphQL-specific contract tests. ✅
 
 Security items:
-- Query depth and complexity limits enforced (Hot Chocolate built-in).
-- Introspection disabled in production unless `SystemAdmin` role present.
-- Same JWT bearer + tenant-scoped authorization as REST.
+- Query depth and complexity limits enforced (Hot Chocolate built-in). ✅
+- Introspection disabled in production unless `SystemAdmin` role present. ✅
+- Same JWT bearer + tenant-scoped authorization as REST. ✅
+
+Implementation notes:
+- `MicroCMS.GraphQL` project: `RootQuery`, `RootMutation`, `RootSubscription` types wired to MediatR pipeline. ✅
+- `EntryByIdDataLoader` + `MediaAssetByIdDataLoader` batch data loaders registered. ✅
+- `EntryPublishedSubscriptionBridge` — MediatR `DomainEventNotification<EntryPublishedEvent>` forwarded to Hot Chocolate in-memory topic. ✅
+- `DynamicSchemaService` + `DynamicEntryTypeExtension` — computed fields (`hasPublishedVersion`, `isScheduled`) added to `EntryDto` at schema level. ✅
+- `HotChocolate.PersistedQueries.FileSystem` + `UsePersistedQueryPipeline` — file-system persisted query store at `./persisted-queries`. ✅
+- `AddMaxExecutionDepthRule(10)` — depth limit enforced. ✅
+- Banana Cake Pop IDE served at `/graphql/ui` in Development. ✅
+- WebHost wired: `AddGraphQlSchema()` in `ServiceCollectionExtensions`, `UseWebSockets()` + `MapGraphQL("/graphql")` in `ApplicationBuilderExtensions`. ✅
 
 ### Sprint 11 — Headless Starter & TypeScript SDK
 **Goal:** First-class headless consumer experience — TypeScript SDK and a production-ready Next.js starter template consuming the GraphQL API.
@@ -422,7 +432,7 @@ Security items:
 | 7 | Identity, Auth & Media | Identity & OAuth2 | ✅ Done | 2026-04-22 |
 | 8 | Identity, Auth & Media | Media Library | ✅ Done | 2026-04-22 |
 | 9 | Search, Caching & GraphQL | Search and Cache | ✅ Done | 2026-04-23 |
-| 10 | Search, Caching & GraphQL | GraphQL API | 🔲 Not started | — |
+| 10 | Search, Caching & GraphQL | GraphQL API | ✅ Done | 2026-04-25 |
 | 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
 | 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
 | 13 | Webhooks, Events & Plugins | Plugin System | 🔲 Not started | — |
@@ -446,7 +456,7 @@ Security items:
 | 8 | Application.UnitTests (Media) | Upload, bulk ops, folder CRUD | ✅ 14 new tests |
 | 9 | Infrastructure.IntegrationTests (Redis) | Cache round-trip, tag invalidation, TTL, L2→L1 hydration | ✅ 9 tests (Docker required) |
 | 9 | Vitest (Admin UI search) | GlobalSearchBar component + API hook | ✅ 9 tests |
-| 10 | Not yet started | — | 🔲 |
+| 10 | Api.ContractTests (GraphQL) | Endpoint reachability, depth limit, auth, subscription bridge | ✅ Added to existing contract test project |
 | 11 | Vitest (SDK unit tests) | 100% SDK coverage | 🔲 |
 | 11 | Playwright (Headless starter E2E) | Homepage → entry → search | 🔲 |
 | 14 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
