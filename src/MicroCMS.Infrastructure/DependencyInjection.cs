@@ -66,7 +66,7 @@ public static class DependencyInjection
         RegisterCoreServices(services);
         RegisterTenancyServices(services);
         RegisterStorageServices(services, configuration);
-    RegisterSearchAndCache(services, configuration);
+        RegisterSearchAndCache(services, configuration);
         RegisterBackgroundJobs(services);
 
         return services;
@@ -78,9 +78,9 @@ public static class DependencyInjection
         IServiceCollection services,
         IConfiguration configuration)
     {
-   var provider = configuration.GetValue<string>("MicroCMS:Database:Provider") ?? "Sqlite";
+        var provider = configuration.GetValue<string>("MicroCMS:Database:Provider") ?? "Sqlite";
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-  ?? "Data Source=microcms_dev.db";
+          ?? "Data Source=microcms_dev.db";
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
@@ -257,46 +257,59 @@ public static class DependencyInjection
     /// <summary>Sprint 9 — Search and Cache infrastructure.</summary>
     private static void RegisterSearchAndCache(
       IServiceCollection services,
-        IConfiguration configuration)
+     IConfiguration configuration)
     {
-     // ── Cache ──────────────────────────────────────────────────────────
+        // ── Cache ──────────────────────────────────────────────────────────
         services.AddMemoryCache();
-     services.Configure<CacheOptions>(configuration.GetSection($"MicroCMS:{CacheOptions.SectionName}"));
+        services.Configure<CacheOptions>(configuration.GetSection($"MicroCMS:{CacheOptions.SectionName}"));
 
-        var cacheProvider = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:Provider") ?? "None";
+    var cacheProvider = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:Provider") ?? "None";
         if (string.Equals(cacheProvider, "Redis", StringComparison.OrdinalIgnoreCase))
         {
-    var connectionString = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:ConnectionString");
-         if (!string.IsNullOrWhiteSpace(connectionString))
-     {
-      services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
-   }
-        }
+        var connectionString = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:ConnectionString");
+          if (!string.IsNullOrWhiteSpace(connectionString))
+            {
+         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
+      }
+     }
 
         services.AddSingleton<MicroCMS.Application.Common.Interfaces.ICacheService, TwoTierCacheService>();
 
-  // ── Search ─────────────────────────────────────────────────────────
-        services.Configure<SearchOptions>(configuration.GetSection($"MicroCMS:{SearchOptions.SectionName}"));
+        // ── Search ─────────────────────────────────────────────────────────
+     services.Configure<SearchOptions>(configuration.GetSection($"MicroCMS:{SearchOptions.SectionName}"));
 
-        var searchProvider = configuration.GetValue<string>($"MicroCMS:{SearchOptions.SectionName}:Provider") ?? "None";
-        if (string.Equals(searchProvider, "OpenSearch", StringComparison.OrdinalIgnoreCase))
-     {
-   services.AddSingleton<OpenSearch.Client.IOpenSearchClient>(sp =>
-            {
-                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value;
-                var pool = new OpenSearch.Net.SingleNodeConnectionPool(new Uri(opts.Endpoint));
-         var settings = new OpenSearch.Client.ConnectionSettings(pool);
-      if (!string.IsNullOrEmpty(opts.Username))
+var searchProvider = configuration.GetValue<string>($"MicroCMS:{SearchOptions.SectionName}:Provider") ?? "Database";
+        RegisterSearchProvider(services, configuration, searchProvider);
+    }
+
+private static void RegisterSearchProvider(
+   IServiceCollection services,
+        IConfiguration configuration,
+        string providerName)
     {
-      settings = settings.BasicAuthentication(opts.Username, opts.Password);
-     }
-       return new OpenSearch.Client.OpenSearchClient(settings);
-      });
-   services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, OpenSearchService>();
-  }
-        else
+        if (string.Equals(providerName, "OpenSearch", StringComparison.OrdinalIgnoreCase))
         {
-      services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, NullSearchService>();
+            services.AddSingleton<OpenSearch.Client.IOpenSearchClient>(sp =>
+       {
+                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value;
+        var pool = new OpenSearch.Net.SingleNodeConnectionPool(new Uri(opts.Endpoint));
+        var settings = new OpenSearch.Client.ConnectionSettings(pool);
+    if (!string.IsNullOrEmpty(opts.Username))
+    {
+                    settings = settings.BasicAuthentication(opts.Username, opts.Password);
+      }
+                return new OpenSearch.Client.OpenSearchClient(settings);
+            });
+  services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, OpenSearchService>();
+        }
+        else if (string.Equals(providerName, "None", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, NullSearchService>();
+        }
+    else
+      {
+      // Default: "Database" — SQL LIKE via EF Core; no external dependencies required.
+       services.AddScoped<MicroCMS.Application.Common.Interfaces.ISearchService, DatabaseSearchService>();
         }
     }
 

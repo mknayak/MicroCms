@@ -5,8 +5,15 @@ public sealed class SearchOptions
 {
     public const string SectionName = "Search";
 
-    /// <summary>Active provider: <c>OpenSearch</c> or <c>None</c>. Defaults to <c>None</c>.</summary>
-    public string Provider { get; set; } = "None";
+    /// <summary>
+    /// Active provider. Allowed values:
+    /// <list type="bullet">
+    ///   <item><c>Database</c> (default) — SQL <c>LIKE</c> search via EF Core; no external dependencies.</item>
+    ///   <item><c>OpenSearch</c> — full-text relevance ranking via an OpenSearch cluster.</item>
+    ///   <item><c>None</c> — no-op; all searches return empty results.</item>
+    /// </list>
+    /// </summary>
+    public string Provider { get; set; } = "Database";
 
     /// <summary>Endpoint URL of the OpenSearch cluster (e.g. <c>http://localhost:9200</c>).</summary>
     public string Endpoint { get; set; } = "http://localhost:9200";
