@@ -5,6 +5,9 @@ import type {
   CreateStaticPageRequest,
   CreateCollectionPageRequest,
   MovePageRequest,
+  SetPageLayoutRequest,
+  PageTemplateDto,
+  SavePageTemplateRequest,
 } from '@/types';
 
 export const pagesApi = {
@@ -22,4 +25,13 @@ export const pagesApi = {
 
   delete: (id: string): Promise<void> =>
     del(`/pages/${id}`),
+
+  setLayout: (id: string, data: SetPageLayoutRequest): Promise<PageDto> =>
+    put<PageDto>(`/pages/${id}/layout`, data),
+
+  getTemplate: (id: string): Promise<PageTemplateDto> =>
+    get<PageTemplateDto>(`/pages/${id}/template`),
+
+  saveTemplate: (id: string, data: SavePageTemplateRequest): Promise<PageTemplateDto> =>
+    put<PageTemplateDto>(`/pages/${id}/template`, data),
 };

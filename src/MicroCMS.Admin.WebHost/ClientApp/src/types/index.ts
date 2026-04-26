@@ -373,6 +373,7 @@ export interface PageTreeNode {
   pageType: PageType;
   parentId?: string;
   depth: number;
+  layoutId?: string;
   children: PageTreeNode[];
 }
 
@@ -383,10 +384,11 @@ export interface PageDto {
   slug: string;
   pageType: PageType;
   parentId?: string;
-linkedEntryId?: string;
+  linkedEntryId?: string;
   collectionContentTypeId?: string;
   routePattern?: string;
   depth: number;
+  layoutId?: string;
 }
 
 export interface CreateStaticPageRequest {
@@ -408,6 +410,76 @@ export interface CreateCollectionPageRequest {
 
 export interface MovePageRequest {
   newParentId?: string;
+}
+
+export interface SetPageLayoutRequest {
+  layoutId: string | null;
+}
+
+export interface PageTemplatePlacementDto {
+  id: string;
+  componentId: string;
+  zone: string;
+  sortOrder: number;
+}
+
+export interface PageTemplateDto {
+  id: string;
+  pageId: string;
+  placements: PageTemplatePlacementDto[];
+  updatedAt: string;
+}
+
+export interface PageTemplatePlacementInput {
+  componentId: string;
+  zone: string;
+  sortOrder: number;
+}
+
+export interface SavePageTemplateRequest {
+  placements: PageTemplatePlacementInput[];
+}
+
+// ─── Layouts ──────────────────────────────────────────────────────────────────
+
+export type LayoutTemplateType = 'Handlebars' | 'Html';
+
+export interface LayoutListItem {
+  id: string;
+  siteId: string;
+  name: string;
+  key: string;
+  templateType: LayoutTemplateType;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LayoutDto {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  name: string;
+  key: string;
+  templateType: LayoutTemplateType;
+  shellTemplate?: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateLayoutRequest {
+  siteId: string;
+  name: string;
+  key: string;
+  templateType: LayoutTemplateType;
+  shellTemplate?: string;
+}
+
+export interface UpdateLayoutRequest {
+  name: string;
+  templateType: LayoutTemplateType;
+  shellTemplate?: string;
 }
 
 // ─── Sites ────────────────────────────────────────────────────────────────────
@@ -514,7 +586,7 @@ export interface SearchParams {
 export type ComponentCategory =
   | 'Layout'
   | 'Content'
-| 'Media'
+  | 'Media'
   | 'Navigation'
   | 'Interactive'
   | 'Commerce';
@@ -640,4 +712,33 @@ export interface ComponentListParams extends PaginationParams {
 export interface ComponentItemListParams extends PaginationParams {
   status?: 'Draft' | 'Published' | 'Archived';
   search?: string;
+}
+
+// ─── API Clients ──────────────────────────────────────────────────────────────
+
+export type ApiKeyType = 'Delivery' | 'Management' | 'Preview';
+
+export interface ApiClientDto {
+  id: string;
+  siteId: string;
+  name: string;
+  keyType: ApiKeyType;
+  isActive: boolean;
+  scopes: string[];
+  expiresAt?: string;
+  createdAt: string;
+}
+
+export interface ApiClientCreatedDto {
+  client: ApiClientDto;
+  /** Raw key shown exactly once — store it immediately. */
+  rawKey: string;
+}
+
+export interface CreateApiClientRequest {
+  siteId: string;
+  name: string;
+  keyType: ApiKeyType;
+  scopes?: string[];
+  expiresAt?: string;
 }

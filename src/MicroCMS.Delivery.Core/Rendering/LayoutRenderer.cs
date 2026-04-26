@@ -49,9 +49,8 @@ internal sealed class LayoutRenderer(ILogger<LayoutRenderer> logger) : ILayoutRe
         var html = layout.TemplateType switch
         {
       LayoutTemplateType.Handlebars => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
-  LayoutTemplateType.Html=> RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
-        // Razor layouts are compiled at startup — not supported for runtime inline templates.
-         _ => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
+  LayoutTemplateType.Html       => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
+            _   => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
         };
 
         return Task.FromResult(html);

@@ -11,6 +11,31 @@ builder.Configuration
     .AddJsonFile($"Configuration/appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+// ── Bridge TrustedClients:Admin → Jwt ────────────────────────────────────────
+// JwtTokenService (Infrastructure) reads Jwt:Secret/Issuer/Audience/AccessTokenMinutes
+// to mint tokens. WebHost validates via TrustedClients.  Rather than duplicating
+// values in both sections, we derive Jwt:* from TrustedClients:Admin at startup so
+// there is a single source of truth: TrustedClients.
+var adminClient = builder.Configuration.GetSection("TrustedClients:Admin");
+if (adminClient.Exists())
+{
+    var bridge = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+    {
+      ["Jwt:Secret"]  = adminClient["Secret"],
+        ["Jwt:Issuer"]  = adminClient["Issuer"],
+ ["Jwt:Audience"] = adminClient["Audience"],
+    };
+
+  // Preserve AccessTokenMinutes if already set (e.g. from appsettings or env var);
+    // fall back to the value already in config so we do not overwrite a legitimate override.
+    if (string.IsNullOrEmpty(builder.Configuration["Jwt:AccessTokenMinutes"]))
+   bridge["Jwt:AccessTokenMinutes"] = "15";
+
+    builder.Configuration.AddInMemoryCollection(bridge);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 builder.AddLoggingAndTelemetry();
 builder.AddSecurityServices();
 builder.AddApplicationServices();

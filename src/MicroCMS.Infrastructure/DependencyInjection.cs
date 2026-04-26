@@ -150,6 +150,8 @@ public static class DependencyInjection
      // Content pipeline services
         services.AddScoped<IRepository<Component, ComponentId>, EfRepository<Component, ComponentId>>();
         services.AddScoped<IRepository<ComponentItem, ComponentItemId>, EfRepository<ComponentItem, ComponentItemId>>();
+        services.AddScoped<IRepository<Layout, LayoutId>, EfRepository<Layout, LayoutId>>();
+        services.AddScoped<IRepository<PageTemplate, PageTemplateId>, EfRepository<PageTemplate, PageTemplateId>>();
 
         // AI
       services.AddScoped<IRepository<CopilotConversation, CopilotConversationId>, EfRepository<CopilotConversation, CopilotConversationId>>();

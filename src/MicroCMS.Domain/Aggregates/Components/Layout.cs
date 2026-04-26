@@ -5,18 +5,23 @@ namespace MicroCMS.Domain.Aggregates.Components;
 
 /// <summary>
 /// The rendering engine used for a <see cref="Layout"/> shell.
-/// Mirrors <see cref="RenderingTemplateType"/> but scoped to whole-page layouts.
 /// </summary>
 public enum LayoutTemplateType
 {
-    /// <summary>ASP.NET Core Razor layout (_Layout.cshtml). Default.</summary>
-    Razor = 0,
+    /// <summary>
+ /// Handlebars template (default).
+    /// Zones are available as <c>{{{zone_hero_zone}}}</c> (triple-stash, unescaped HTML)
+    /// or via the nested helper <c>{{{zones.[hero-zone]}}}</c>.
+    /// Full Handlebars syntax is supported: <c>{{#if}}</c>, <c>{{#each}}</c>, partials, etc.
+    /// </summary>
+    Handlebars = 0,
 
-    /// <summary>Handlebars template — zones injected as named partials.</summary>
-    Handlebars = 1,
-
-    /// <summary>Raw HTML with <c>{{zone:name}}</c> placeholder tokens.</summary>
-    Html = 2,
+    /// <summary>
+    /// Raw HTML with <c>{{zone:name}}</c> and <c>{{seo:*}}</c> placeholder tokens.
+    /// No logic constructs — pure string replacement.
+    /// Use when the template is authored outside the CMS and pasted in as static HTML.
+    /// </summary>
+    Html = 1,
 }
 
 /// <summary>

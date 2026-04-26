@@ -34,6 +34,7 @@
     <ProjectReference Include="..\MicroCMS.Ai.VectorStores.OpenSearch\MicroCMS.Ai.VectorStores.OpenSearch.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.VectorStores.Qdrant\MicroCMS.Ai.VectorStores.Qdrant.csproj" />
     <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+    <ProjectReference Include="..\MicroCMS.Delivery.Core\MicroCMS.Delivery.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

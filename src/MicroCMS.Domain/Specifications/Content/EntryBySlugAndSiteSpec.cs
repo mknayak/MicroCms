@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Aggregates.Content;
+using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Domain.Specifications.Content;
@@ -10,9 +11,10 @@ namespace MicroCMS.Domain.Specifications.Content;
 public sealed class EntryBySlugAndSiteSpec : BaseSpecification<Entry>
 {
     public EntryBySlugAndSiteSpec(SiteId siteId, string slug, string locale)
+        : this(siteId, Slug.Create(slug), Locale.Create(locale)) { }
+
+    private EntryBySlugAndSiteSpec(SiteId siteId, Slug slug, Locale locale)
         : base(e => e.SiteId == siteId
-                 && e.Slug.Value == slug
-                 && e.Locale.Value == locale)
-    {
-    }
+                 && e.Slug == slug
+    && e.Locale == locale) { }
 }

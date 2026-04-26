@@ -10,9 +10,13 @@ namespace MicroCMS.Delivery.Core.Rendering;
 /// Renders a component item to HTML using the parent component's
 /// <see cref="RenderingTemplateType"/> and <c>TemplateContent</c>.
 ///
-/// Supported:
-///   • <b>Handlebars</b> — rendered server-side via Handlebars.Net.
-///   • All other types — placeholder comment so React/WebComponent/Razor can hydrate.
+/// Rendering behaviour by type:
+/// <list type="table">
+///   <item><term>Handlebars</term><description>Rendered server-side via Handlebars.Net. Fields JSON is flattened to named tokens.</description></item>
+///   <item><term>React</term><description>Emits <c>&lt;!-- component:key id:... type:React --&gt;</c> for client-side hydration.</description></item>
+///   <item><term>WebComponent</term><description>Emits a hydration hint comment.</description></item>
+///   <item><term>RazorPartial</term><description>Emits a hydration hint comment. Rendering must be done by an MVC host via <c>Html.PartialAsync(component.Key)</c>.</description></item>
+/// </list>
 /// </summary>
 public interface IComponentRenderer
 {

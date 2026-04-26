@@ -4,42 +4,99 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MicroCMS.Api.Controllers;
 
-/// <summary>Page tree CRUD and site structure management (GAP-21).</summary>
+/// <summary>Page tree CRUD, layout assignment, and PageTemplate (zone) management (GAP-21).</summary>
 [Authorize]
 public sealed class PagesController : ApiControllerBase
 {
+    // ── Page tree ─────────────────────────────────────────────────────────
+
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<PageTreeNode>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTree(
  [FromQuery] Guid siteId, CancellationToken ct = default) =>
-  OkOrProblem(await Sender.Send(new GetSiteTreeQuery(siteId), ct));
+   OkOrProblem(await Sender.Send(new GetSiteTreeQuery(siteId), ct));
 
     [HttpPost("static")]
     [ProducesResponseType(typeof(PageDto), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateStatic(
-  [FromBody] CreateStaticPageCommand command, CancellationToken ct = default)
+        [FromBody] CreateStaticPageCommand command, CancellationToken ct = default)
     {
-        var result = await Sender.Send(command, ct);
-   return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
-}
+   var result = await Sender.Send(command, ct);
+    return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
+    }
 
     [HttpPost("collection")]
     [ProducesResponseType(typeof(PageDto), StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateCollection(
-    [FromBody] CreateCollectionPageCommand command, CancellationToken ct = default)
+  public async Task<IActionResult> CreateCollection(
+        [FromBody] CreateCollectionPageCommand command, CancellationToken ct = default)
     {
-  var result = await Sender.Send(command, ct);
-   return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
-  }
+     var result = await Sender.Send(command, ct);
+     return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
+    }
 
     [HttpPut("{id:guid}/move")]
+    [ProducesResponseType(typeof(PageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Move(
-    Guid id, [FromBody] MovePageRequest r, CancellationToken ct = default) =>
-   OkOrProblem(await Sender.Send(new MovePageCommand(id, r.NewParentId), ct));
+        Guid id, [FromBody] MovePageRequest r, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new MovePageCommand(id, r.NewParentId), ct));
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default) =>
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default) =>
         NoContentOrProblem(await Sender.Send(new DeletePageCommand(id), ct));
+
+    // ── Layout assignment ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Assigns or clears the layout for a page.
+    /// Pass <c>null</c> as <c>layoutId</c> to clear the override and use the site default layout.
+    /// </summary>
+[HttpPut("{id:guid}/layout")]
+    [ProducesResponseType(typeof(PageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetLayout(
+        Guid id, [FromBody] SetPageLayoutRequest r, CancellationToken ct = default) =>
+     OkOrProblem(await Sender.Send(new SetPageLayoutCommand(id, r.LayoutId), ct));
+
+    // ── PageTemplate (zone placements) ────────────────────────────────────
+
+    /// <summary>
+    /// Returns the PageTemplate for a page — the zone map with ordered ComponentPlacements.
+    /// Returns 404 if no template has been configured yet.
+    /// </summary>
+    [HttpGet("{id:guid}/template")]
+    [ProducesResponseType(typeof(PageTemplateDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTemplate(Guid id, CancellationToken ct = default) =>
+      OkOrProblem(await Sender.Send(new GetPageTemplateQuery(id), ct));
+
+    /// <summary>
+    /// Saves (creates or fully replaces) the PageTemplate for a page.
+    ///
+    /// Send an ordered list of placements. Each placement specifies:
+    /// <ul>
+    ///   <li><c>componentId</c> — the component whose published items will be rendered.</li>
+    ///   <li><c>zone</c> — the Layout zone name it renders into, e.g. <c>"hero-zone"</c>.</li>
+    ///   <li><c>sortOrder</c> — render order within the zone (lower = first).</li>
+    /// </ul>
+ /// All existing placements are replaced atomically.
+    /// </summary>
+    [HttpPut("{id:guid}/template")]
+    [ProducesResponseType(typeof(PageTemplateDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> SaveTemplate(
+        Guid id, [FromBody] SavePageTemplateRequest r, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new SavePageTemplateCommand(id, r.Placements), ct));
 }
 
+// ── Request types ──────────────────────────────────────────────────────────────
+
 public sealed record MovePageRequest(Guid? NewParentId);
+
+public sealed record SetPageLayoutRequest(Guid? LayoutId);
+
+public sealed record SavePageTemplateRequest(
+    IReadOnlyList<PageTemplatePlacementInput> Placements);

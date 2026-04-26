@@ -12,17 +12,35 @@ namespace MicroCMS.Domain.Aggregates.Components;
 /// </summary>
 public enum RenderingTemplateType
 {
-    /// <summary>ASP.NET Core Razor partial (.cshtml). Default.</summary>
-    RazorPartial = 0,
+    /// <summary>
+    /// Handlebars template (.hbs) — fully rendered server-side via Handlebars.Net.
+    /// Fields are flattened to named tokens: <c>{{heading}}</c>, <c>{{{body}}}</c> (triple-stash for raw HTML).
+    /// Supports <c>{{#if}}</c>, <c>{{#each}}</c>, partials and helpers.
+    /// <b>This is the recommended default for server-side rendering.</b>
+    /// </summary>
+    Handlebars = 0,
 
-    /// <summary>Handlebars template (.hbs) — rendered server-side via Handlebars.Net.</summary>
-    Handlebars = 1,
+  /// <summary>
+    /// React component (.tsx) — <c>TemplateContent</c> is not rendered server-side.
+    /// The Delivery API emits a <c>&lt;!-- component:key id:... type:React --&gt;</c>
+    /// hydration hint; the frontend is responsible for mounting the component.
+  /// </summary>
+    React = 1,
 
-    /// <summary>React component (.tsx) — server-side rendered or hydrated client-side.</summary>
-    React = 2,
+  /// <summary>
+    /// Web Component / Custom Element — rendered entirely client-side.
+    /// The Delivery API emits a hydration hint comment; no server rendering occurs.
+    /// </summary>
+WebComponent = 2,
 
-  /// <summary>Web Component / Custom Element — rendered entirely client-side.</summary>
-    WebComponent = 3,
+    /// <summary>
+    /// ASP.NET Core Razor partial (.cshtml) — <c>TemplateContent</c> is not rendered server-side
+/// by the Delivery API (which is a non-MVC host and has no Razor view engine).
+    /// Use this type only when the component partial lives on disk inside an MVC host
+    /// and is rendered via <c>Html.PartialAsync(component.Key)</c> in that host.
+    /// The Delivery API emits a hydration hint comment for this type.
+    /// </summary>
+    RazorPartial = 3,
 }
 
 /// <summary>
@@ -60,8 +78,8 @@ SiteId = siteId;
         Description = description;
         Category = category;
         ZonesJson = zonesJson;
-        TemplateType = RenderingTemplateType.RazorPartial;
-        CreatedAt = DateTimeOffset.UtcNow;
+        TemplateType = RenderingTemplateType.Handlebars;
+      CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -76,7 +94,7 @@ SiteId = siteId;
     public int UsageCount { get; private set; }
     public int ItemCount { get; private set; }
     /// <summary>The rendering engine used to turn TemplateContent into HTML.</summary>
-    public RenderingTemplateType TemplateType { get; private set; } = RenderingTemplateType.RazorPartial;
+    public RenderingTemplateType TemplateType { get; private set; } = RenderingTemplateType.Handlebars;
     /// <summary>The raw template source code (Razor/Handlebars/React/Web Component markup).</summary>
     public string? TemplateContent { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }

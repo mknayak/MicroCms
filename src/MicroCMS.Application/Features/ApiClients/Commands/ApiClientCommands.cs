@@ -7,6 +7,7 @@ using MicroCMS.Application.Common.Markers;
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications.Tenant;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
 
@@ -47,6 +48,12 @@ public sealed record RevokeApiClientCommand(Guid ApiClientId) : ICommand<ApiClie
 /// <summary>Regenerates an API client's secret and returns the new raw key once (GAP-20).</summary>
 [HasPolicy(ContentPolicies.TenantManage)]
 public sealed record RegenerateApiClientCommand(Guid ApiClientId) : ICommand<ApiClientCreatedDto>;
+
+// ── Queries ───────────────────────────────────────────────────────────────────
+
+/// <summary>Lists all active API clients for a site.</summary>
+[HasPolicy(ContentPolicies.TenantManage)]
+public sealed record ListApiClientsQuery(Guid SiteId) : IQuery<IReadOnlyList<ApiClientDto>>;
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
@@ -106,6 +113,20 @@ internal sealed class RegenerateApiClientCommandHandler(
      client.RegenerateSecret(hasher.Hash(rawKey));
         clientRepository.Update(client);
       return Result.Success(new ApiClientCreatedDto(ApiClientMapper.ToDto(client), rawKey));
+    }
+}
+
+internal sealed class ListApiClientsQueryHandler(
+    IRepository<ApiClient, ApiClientId> clientRepository)
+    : IRequestHandler<ListApiClientsQuery, Result<IReadOnlyList<ApiClientDto>>>
+{
+    public async Task<Result<IReadOnlyList<ApiClientDto>>> Handle(
+        ListApiClientsQuery request, CancellationToken cancellationToken)
+    {
+        var clients = await clientRepository.ListAsync(
+   new ApiClientsBySiteSpec(new SiteId(request.SiteId)), cancellationToken);
+  IReadOnlyList<ApiClientDto> result = clients.Select(ApiClientMapper.ToDto).ToList();
+        return Result.Success(result);
     }
 }
 

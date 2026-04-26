@@ -7,11 +7,14 @@ namespace MicroCMS.Delivery.WebHost.Controllers;
 
 /// <summary>
 /// Base for all delivery API controllers.
-/// Route: <c>/delivery/v{version}/[controller]</c>
+/// Routes (both match due to AssumeDefaultVersionWhenUnspecified):
+///   <c>/api/delivery/pages</c>  — version omitted, defaults to v1
+///   <c>/api/delivery/v1/pages</c> — explicit version
 /// Auth: <c>X-Api-Key</c> header (DeliveryApiKey scheme).
 /// </summary>
 [ApiController]
-[Route("delivery/v{version:apiVersion}/[controller]")]
+[Route("api/delivery/v{version:apiVersion}/[controller]")]
+[Route("api/delivery/[controller]")]
 [ApiVersion("1.0")]
 [Produces("application/json")]
 public abstract class DeliveryControllerBase : ControllerBase

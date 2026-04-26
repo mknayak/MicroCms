@@ -6,6 +6,7 @@ namespace MicroCMS.Api.Controllers;
 
 /// <summary>API client (delivery/management/preview key) management (GAP-20).</summary>
 [Authorize]
+[Route("api/v{version:apiVersion}/api-clients")]
 public sealed class ApiClientsController : ApiControllerBase
 {
     [HttpPost]
@@ -28,4 +29,9 @@ public sealed class ApiClientsController : ApiControllerBase
     [ProducesResponseType(typeof(ApiClientCreatedDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Regenerate(Guid id, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new RegenerateApiClientCommand(id), ct));
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<ApiClientDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> List([FromQuery] Guid siteId, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new ListApiClientsQuery(siteId), ct));
 }
