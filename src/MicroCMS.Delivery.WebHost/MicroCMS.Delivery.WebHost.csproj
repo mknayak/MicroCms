@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+ <AssemblyName>MicroCMS.Delivery.WebHost</AssemblyName>
+    <RootNamespace>MicroCMS.Delivery.WebHost</RootNamespace>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+ <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MicroCMS.Application\MicroCMS.Application.csproj" />
+    <ProjectReference Include="..\MicroCMS.Infrastructure\MicroCMS.Infrastructure.csproj" />
+    <ProjectReference Include="..\MicroCMS.Domain\MicroCMS.Domain.csproj" />
+    <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+    <ProjectReference Include="..\MicroCMS.Delivery.Core\MicroCMS.Delivery.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Problem Details RFC 7807 -->
+    <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
+    <!-- API versioning -->
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+    <!-- Swagger -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    <!-- Serilog -->
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <!-- Analyzers -->
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.25.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

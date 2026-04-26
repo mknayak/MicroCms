@@ -1,9 +1,7 @@
 namespace MicroCMS.Domain.Services;
 
 /// <summary>
-/// Generates time-limited signed URLs for private media assets (GAP-16).
-/// Implementations live in Infrastructure and are bound to the configured storage provider
-/// (local HMAC, S3 pre-signed, Azure SAS, etc.).
+/// Generates and validates time-limited signed URLs for private media assets (GAP-16).
 /// </summary>
 public interface IStorageSigningService
 {
@@ -12,7 +10,13 @@ public interface IStorageSigningService
     /// <paramref name="expiresIn"/>. The URL is opaque to the caller; never stored in the DB.
     /// </summary>
     Task<string> GenerateSignedUrlAsync(
-   string storageKey,
+      string storageKey,
         TimeSpan expiresIn,
         CancellationToken cancellationToken = default);
+
+ /// <summary>
+    /// Validates a signed URL's HMAC and expiry.
+    /// Returns <c>true</c> when the signature is valid and the URL has not expired.
+    /// </summary>
+    bool Validate(string storageKey, long expiresAt, string tenantId, string signature);
 }

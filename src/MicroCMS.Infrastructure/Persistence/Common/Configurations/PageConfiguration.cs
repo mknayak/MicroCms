@@ -42,21 +42,6 @@ internal sealed class PageConfiguration : IEntityTypeConfiguration<Page>
         .HasMaxLength(32)
           .IsRequired();
 
-        builder.Property(p => p.ParentId)
-       .HasConversion(
-    id => id.HasValue ? (Guid?)id.Value.Value : null,
-      value => value.HasValue ? new PageId(value.Value) : (PageId?)null);
-
-        builder.Property(p => p.LinkedEntryId)
-            .HasConversion(
-      id => id.HasValue ? (Guid?)id.Value.Value : null,
-                value => value.HasValue ? new EntryId(value.Value) : (EntryId?)null);
-
-        builder.Property(p => p.CollectionContentTypeId)
-    .HasConversion(
-          id => id.HasValue ? (Guid?)id.Value.Value : null,
-    value => value.HasValue ? new ContentTypeId(value.Value) : (ContentTypeId?)null);
-
         builder.Property(p => p.RoutePattern)
             .HasMaxLength(Page.MaxRoutePatternLength);
 
@@ -64,9 +49,32 @@ internal sealed class PageConfiguration : IEntityTypeConfiguration<Page>
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();
 
+     // Optional layout override — null means use the site default layout
+     builder.Property(p => p.LayoutId)
+            .HasConversion(
+       id => id.HasValue ? (Guid?)id.Value.Value : null,
+         value => value.HasValue ? new LayoutId(value.Value) : (LayoutId?)null);
+
         builder.HasIndex(p => new { p.SiteId, p.Slug }).IsUnique();
         builder.HasIndex(p => new { p.SiteId, p.ParentId });
 
         builder.Ignore(p => p.DomainEvents);
+
+          ConfigureNullableIds(builder);
+    }
+
+    private static void ConfigureNullableIds(EntityTypeBuilder<Page> builder)
+    {
+        builder.Property(p => p.ParentId)
+    .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
+          v => v.HasValue ? new PageId(v.Value) : (PageId?)null);
+
+     builder.Property(p => p.LinkedEntryId)
+  .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
+       v => v.HasValue ? new EntryId(v.Value) : (EntryId?)null);
+
+     builder.Property(p => p.CollectionContentTypeId)
+         .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
+          v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
     }
 }

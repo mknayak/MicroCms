@@ -84,6 +84,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<CopilotConversation> CopilotConversations => Set<CopilotConversation>();
     public DbSet<AiProviderSettings> AiProviderSettings => Set<AiProviderSettings>();
     public DbSet<Plugin> Plugins => Set<Plugin>();
+    public DbSet<Layout>   Layouts  => Set<Layout>();
 
     // ── Model configuration ───────────────────────────────────────────────
 
@@ -130,6 +131,7 @@ public sealed class ApplicationDbContext : DbContext
         modelBuilder.Entity<Page>().HasQueryFilter(p => _tenantFilter == null || p.TenantId == _tenantFilter);
         modelBuilder.Entity<Component>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);
         modelBuilder.Entity<ComponentItem>().HasQueryFilter(ci => _tenantFilter == null || ci.TenantId == _tenantFilter);
+        modelBuilder.Entity<Layout>().HasQueryFilter(l => _tenantFilter == null || l.TenantId == _tenantFilter);
     }
 
     private void ApplyMediaFilters(ModelBuilder modelBuilder)

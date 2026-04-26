@@ -50,6 +50,11 @@ public sealed class Page : AggregateRoot<PageId>
     public int Depth { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
+    /// <summary>
+    /// The layout used to render this page.
+    /// <c>null</c> means use the site default layout (if one is configured) or headless mode.
+    /// </summary>
+  public LayoutId? LayoutId { get; private set; }
 
     // ── Factory ────────────────────────────────────────────────────────────
 
@@ -108,6 +113,12 @@ TenantId tenantId, SiteId siteId,
             throw new BusinessRuleViolationException("Page.NotStatic", "Only Static pages can be linked to an entry.");
         LinkedEntryId = entryId;
         UpdatedAt = DateTimeOffset.UtcNow;
+    }
+    /// <summary>Assigns or clears the layout for this page.</summary>
+    public void SetLayout(LayoutId? layoutId)
+    {
+        LayoutId  = layoutId;
+     UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

@@ -42,4 +42,8 @@ public static class ContentPolicies
     // ── Component policies ─────────────────────────────────────────────────
     public const string ComponentRead   = "Component.Read";
     public const string ComponentManage = "Component.Manage";
+
+    // ── Layout policies ────────────────────────────────────────────────────
+    public const string LayoutRead   = "Layout.Read";
+    public const string LayoutManage = "Layout.Manage";
 }
