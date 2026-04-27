@@ -82,16 +82,25 @@ export interface UpdateTenantRequest {
 
 // ─── Content Types ────────────────────────────────────────────────────────────
 
+/**
+ * Matches the backend FieldType enum exactly (case-sensitive).
+ */
 export type FieldType =
-  | 'text'
-  | 'richtext'
-  | 'number'
-  | 'boolean'
-  | 'date'
-  | 'media'
-  | 'reference'
-  | 'json'
-  | 'select';
+  | 'ShortText'
+  | 'LongText'
+  | 'RichText'
+  | 'Markdown'
+  | 'Integer'
+  | 'Decimal'
+  | 'Boolean'
+  | 'DateTime'
+  | 'Enum'
+  | 'Reference'
+  | 'AssetReference'
+  | 'Json'
+  | 'Component'
+  | 'Location'
+  | 'Color';
 
 export interface FieldDefinition {
   id: string;

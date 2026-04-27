@@ -153,6 +153,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     public void UpdateField(
         Guid fieldId,
         string label,
+        FieldType fieldType,
         bool isRequired,
         bool isLocalized,
         int sortOrder,
@@ -160,7 +161,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     {
         EnsureNotArchived();
         var field = GetFieldOrThrow(fieldId);
-        field.Update(label, isRequired, isLocalized, sortOrder, description);
+        field.Update(label, fieldType, isRequired, isLocalized, sortOrder, description);
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

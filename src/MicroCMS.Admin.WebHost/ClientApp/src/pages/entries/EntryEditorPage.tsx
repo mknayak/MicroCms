@@ -96,11 +96,36 @@ function FieldInput({
         <RichTextEditor
           value={typeof value === 'string' ? value : ''}
           onChange={onChange}
-     placeholder={`Write ${field.label}…`}
+          placeholder={`Write ${field.label}…`}
         />
       );
+
+    case 'LongText':
+    case 'Markdown':
+      return (
+        <textarea
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          rows={6}
+          className="form-input resize-y font-mono"
+          placeholder={`Enter ${field.label}…`}
+        />
+      );
+
+    case 'Json':
+      return (
+        <textarea
+          value={typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2)}
+          onChange={(e) => onChange(e.target.value)}
+          rows={8}
+          className="form-input resize-y font-mono text-xs"
+          placeholder="{}"
+          spellCheck={false}
+        />
+      );
+
     case 'Boolean':
-    return (
+      return (
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -108,32 +133,124 @@ function FieldInput({
           className="h-4 w-4 rounded border-slate-300 text-brand-600"
         />
       );
-    case 'Number':
-    return (
-    <input
-       type="number"
-     value={typeof value === 'number' ? value : ''}
-   onChange={(e) => onChange(e.target.valueAsNumber)}
-     className="form-input"
+
+    case 'Integer':
+      return (
+        <input
+          type="number"
+          step="1"
+          value={typeof value === 'number' ? value : ''}
+          onChange={(e) => onChange(e.target.valueAsNumber)}
+          className="form-input"
+          placeholder="0"
         />
- );
+      );
+
+    case 'Decimal':
+      return (
+        <input
+          type="number"
+          step="any"
+          value={typeof value === 'number' ? value : ''}
+          onChange={(e) => onChange(e.target.valueAsNumber)}
+          className="form-input"
+          placeholder="0.00"
+        />
+      );
+
     case 'DateTime':
       return (
-      <input
+        <input
           type="datetime-local"
-    value={typeof value === 'string' ? value : ''}
-     onChange={(e) => onChange(e.target.value)}
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
           className="form-input"
         />
       );
+
+    case 'Color':
+      return (
+        <div className="flex items-center gap-3">
+          <input
+            type="color"
+            value={typeof value === 'string' && value ? value : '#000000'}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9 w-16 cursor-pointer rounded border border-slate-300 p-0.5"
+          />
+          <input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="form-input font-mono"
+            placeholder="#000000"
+          />
+        </div>
+      );
+
+    case 'AssetReference':
+      return (
+        <input
+          type="text"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="form-input font-mono"
+          placeholder="Asset ID…"
+        />
+      );
+
+    case 'Reference':
+      return (
+        <input
+          type="text"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="form-input font-mono"
+          placeholder="Entry ID…"
+        />
+      );
+
+    case 'Enum':
+      return (
+        <input
+          type="text"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="form-input"
+          placeholder="Enter value…"
+        />
+      );
+
+    case 'Location':
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            step="any"
+            value={typeof value === 'object' && value !== null && 'lat' in value ? (value as { lat: number }).lat : ''}
+            onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lat: e.target.valueAsNumber })}
+            className="form-input"
+            placeholder="Latitude"
+          />
+          <input
+            type="number"
+            step="any"
+            value={typeof value === 'object' && value !== null && 'lng' in value ? (value as { lng: number }).lng : ''}
+            onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lng: e.target.valueAsNumber })}
+            className="form-input"
+            placeholder="Longitude"
+          />
+        </div>
+      );
+
+    // ShortText and any unrecognised types
     default:
       return (
         <input
-      type="text"
-     value={typeof value === 'string' ? value : ''}
+          type="text"
+          value={typeof value === 'string' ? value : ''}
           onChange={(e) => onChange(e.target.value)}
           className="form-input"
-     placeholder={`Enter ${field.label}…`}
+          placeholder={`Enter ${field.label}…`}
         />
       );
   }

@@ -44,7 +44,7 @@ public sealed class ContentTypesController : ApiControllerBase
     }
 
     [HttpPost("{id:guid}/fields")]
- [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddField(
         Guid id,
@@ -55,8 +55,8 @@ public sealed class ContentTypesController : ApiControllerBase
        new AddFieldCommand(id, request.Handle, request.Label, request.FieldType,
           request.IsRequired, request.IsLocalized, request.IsUnique, request.Description),
             cancellationToken);
-     return OkOrProblem(result);
-  }
+        return OkOrProblem(result);
+    }
 
     [HttpDelete("{id:guid}/fields/{fieldId:guid}")]
     [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
@@ -67,7 +67,7 @@ public sealed class ContentTypesController : ApiControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new RemoveFieldCommand(id, fieldId), cancellationToken);
-     return OkOrProblem(result);
+        return OkOrProblem(result);
     }
 
     [HttpPost("{id:guid}/publish")]
@@ -76,13 +76,13 @@ public sealed class ContentTypesController : ApiControllerBase
     public async Task<IActionResult> Publish(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new PublishContentTypeCommand(id), cancellationToken);
-   return OkOrProblem(result);
+        return OkOrProblem(result);
     }
 
     [HttpPost("{id:guid}/archive")]
     [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
- [ProducesResponseType(StatusCodes.Status404NotFound)]
-  public async Task<IActionResult> Archive(Guid id, CancellationToken cancellationToken = default)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Archive(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new ArchiveContentTypeCommand(id), cancellationToken);
         return OkOrProblem(result);
@@ -93,10 +93,17 @@ public sealed class ContentTypesController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
         Guid id,
-  [FromBody] UpdateContentTypeRequest request,
-      CancellationToken cancellationToken = default)
+        [FromBody] UpdateContentTypeRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new UpdateContentTypeCommand(id, request.DisplayName, request.Description), cancellationToken);
+        var fields = request.Fields?
+  .Select(f => new UpdateFieldInput(f.Id, f.Handle, f.Label, f.FieldType,
+     f.IsRequired, f.IsLocalized, f.IsUnique, f.SortOrder, f.Description))
+        .ToList();
+
+        var result = await Sender.Send(
+      new UpdateContentTypeCommand(id, request.DisplayName, request.Description, fields),
+            cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -106,7 +113,7 @@ public sealed class ContentTypesController : ApiControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new DeleteContentTypeCommand(id), cancellationToken);
-        return result.IsSuccess ? NoContent() : Problem(result);
+  return NoContentOrProblem(result);
     }
 }
 
@@ -117,4 +124,20 @@ public sealed record AddFieldRequest(
     bool IsRequired = false,
     bool IsLocalized = false,
     bool IsUnique = false,
+    string? Description = null);
+
+public sealed record UpdateContentTypeRequest(
+    string DisplayName,
+  string? Description = null,
+  IReadOnlyList<UpdateFieldRequest>? Fields = null);
+
+public sealed record UpdateFieldRequest(
+    Guid? Id,
+    string Handle,
+    string Label,
+    string FieldType,
+    bool IsRequired = false,
+    bool IsLocalized = false,
+    bool IsUnique = false,
+    int SortOrder = 0,
     string? Description = null);

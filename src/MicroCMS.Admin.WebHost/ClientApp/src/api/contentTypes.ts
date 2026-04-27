@@ -13,9 +13,22 @@ export interface CreateContentTypeRequest {
   description?: string;
 }
 
+export interface UpdateFieldRequest {
+  id?: string;
+  handle: string;
+  label: string;
+  fieldType: string;
+  isRequired?: boolean;
+  isLocalized?: boolean;
+  isUnique?: boolean;
+  sortOrder?: number;
+  description?: string;
+}
+
 export interface UpdateContentTypeRequest {
   displayName: string;
   description?: string;
+  fields?: UpdateFieldRequest[];
 }
 
 export const contentTypesApi = {

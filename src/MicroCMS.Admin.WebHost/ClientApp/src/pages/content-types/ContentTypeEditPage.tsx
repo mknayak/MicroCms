@@ -12,22 +12,30 @@ import { ApiError } from '@/api/client';
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
-  { value: 'text', label: 'Short Text' },
-  { value: 'richtext', label: 'Rich Text' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Boolean' },
-  { value: 'date', label: 'Date & Time' },
-  { value: 'media', label: 'Media' },
-  { value: 'reference', label: 'Reference' },
-  { value: 'json', label: 'JSON' },
-  { value: 'select', label: 'Select' },
+  { value: 'ShortText',      label: 'Short Text' },
+  { value: 'LongText',       label: 'Long Text' },
+  { value: 'RichText',       label: 'Rich Text' },
+  { value: 'Markdown',       label: 'Markdown' },
+  { value: 'Integer',        label: 'Integer' },
+  { value: 'Decimal',        label: 'Decimal' },
+  { value: 'Boolean',        label: 'Boolean' },
+  { value: 'DateTime',   label: 'Date & Time' },
+  { value: 'Enum',     label: 'Select / Enum' },
+  { value: 'Reference',    label: 'Reference' },
+  { value: 'AssetReference', label: 'Asset' },
+  { value: 'Json',           label: 'JSON' },
+  { value: 'Component',      label: 'Component' },
+  { value: 'Location',       label: 'Location' },
+  { value: 'Color',    label: 'Color' },
 ];
+
+const FIELD_TYPE_VALUES = FIELD_TYPES.map((ft) => ft.value) as [FieldType, ...FieldType[]];
 
 const fieldSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
   apiKey: z.string().min(1, 'API key is required').regex(/^[a-z][a-zA-Z0-9_]*$/, 'Must start with lowercase letter, only letters/numbers/underscores'),
-  type: z.enum(['text', 'richtext', 'number', 'boolean', 'date', 'media', 'reference', 'json', 'select']),
+  type: z.enum(FIELD_TYPE_VALUES),
   required: z.boolean(),
   localized: z.boolean(),
 });
@@ -113,15 +121,25 @@ export default function ContentTypeEditPage() {
     mutationFn: (values: FormValues) =>
       isNew
         ? contentTypesApi.create({
-           siteId: '',      // caller must supply; kept as empty default here
-   handle: values.apiKey,
+     siteId: '',
+            handle: values.apiKey,
             displayName: values.name,
- description: values.description,
-          })
+      description: values.description,
+ })
         : contentTypesApi.update(id!, {
-  displayName: values.name,
-          description: values.description,
-        }),
+        displayName: values.name,
+            description: values.description,
+ fields: values.fields.map((f, idx) => ({
+         id: f.id,
+    handle: f.apiKey,
+ label: f.name,
+    fieldType: f.type,
+   isRequired: f.required,
+   isLocalized: f.localized,
+    isUnique: false,
+        sortOrder: idx,
+         })),
+   }),
     onSuccess: () => {
       toast.success(isNew ? 'Content type created.' : 'Content type updated.');
       void qc.invalidateQueries({ queryKey: ['content-types'] });
@@ -133,7 +151,7 @@ export default function ContentTypeEditPage() {
   });
 
   const addField = () => {
-    append({ name: '', apiKey: '', type: 'text', required: false, localized: false });
+    append({ name: '', apiKey: '', type: 'ShortText', required: false, localized: false });
     setActiveFieldIdx(fields.length);
   };
 

@@ -10,17 +10,11 @@ using Microsoft.Extensions.Logging;
 namespace MicroCMS.Infrastructure.Tenancy;
 
 /// <summary>
-/// Resolves <see cref="TenantId"/> from the incoming request's subdomain
-/// (e.g. <c>acme.microcms.io</c> → slug <c>acme</c>).
-///
-/// Resolution order:
-///   1. Subdomain of <c>Host</c> header.
-///   2. <c>X-Tenant-Slug</c> header — only honoured when the caller has the
-///      <c>SystemAdmin</c> JWT role; otherwise silently ignored (SSRF / spoofing guard).
-///
-/// Results are cached in an in-process LRU cache (<see cref="_cache"/>) to avoid
-/// a DB round-trip on every request. Cache entries expire after
-/// <see cref="CacheTtl"/> to pick up slug-to-tenant changes within a reasonable window.
+/// Resolves <see cref="TenantId"/> from the incoming request using the following priority:
+///   1. Subdomain of the <c>Host</c> header (e.g. <c>acme.microcms.io</c> → <c>acme</c>).
+///   2. <c>X-Tenant-Slug</c> header — only honoured for <c>SystemAdmin</c> JWT callers.
+///   3. JWT <c>tid</c> / <c>tenant_id</c> / <c>tenantSlug</c> claim (covers localhost / direct-IP).
+/// Results are cached in-process for <see cref="CacheTtl"/> to avoid DB hits on every request.
 /// </summary>
 internal sealed class SubdomainTenantResolver(
     IHttpContextAccessor httpContextAccessor,
@@ -29,10 +23,10 @@ internal sealed class SubdomainTenantResolver(
     : ITenantResolver
 {
     internal static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
- private const int MaxCacheSize = 1024;
+    private const int MaxCacheSize = 1024;
 
-    // slug → (TenantId?, cachedAt)
-    private static readonly ConcurrentDictionary<string, (TenantId? Id, DateTimeOffset CachedAt)> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, (TenantId? Id, DateTimeOffset CachedAt)>
+        _cache = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<TenantId?> ResolveAsync(CancellationToken cancellationToken = default)
     {
@@ -42,55 +36,58 @@ internal sealed class SubdomainTenantResolver(
         var slug = ExtractSlug(ctx);
         if (string.IsNullOrEmpty(slug)) return null;
 
-        // Cache hit
         if (_cache.TryGetValue(slug, out var entry) &&
             DateTimeOffset.UtcNow - entry.CachedAt < CacheTtl)
-        {
-   return entry.Id;
-        }
+            return entry.Id;
 
-        // Cache miss — query DB
         var tenants = await tenantRepo.ListAsync(new TenantBySlugSpec(slug), cancellationToken);
-   var tenantId = tenants.Count > 0 ? tenants[0].Id : (TenantId?)null;
+        var tenantId = tenants.Count > 0 ? tenants[0].Id : (TenantId?)null;
 
-        // Evict oldest entry if at capacity (simple LRU approximation)
-      if (_cache.Count >= MaxCacheSize)
-        {
-          var oldest = _cache.OrderBy(kv => kv.Value.CachedAt).FirstOrDefault();
-  _cache.TryRemove(oldest.Key, out _);
-        }
-
+        EvictIfAtCapacity();
         _cache[slug] = (tenantId, DateTimeOffset.UtcNow);
 
-  if (tenantId is null)
-        logger.LogWarning("Tenant slug '{Slug}' could not be resolved to a known tenant.", slug);
+        if (tenantId is null)
+            logger.LogWarning("Tenant slug '{Slug}' could not be resolved to a known tenant.", slug);
 
         return tenantId;
     }
 
-  private static string? ExtractSlug(HttpContext ctx)
- {
-        var host = ctx.Request.Host.Host; // e.g. "acme.microcms.io" or "localhost"
+    // ── Slug extraction (three independent fallbacks) ─────────────────────
 
-        // Subdomain extraction: first label before first dot
-     var firstDot = host.IndexOf('.', StringComparison.Ordinal);
-      if (firstDot > 0)
-        {
-      var subdomain = host[..firstDot];
-   // Ignore "www" and bare hostnames like "localhost"
-   if (!subdomain.Equals("www", StringComparison.OrdinalIgnoreCase))
-     return subdomain;
-        }
+    private static string? ExtractSlug(HttpContext ctx) =>
+      ExtractFromSubdomain(ctx.Request.Host.Host)
+        ?? ExtractFromTenantSlugHeader(ctx)
+      ?? ExtractFromJwtClaims(ctx);
 
-        // Fallback: X-Tenant-Slug header — only trusted from SystemAdmin callers
-  var headerSlug = ctx.Request.Headers["X-Tenant-Slug"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(headerSlug))
-     {
-         var isSystemAdmin = ctx.User?.IsInRole("SystemAdmin") is true;
-          if (isSystemAdmin)
-      return headerSlug;
-}
+    private static string? ExtractFromSubdomain(string host)
+    {
+        var dot = host.IndexOf('.', StringComparison.Ordinal);
+     if (dot <= 0) return null;
 
-        return null;
+    var sub = host[..dot];
+        return sub.Equals("www", StringComparison.OrdinalIgnoreCase) ? null : sub;
+    }
+
+    private static string? ExtractFromTenantSlugHeader(HttpContext ctx)
+    {
+        var slug = ctx.Request.Headers["X-Tenant-Slug"].FirstOrDefault();
+        if (string.IsNullOrEmpty(slug)) return null;
+
+        return ctx.User?.IsInRole("SystemAdmin") is true ? slug : null;
+    }
+
+    private static string? ExtractFromJwtClaims(HttpContext ctx) =>
+        ctx.User?.FindFirst("tid")?.Value
+   ?? ctx.User?.FindFirst("tenant_id")?.Value
+     ?? ctx.User?.FindFirst("tenantSlug")?.Value;
+
+    // ── Cache helpers ─────────────────────────────────────────────────────
+
+    private static void EvictIfAtCapacity()
+    {
+    if (_cache.Count < MaxCacheSize) return;
+
+        var oldest = _cache.MinBy(kv => kv.Value.CachedAt);
+        _cache.TryRemove(oldest.Key, out _);
     }
 }

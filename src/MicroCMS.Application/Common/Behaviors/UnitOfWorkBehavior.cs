@@ -28,7 +28,10 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
 
         if (IsCommand())
         {
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            // Use CancellationToken.None so a client disconnect (which cancels the HTTP
+            // request token) never aborts a save that the handler already completed.
+            // The handler ran successfully — the write must be committed regardless.
+            await unitOfWork.SaveChangesAsync(CancellationToken.None);
         }
 
         return response;

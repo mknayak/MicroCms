@@ -39,7 +39,27 @@ public sealed record ArchiveContentTypeCommand(Guid ContentTypeId) : ICommand<Co
 public sealed record UpdateContentTypeCommand(
     Guid ContentTypeId,
     string DisplayName,
-    string? Description = null) : ICommand<ContentTypeDto>;
+    string? Description = null,
+  IReadOnlyList<UpdateFieldInput>? Fields = null) : ICommand<ContentTypeDto>;
+
+/// <summary>
+/// Represents a field in the full-update payload.
+/// <para>
+/// <c>Id == null</c> → add as a new field.<br/>
+/// <c>Id != null</c> → update the existing field with that ID.<br/>
+/// Fields currently on the content type whose ID is absent from the list are removed.
+/// </para>
+/// </summary>
+public sealed record UpdateFieldInput(
+    Guid? Id,
+    string Handle,
+    string Label,
+    string FieldType,
+bool IsRequired = false,
+    bool IsLocalized = false,
+    bool IsUnique = false,
+    int SortOrder = 0,
+    string? Description = null);
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record DeleteContentTypeCommand(Guid ContentTypeId) : ICommand;

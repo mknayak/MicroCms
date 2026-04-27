@@ -85,10 +85,11 @@ public sealed class FieldDefinition : Entity<Guid>
             validationJson);
     }
 
-    internal void Update(string label, bool isRequired, bool isLocalized, int sortOrder, string? description)
+    internal void Update(string label, FieldType fieldType, bool isRequired, bool isLocalized, int sortOrder, string? description)
     {
         ValidateLabel(label);
         Label = label.Trim();
+        FieldType = fieldType;
         IsRequired = isRequired;
         IsLocalized = isLocalized;
         SortOrder = sortOrder;
