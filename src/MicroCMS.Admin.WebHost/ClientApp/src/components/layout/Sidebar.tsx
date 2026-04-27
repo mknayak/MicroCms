@@ -85,7 +85,7 @@ const NAV_SECTIONS: NavSection[] = [
 
   // 4 ── Design — component system
   {
-    title: 'Design',
+ title: 'Design',
     items: [
       {
     label: 'Component Library',
@@ -96,8 +96,13 @@ const NAV_SECTIONS: NavSection[] = [
       },
       {
         label: 'Layouts',
-        href: '/layouts',
-        icon: <Icon d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />,
+      href: '/layouts',
+      icon: <Icon d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />,
+      },
+    {
+        label: 'Page Designer',
+        href: '/designer',
+        icon: <Icon d="M3 3h18v18H3zM3 9h18M9 21V9" />,
       },
     ],
   },

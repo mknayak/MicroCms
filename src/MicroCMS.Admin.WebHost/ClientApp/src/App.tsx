@@ -31,6 +31,7 @@ const ComponentEditorPage = lazy(() => import('@/pages/components/ComponentEdito
 const ComponentItemListPage = lazy(() => import('@/pages/components/ComponentItemListPage'));
 const ComponentItemEditorPage = lazy(() => import('@/pages/components/ComponentItemEditorPage'));
 const LayoutsPage = lazy(() => import('@/pages/layouts/LayoutsPage'));
+const PageDesignerPage = lazy(() => import('@/pages/designer/PageDesignerPage'));
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -173,6 +174,16 @@ export default function App() {
                                                 <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Editor']}>
                                                     <Suspense fallback={<PageLoader />}>
                                                         <LayoutsPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/designer"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Editor']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <PageDesignerPage />
                                                     </Suspense>
                                                 </ProtectedRoute>
                                             }
