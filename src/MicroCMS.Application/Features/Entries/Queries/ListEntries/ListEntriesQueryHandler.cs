@@ -12,37 +12,46 @@ using MicroCMS.Shared.Results;
 
 namespace MicroCMS.Application.Features.Entries.Queries.ListEntries;
 
-/// <summary>Handles <see cref="ListEntriesQuery"/> with a cache-aside read pattern (Sprint 9).</summary>
+/// <summary>Handles <see cref="ListEntriesQuery"/> with a cache-aside read pattern.</summary>
 public sealed class ListEntriesQueryHandler(
- IRepository<Entry, EntryId> entryRepository,
+    IRepository<Entry, EntryId> entryRepository,
     ICacheService cacheService,
     ICurrentUser currentUser)
     : IRequestHandler<ListEntriesQuery, Result<PagedList<EntryListItemDto>>>
 {
     public async Task<Result<PagedList<EntryListItemDto>>> Handle(
- ListEntriesQuery request,
-  CancellationToken cancellationToken)
+        ListEntriesQuery request,
+        CancellationToken cancellationToken)
     {
-     var tenantId = currentUser.TenantId;
-        var cacheKey = CacheKeys.EntryList(tenantId, request.SiteId, request.StatusFilter, request.Page, request.PageSize);
+        var tenantId = currentUser.TenantId;
+        var cacheKey = CacheKeys.EntryList(
+            tenantId, request.SiteId, request.StatusFilter,
+            request.ContentTypeId, request.Locale, request.FolderId,
+            request.PageNumber, request.PageSize);
 
         var cached = await cacheService.GetAsync<PagedList<EntryListItemDto>>(cacheKey, cancellationToken);
-      if (cached is not null)
-    return Result.Success(cached);
+        if (cached is not null)
+            return Result.Success(cached);
 
         var siteId = new SiteId(request.SiteId);
 
-    var listSpec = new EntriesBySiteSpec(siteId, request.StatusFilter, request.Page, request.PageSize);
-        var countSpec = new EntriesBySiteSpec(siteId, request.StatusFilter);
+        var listSpec = new EntriesBySiteSpec(
+            siteId, request.StatusFilter, request.ContentTypeId,
+            request.Locale, request.FolderId, request.PageNumber, request.PageSize);
 
-   var entries = await entryRepository.ListAsync(listSpec, cancellationToken);
-      var totalCount = await entryRepository.CountAsync(countSpec, cancellationToken);
+        var countSpec = new EntriesBySiteSpec(
+            siteId, request.StatusFilter, request.ContentTypeId,
+            request.Locale, request.FolderId);
+
+        var entries = await entryRepository.ListAsync(listSpec, cancellationToken);
+        var totalCount = await entryRepository.CountAsync(countSpec, cancellationToken);
 
         var dtos = EntryMapper.ToListItemDtos(entries);
-      var paged = PagedList<EntryListItemDto>.Create(dtos, request.Page, request.PageSize, totalCount);
+        var paged = PagedList<EntryListItemDto>.Create(dtos, request.PageNumber, request.PageSize, totalCount);
 
-  await cacheService.SetWithTagAsync(cacheKey, paged, CacheTags.TenantEntries(tenantId), cancellationToken: cancellationToken);
+        await cacheService.SetWithTagAsync(
+            cacheKey, paged, CacheTags.TenantEntries(tenantId), cancellationToken: cancellationToken);
 
-   return Result.Success(paged);
+        return Result.Success(paged);
     }
 }

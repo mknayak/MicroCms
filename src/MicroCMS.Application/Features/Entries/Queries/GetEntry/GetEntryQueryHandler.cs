@@ -6,6 +6,7 @@ using MicroCMS.Application.Features.Entries.Mappers;
 using MicroCMS.Application.Features.Search.EventHandlers;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications.Content;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
 
@@ -19,25 +20,27 @@ public sealed class GetEntryQueryHandler(
     : IRequestHandler<GetEntryQuery, Result<EntryDto>>
 {
     public async Task<Result<EntryDto>> Handle(
-  GetEntryQuery request,
-        CancellationToken cancellationToken)
+        GetEntryQuery request,
+     CancellationToken cancellationToken)
     {
         var tenantId = currentUser.TenantId;
-      var entryId = new EntryId(request.EntryId);
+     var entryId = new EntryId(request.EntryId);
         var cacheKey = CacheKeys.Entry(tenantId, entryId);
 
-        // L1/L2 cache hit
-     var cached = await cacheService.GetAsync<EntryDto>(cacheKey, cancellationToken);
+    var cached = await cacheService.GetAsync<EntryDto>(cacheKey, cancellationToken);
         if (cached is not null)
-            return Result.Success(cached);
+       return Result.Success(cached);
 
-        // Cache miss — load from DB
-        var entry = await entryRepository.GetByIdAsync(entryId, cancellationToken)
-            ?? throw new NotFoundException(nameof(Entry), entryId);
+  var entry = await entryRepository.GetByIdAsync(entryId, cancellationToken)
+   ?? throw new NotFoundException(nameof(Entry), entryId);
 
-        var dto = EntryMapper.ToDto(entry);
+ // Fetch locale variants for the same slug+contentType
+        var variantsSpec = new EntryLocaleVariantsSpec(entry.SiteId, entry.ContentTypeId, entry.Slug);
+        var variants = await entryRepository.ListAsync(variantsSpec, cancellationToken);
+  var localeVariants = variants.Select(e => e.Locale.Value).ToList().AsReadOnly();
 
-  // Populate cache and associate tag for bulk invalidation
+        var dto = EntryMapper.ToDto(entry, localeVariants);
+
         await cacheService.SetWithTagAsync(cacheKey, dto, CacheTags.TenantEntries(tenantId), cancellationToken: cancellationToken);
 
         return Result.Success(dto);

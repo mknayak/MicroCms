@@ -106,6 +106,6 @@ public sealed class CreateEntryCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.FieldsJson.Should().Be("{}");
+        result.Value.Fields.Should().BeNullOrEmpty();
     }
 }

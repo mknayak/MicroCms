@@ -34,18 +34,20 @@ public sealed class RootQuery
 
     /// <summary>Returns a paginated list of entries for a site.</summary>
     public async Task<PagedList<EntryListItemDto>> EntriesAsync(
-  Guid siteId,
+        Guid siteId,
         string? statusFilter,
-        int page,
-    int pageSize,
-  [Service] IMediator mediator,
+        Guid? contentTypeId,
+        string? locale,
+        int pageNumber,
+        int pageSize,
+        [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {
-     var query = new ListEntriesQuery(siteId, statusFilter, page, pageSize);
+        var query = new ListEntriesQuery(siteId, statusFilter, contentTypeId, locale, PageNumber: pageNumber, PageSize: pageSize);
         var result = await mediator.Send(query, cancellationToken);
         return result.IsSuccess
             ? result.Value
-            : PagedList<EntryListItemDto>.Create(Array.Empty<EntryListItemDto>(), page, pageSize, 0);
+            : PagedList<EntryListItemDto>.Create(Array.Empty<EntryListItemDto>(), pageNumber, pageSize, 0);
     }
 
     // ── Content types ──────────────────────────────────────────────────────

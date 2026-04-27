@@ -21,12 +21,13 @@ internal sealed class CreateContentTypeCommandHandler(
 {
     public async Task<Result<ContentTypeDto>> Handle(CreateContentTypeCommand request, CancellationToken cancellationToken)
     {
-        var ct = ContentType.Create(
-                currentUser.TenantId,
-      new SiteId(request.SiteId),
-          request.Handle,
-          request.DisplayName,
-      request.Description);
+      var ct = ContentType.Create(
+     currentUser.TenantId,
+         new SiteId(request.SiteId),
+      request.Handle,
+      request.DisplayName,
+     request.Description,
+      request.Localization);
 
         await repo.AddAsync(ct, cancellationToken);
         return Result.Success(ContentTypeMapper.ToDto(ct));
@@ -47,7 +48,8 @@ internal sealed class AddFieldCommandHandler(
             throw new ValidationException([new ValidationFailure("FieldType", $"'{request.FieldType}' is not a valid FieldType.")]);
 
         ct.AddField(request.Handle, request.Label, fieldType,
-        request.IsRequired, request.IsLocalized, request.IsUnique, request.Description);
+            request.IsRequired, request.IsLocalized, request.IsUnique,
+            description: request.Description, isIndexed: request.IsIndexed);
 
         repo.Update(ct);
         await InvalidateAsync(ct.TenantId, ct.Id.Value, cancellationToken);
@@ -131,7 +133,7 @@ internal sealed class UpdateContentTypeCommandHandler(
         var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
            ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
 
-        ct.Update(request.DisplayName, request.Description);
+        ct.Update(request.DisplayName, request.Description, request.Localization);
 
         if (request.Fields is not null)
         {
@@ -150,9 +152,10 @@ internal sealed class UpdateContentTypeCommandHandler(
                     throw new ValidationException([new ValidationFailure("FieldType", $"'{f.FieldType}' is not a valid FieldType.")]);
 
                 if (f.Id.HasValue)
-                    ct.UpdateField(f.Id.Value, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.SortOrder, f.Description);
+                    ct.UpdateField(f.Id.Value, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsIndexed, f.SortOrder, f.Description);
                 else
-                    ct.AddField(f.Handle, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsUnique, f.Description);
+                    ct.AddField(f.Handle, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsUnique,
+                        description: f.Description, isIndexed: f.IsIndexed);
             }
         }
 
@@ -186,4 +189,39 @@ internal sealed class DeleteContentTypeCommandHandler(
     private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
         cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
       cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
+}
+
+internal sealed class ImportContentTypeSchemaCommandHandler(
+    IRepository<ContentType, ContentTypeId> repo,
+    ICurrentUser currentUser)
+    : IRequestHandler<ImportContentTypeSchemaCommand, Result<ContentTypeDto>>
+{
+    private const int MaxImportFields = 50;
+
+    public async Task<Result<ContentTypeDto>> Handle(ImportContentTypeSchemaCommand request, CancellationToken cancellationToken)
+    {
+        if (request.Fields.Count > MaxImportFields)
+            return Result.Failure<ContentTypeDto>(Error.Validation("Import.TooManyFields",
+     $"Import is limited to {MaxImportFields} fields."));
+
+        var ct = ContentType.Create(
+      currentUser.TenantId,
+       new SiteId(request.SiteId),
+        request.Handle,
+            request.DisplayName,
+            request.Description);
+
+   foreach (var field in request.Fields)
+        {
+            if (!Enum.TryParse<FieldType>(field.FieldType, ignoreCase: true, out var fieldType))
+            continue;
+
+            ct.AddField(field.Handle, field.Label, fieldType,
+      field.IsRequired, field.IsLocalized,
+                description: null, isIndexed: false);
+        }
+
+        await repo.AddAsync(ct, cancellationToken);
+     return Result.Success(ContentTypeMapper.ToDto(ct));
+    }
 }

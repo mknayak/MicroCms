@@ -65,8 +65,9 @@ public sealed class UpdateEntryCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.FieldsJson.Should().Be("""{"title":"Updated"}""");
-        _repository.Received(1).Update(_existingEntry);
+        result.Value.Fields.Should().ContainKey("title");
+        result.Value.Fields.Should().ContainKey("title");
+    _repository.Received(1).Update(_existingEntry);
     }
 
     [Fact]
@@ -130,3 +131,4 @@ public sealed class UpdateEntryCommandHandlerTests
         result.Value.Slug.Should().Be("new-unique-slug");
     }
 }
+

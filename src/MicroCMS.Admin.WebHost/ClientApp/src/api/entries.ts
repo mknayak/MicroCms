@@ -4,18 +4,18 @@ import type {
   EntryListItem,
   CreateEntryRequest,
   UpdateEntryRequest,
-  PublishEntryRequest,
   EntryVersion,
   PagedResult,
   EntryListParams,
+  SeoMetadata,
 } from '@/types';
 
 export const entriesApi = {
   list: (params?: EntryListParams): Promise<PagedResult<EntryListItem>> =>
     get<PagedResult<EntryListItem>>('/entries', { params }),
 
-  getById: (id: string, locale?: string): Promise<Entry> =>
-    get<Entry>(`/entries/${id}`, { params: { locale } }),
+  getById: (id: string): Promise<Entry> =>
+    get<Entry>(`/entries/${id}`),
 
   create: (data: CreateEntryRequest): Promise<Entry> =>
     post<Entry>('/entries', data),
@@ -23,17 +23,29 @@ export const entriesApi = {
   update: (id: string, data: UpdateEntryRequest): Promise<Entry> =>
     put<Entry>(`/entries/${id}`, data),
 
-  publish: (id: string, data?: PublishEntryRequest): Promise<void> =>
-    post<void>(`/entries/${id}/publish`, data),
+  updateSeo: (id: string, seo: Partial<SeoMetadata & { metaTitle: string; metaDescription: string }>): Promise<Entry> =>
+    put<Entry>(`/entries/${id}/seo`, seo),
 
-  unpublish: (id: string): Promise<void> =>
-    post<void>(`/entries/${id}/unpublish`),
+  publish: (id: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/publish`),
 
-  submitForReview: (id: string): Promise<void> =>
-    post<void>(`/entries/${id}/review`),
+  unpublish: (id: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/unpublish`),
 
-  archive: (id: string): Promise<void> =>
-    post<void>(`/entries/${id}/archive`),
+  submitForReview: (id: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/submit`),
+
+  approve: (id: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/approve`),
+
+  reject: (id: string, reason: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/reject`, { reason }),
+
+  schedule: (id: string, publishAt: string, unpublishAt?: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/schedule`, { publishAt, unpublishAt }),
+
+  cancelSchedule: (id: string): Promise<void> =>
+    del(`/entries/${id}/schedule`),
 
   delete: (id: string): Promise<void> =>
     del(`/entries/${id}`),
@@ -41,6 +53,10 @@ export const entriesApi = {
   getVersions: (id: string): Promise<EntryVersion[]> =>
     get<EntryVersion[]>(`/entries/${id}/versions`),
 
-  restoreVersion: (id: string, versionId: string): Promise<void> =>
-    post<void>(`/entries/${id}/versions/${versionId}/restore`),
+  /** Restore a specific version by its GUID. */
+  restoreVersion: (id: string, versionId: string): Promise<Entry> =>
+    post<Entry>(`/entries/${id}/versions/${versionId}/restore`),
+
+  getPreviewToken: (id: string): Promise<{ token: string; expiresAt: string }> =>
+    get(`/entries/${id}/preview-token`),
 };

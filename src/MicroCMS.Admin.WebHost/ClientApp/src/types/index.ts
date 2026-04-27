@@ -125,6 +125,11 @@ export interface ContentTypeListItem {
   /** Human-readable display name */
   displayName: string;
   status: string;
+  localizationMode: string;
+  /** Count of non-archived entries for this content type. */
+  entryCount: number;
+  /** Count of distinct locales used by entries of this type. */
+  localeCount: number;
   /** Number of fields defined on this content type */
   fieldCount: number;
   updatedAt: string;
@@ -141,6 +146,7 @@ export interface ContentType {
   handle: string;
   displayName: string;
   description?: string;
+  localizationMode: string;
   status: string;
   fields: FieldDefinitionDto[];
   createdAt: string;
@@ -158,8 +164,11 @@ export interface FieldDefinitionDto {
   isRequired: boolean;
   isLocalized: boolean;
   isUnique: boolean;
+  isIndexed: boolean;
   sortOrder: number;
   description?: string;
+  /** Allowed values for Enum-type fields. Null/undefined for all other types. */
+  options?: string[];
 }
 
 export interface CreateContentTypeRequest {
@@ -176,53 +185,95 @@ export interface UpdateContentTypeRequest extends CreateContentTypeRequest {
 
 // ─── Entries ──────────────────────────────────────────────────────────────────
 
-export type EntryStatus = 'Draft' | 'Review' | 'Scheduled' | 'Published' | 'Archived';
+/** Matches the backend EntryStatus enum exactly (case-sensitive). */
+export type EntryStatus =
+  | 'Draft'
+  | 'PendingReview'
+  | 'Approved'
+  | 'Published'
+  | 'Unpublished'
+  | 'Archived'
+  | 'Scheduled';
 
+/** Matches EntryListItemDto — returned by GET /entries (paginated list). */
 export interface EntryListItem {
   id: string;
-  title: string;
-  slug: string;
-  status: EntryStatus;
-  locale: string;
+  siteId: string;
   contentTypeId: string;
-  contentTypeName: string;
+  /** Populated when the backend performs a join; may be null on simple list paths. */
+  contentTypeName?: string;
+  slug: string;
+  /** Extracted from the "title" field in FieldsJson; null when absent. */
+  title?: string;
+  locale: string;
   authorId: string;
-  authorName: string;
-  publishedAt?: string;
-  scheduledAt?: string;
+  /** Populated when the backend performs a join; may be null on simple list paths. */
+  authorName?: string;
+  status: EntryStatus;
+  currentVersionNumber: number;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
+  scheduledPublishAt?: string;
 }
 
-export interface Entry extends EntryListItem {
+/** Matches EntryDto — returned by GET /entries/{id} (single entry). */
+export interface Entry {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  contentTypeId: string;
+  slug: string;
+  locale: string;
+  authorId: string;
+  status: EntryStatus;
+  currentVersionNumber: number;
   fields: Record<string, unknown>;
-  localeVariants: string[];
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  scheduledPublishAt?: string;
+  scheduledUnpublishAt?: string;
+  folderId?: string;
+  seo?: SeoMetadata;
+  /** All locale codes for which a variant of this entry exists. */
+  localeVariants?: string[];
+}
+
+export interface SeoMetadata {
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
 }
 
 export interface CreateEntryRequest {
+  siteId: string;
   contentTypeId: string;
   slug: string;
   locale: string;
-  fields: Record<string, unknown>;
+  fields?: Record<string, unknown>;
 }
 
 export interface UpdateEntryRequest {
-  slug: string;
-  fields: Record<string, unknown>;
+  fields?: Record<string, unknown>;
+  newSlug?: string;
+  changeNote?: string;
 }
 
 export interface PublishEntryRequest {
   scheduledAt?: string;
 }
 
+/** Matches EntryVersionDto — returned by GET /entries/{id}/versions. */
 export interface EntryVersion {
   id: string;
   entryId: string;
-  version: number;
+  versionNumber: number;
   fields: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
+  authorId: string;
   changeNote?: string;
+  createdAt: string;
 }
 
 export interface EntryListParams extends PaginationParams {
@@ -231,6 +282,7 @@ export interface EntryListParams extends PaginationParams {
   status?: EntryStatus;
   locale?: string;
   search?: string;
+  folderId?: string;
 }
 
 // ─── Media ────────────────────────────────────────────────────────────────────

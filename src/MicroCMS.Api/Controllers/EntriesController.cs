@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MicroCMS.Application.Features.Entries.Commands.Bulk;
 using MicroCMS.Application.Features.Entries.Commands.CancelScheduledPublish;
 using MicroCMS.Application.Features.Entries.Commands.CreateEntry;
@@ -26,24 +27,33 @@ namespace MicroCMS.Api.Controllers;
 [Authorize]
 public sealed class EntriesController : ApiControllerBase
 {
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
+
     // ── Queries ───────────────────────────────────────────────────────────
 
     [HttpGet]
     [ProducesResponseType(typeof(PagedList<EntryListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-  [FromQuery] Guid siteId, [FromQuery] string? status,
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        [FromQuery] Guid siteId,
+        [FromQuery] string? status,
+        [FromQuery] Guid? contentTypeId,
+        [FromQuery] string? locale,
+        [FromQuery] Guid? folderId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default) =>
-        OkOrProblem(await Sender.Send(new ListEntriesQuery(siteId, status, page, pageSize), cancellationToken));
+        OkOrProblem(await Sender.Send(
+            new ListEntriesQuery(siteId, status, contentTypeId, locale, folderId, pageNumber, pageSize),
+            cancellationToken));
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(EntryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken = default) =>
         OkOrProblem(await Sender.Send(new GetEntryQuery(id), cancellationToken));
 
- [HttpGet("{id:guid}/versions")]
+    [HttpGet("{id:guid}/versions")]
     [ProducesResponseType(typeof(IReadOnlyList<EntryVersionDto>), StatusCodes.Status200OK)]
-public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancellationToken = default) =>
+    public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancellationToken = default) =>
         OkOrProblem(await Sender.Send(new GetEntryVersionsQuery(id), cancellationToken));
 
     [HttpGet("{id:guid}/quality-checks")]
@@ -52,7 +62,7 @@ public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancella
         OkOrProblem(await Sender.Send(new RunQualityChecksQuery(id), cancellationToken));
 
     [HttpGet("{id:guid}/preview-token")]
-[ProducesResponseType(typeof(PreviewTokenResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PreviewTokenResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPreviewToken(Guid id, CancellationToken cancellationToken = default) =>
         OkOrProblem(await Sender.Send(new GeneratePreviewTokenQuery(id), cancellationToken));
 
@@ -61,41 +71,45 @@ public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancella
     [ProducesResponseType(typeof(EntryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByPreviewToken(
         [FromQuery] string token, CancellationToken cancellationToken = default) =>
-  OkOrProblem(await Sender.Send(new GetEntryByPreviewTokenQuery(token), cancellationToken));
+        OkOrProblem(await Sender.Send(new GetEntryByPreviewTokenQuery(token), cancellationToken));
 
     [HttpGet("export")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Export(
         [FromQuery] Guid siteId, [FromQuery] Guid? contentTypeId,
-     [FromQuery] ExportFormat format = ExportFormat.Json,
-    CancellationToken cancellationToken = default)
+        [FromQuery] ExportFormat format = ExportFormat.Json,
+        CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new ExportEntriesQuery(siteId, contentTypeId, format), cancellationToken);
-  if (result.IsFailure) return ToProblemResult(result.Error);
-      return File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
+        if (result.IsFailure) return ToProblemResult(result.Error);
+        return File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
     }
 
     // ── Commands ──────────────────────────────────────────────────────────
 
     [HttpPost]
     [ProducesResponseType(typeof(EntryDto), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Create([FromBody] CreateEntryCommand command, CancellationToken ct = default)
+    public async Task<IActionResult> Create([FromBody] CreateEntryRequest r, CancellationToken ct = default)
     {
+        var fieldsJson = SerialiseFields(r.Fields);
+        var command = new CreateEntryCommand(r.SiteId, r.ContentTypeId, r.Slug, r.Locale, fieldsJson);
         var result = await Sender.Send(command, ct);
-   return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
+        return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(EntryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(
         Guid id, [FromBody] UpdateEntryRequest r, CancellationToken ct = default) =>
-        OkOrProblem(await Sender.Send(new UpdateEntryCommand(id, r.FieldsJson, r.NewSlug, r.ChangeNote), ct));
+        OkOrProblem(await Sender.Send(
+            new UpdateEntryCommand(id, SerialiseFields(r.Fields), r.NewSlug, r.ChangeNote), ct));
 
     [HttpPut("{id:guid}/seo")]
     [ProducesResponseType(typeof(EntryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateSeo(
- Guid id, [FromBody] UpdateSeoRequest r, CancellationToken ct = default) =>
-        OkOrProblem(await Sender.Send(new UpdateSeoMetadataCommand(id, r.MetaTitle, r.MetaDescription, r.CanonicalUrl, r.OgImage), ct));
+        Guid id, [FromBody] UpdateSeoRequest r, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(
+            new UpdateSeoMetadataCommand(id, r.MetaTitle, r.MetaDescription, r.CanonicalUrl, r.OgImage), ct));
 
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> Publish(Guid id, CancellationToken ct = default) =>
@@ -107,10 +121,10 @@ public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancella
 
     [HttpPost("{id:guid}/schedule")]
     public async Task<IActionResult> Schedule(
-     Guid id, [FromBody] ScheduleEntryRequest r, CancellationToken ct = default) =>
-      OkOrProblem(await Sender.Send(new SchedulePublishCommand(id, r.PublishAt, r.UnpublishAt), ct));
+        Guid id, [FromBody] ScheduleEntryRequest r, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new SchedulePublishCommand(id, r.PublishAt, r.UnpublishAt), ct));
 
- [HttpDelete("{id:guid}/schedule")]
+    [HttpDelete("{id:guid}/schedule")]
     public async Task<IActionResult> CancelSchedule(Guid id, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new CancelScheduledPublishCommand(id), ct));
 
@@ -118,16 +132,39 @@ public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancella
     public async Task<IActionResult> Submit(Guid id, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new SubmitForReviewCommand(id), ct));
 
-[HttpPost("{id:guid}/approve")]
+    [HttpPost("{id:guid}/approve")]
     public async Task<IActionResult> Approve(Guid id, CancellationToken ct = default) =>
-      OkOrProblem(await Sender.Send(new ApproveEntryCommand(id), ct));
+        OkOrProblem(await Sender.Send(new ApproveEntryCommand(id), ct));
 
     [HttpPost("{id:guid}/reject")]
     public async Task<IActionResult> Reject(
         Guid id, [FromBody] RejectRequest r, CancellationToken ct = default) =>
-     OkOrProblem(await Sender.Send(new RejectEntryCommand(id, r.Reason), ct));
+        OkOrProblem(await Sender.Send(new RejectEntryCommand(id, r.Reason), ct));
 
- [HttpPost("{id:guid}/rollback")]
+    /// <summary>
+    /// Rolls back to a specific version identified by its GUID.
+    /// Loads all versions of the entry, resolves the version number, then delegates
+    /// to <see cref="RollbackEntryVersionCommand"/>.
+    /// </summary>
+    [HttpPost("{id:guid}/versions/{versionId:guid}/restore")]
+    [ProducesResponseType(typeof(EntryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RestoreVersion(
+        Guid id, Guid versionId, CancellationToken ct = default)
+    {
+        var versionsResult = await Sender.Send(new GetEntryVersionsQuery(id), ct);
+        if (versionsResult.IsFailure)
+            return ToProblemResult(versionsResult.Error);
+
+        var version = versionsResult.Value.FirstOrDefault(v => v.Id == versionId);
+        if (version is null)
+            return NotFound(new { detail = $"Version {versionId} not found on entry {id}." });
+
+        return OkOrProblem(await Sender.Send(new RollbackEntryVersionCommand(id, version.VersionNumber), ct));
+    }
+
+    /// <summary>Rollback by version number (kept for backward compatibility).</summary>
+    [HttpPost("{id:guid}/rollback")]
     public async Task<IActionResult> Rollback(
         Guid id, [FromBody] RollbackEntryRequest r, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new RollbackEntryVersionCommand(id, r.TargetVersionNumber), ct));
@@ -148,17 +185,39 @@ public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancella
     [ProducesResponseType(typeof(BulkOperationResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> BulkUnpublish(
         [FromBody] BulkEntriesRequest r, CancellationToken ct = default) =>
- OkOrProblem(await Sender.Send(new BulkUnpublishEntriesCommand(r.EntryIds), ct));
+        OkOrProblem(await Sender.Send(new BulkUnpublishEntriesCommand(r.EntryIds), ct));
 
     [HttpDelete("bulk")]
     [ProducesResponseType(typeof(BulkOperationResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> BulkDelete(
         [FromBody] BulkEntriesRequest r, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new BulkDeleteEntriesCommand(r.EntryIds), ct));
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    /// <summary>Serialises the structured fields map back to a JSON string for the domain command.</summary>
+    private static string SerialiseFields(Dictionary<string, JsonElement>? fields) =>
+        fields is null || fields.Count == 0
+            ? "{}"
+            : JsonSerializer.Serialize(fields, _jsonOpts);
 }
 
 // ── Request models ─────────────────────────────────────────────────────────────
-public sealed record UpdateEntryRequest(string FieldsJson, string? NewSlug = null, string? ChangeNote = null);
+
+/// <summary>Payload for POST /entries. Fields are a structured JSON object.</summary>
+public sealed record CreateEntryRequest(
+    Guid SiteId,
+    Guid ContentTypeId,
+    string Slug,
+    string Locale,
+    Dictionary<string, JsonElement>? Fields = null);
+
+/// <summary>Payload for PUT /entries/{id}. Fields are a structured JSON object.</summary>
+public sealed record UpdateEntryRequest(
+    Dictionary<string, JsonElement>? Fields,
+    string? NewSlug = null,
+    string? ChangeNote = null);
+
 public sealed record ScheduleEntryRequest(DateTimeOffset PublishAt, DateTimeOffset? UnpublishAt = null);
 public sealed record RollbackEntryRequest(int TargetVersionNumber);
 public sealed record UpdateSeoRequest(string? MetaTitle, string? MetaDescription, string? CanonicalUrl = null, string? OgImage = null);

@@ -26,6 +26,7 @@ public sealed class FieldDefinition : Entity<Guid>
         bool isRequired,
         bool isLocalized,
         bool isUnique,
+        bool isIndexed,
         int sortOrder,
         string? description,
         string? validationJson)
@@ -38,6 +39,7 @@ public sealed class FieldDefinition : Entity<Guid>
         IsRequired = isRequired;
         IsLocalized = isLocalized;
         IsUnique = isUnique;
+        IsIndexed = isIndexed;
         SortOrder = sortOrder;
         Description = description;
         ValidationJson = validationJson;
@@ -50,6 +52,10 @@ public sealed class FieldDefinition : Entity<Guid>
     public bool IsRequired { get; private set; }
     public bool IsLocalized { get; private set; }
     public bool IsUnique { get; private set; }
+
+    /// <summary>When true, a DB index is maintained for this field to support filtered queries.</summary>
+    public bool IsIndexed { get; private set; }
+
     public int SortOrder { get; private set; }
     public string? Description { get; private set; }
 
@@ -66,7 +72,8 @@ public sealed class FieldDefinition : Entity<Guid>
         bool isUnique,
         int sortOrder,
         string? description = null,
-        string? validationJson = null)
+        string? validationJson = null,
+        bool isIndexed = false)
     {
         ValidateHandle(handle);
         ValidateLabel(label);
@@ -80,18 +87,27 @@ public sealed class FieldDefinition : Entity<Guid>
             isRequired,
             isLocalized,
             isUnique,
+            isIndexed,
             sortOrder,
             description?.Trim(),
             validationJson);
     }
 
-    internal void Update(string label, FieldType fieldType, bool isRequired, bool isLocalized, int sortOrder, string? description)
+    internal void Update(
+        string label,
+        FieldType fieldType,
+        bool isRequired,
+        bool isLocalized,
+        bool isIndexed,
+        int sortOrder,
+        string? description)
     {
         ValidateLabel(label);
         Label = label.Trim();
         FieldType = fieldType;
         IsRequired = isRequired;
         IsLocalized = isLocalized;
+        IsIndexed = isIndexed;
         SortOrder = sortOrder;
         Description = description?.Trim();
     }

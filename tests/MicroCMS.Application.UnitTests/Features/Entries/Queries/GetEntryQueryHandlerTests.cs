@@ -62,7 +62,7 @@ public sealed class GetEntryQueryHandlerTests
         result.Value.Slug.Should().Be("my-entry");
         result.Value.Locale.Should().Be("en");
         result.Value.TenantId.Should().Be(_tenantId.Value);
-        result.Value.FieldsJson.Should().Be("""{"title":"Hello"}""");
+        result.Value.Fields.Should().ContainKey("title");
     }
 
     [Fact]

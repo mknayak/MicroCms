@@ -141,8 +141,11 @@ public static class CacheKeys
     public static string Entry(TenantId tenantId, EntryId entryId)
         => $"cms:{tenantId.Value}:entry:{entryId.Value}";
 
-    public static string EntryList(TenantId tenantId, Guid siteId, string? status, int page, int pageSize)
-        => $"cms:{tenantId.Value}:entries:{siteId}:{status ?? "all"}:{page}:{pageSize}";
+    public static string EntryList(
+        TenantId tenantId, Guid siteId, string? status,
+        Guid? contentTypeId, string? locale, Guid? folderId,
+        int pageNumber, int pageSize)
+        => $"cms:{tenantId.Value}:entries:{siteId}:{status ?? "all"}:{contentTypeId?.ToString() ?? "any"}:{locale ?? "any"}:{folderId?.ToString() ?? "any"}:{pageNumber}:{pageSize}";
 
     public static string ContentType(TenantId tenantId, Guid contentTypeId)
       => $"cms:{tenantId.Value}:contenttype:{contentTypeId}";

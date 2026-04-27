@@ -53,7 +53,7 @@ public sealed class ListEntriesQueryHandlerTests
             .CountAsync(Arg.Any<ISpecification<Entry>>(), Arg.Any<CancellationToken>())
             .Returns(2);
 
-        var query = new ListEntriesQuery(SiteId: _siteId.Value, Page: 1, PageSize: 10);
+        var query = new ListEntriesQuery(SiteId: _siteId.Value, PageNumber: 1, PageSize: 10);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);

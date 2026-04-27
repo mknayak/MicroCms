@@ -43,7 +43,7 @@ public sealed class WorkflowCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Status.Should().Be(EntryStatus.PendingApproval.ToString());
+        result.Value.Status.Should().Be(EntryStatus.PendingReview.ToString());
         _repository.Received(1).Update(entry);
     }
 

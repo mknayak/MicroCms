@@ -37,7 +37,7 @@ public sealed class EntryAggregateTests
         var entry = CreateDraftEntry();
 
         entry.Submit();
-        entry.Status.Should().Be(EntryStatus.PendingApproval);
+        entry.Status.Should().Be(EntryStatus.PendingReview);
 
         entry.Approve();
         entry.Status.Should().Be(EntryStatus.Approved);

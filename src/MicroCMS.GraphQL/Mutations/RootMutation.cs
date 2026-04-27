@@ -114,18 +114,19 @@ public async Task<EntryPayload> UnpublishEntryAsync(
     /// <summary>Adds a field to an existing content type.</summary>
     public async Task<ContentTypePayload> AddFieldAsync(
         AddFieldInput input,
- [Service] IMediator mediator,
-        CancellationToken cancellationToken)
+        [Service] IMediator mediator,
+      CancellationToken cancellationToken)
     {
         var command = new AddFieldCommand(
-input.ContentTypeId,
-    input.Handle,
-   input.Label,
- input.FieldType,
-    input.IsRequired,
-    input.IsLocalized,
-         input.IsUnique,
-            input.Description);
+     input.ContentTypeId,
+         input.Handle,
+          input.Label,
+         input.FieldType,
+      input.IsRequired,
+            input.IsLocalized,
+            input.IsUnique,
+ false, // IsIndexed — not exposed via GraphQL input (defaults to false)
+      input.Description);
 
         var result = await mediator.Send(command, cancellationToken);
         return result.IsSuccess

@@ -15,6 +15,7 @@ import InstallPage from '@/pages/install/InstallPage';
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const ContentTypesPage = lazy(() => import('@/pages/content-types/ContentTypesPage'));
 const ContentTypeEditPage = lazy(() => import('@/pages/content-types/ContentTypeEditPage'));
+const ContentTypeDetailPage = lazy(() => import('@/pages/content-types/ContentTypeDetailPage'));
 const EntriesPage = lazy(() => import('@/pages/entries/EntriesPage'));
 const EntryEditorPage = lazy(() => import('@/pages/entries/EntryEditorPage'));
 const MediaPage = lazy(() => import('@/pages/media/MediaPage'));
@@ -85,6 +86,14 @@ export default function App() {
                                             element={
                                                 <Suspense fallback={<PageLoader />}>
                                                     <ContentTypeEditPage />
+                                                </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/content-types/:id"
+                                            element={
+                                                <Suspense fallback={<PageLoader />}>
+                                                    <ContentTypeDetailPage />
                                                 </Suspense>
                                             }
                                         />

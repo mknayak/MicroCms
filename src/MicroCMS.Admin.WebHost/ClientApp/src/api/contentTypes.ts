@@ -11,6 +11,7 @@ export interface CreateContentTypeRequest {
   handle: string;
   displayName: string;
   description?: string;
+  localizationMode?: string;
 }
 
 export interface UpdateFieldRequest {
@@ -21,6 +22,7 @@ export interface UpdateFieldRequest {
   isRequired?: boolean;
   isLocalized?: boolean;
   isUnique?: boolean;
+  isIndexed?: boolean;
   sortOrder?: number;
   description?: string;
 }
@@ -28,7 +30,22 @@ export interface UpdateFieldRequest {
 export interface UpdateContentTypeRequest {
   displayName: string;
   description?: string;
+  localizationMode?: string;
   fields?: UpdateFieldRequest[];
+}
+
+export interface ImportSchemaRequest {
+  siteId: string;
+  handle: string;
+  displayName: string;
+  description?: string;
+  fields?: Array<{
+    handle: string;
+    label: string;
+    fieldType: string;
+    isRequired?: boolean;
+    isLocalized?: boolean;
+  }>;
 }
 
 export const contentTypesApi = {
@@ -43,6 +60,9 @@ export const contentTypesApi = {
 
   update: (id: string, data: UpdateContentTypeRequest): Promise<ContentType> =>
     put<ContentType>(`/content-types/${id}`, data),
+
+  importSchema: (data: ImportSchemaRequest): Promise<ContentType> =>
+    post<ContentType>('/content-types/import', data),
 
   delete: (id: string): Promise<void> =>
     del(`/content-types/${id}`),

@@ -41,6 +41,12 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
         builder.Property(ct => ct.Description)
             .HasMaxLength(ContentType.MaxDescriptionLength);
 
+        builder.Property(ct => ct.LocalizationMode)
+            .HasConversion<string>()
+            .HasMaxLength(32)
+            .IsRequired()
+            .HasDefaultValue(LocalizationMode.PerLocale);
+
         builder.Property(ct => ct.Status)
             .HasConversion<string>()
             .HasMaxLength(32)
@@ -84,6 +90,7 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
             field.Property(f => f.IsRequired).IsRequired();
             field.Property(f => f.IsLocalized).IsRequired();
             field.Property(f => f.IsUnique).IsRequired();
+            field.Property(f => f.IsIndexed).IsRequired();
             field.Property(f => f.SortOrder).IsRequired();
 
             field.Property(f => f.Description)

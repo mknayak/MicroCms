@@ -42,6 +42,9 @@ const mockContentTypes: ContentTypeListItem[] = [
     handle: 'blog_post',
     displayName: 'Blog Post',
     status: 'Active',
+    localizationMode: 'PerLocale',
+    entryCount: 0,
+    localeCount: 1,
     fieldCount: 2,
     updatedAt: '2025-01-15T00:00:00Z',
   },
@@ -52,6 +55,7 @@ const mockContentTypes: ContentTypeListItem[] = [
 const mockEntries: EntryListItem[] = [
   {
     id: 'entry-1',
+    siteId: 'site-1',
     title: 'Hello World',
     slug: 'hello-world',
     status: 'Draft',
@@ -60,6 +64,7 @@ const mockEntries: EntryListItem[] = [
     contentTypeName: 'Blog Post',
     authorId: 'user-1',
     authorName: 'Test Admin',
+    currentVersionNumber: 1,
     createdAt: '2025-01-10T00:00:00Z',
     updatedAt: '2025-01-10T00:00:00Z',
   },

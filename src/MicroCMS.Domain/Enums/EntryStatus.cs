@@ -7,7 +7,7 @@ public enum EntryStatus
     Draft = 0,
 
     /// <summary>Submitted for editorial review.</summary>
-    PendingApproval = 1,
+    PendingReview = 1,
 
     /// <summary>Approved but not yet published.</summary>
     Approved = 2,

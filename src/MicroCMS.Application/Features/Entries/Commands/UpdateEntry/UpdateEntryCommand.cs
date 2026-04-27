@@ -7,7 +7,7 @@ namespace MicroCMS.Application.Features.Entries.Commands.UpdateEntry;
 
 /// <summary>
 /// Updates an existing entry's field data and optionally its slug.
-/// Only entries in Draft, PendingApproval, Approved, Scheduled, or Unpublished status are editable.
+/// Only entries in Draft, PendingReview, Approved, Scheduled, or Unpublished status are editable.
 /// </summary>
 [HasPolicy(ContentPolicies.EntryUpdate)]
 public sealed record UpdateEntryCommand(

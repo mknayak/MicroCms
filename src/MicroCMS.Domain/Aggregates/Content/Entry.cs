@@ -122,13 +122,13 @@ public sealed class Entry : AggregateRoot<EntryId>
     public void Submit()
     {
         EnsureStatus(EntryStatus.Draft, "Submit");
-        Status = EntryStatus.PendingApproval;
+        Status = EntryStatus.PendingReview;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Approve()
     {
-        EnsureStatus(EntryStatus.PendingApproval, "Approve");
+        EnsureStatus(EntryStatus.PendingReview, "Approve");
         Status = EntryStatus.Approved;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
@@ -137,7 +137,7 @@ public sealed class Entry : AggregateRoot<EntryId>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(reason, nameof(reason));
 
-        if (Status != EntryStatus.PendingApproval)
+        if (Status != EntryStatus.PendingReview)
         {
             throw new InvalidStateTransitionException("Entry", Status.ToString(), "Draft");
         }

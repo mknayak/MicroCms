@@ -17,20 +17,22 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     private ContentType() : base() { } // EF Core
 
     private ContentType(
-     ContentTypeId id,
+        ContentTypeId id,
         TenantId tenantId,
-  SiteId siteId,
+        SiteId siteId,
         string handle,
         string displayName,
-  string? description) : base(id)
-  {
+        string? description,
+        LocalizationMode localizationMode) : base(id)
+    {
         TenantId = tenantId;
         SiteId = siteId;
-   Handle = handle;
-     DisplayName = displayName;
+        Handle = handle;
+        DisplayName = displayName;
         Description = description;
+        LocalizationMode = localizationMode;
         Status = ContentTypeStatus.Draft;
-   CreatedAt = DateTimeOffset.UtcNow;
+        CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -39,6 +41,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     public string Handle { get; private set; } = string.Empty;
     public string DisplayName { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public LocalizationMode LocalizationMode { get; private set; }
     public ContentTypeStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
@@ -55,7 +58,8 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         SiteId siteId,
         string handle,
         string displayName,
-        string? description = null)
+        string? description = null,
+        LocalizationMode localizationMode = LocalizationMode.PerLocale)
     {
         ValidateHandle(handle);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
@@ -67,7 +71,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
 
         var ct = new ContentType(
             ContentTypeId.New(), tenantId, siteId,
-            handle.Trim(), displayName.Trim(), description?.Trim());
+            handle.Trim(), displayName.Trim(), description?.Trim(), localizationMode);
 
         ct.RaiseDomainEvent(new ContentTypeCreatedEvent(ct.Id, ct.TenantId, handle));
         return ct;
@@ -75,16 +79,26 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
-    public void Update(string displayName, string? description)
+    public void Update(string displayName, string? description, LocalizationMode? localizationMode = null)
     {
-    EnsureNotArchived();
+        EnsureNotArchived();
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
-  if (displayName.Length > MaxDisplayNameLength)
+        if (displayName.Length > MaxDisplayNameLength)
             throw new DomainException($"Display name must not exceed {MaxDisplayNameLength} characters.");
 
         DisplayName = displayName.Trim();
         Description = description?.Trim();
-     UpdatedAt = DateTimeOffset.UtcNow;
+        if (localizationMode.HasValue)
+            LocalizationMode = localizationMode.Value;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Changes the localization strategy for this content type.</summary>
+    public void SetLocalizationMode(LocalizationMode mode)
+    {
+        EnsureNotArchived();
+        LocalizationMode = mode;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Publish()
@@ -128,7 +142,8 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         bool isLocalized = false,
         bool isUnique = false,
         string? description = null,
-        string? validationJson = null)
+        string? validationJson = null,
+        bool isIndexed = false)
     {
         EnsureNotArchived();
 
@@ -143,7 +158,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
             Id, handle, label, fieldType,
             isRequired, isLocalized, isUnique,
             sortOrder: _fields.Count,
-            description, validationJson);
+            description, validationJson, isIndexed);
 
         _fields.Add(field);
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -156,12 +171,13 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         FieldType fieldType,
         bool isRequired,
         bool isLocalized,
+        bool isIndexed,
         int sortOrder,
         string? description)
     {
         EnsureNotArchived();
         var field = GetFieldOrThrow(fieldId);
-        field.Update(label, fieldType, isRequired, isLocalized, sortOrder, description);
+        field.Update(label, fieldType, isRequired, isLocalized, isIndexed, sortOrder, description);
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -198,10 +214,11 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
             throw new DomainException($"ContentType handle must not exceed {MaxHandleLength} characters.");
         }
 
-        if (!handle.All(c => char.IsLetterOrDigit(c) || c == '_'))
+        // Allow letters, digits, underscores, and hyphens (e.g. "blog-post" or "blog_post")
+        if (!handle.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-'))
         {
             throw new DomainException(
-                "ContentType handle may only contain letters, digits, and underscores.");
+                "ContentType handle may only contain lowercase letters, digits, hyphens, and underscores.");
         }
     }
 }

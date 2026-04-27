@@ -75,7 +75,7 @@ internal sealed class ListContentTypesQueryHandler(
      var total = await repo.CountAsync(countSpec, cancellationToken);
 
    var paged = PagedList<ContentTypeListItemDto>.Create(
-    items.Select(ContentTypeMapper.ToListItemDto),
+    items.Select(ct => ContentTypeMapper.ToListItemDto(ct)),
             request.Page, request.PageSize, total);
 
       await cacheService.SetWithTagAsync(cacheKey, paged, CacheTags.TenantContentTypes(tenantId), cancellationToken: cancellationToken);

@@ -2,6 +2,7 @@ using MicroCMS.Application.Common.Attributes;
 using MicroCMS.Application.Common.Authorization;
 using MicroCMS.Application.Common.Markers;
 using MicroCMS.Application.Features.ContentTypes.Dtos;
+using MicroCMS.Domain.Enums;
 using MicroCMS.Shared.Primitives;
 
 namespace MicroCMS.Application.Features.ContentTypes.Commands;
@@ -10,8 +11,9 @@ namespace MicroCMS.Application.Features.ContentTypes.Commands;
 public sealed record CreateContentTypeCommand(
     Guid SiteId,
     string Handle,
-  string DisplayName,
-    string? Description = null) : ICommand<ContentTypeDto>;
+    string DisplayName,
+    string? Description = null,
+    LocalizationMode Localization = LocalizationMode.PerLocale) : ICommand<ContentTypeDto>;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record AddFieldCommand(
@@ -21,7 +23,8 @@ public sealed record AddFieldCommand(
     string FieldType,
     bool IsRequired = false,
     bool IsLocalized = false,
- bool IsUnique = false,
+    bool IsUnique = false,
+    bool IsIndexed = false,
     string? Description = null) : ICommand<ContentTypeDto>;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
@@ -40,7 +43,8 @@ public sealed record UpdateContentTypeCommand(
     Guid ContentTypeId,
     string DisplayName,
     string? Description = null,
-  IReadOnlyList<UpdateFieldInput>? Fields = null) : ICommand<ContentTypeDto>;
+    LocalizationMode? Localization = null,
+    IReadOnlyList<UpdateFieldInput>? Fields = null) : ICommand<ContentTypeDto>;
 
 /// <summary>
 /// Represents a field in the full-update payload.
@@ -55,11 +59,28 @@ public sealed record UpdateFieldInput(
     string Handle,
     string Label,
     string FieldType,
-bool IsRequired = false,
+    bool IsRequired = false,
     bool IsLocalized = false,
     bool IsUnique = false,
+    bool IsIndexed = false,
     int SortOrder = 0,
     string? Description = null);
+
+/// <summary>Imports a ContentType schema from a JSON Schema document (BE-07c).</summary>
+[HasPolicy(ContentPolicies.ContentTypeManage)]
+public sealed record ImportContentTypeSchemaCommand(
+  Guid SiteId,
+    string Handle,
+    string DisplayName,
+    string? Description,
+    IReadOnlyList<ImportFieldInput> Fields) : ICommand<ContentTypeDto>;
+
+public sealed record ImportFieldInput(
+    string Handle,
+    string Label,
+    string FieldType,
+    bool IsRequired = false,
+    bool IsLocalized = false);
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record DeleteContentTypeCommand(Guid ContentTypeId) : ICommand;
