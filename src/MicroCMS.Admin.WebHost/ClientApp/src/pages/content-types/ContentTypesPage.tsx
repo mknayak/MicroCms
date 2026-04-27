@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { contentTypesApi } from '@/api/contentTypes';
-import type { ContentType } from '@/types';
+import type { ContentTypeListItem } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { ApiError } from '@/api/client';
 
@@ -14,7 +14,7 @@ function DeleteModal({
   onClose,
   onConfirm,
 }: {
-  contentType: ContentType;
+  contentType: ContentTypeListItem;
   onClose: () => void;
   onConfirm: () => void;
 }) {
@@ -23,8 +23,8 @@ function DeleteModal({
       <div className="card mx-4 w-full max-w-md">
         <h3 className="text-base font-semibold text-slate-900">Delete Content Type</h3>
         <p className="mt-2 text-sm text-slate-500">
-          Are you sure you want to delete <strong>{contentType.name}</strong>? This action cannot be
-          undone and will also delete all associated entries.
+          Are you sure you want to delete <strong>{contentType.displayName}</strong>? This action
+          cannot be undone and will also delete all associated entries.
         </p>
         <div className="mt-4 flex justify-end gap-3">
           <button onClick={onClose} className="btn-secondary">
@@ -43,7 +43,7 @@ function DeleteModal({
 
 export default function ContentTypesPage() {
   const qc = useQueryClient();
-  const [toDelete, setToDelete] = useState<ContentType | null>(null);
+  const [toDelete, setToDelete] = useState<ContentTypeListItem | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['content-types'],
@@ -61,6 +61,8 @@ export default function ContentTypesPage() {
       toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.');
     },
   });
+
+  const items = data?.items ?? [];
 
   return (
     <div className="space-y-6">
@@ -86,7 +88,7 @@ export default function ContentTypesPage() {
               <div key={i} className="h-16 animate-pulse bg-slate-50" />
             ))}
           </div>
-        ) : data?.items.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
               <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,24 +105,32 @@ export default function ContentTypesPage() {
             <thead className="border-b border-slate-100 bg-slate-50">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-slate-700">Name</th>
-                <th className="px-6 py-3 text-left font-semibold text-slate-700">API Key</th>
-                <th className="px-6 py-3 text-left font-semibold text-slate-700">Type</th>
+                <th className="px-6 py-3 text-left font-semibold text-slate-700">Handle</th>
+                <th className="px-6 py-3 text-left font-semibold text-slate-700">Status</th>
                 <th className="px-6 py-3 text-left font-semibold text-slate-700">Fields</th>
                 <th className="px-6 py-3 text-left font-semibold text-slate-700">Updated</th>
                 <th className="px-6 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {data?.items.map((ct) => (
+              {items.map((ct) => (
                 <tr key={ct.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-900">{ct.name}</td>
-                  <td className="px-6 py-4 font-mono text-slate-500">{ct.apiKey}</td>
+                  <td className="px-6 py-4 font-medium text-slate-900">{ct.displayName}</td>
+                  <td className="px-6 py-4 font-mono text-slate-500">{ct.handle}</td>
                   <td className="px-6 py-4">
-                    <span className={ct.isCollection ? 'badge-brand' : 'badge-slate'}>
-                      {ct.isCollection ? 'Collection' : 'Single'}
+                    <span
+                      className={
+                        ct.status === 'Active'
+                          ? 'badge-brand'
+                          : ct.status === 'Archived'
+                          ? 'badge-slate'
+                          : 'badge-amber'
+                      }
+                    >
+                      {ct.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-500">{ct.fields.length}</td>
+                  <td className="px-6 py-4 text-slate-500">{ct.fieldCount}</td>
                   <td className="px-6 py-4 text-slate-400">
                     {formatDistanceToNow(new Date(ct.updatedAt), { addSuffix: true })}
                   </td>

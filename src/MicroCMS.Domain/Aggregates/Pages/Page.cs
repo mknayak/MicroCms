@@ -33,6 +33,7 @@ public sealed class Page : AggregateRoot<PageId>
         ParentId = parentId;
         CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
+     Seo = SeoMetadata.Empty;
     }
 
     public TenantId TenantId { get; private set; }
@@ -48,56 +49,63 @@ public sealed class Page : AggregateRoot<PageId>
     /// <summary>Route pattern, e.g. "/products/{slug}" (GAP-21).</summary>
     public string? RoutePattern { get; private set; }
     public int Depth { get; private set; }
-    public DateTimeOffset CreatedAt { get; private set; }
+  public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     /// <summary>
     /// The layout used to render this page.
     /// <c>null</c> means use the site default layout (if one is configured) or headless mode.
     /// </summary>
-  public LayoutId? LayoutId { get; private set; }
+    public LayoutId? LayoutId { get; private set; }
+
+    /// <summary>
+    /// Page-level SEO metadata. These values are injected into layout
+    /// <c>{{seo:title}}</c>, <c>{{seo:description}}</c>, and <c>{{seo:ogImage}}</c> tokens at render time.
+    /// When not set, the render pipeline falls back to the linked Entry's SEO metadata (if any).
+    /// </summary>
+    public SeoMetadata Seo { get; private set; } = null!;
 
     // ── Factory ────────────────────────────────────────────────────────────
 
     public static Page CreateStatic(
-TenantId tenantId, SiteId siteId,
-   string title, Slug slug,
+        TenantId tenantId, SiteId siteId,
+        string title, Slug slug,
         PageId? parentId = null, EntryId? linkedEntryId = null, int depth = 0)
     {
-        Validate(title);
+     Validate(title);
         var page = new Page(PageId.New(), tenantId, siteId, title, slug, PageType.Static, parentId)
-        {
-            LinkedEntryId = linkedEntryId,
-            Depth = depth
+   {
+      LinkedEntryId = linkedEntryId,
+ Depth = depth
         };
-        return page;
+     return page;
     }
 
-    public static Page CreateCollection(
-       TenantId tenantId, SiteId siteId,
-   string title, Slug slug,
+public static Page CreateCollection(
+        TenantId tenantId, SiteId siteId,
+        string title, Slug slug,
         ContentTypeId contentTypeId, string routePattern,
-   PageId? parentId = null, int depth = 0)
+        PageId? parentId = null, int depth = 0)
     {
         Validate(title);
-        ArgumentException.ThrowIfNullOrWhiteSpace(routePattern, nameof(routePattern));
+    ArgumentException.ThrowIfNullOrWhiteSpace(routePattern, nameof(routePattern));
 
-        return new Page(PageId.New(), tenantId, siteId, title, slug, PageType.Collection, parentId)
-        {
+     return new Page(PageId.New(), tenantId, siteId, title, slug, PageType.Collection, parentId)
+      {
             CollectionContentTypeId = contentTypeId,
-            RoutePattern = routePattern.Trim(),
-            Depth = depth
-        };
+     RoutePattern = routePattern.Trim(),
+    Depth = depth
+};
     }
 
     // ── Mutations ─────────────────────────────────────────────────────────
 
     public void MoveTo(PageId? newParentId, int newDepth)
     {
-        if (newParentId == Id)
-            throw new BusinessRuleViolationException("Page.CircularReference", "A page cannot be its own parent.");
-        ParentId = newParentId;
-        Depth = newDepth;
-        UpdatedAt = DateTimeOffset.UtcNow;
+  if (newParentId == Id)
+    throw new BusinessRuleViolationException("Page.CircularReference", "A page cannot be its own parent.");
+ ParentId = newParentId;
+      Depth = newDepth;
+      UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void UpdateTitle(string title)
@@ -110,14 +118,35 @@ TenantId tenantId, SiteId siteId,
     public void LinkEntry(EntryId entryId)
     {
         if (PageType != PageType.Static)
-            throw new BusinessRuleViolationException("Page.NotStatic", "Only Static pages can be linked to an entry.");
+ throw new BusinessRuleViolationException("Page.NotStatic", "Only Static pages can be linked to an entry.");
         LinkedEntryId = entryId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    /// <summary>Clears the linked entry association from a Static page.</summary>
+    public void ClearLinkedEntry()
+    {
+        if (PageType != PageType.Static)
+      throw new BusinessRuleViolationException("Page.NotStatic", "Only Static pages can have a linked entry.");
+        LinkedEntryId = null;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     /// <summary>Assigns or clears the layout for this page.</summary>
     public void SetLayout(LayoutId? layoutId)
     {
-        LayoutId  = layoutId;
+        LayoutId = layoutId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Updates the page-level SEO metadata used by the layout renderer.
+    /// Pass <see cref="SeoMetadata.Empty"/> to clear all values.
+ /// </summary>
+    public void UpdateSeo(SeoMetadata seo)
+    {
+        ArgumentNullException.ThrowIfNull(seo, nameof(seo));
+        Seo = seo;
      UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -127,6 +156,6 @@ TenantId tenantId, SiteId siteId,
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title, nameof(title));
         if (title.Length > MaxTitleLength)
-            throw new DomainException($"Page title must not exceed {MaxTitleLength} characters.");
+       throw new DomainException($"Page title must not exceed {MaxTitleLength} characters.");
     }
 }

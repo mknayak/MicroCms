@@ -1,15 +1,26 @@
 import { get, post, put, del } from './client';
 import type {
   ContentType,
-  CreateContentTypeRequest,
-  UpdateContentTypeRequest,
+  ContentTypeListItem,
   PagedResult,
   PaginationParams,
 } from '@/types';
 
+export interface CreateContentTypeRequest {
+  siteId: string;
+  handle: string;
+  displayName: string;
+  description?: string;
+}
+
+export interface UpdateContentTypeRequest {
+  displayName: string;
+  description?: string;
+}
+
 export const contentTypesApi = {
-  list: (params?: PaginationParams): Promise<PagedResult<ContentType>> =>
-    get<PagedResult<ContentType>>('/content-types', { params }),
+  list: (params?: PaginationParams & { siteId?: string }): Promise<PagedResult<ContentTypeListItem>> =>
+    get<PagedResult<ContentTypeListItem>>('/content-types', { params }),
 
   getById: (id: string): Promise<ContentType> =>
     get<ContentType>(`/content-types/${id}`),

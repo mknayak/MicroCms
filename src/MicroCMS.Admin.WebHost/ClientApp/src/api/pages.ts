@@ -6,6 +6,8 @@ import type {
   CreateCollectionPageRequest,
   MovePageRequest,
   SetPageLayoutRequest,
+  SetPageSeoRequest,
+  SetPageLinkedEntryRequest,
   PageTemplateDto,
   SavePageTemplateRequest,
 } from '@/types';
@@ -13,6 +15,9 @@ import type {
 export const pagesApi = {
   getTree: (siteId: string): Promise<PageTreeNode[]> =>
     get<PageTreeNode[]>(`/pages`, { params: { siteId } }),
+
+  getPage: (id: string): Promise<PageDto> =>
+ get<PageDto>(`/pages/${id}`),
 
   createStatic: (data: CreateStaticPageRequest): Promise<PageDto> =>
     post<PageDto>('/pages/static', data),
@@ -29,9 +34,15 @@ export const pagesApi = {
   setLayout: (id: string, data: SetPageLayoutRequest): Promise<PageDto> =>
     put<PageDto>(`/pages/${id}/layout`, data),
 
+  setLinkedEntry: (id: string, data: SetPageLinkedEntryRequest): Promise<PageDto> =>
+    put<PageDto>(`/pages/${id}/entry`, data),
+
   getTemplate: (id: string): Promise<PageTemplateDto> =>
     get<PageTemplateDto>(`/pages/${id}/template`),
 
   saveTemplate: (id: string, data: SavePageTemplateRequest): Promise<PageTemplateDto> =>
-    put<PageTemplateDto>(`/pages/${id}/template`, data),
+  put<PageTemplateDto>(`/pages/${id}/template`, data),
+
+  setSeo: (id: string, data: SetPageSeoRequest): Promise<PageDto> =>
+ put<PageDto>(`/pages/${id}/seo`, data),
 };

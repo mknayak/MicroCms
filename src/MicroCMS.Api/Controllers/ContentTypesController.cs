@@ -87,6 +87,27 @@ public sealed class ContentTypesController : ApiControllerBase
         var result = await Sender.Send(new ArchiveContentTypeCommand(id), cancellationToken);
         return OkOrProblem(result);
     }
+
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(
+        Guid id,
+  [FromBody] UpdateContentTypeRequest request,
+      CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new UpdateContentTypeCommand(id, request.DisplayName, request.Description), cancellationToken);
+        return OkOrProblem(result);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new DeleteContentTypeCommand(id), cancellationToken);
+        return result.IsSuccess ? NoContent() : Problem(result);
+    }
 }
 
 public sealed record AddFieldRequest(

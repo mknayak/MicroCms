@@ -105,16 +105,52 @@ export interface FieldDefinition {
   options?: string[];
 }
 
+/**
+ * Matches ContentTypeListItemDto — returned by GET /content-types (list).
+ * Uses fieldCount (number) instead of a full fields array to keep payloads small.
+ */
+export interface ContentTypeListItem {
+  id: string;
+  /** Machine-readable handle, e.g. "blog_post" */
+  handle: string;
+  /** Human-readable display name */
+  displayName: string;
+  status: string;
+  /** Number of fields defined on this content type */
+  fieldCount: number;
+  updatedAt: string;
+}
+
+/**
+ * Matches ContentTypeDto — returned by GET /content-types/{id} (single).
+ * Includes the full fields array.
+ */
 export interface ContentType {
   id: string;
-  name: string;
-  apiKey: string;
-  description?: string;
-  fields: FieldDefinition[];
-  isCollection: boolean;
   tenantId: string;
+  siteId: string;
+  handle: string;
+  displayName: string;
+  description?: string;
+  status: string;
+  fields: FieldDefinitionDto[];
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Matches FieldDefinitionDto from the backend.
+ */
+export interface FieldDefinitionDto {
+  id: string;
+  handle: string;
+  label: string;
+  fieldType: string;
+  isRequired: boolean;
+  isLocalized: boolean;
+  isUnique: boolean;
+  sortOrder: number;
+  description?: string;
 }
 
 export interface CreateContentTypeRequest {
@@ -377,6 +413,13 @@ export interface PageTreeNode {
   children: PageTreeNode[];
 }
 
+export interface PageSeoDto {
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+}
+
 export interface PageDto {
   id: string;
   siteId: string;
@@ -389,6 +432,8 @@ export interface PageDto {
   routePattern?: string;
   depth: number;
   layoutId?: string;
+  /** Page-level SEO metadata; null/undefined when none have been set. */
+  seo?: PageSeoDto;
 }
 
 export interface CreateStaticPageRequest {
@@ -438,6 +483,17 @@ export interface PageTemplatePlacementInput {
 
 export interface SavePageTemplateRequest {
   placements: PageTemplatePlacementInput[];
+}
+
+export interface SetPageSeoRequest {
+  metaTitle: string | null;
+  metaDescription: string | null;
+  canonicalUrl: string | null;
+  ogImage: string | null;
+}
+
+export interface SetPageLinkedEntryRequest {
+  entryId: string | null;
 }
 
 // ─── Layouts ──────────────────────────────────────────────────────────────────

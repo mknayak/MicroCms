@@ -83,16 +83,42 @@ internal sealed class PublishContentTypeCommandHandler(
 }
 
 internal sealed class ArchiveContentTypeCommandHandler(
-IRepository<ContentType, ContentTypeId> repo)
-    : IRequestHandler<ArchiveContentTypeCommand, Result<ContentTypeDto>>
+    IRepository<ContentType, ContentTypeId> repo)
+  : IRequestHandler<ArchiveContentTypeCommand, Result<ContentTypeDto>>
 {
     public async Task<Result<ContentTypeDto>> Handle(ArchiveContentTypeCommand request, CancellationToken cancellationToken)
     {
-   var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
-  ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
-
+        var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
+   ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
         ct.Archive();
-        repo.Update(ct);
-  return Result.Success(ContentTypeMapper.ToDto(ct));
+     repo.Update(ct);
+      return Result.Success(ContentTypeMapper.ToDto(ct));
+    }
+}
+
+internal sealed class UpdateContentTypeCommandHandler(
+    IRepository<ContentType, ContentTypeId> repo)
+    : IRequestHandler<UpdateContentTypeCommand, Result<ContentTypeDto>>
+{
+    public async Task<Result<ContentTypeDto>> Handle(UpdateContentTypeCommand request, CancellationToken cancellationToken)
+    {
+ var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
+            ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
+        ct.Update(request.DisplayName, request.Description);
+     repo.Update(ct);
+        return Result.Success(ContentTypeMapper.ToDto(ct));
+    }
+}
+
+internal sealed class DeleteContentTypeCommandHandler(
+    IRepository<ContentType, ContentTypeId> repo)
+    : IRequestHandler<DeleteContentTypeCommand, Result>
+{
+    public async Task<Result> Handle(DeleteContentTypeCommand request, CancellationToken cancellationToken)
+    {
+        var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
+      ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
+  repo.Remove(ct);
+      return Result.Success();
     }
 }

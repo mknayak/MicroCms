@@ -8,10 +8,12 @@ import { pagesApi } from '@/api/pages';
 import { layoutsApi } from '@/api/layouts';
 import { contentTypesApi } from '@/api/contentTypes';
 import { componentsApi } from '@/api/components';
+import { entriesApi } from '@/api/entries';
 import { useSite } from '@/contexts/SiteContext';
 import type {
   PageTreeNode,
-  ContentType,
+  PageDto,
+  ContentTypeListItem,
   LayoutListItem,
   PageTemplateDto,
   PageTemplatePlacementInput,
@@ -47,9 +49,17 @@ const templateSchema = z.object({
   ),
 });
 
+const seoSchema = z.object({
+  metaTitle: z.string().max(60, 'Max 60 characters').optional().or(z.literal('')),
+  metaDescription: z.string().max(160, 'Max 160 characters').optional().or(z.literal('')),
+  canonicalUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  ogImage: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+});
+
 type StaticForm = z.infer<typeof staticSchema>;
 type CollectionForm = z.infer<typeof collectionSchema>;
 type TemplateForm = z.infer<typeof templateSchema>;
+type SeoForm = z.infer<typeof seoSchema>;
 
 // ─── Page detail panel ────────────────────────────────────────────────────────
 
@@ -67,236 +77,452 @@ function PageDetailPanel({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const [tab, setTab] = useState<'layout' | 'template'>('layout');
+  const isStatic = page.pageType === 'Static';
+  const [tab, setTab] = useState<'layout' | 'template' | 'seo' | 'entry'>(
+    isStatic ? 'entry' : 'layout'
+  );
   const [selectedLayoutId, setSelectedLayoutId] = useState<string>(page.layoutId ?? '');
 
+  // ── Fetch full page detail (for linkedEntryId + SEO) ────────────────────
+  const { data: pageDetail } = useQuery<PageDto>({
+    queryKey: ['page-detail', page.id],
+    queryFn: () => pagesApi.getPage(page.id),
+  });
+
+  // ── Layout ──────────────────────────────────────────────────────────────
   const setLayoutMutation = useMutation({
     mutationFn: () => pagesApi.setLayout(page.id, { layoutId: selectedLayoutId || null }),
     onSuccess: () => {
-      toast.success('Layout saved.');
+    toast.success('Layout saved.');
       void qc.invalidateQueries({ queryKey: ['pages', siteId] });
     },
     onError: (err) =>
-      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
+    toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
 
+  // ── Template ────────────────────────────────────────────────────────────
   const { data: existingTemplate, isLoading: templateLoading } = useQuery<PageTemplateDto | null>({
     queryKey: ['page-template', page.id],
     queryFn: async () => {
-      try {
-        return await pagesApi.getTemplate(page.id);
- } catch (e) {
-        if (e instanceof ApiError && e.status === 404) return null;
-    throw e;
-      }
+      try { return await pagesApi.getTemplate(page.id); }
+      catch (e) {
+     if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+    }
     },
   });
 
   const templateForm = useForm<TemplateForm>({
     resolver: zodResolver(templateSchema),
     values: {
-      placements: (existingTemplate?.placements ?? []).map((p) => ({
+   placements: (existingTemplate?.placements ?? []).map((p) => ({
      componentId: p.componentId,
-    zone: p.zone,
-     sortOrder: p.sortOrder,
+        zone: p.zone,
+        sortOrder: p.sortOrder,
       })),
     },
   });
-
-  const { fields, append, remove } = useFieldArray({
-    control: templateForm.control,
-    name: 'placements',
-  });
+  const { fields, append, remove } = useFieldArray({ control: templateForm.control, name: 'placements' });
 
   const saveTemplateMutation = useMutation({
     mutationFn: (data: TemplateForm) =>
       pagesApi.saveTemplate(page.id, { placements: data.placements as PageTemplatePlacementInput[] }),
     onSuccess: () => {
       toast.success('Page template saved.');
-      void qc.invalidateQueries({ queryKey: ['page-template', page.id] });
+    void qc.invalidateQueries({ queryKey: ['page-template', page.id] });
+  },
+    onError: (err) =>
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
+  });
+
+  // ── SEO ─────────────────────────────────────────────────────────────────
+  const seoForm = useForm<SeoForm>({
+    resolver: zodResolver(seoSchema),
+    values: {
+      metaTitle: pageDetail?.seo?.metaTitle ?? '',
+      metaDescription: pageDetail?.seo?.metaDescription ?? '',
+      canonicalUrl: pageDetail?.seo?.canonicalUrl ?? '',
+      ogImage: pageDetail?.seo?.ogImage ?? '',
+    },
+  });
+
+  const saveSeoMutation = useMutation({
+    mutationFn: (data: SeoForm) =>
+      pagesApi.setSeo(page.id, {
+        metaTitle: data.metaTitle || null,
+        metaDescription: data.metaDescription || null,
+canonicalUrl: data.canonicalUrl || null,
+        ogImage: data.ogImage || null,
+  }),
+    onSuccess: (updated) => {
+      toast.success('SEO settings saved.');
+      seoForm.reset({
+        metaTitle: updated.seo?.metaTitle ?? '',
+      metaDescription: updated.seo?.metaDescription ?? '',
+   canonicalUrl: updated.seo?.canonicalUrl ?? '',
+        ogImage: updated.seo?.ogImage ?? '',
+      });
+   void qc.invalidateQueries({ queryKey: ['page-detail', page.id] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
+  });
+
+  const metaTitleValue = seoForm.watch('metaTitle') ?? '';
+  const metaDescValue = seoForm.watch('metaDescription') ?? '';
+
+  // ── Linked entry ─────────────────────────────────────────────────────────
+  const [entrySearch, setEntrySearch] = useState('');
+  const [selectedEntryId, setSelectedEntryId] = useState<string>(
+    pageDetail?.linkedEntryId ?? ''
+  );
+  // Sync selectedEntryId once pageDetail loads
+  const linkedEntryId = pageDetail?.linkedEntryId ?? null;
+
+  const { data: entryResults, isFetching: entriesFetching } = useQuery({
+    queryKey: ['entries-search', siteId, entrySearch],
+    queryFn: () => entriesApi.list({ siteId, search: entrySearch || undefined, pageSize: 30 }),
+    enabled: isStatic && tab === 'entry',
+ staleTime: 10_000,
+  });
+
+  const setLinkedEntryMutation = useMutation({
+    mutationFn: () =>
+      pagesApi.setLinkedEntry(page.id, { entryId: selectedEntryId || null }),
+    onSuccess: (updated) => {
+      toast.success(updated.linkedEntryId ? 'Entry linked.' : 'Entry link cleared.');
+      void qc.invalidateQueries({ queryKey: ['page-detail', page.id] });
+      void qc.invalidateQueries({ queryKey: ['pages', siteId] });
     },
     onError: (err) =>
       toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
 
   const selectedLayout = layouts.find((l) => l.id === selectedLayoutId);
+  const tabs = isStatic
+    ? (['entry', 'layout', 'template', 'seo'] as const)
+    : (['layout', 'template', 'seo'] as const);
+
+  const tabLabel = (t: string) => {
+ if (t === 'entry') return 'Linked Entry';
+    if (t === 'layout') return 'Layout';
+    if (t === 'template') return 'Zone Placements';
+    return 'SEO';
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/30">
       <div className="flex h-full w-full max-w-xl flex-col bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900">{page.title}</h2>
+     <div>
+    <h2 className="text-base font-semibold text-slate-900">{page.title}</h2>
             <p className="font-mono text-xs text-slate-400">/{page.slug}</p>
-      </div>
-   <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-          </button>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+       </svg>
+  </button>
         </div>
 
-    {/* Tabs */}
-        <div className="flex border-b border-slate-200 px-5">
-          {(['layout', 'template'] as const).map((t) => (
-            <button
-   key={t}
-            onClick={() => setTab(t)}
-              className={`mr-4 border-b-2 py-3 text-sm font-medium capitalize transition-colors ${
-    tab === t
-             ? 'border-brand-600 text-brand-600'
-           : 'border-transparent text-slate-500 hover:text-slate-700'
-      }`}
-            >
-      {t === 'layout' ? 'Layout' : 'Zone Placements'}
-    </button>
-  ))}
+  {/* Tabs */}
+  <div className="flex border-b border-slate-200 px-5">
+          {tabs.map((t) => (
+        <button
+              key={t}
+     onClick={() => setTab(t)}
+      className={`mr-4 border-b-2 py-3 text-sm font-medium transition-colors ${
+            tab === t
+               ? 'border-brand-600 text-brand-600'
+   : 'border-transparent text-slate-500 hover:text-slate-700'
+       }`}
+        >
+      {tabLabel(t)}
+            </button>
+    ))}
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5">
-          {tab === 'layout' && (
-    <div className="space-y-4">
-              <p className="text-sm text-slate-500">
-                Choose which layout wraps this page. Leave empty to inherit the site default.
-  </p>
-         <div>
-       <label className="form-label">Layout</label>
-      <select
-         className="form-input mt-1"
-     value={selectedLayoutId}
-     onChange={(e) => setSelectedLayoutId(e.target.value)}
-            >
-          <option value="">— Use site default —</option>
-       {layouts.map((l) => (
-   <option key={l.id} value={l.id}>
-  {l.name} {l.isDefault ? '(default)' : ''}
-                </option>
-       ))}
-        </select>
-     </div>
-     {selectedLayout && (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              <span className="font-medium text-slate-700">{selectedLayout.name}</span>
-            {' · '}
-          <span className="font-mono">{selectedLayout.key}</span>
-       {' · '}
-    <span
-     className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-       selectedLayout.templateType === 'Handlebars'
-       ? 'bg-amber-100 text-amber-800'
-   : 'bg-slate-200 text-slate-700'
-          }`}
-        >
-        {selectedLayout.templateType}
-    </span>
+
+   {/* ── Linked Entry tab ── */}
+   {tab === 'entry' && (
+   <div className="space-y-4">
+         <p className="text-sm text-slate-500">
+      Link this Static page to a backend entry. The render pipeline uses the entry's
+        fields and SEO metadata at delivery time.
+      </p>
+
+         {/* Current link indicator */}
+{linkedEntryId ? (
+    <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+        <div>
+  <p className="text-xs font-semibold text-green-800">Currently linked</p>
+                <p className="font-mono text-[11px] text-green-700">{linkedEntryId}</p>
           </div>
-       )}
-           <button
-          onClick={() => setLayoutMutation.mutate()}
-                disabled={setLayoutMutation.isPending}
- className="btn-primary w-full justify-center"
-       >
-         {setLayoutMutation.isPending ? 'Saving…' : 'Save Layout'}
-              </button>
+            <button
+    onClick={() => {
+              setSelectedEntryId('');
+   setLinkedEntryMutation.mutate();
+    }}
+               className="ml-3 flex-shrink-0 text-xs text-red-500 hover:text-red-700"
+     >
+         Clear
+       </button>
+    </div>
+              ) : (
+         <div className="rounded-lg border border-dashed border-slate-200 py-3 text-center text-xs text-slate-400">
+            No entry linked — page will render without entry data.
+        </div>
+     )}
+
+              {/* Search box */}
+     <div>
+                <label className="form-label">Search entries</label>
+     <input
+    className="form-input mt-1"
+              placeholder="Type to filter by title or slug…"
+      value={entrySearch}
+            onChange={(e) => setEntrySearch(e.target.value)}
+   />
+           </div>
+
+              {/* Entry list */}
+    <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
+           {entriesFetching && (
+           <div className="space-y-1 p-2">
+      {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-8 animate-pulse rounded bg-slate-100" />
+      ))}
+      </div>
+      )}
+                {!entriesFetching && (entryResults?.items ?? []).length === 0 && (
+        <p className="p-4 text-center text-xs text-slate-400">No entries found.</p>
+    )}
+     {!entriesFetching &&
+    (entryResults?.items ?? []).map((entry) => {
+             const isSelected = selectedEntryId === entry.id;
+        const isCurrent = linkedEntryId === entry.id;
+     return (
+            <button
+       key={entry.id}
+             type="button"
+              onClick={() => setSelectedEntryId(isSelected ? '' : entry.id)}
+  className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${
+               isSelected ? 'bg-brand-50' : ''
+        }`}
+        >
+      <div className="min-w-0">
+      <p className="truncate font-medium text-slate-800">{entry.title}</p>
+     <p className="font-mono text-[10px] text-slate-400">
+    {entry.contentTypeName} · {entry.slug}
+       </p>
      </div>
+         <div className="ml-2 flex flex-shrink-0 gap-1.5">
+          {isCurrent && (
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+       current
+             </span>
+     )}
+      <span
+  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+             entry.status === 'Published'
+     ? 'bg-green-100 text-green-700'
+      : entry.status === 'Draft'
+   ? 'bg-slate-100 text-slate-600'
+          : 'bg-amber-100 text-amber-700'
+       }`}
+         >
+               {entry.status}
+       </span>
+           </div>
+       </button>
+        );
+})}
+              </div>
+
+          <button
+              disabled={setLinkedEntryMutation.isPending || selectedEntryId === (linkedEntryId ?? '')}
+       onClick={() => setLinkedEntryMutation.mutate()}
+              className="btn-primary w-full justify-center disabled:opacity-50"
+      >
+       {setLinkedEntryMutation.isPending
+    ? 'Saving…'
+     : selectedEntryId
+      ? 'Link Selected Entry'
+      : 'Save (clear link)'}
+       </button>
+   </div>
           )}
 
-          {tab === 'template' && (
-       <form onSubmit={templateForm.handleSubmit((v) => saveTemplateMutation.mutate(v))} className="space-y-4">
-       <p className="text-sm text-slate-500">
-       Add components to layout zones. Lower sort-order renders first within each zone.
+          {/* ── Layout tab ── */}
+       {tab === 'layout' && (
+ <div className="space-y-4">
+              <p className="text-sm text-slate-500">
+           Choose which layout wraps this page. Leave empty to inherit the site default.
             </p>
-     {templateLoading ? (
-      <div className="space-y-2">
-      {Array.from({ length: 3 }).map((_, i) => (
- <div key={i} className="h-12 animate-pulse rounded bg-slate-100" />
-         ))}
-                </div>
-     ) : (
-           <>
-          {fields.length === 0 && (
-        <p className="rounded-lg border border-dashed border-slate-200 py-6 text-center text-sm text-slate-400">
-        No placements yet. Add components below.
-     </p>
-             )}
-               <div className="space-y-3">
-     {fields.map((field, idx) => (
-         <div
-  key={field.id}
-            className="grid grid-cols-[1fr_1fr_4rem_2rem] gap-2 rounded-lg border border-slate-200 p-3"
-           >
-  {/* Component */}
-          <div>
-         <label className="text-[10px] font-semibold uppercase text-slate-400">Component</label>
-        <select
-      className="form-input mt-0.5 text-xs"
-         {...templateForm.register(`placements.${idx}.componentId`)}
-      >
-   <option value="">Select…</option>
-        {components.map((c) => (
-      <option key={c.id} value={c.id}>{c.name}</option>
+    <div>
+      <label className="form-label">Layout</label>
+    <select
+         className="form-input mt-1"
+                value={selectedLayoutId}
+       onChange={(e) => setSelectedLayoutId(e.target.value)}
+                >
+      <option value="">— Use site default —</option>
+    {layouts.map((l) => (
+      <option key={l.id} value={l.id}>
+    {l.name} {l.isDefault ? '(default)' : ''}
+      </option>
            ))}
-   </select>
-     </div>
-              {/* Zone */}
-           <div>
-             <label className="text-[10px] font-semibold uppercase text-slate-400">Zone</label>
-      <input
-     className="form-input mt-0.5 font-mono text-xs"
-          placeholder="hero-zone"
-        {...templateForm.register(`placements.${idx}.zone`)}
-    />
-        </div>
- {/* Sort order */}
-            <div>
-      <label className="text-[10px] font-semibold uppercase text-slate-400">Order</label>
-             <input
-        type="number"
-    min={0}
-       className="form-input mt-0.5 text-xs"
-              {...templateForm.register(`placements.${idx}.sortOrder`, { valueAsNumber: true })}
-     />
-     </div>
-      {/* Remove */}
-   <div className="flex items-end pb-0.5">
-         <button
-           type="button"
-              onClick={() => remove(idx)}
-         className="text-red-400 hover:text-red-600"
-          >
-         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-    </button>
-       </div>
+    </select>
    </div>
-))}
-  </div>
-       <button
-   type="button"
-         onClick={() => append({ componentId: '', zone: '', sortOrder: fields.length })}
-   className="btn-secondary w-full justify-center text-sm"
+           {selectedLayout && (
+       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+     <span className="font-medium text-slate-700">{selectedLayout.name}</span>
+       {' · '}
+<span className="font-mono">{selectedLayout.key}</span>
+      {' · '}
+        <span
+    className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+   selectedLayout.templateType === 'Handlebars'
+        ? 'bg-amber-100 text-amber-800'
+     : 'bg-slate-200 text-slate-700'
+          }`}
+       >
+          {selectedLayout.templateType}
+        </span>
+       </div>
+      )}
+     <button
+     onClick={() => setLayoutMutation.mutate()}
+      disabled={setLayoutMutation.isPending}
+           className="btn-primary w-full justify-center"
               >
-        <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-         Add Placement
-      </button>
-           <button
-          type="submit"
-   disabled={saveTemplateMutation.isPending}
-         className="btn-primary w-full justify-center"
-           >
-       {saveTemplateMutation.isPending ? 'Saving…' : 'Save Template'}
-                  </button>
-                </>
-  )}
-     </form>
+      {setLayoutMutation.isPending ? 'Saving…' : 'Save Layout'}
+  </button>
+ </div>
+          )}
+
+          {/* ── Zone Placements tab ── */}
+     {tab === 'template' && (
+  <form onSubmit={templateForm.handleSubmit((v) => saveTemplateMutation.mutate(v))} className="space-y-4">
+              <p className="text-sm text-slate-500">
+   Add components to layout zones. Lower sort-order renders first within each zone.
+        </p>
+    {templateLoading ? (
+                <div className="space-y-2">
+     {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-12 animate-pulse rounded bg-slate-100" />
+))}
+           </div>
+              ) : (
+            <>
+       {fields.length === 0 && (
+          <p className="rounded-lg border border-dashed border-slate-200 py-6 text-center text-sm text-slate-400">
+ No placements yet. Add components below.
+     </p>
     )}
-        </div>
+            <div className="space-y-3">
+           {fields.map((field, idx) => (
+     <div
+        key={field.id}
+    className="grid grid-cols-[1fr_1fr_4rem_2rem] gap-2 rounded-lg border border-slate-200 p-3"
+        >
+            <div>
+  <label className="text-[10px] font-semibold uppercase text-slate-400">Component</label>
+         <select className="form-input mt-0.5 text-xs" {...templateForm.register(`placements.${idx}.componentId`)}>
+           <option value="">Select…</option>
+   {components.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+                 ))}
+              </select>
+            </div>
+            <div>
+    <label className="text-[10px] font-semibold uppercase text-slate-400">Zone</label>
+ <input className="form-input mt-0.5 font-mono text-xs" placeholder="hero-zone" {...templateForm.register(`placements.${idx}.zone`)} />
+    </div>
+ <div>
+  <label className="text-[10px] font-semibold uppercase text-slate-400">Order</label>
+        <input type="number" min={0} className="form-input mt-0.5 text-xs" {...templateForm.register(`placements.${idx}.sortOrder`, { valueAsNumber: true })} />
       </div>
+   <div className="flex items-end pb-0.5">
+      <button type="button" onClick={() => remove(idx)} className="text-red-400 hover:text-red-600">
+     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+                 </div>
+         </div>
+         ))}
+                  </div>
+           <button type="button" onClick={() => append({ componentId: '', zone: '', sortOrder: fields.length })} className="btn-secondary w-full justify-center text-sm">
+          <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    </svg>
+        Add Placement
+       </button>
+     <button type="submit" disabled={saveTemplateMutation.isPending} className="btn-primary w-full justify-center">
+        {saveTemplateMutation.isPending ? 'Saving…' : 'Save Template'}
+           </button>
+      </>
+    )}
+            </form>
+          )}
+
+    {/* ── SEO tab ── */}
+          {tab === 'seo' && (
+    <form onSubmit={seoForm.handleSubmit((v) => saveSeoMutation.mutate(v))} className="space-y-5">
+  <p className="text-sm text-slate-500">
+   Page-level SEO overrides. These populate{' '}
+    <code className="rounded bg-slate-100 px-1 text-xs">{`{{seo:title}}`}</code>,{' '}
+                <code className="rounded bg-slate-100 px-1 text-xs">{`{{seo:description}}`}</code>, and{' '}
+           <code className="rounded bg-slate-100 px-1 text-xs">{`{{seo:ogImage}}`}</code> tokens.
+         Leave blank to inherit from the linked entry.
+     </p>
+   {/* SERP preview */}
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">SERP Preview</p>
+                <p className="truncate text-sm font-medium text-[#1a0dab]">{metaTitleValue || page.title}</p>
+              <p className="mt-0.5 font-mono text-xs text-[#006621]">yoursite.com/{page.slug}</p>
+         <p className="mt-1 line-clamp-2 text-xs text-slate-600">
+         {metaDescValue || <span className="italic text-slate-400">No meta description set.</span>}
+    </p>
+    </div>
+       <div>
+      <div className="flex items-center justify-between">
+      <label className="form-label">Meta Title</label>
+        <span className={`text-xs font-medium ${metaTitleValue.length > 55 ? 'text-amber-600' : 'text-slate-400'}`}>{metaTitleValue.length}/60</span>
+    </div>
+     <input className="form-input mt-1" placeholder={page.title} {...seoForm.register('metaTitle')} />
+    {seoForm.formState.errors.metaTitle && <p className="form-error">{seoForm.formState.errors.metaTitle.message}</p>}
+              </div>
+ <div>
+       <div className="flex items-center justify-between">
+            <label className="form-label">Meta Description</label>
+       <span className={`text-xs font-medium ${metaDescValue.length > 150 ? 'text-amber-600' : 'text-slate-400'}`}>{metaDescValue.length}/160</span>
+ </div>
+       <textarea rows={3} className="form-input mt-1 resize-none" placeholder="Brief description…" {...seoForm.register('metaDescription')} />
+                {seoForm.formState.errors.metaDescription && <p className="form-error">{seoForm.formState.errors.metaDescription.message}</p>}
+        </div>
+<div>
+             <label className="form-label">Canonical URL</label>
+    <input className="form-input mt-1 font-mono text-sm" placeholder="https://yoursite.com/page" {...seoForm.register('canonicalUrl')} />
+         {seoForm.formState.errors.canonicalUrl && <p className="form-error">{seoForm.formState.errors.canonicalUrl.message}</p>}
+           </div>
+        <div>
+       <label className="form-label">Open Graph Image URL</label>
+         <input className="form-input mt-1 font-mono text-sm" placeholder="https://yoursite.com/og.png" {...seoForm.register('ogImage')} />
+       {seoForm.formState.errors.ogImage && <p className="form-error">{seoForm.formState.errors.ogImage.message}</p>}
+        </div>
+        <button type="submit" disabled={saveSeoMutation.isPending} className="btn-primary w-full justify-center">
+      {saveSeoMutation.isPending ? 'Saving…' : 'Save SEO Settings'}
+         </button>
+            </form>
+          )}
+
+        </div>
+   </div>
     </div>
   );
 }
@@ -621,8 +847,8 @@ siteId={siteId}
     <label className="form-label">Content Type</label>
                 <select className="form-input mt-1" {...collectionForm.register('contentTypeId')}>
                   <option value="">Select…</option>
-       {(contentTypes?.items ?? []).map((ct: ContentType) => (
-      <option key={ct.id} value={ct.id}>{ct.name}</option>
+       {(contentTypes?.items ?? []).map((ct: ContentTypeListItem) => (
+      <option key={ct.id} value={ct.id}>{ct.displayName}</option>
         ))}
            </select>
                 {collectionForm.formState.errors.contentTypeId && (

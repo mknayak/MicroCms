@@ -124,7 +124,7 @@ export default function EntriesPage() {
         >
           <option value="">All content types</option>
           {contentTypes?.items.map((ct) => (
-            <option key={ct.id} value={ct.id}>{ct.name}</option>
+            <option key={ct.id} value={ct.id}>{ct.displayName}</option>
           ))}
         </select>
         <select

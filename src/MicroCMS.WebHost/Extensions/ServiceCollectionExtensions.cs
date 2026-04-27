@@ -10,10 +10,13 @@ using MicroCMS.Delivery.Core.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
 
 namespace MicroCMS.WebHost.Extensions;
@@ -26,6 +29,22 @@ internal sealed class TrustedClientOptions
     public string Secret { get; set; } = string.Empty;
     public string Issuer { get; set; } = string.Empty;
     public string Audience { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Transforms PascalCase controller/action tokens to kebab-case URL segments.
+/// e.g. <c>ContentTypes</c> → <c>content-types</c>, <c>TenantAdmin</c> → <c>tenant-admin</c>.
+/// Applied globally via <see cref="RouteTokenTransformerConvention"/> so every
+/// <c>[controller]</c> and <c>[action]</c> placeholder is normalised automatically.
+/// </summary>
+internal sealed class KebabCaseParameterTransformer : IOutboundParameterTransformer
+{
+    private static readonly Regex UpperToHyphen =
+        new("([a-z])([A-Z])", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
+
+    public string? TransformOutbound(object? value) =>
+  value is null ? null
+      : UpperToHyphen.Replace(value.ToString()!, "$1-$2").ToLowerInvariant();
 }
 
 internal static class ServiceCollectionExtensions
@@ -203,71 +222,82 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
     internal static WebApplicationBuilder AddApiServices(
         this WebApplicationBuilder builder)
     {
+        var kebabTransformer = new KebabCaseParameterTransformer();
+
         builder.Services
-          .AddControllers()
+   .AddControllers(options =>
+{
+                // Apply kebab-case to all [controller] and [action] route tokens.
+           options.Conventions.Add(new RouteTokenTransformerConvention(kebabTransformer));
+       })
             .AddApplicationPart(typeof(MicroCMS.Api.AssemblyReference).Assembly);
+
+        // Also register as the global slug constraint so parameter transformers in
+        // attribute routes (e.g. [Route("[controller]")]) resolve identically.
+        builder.Services.Configure<RouteOptions>(o =>
+  o.ConstraintMap["slugify"] = typeof(KebabCaseParameterTransformer));
 
         builder.Services
             .AddApiVersioning(opt =>
-        {
-          opt.DefaultApiVersion = new ApiVersion(1, 0);
+          {
+         opt.DefaultApiVersion = new ApiVersion(1, 0);
           opt.AssumeDefaultVersionWhenUnspecified = true;
-     opt.ReportApiVersions = true;
-        })
+                opt.ReportApiVersions = true;
+            })
             .AddApiExplorer(opt =>
-            {
-   opt.GroupNameFormat = "'v'VVV";
-       opt.SubstituteApiVersionInUrl = true;
-      });
+{
+     opt.GroupNameFormat = "'v'VVV";
+   opt.SubstituteApiVersionInUrl = true;
+            });
 
-    builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(opt =>
         {
    opt.SwaggerDoc("v1", new OpenApiInfo
-            {
-         Title = "MicroCMS API",
-             Version = "v1",
-              Description = "Headless CMS REST API",
-   });
+        {
+  Title = "MicroCMS API",
+            Version = "v1",
+    Description = "Headless CMS REST API",
+        });
 
-         opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-{
-           In = ParameterLocation.Header,
-         Description = "Enter JWT token",
-                Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-    BearerFormat = "JWT",
-                Scheme = "Bearer",
+      opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+     {
+       In = ParameterLocation.Header,
+    Description = "Enter JWT token",
+     Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+   BearerFormat = "JWT",
+     Scheme = "Bearer",
             });
 
             opt.AddSecurityRequirement(new OpenApiSecurityRequirement
-     {
-             {
-  new OpenApiSecurityScheme
-   {
-            Reference = new OpenApiReference
-           {
-    Type = ReferenceType.SecurityScheme,
+            {
+       {
+         new OpenApiSecurityScheme
+      {
+       Reference = new OpenApiReference
+    {
+   Type = ReferenceType.SecurityScheme,
          Id = "Bearer",
-   },
-           },
-           Array.Empty<string>()
-        },
-     });
-        });
+         },
+          },
+   Array.Empty<string>()
+                },
+      });
+  });
 
- builder.Services.AddProblemDetails(opt =>
+  builder.Services.AddProblemDetails(opt =>
         {
-    opt.MapToStatusCode<NotFoundException>(StatusCodes.Status404NotFound);
-  opt.MapToStatusCode<ConflictException>(StatusCodes.Status409Conflict);
-       opt.MapToStatusCode<ForbiddenException>(StatusCodes.Status403Forbidden);
-            opt.MapToStatusCode<UnauthorizedException>(StatusCodes.Status401Unauthorized);
-      opt.MapToStatusCode<ValidationException>(StatusCodes.Status422UnprocessableEntity);
-    opt.MapToStatusCode<DomainException>(StatusCodes.Status400BadRequest);
-            opt.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
+   opt.MapToStatusCode<NotFoundException>(StatusCodes.Status404NotFound);
+        opt.MapToStatusCode<ConflictException>(StatusCodes.Status409Conflict);
+            opt.MapToStatusCode<ForbiddenException>(StatusCodes.Status403Forbidden);
+    opt.MapToStatusCode<UnauthorizedException>(StatusCodes.Status401Unauthorized);
+   opt.MapToStatusCode<ValidationException>(StatusCodes.Status422UnprocessableEntity);
+            opt.MapToStatusCode<DomainException>(StatusCodes.Status400BadRequest);
+ opt.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
     });
 
-        return builder;
+    return builder;
     }
 
     // ── GraphQL layer ─────────────────────────────────────────────────────

@@ -5,11 +5,13 @@ using MicroCMS.Application.Features.Delivery.Dtos;
 using MicroCMS.Application.Features.Delivery.Queries;
 using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Domain.Aggregates.Components;
+using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Specifications.Components;
 using MicroCMS.Domain.Specifications.Delivery;
 using MicroCMS.Domain.Specifications.Layouts;
+using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
 
@@ -19,14 +21,10 @@ namespace MicroCMS.Application.Features.Delivery.Handlers;
 /// Renders a full page by walking:
 ///   Slug → Page → PageTemplate → ComponentPlacements → ComponentRenderer → Layout shell.
 ///
-/// Pipeline:
-///   1. Resolve Page by slug
-///   2. Load PageTemplate for that page (zones + ordered placements)
-///   3. For each placement, load Component + its published ComponentItems
-///   4. Render each item via <see cref="IComponentRenderingService"/> → HTML fragment
-///   5. Group fragments by zone name
-///   6. If a Layout is assigned (page or site default), inject zones into the shell
-///   7. Return <see cref="RenderedPageDto"/> with either full HTML or a zone dictionary
+/// SEO resolution order (first non-null wins per field):
+///   1. Page.Seo  — page-level override set via PUT /pages/{id}/seo
+///   2. LinkedEntry.Seo  — the entry linked to a Static page (if any)
+///   3. Page.Title  — used as seo:title fallback when nothing else is set
 /// </summary>
 internal sealed class RenderPageBySlugQueryHandler(
     IRepository<Page, PageId> pageRepo,
@@ -34,42 +32,88 @@ internal sealed class RenderPageBySlugQueryHandler(
     IRepository<Component, ComponentId> compRepo,
     IRepository<ComponentItem, ComponentItemId> itemRepo,
     IRepository<Layout, LayoutId> layoutRepo,
+    IRepository<Entry, EntryId> entryRepo,
     IComponentRenderingService renderer)
     : IRequestHandler<RenderPageBySlugQuery, Result<RenderedPageDto>>
 {
     public async Task<Result<RenderedPageDto>> Handle(
         RenderPageBySlugQuery request, CancellationToken cancellationToken)
-{
+    {
         var siteId = new SiteId(request.SiteId);
 
         // ── 1. Resolve Page ───────────────────────────────────────────────
-     var pages = await pageRepo.ListAsync(new PageBySlugSpec(siteId, request.Slug), cancellationToken);
-        var page  = pages.FirstOrDefault()
+        var pages = await pageRepo.ListAsync(new PageBySlugSpec(siteId, request.Slug), cancellationToken);
+        var page = pages.FirstOrDefault()
        ?? throw new NotFoundException(nameof(Page), request.Slug);
 
         // ── 2. Load PageTemplate ──────────────────────────────────────────
         var templates = await templateRepo.ListAsync(
           new PageTemplateByPageSpec(page.Id), cancellationToken);
-  var template  = templates.FirstOrDefault();
+        var template = templates.FirstOrDefault();
 
-        // ── 3+4. Render placements → zone HTML ────────────────────────────
-        var zones = await RenderZonesAsync(template, compRepo, itemRepo, renderer, cancellationToken);
+  // ── 3+4. Render placements → zone HTML ────────────────────────────
+    var zones = await RenderZonesAsync(template, compRepo, itemRepo, renderer, cancellationToken);
 
-        // ── 5. Resolve Layout (page override → site default → none) ───────
- var layout = await ResolveLayoutAsync(page, siteId, layoutRepo, cancellationToken);
+    // ── 5. Resolve SEO ────────────────────────────────────────────────
+        var seo = await ResolveSeoAsync(page, entryRepo, cancellationToken);
 
-     // ── 6. Compose final output ───────────────────────────────────────
+        // ── 6. Resolve Layout (page override → site default → none) ───────
+        var layout = await ResolveLayoutAsync(page, siteId, layoutRepo, cancellationToken);
+
+        // ── 7. Compose final output ───────────────────────────────────────
         string? html = null;
-        if (layout is not null)
-    html = await renderer.RenderLayoutAsync(layout, zones, cancellationToken: cancellationToken);
+  if (layout is not null)
+   html = await renderer.RenderLayoutAsync(
+layout, zones,
+  seoTitle: seo.Title,
+       seoDescription: seo.Description,
+             seoOgImage: seo.OgImage,
+          cancellationToken: cancellationToken);
 
         return Result.Success(new RenderedPageDto(
             page.Id.Value,
-  page.Slug.Value,
-      page.Title,
-    html,
-     html is null ? zones : null,
-         null));
+            page.Slug.Value,
+  page.Title,
+         html,
+            html is null ? zones : null,
+     seo));
+    }
+
+    // ── SEO resolution ────────────────────────────────────────────────────
+
+  /// <summary>
+    /// Resolves SEO using a three-level fallback:
+    ///   Page.Seo → LinkedEntry.Seo → Page.Title as title fallback.
+    /// </summary>
+    private static async Task<SeoDto> ResolveSeoAsync(
+        Page page,
+ IRepository<Entry, EntryId> entryRepo,
+        CancellationToken ct)
+    {
+        var pageSeo = page.Seo;
+        var entrySeo = await LoadLinkedEntrySeoAsync(page, entryRepo, ct);
+        return MergeSeo(page.Title, pageSeo, entrySeo);
+    }
+
+    private static async Task<SeoMetadata?> LoadLinkedEntrySeoAsync(
+        Page page,
+      IRepository<Entry, EntryId> entryRepo,
+        CancellationToken ct)
+    {
+        if (!page.LinkedEntryId.HasValue) return null;
+        var entry = await entryRepo.GetByIdAsync(page.LinkedEntryId.Value, ct);
+        return entry?.Seo;
+  }
+
+    private static SeoDto MergeSeo(string pageTitle, SeoMetadata pageSeo, SeoMetadata? entrySeo)
+    {
+        var title = pageSeo.MetaTitle
+          ?? entrySeo?.MetaTitle
+                 ?? pageTitle;
+   var description = pageSeo.MetaDescription ?? entrySeo?.MetaDescription;
+        var ogImage     = pageSeo.OgImage          ?? entrySeo?.OgImage;
+        var canonical   = pageSeo.CanonicalUrl     ?? entrySeo?.CanonicalUrl;
+     return new SeoDto(title, description, ogImage, canonical);
     }
 
     // ── Zone rendering ────────────────────────────────────────────────────
@@ -77,60 +121,56 @@ internal sealed class RenderPageBySlugQueryHandler(
     private static async Task<IReadOnlyDictionary<string, string>> RenderZonesAsync(
         PageTemplate? template,
         IRepository<Component, ComponentId> compRepo,
-        IRepository<ComponentItem, ComponentItemId> itemRepo,
-        IComponentRenderingService renderer,
-        CancellationToken ct)
+IRepository<ComponentItem, ComponentItemId> itemRepo,
+ IComponentRenderingService renderer,
+      CancellationToken ct)
     {
-    if (template is null || template.Placements.Count == 0)
-  return new Dictionary<string, string>();
+        if (template is null || template.Placements.Count == 0)
+    return new Dictionary<string, string>();
 
-  // Group placements by zone; within each zone they are already sorted by SortOrder.
         var zoneHtml = new Dictionary<string, StringBuilder>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var placement in template.Placements.OrderBy(p => p.SortOrder))
-      {
-            var comp = await compRepo.GetByIdAsync(placement.ComponentId, ct);
-         if (comp is null) continue;
+        {
+         var comp = await compRepo.GetByIdAsync(placement.ComponentId, ct);
+            if (comp is null) continue;
 
-          // Load all published items for this component.
-    var items = await itemRepo.ListAsync(
-            new ComponentItemsByComponentAndStatusSpec(comp.Id, ComponentItemStatus.Published, 1, int.MaxValue),
-      ct);
+     var items = await itemRepo.ListAsync(
+    new ComponentItemsByComponentAndStatusSpec(comp.Id, ComponentItemStatus.Published, 1, int.MaxValue),
+              ct);
 
-          var sb = zoneHtml.TryGetValue(placement.Zone, out var existing)
-      ? existing
-    : (zoneHtml[placement.Zone] = new StringBuilder());
+   var sb = zoneHtml.TryGetValue(placement.Zone, out var existing)
+        ? existing
+     : (zoneHtml[placement.Zone] = new StringBuilder());
 
-     foreach (var item in items)
+  foreach (var item in items)
             {
- var fragment = await renderer.RenderComponentAsync(comp, item, ct);
-      sb.Append(fragment);
-   }
-        }
+   var fragment = await renderer.RenderComponentAsync(comp, item, ct);
+          sb.Append(fragment);
+            }
+    }
 
-      return zoneHtml.ToDictionary(
-          kv => kv.Key,
-   kv => kv.Value.ToString(),
-  StringComparer.OrdinalIgnoreCase);
+        return zoneHtml.ToDictionary(
+      kv => kv.Key,
+            kv => kv.Value.ToString(),
+   StringComparer.OrdinalIgnoreCase);
     }
 
     // ── Layout resolution ─────────────────────────────────────────────────
 
     private static async Task<Layout?> ResolveLayoutAsync(
-  Page page,
-        SiteId siteId,
+        Page page,
+  SiteId siteId,
         IRepository<Layout, LayoutId> layoutRepo,
-        CancellationToken ct)
+      CancellationToken ct)
     {
-        // 1. Page-specific layout override
         if (page.LayoutId.HasValue)
-        {
-          var layout = await layoutRepo.GetByIdAsync(page.LayoutId.Value, ct);
-          if (layout is not null) return layout;
+     {
+      var layout = await layoutRepo.GetByIdAsync(page.LayoutId.Value, ct);
+            if (layout is not null) return layout;
         }
 
-        // 2. Site default layout
         var defaults = await layoutRepo.ListAsync(new DefaultLayoutBySiteSpec(siteId), ct);
-  return defaults.FirstOrDefault();
+        return defaults.FirstOrDefault();
     }
 }

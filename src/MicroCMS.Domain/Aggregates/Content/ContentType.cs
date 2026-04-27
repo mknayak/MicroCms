@@ -75,6 +75,18 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
+    public void Update(string displayName, string? description)
+    {
+    EnsureNotArchived();
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
+  if (displayName.Length > MaxDisplayNameLength)
+            throw new DomainException($"Display name must not exceed {MaxDisplayNameLength} characters.");
+
+        DisplayName = displayName.Trim();
+        Description = description?.Trim();
+     UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void Publish()
     {
         if (Status != ContentTypeStatus.Draft)

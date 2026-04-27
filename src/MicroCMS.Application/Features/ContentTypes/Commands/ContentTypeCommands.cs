@@ -34,3 +34,12 @@ public sealed record PublishContentTypeCommand(Guid ContentTypeId) : ICommand<Co
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record ArchiveContentTypeCommand(Guid ContentTypeId) : ICommand<ContentTypeDto>;
+
+[HasPolicy(ContentPolicies.ContentTypeManage)]
+public sealed record UpdateContentTypeCommand(
+    Guid ContentTypeId,
+    string DisplayName,
+    string? Description = null) : ICommand<ContentTypeDto>;
+
+[HasPolicy(ContentPolicies.ContentTypeManage)]
+public sealed record DeleteContentTypeCommand(Guid ContentTypeId) : ICommand;

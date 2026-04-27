@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type {
   AuthTokenResponse,
   PagedResult,
-  ContentType,
+  ContentTypeListItem,
   EntryListItem,
   DashboardStats,
   SearchResults,
@@ -36,19 +36,13 @@ const mockAuthResponse: AuthTokenResponse = {
 
 // ─── Content Types ────────────────────────────────────────────────────────────
 
-const mockContentTypes: ContentType[] = [
+const mockContentTypes: ContentTypeListItem[] = [
   {
     id: 'ct-1',
-    name: 'Blog Post',
-    apiKey: 'blog_post',
-    description: 'A blog post',
-    fields: [
-      { id: 'f-1', name: 'Title', apiKey: 'title', type: 'text', required: true, localized: false },
-      { id: 'f-2', name: 'Body', apiKey: 'body', type: 'richtext', required: true, localized: true },
-    ],
-    isCollection: true,
-    tenantId: 'tenant-1',
-    createdAt: '2025-01-01T00:00:00Z',
+    handle: 'blog_post',
+    displayName: 'Blog Post',
+    status: 'Active',
+    fieldCount: 2,
     updatedAt: '2025-01-15T00:00:00Z',
   },
 ];
@@ -266,28 +260,44 @@ export const handlers = [
 
   // Content Types
   http.get(`${BASE}/content-types`, () =>
-    HttpResponse.json<PagedResult<ContentType>>({
+    HttpResponse.json<PagedResult<ContentTypeListItem>>({
       items: mockContentTypes,
       totalCount: 1,
-      pageNumber: 1,
- pageSize: 100,
+  pageNumber: 1,
+      pageSize: 100,
       totalPages: 1,
     }),
   ),
   http.get(`${BASE}/content-types/:id`, ({ params }) => {
     const ct = mockContentTypes.find((c) => c.id === params.id);
-    return ct ? HttpResponse.json(ct) : HttpResponse.json({ status: 404 }, { status: 404 });
+    if (!ct) return HttpResponse.json({ status: 404 }, { status: 404 });
+    // Return a full ContentType shape for the detail endpoint
+    return HttpResponse.json({
+      id: ct.id,
+      tenantId: 'tenant-1',
+      siteId: 'site-1',
+      handle: ct.handle,
+      displayName: ct.displayName,
+      status: ct.status,
+      fields: [
+        { id: 'f-1', handle: 'title', label: 'Title', fieldType: 'ShortText', isRequired: true, isLocalized: false, isUnique: false, sortOrder: 0 },
+        { id: 'f-2', handle: 'body', label: 'Body', fieldType: 'RichText', isRequired: true, isLocalized: true, isUnique: false, sortOrder: 1 },
+      ],
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: ct.updatedAt,
+    });
   }),
   http.post(`${BASE}/content-types`, async ({ request }) => {
-    const body = await request.json() as Partial<ContentType>;
-    const newCt: ContentType = {
+  const body = await request.json() as { handle?: string; displayName?: string; description?: string; siteId?: string };
+    const newCt = {
       id: 'ct-new',
-      name: body.name ?? 'New Type',
-      apiKey: body.apiKey ?? 'new_type',
-      description: body.description,
-      fields: [],
-      isCollection: body.isCollection ?? true,
       tenantId: 'tenant-1',
+      siteId: body.siteId ?? 'site-1',
+      handle: body.handle ?? 'new_type',
+      displayName: body.displayName ?? 'New Type',
+      description: body.description,
+      status: 'Draft',
+      fields: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

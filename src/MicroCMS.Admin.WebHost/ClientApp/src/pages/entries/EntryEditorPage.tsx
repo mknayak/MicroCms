@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { entriesApi } from '@/api/entries';
 import { contentTypesApi } from '@/api/contentTypes';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
-import type { EntryVersion, FieldDefinition } from '@/types';
+import type { EntryVersion, FieldDefinitionDto } from '@/types';
 import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -86,21 +86,21 @@ function FieldInput({
   value,
   onChange,
 }: {
-  field: FieldDefinition;
+  field: FieldDefinitionDto;
   value: unknown;
   onChange: (val: unknown) => void;
 }) {
-  switch (field.type) {
-    case 'richtext':
+  switch (field.fieldType) {
+    case 'RichText':
       return (
         <RichTextEditor
           value={typeof value === 'string' ? value : ''}
           onChange={onChange}
-          placeholder={`Write ${field.name}…`}
+     placeholder={`Write ${field.label}…`}
         />
       );
-    case 'boolean':
-      return (
+    case 'Boolean':
+    return (
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -108,32 +108,32 @@ function FieldInput({
           className="h-4 w-4 rounded border-slate-300 text-brand-600"
         />
       );
-    case 'number':
-      return (
-        <input
-          type="number"
-          value={typeof value === 'number' ? value : ''}
-          onChange={(e) => onChange(e.target.valueAsNumber)}
-          className="form-input"
+    case 'Number':
+    return (
+    <input
+       type="number"
+     value={typeof value === 'number' ? value : ''}
+   onChange={(e) => onChange(e.target.valueAsNumber)}
+     className="form-input"
         />
-      );
-    case 'date':
+ );
+    case 'DateTime':
       return (
-        <input
+      <input
           type="datetime-local"
-          value={typeof value === 'string' ? value : ''}
-          onChange={(e) => onChange(e.target.value)}
+    value={typeof value === 'string' ? value : ''}
+     onChange={(e) => onChange(e.target.value)}
           className="form-input"
         />
       );
     default:
       return (
         <input
-          type="text"
-          value={typeof value === 'string' ? value : ''}
+      type="text"
+     value={typeof value === 'string' ? value : ''}
           onChange={(e) => onChange(e.target.value)}
           className="form-input"
-          placeholder={`Enter ${field.name}…`}
+     placeholder={`Enter ${field.label}…`}
         />
       );
   }
@@ -275,16 +275,16 @@ export default function EntryEditorPage() {
           <div className="card space-y-4">
             <div className="grid grid-cols-2 gap-4">
               {isNew && (
-                <div>
-                  <label className="form-label">Content Type</label>
-                  <select className="form-input mt-1" {...register('contentTypeId')}>
-                    <option value="">Select a content type…</option>
-                    {contentTypes?.items.map((ct) => (
-                      <option key={ct.id} value={ct.id}>{ct.name}</option>
-                    ))}
-                  </select>
-                  {errors.contentTypeId && <p className="form-error">{errors.contentTypeId.message}</p>}
-                </div>
+        <div>
+<label className="form-label">Content Type</label>
+          <select className="form-input mt-1" {...register('contentTypeId')}>
+           <option value="">Select a content type…</option>
+           {contentTypes?.items.map((ct) => (
+             <option key={ct.id} value={ct.id}>{ct.displayName}</option>
+       ))}
+          </select>
+        {errors.contentTypeId && <p className="form-error">{errors.contentTypeId.message}</p>}
+      </div>
               )}
               <div>
                 <label className="form-label">Slug</label>
@@ -296,28 +296,28 @@ export default function EntryEditorPage() {
 
           {/* Dynamic fields */}
           {selectedContentType?.fields.map((field) => (
-            <div key={field.id} className="card space-y-2">
+     <div key={field.id} className="card space-y-2">
               <div className="flex items-center justify-between">
-                <label className="form-label">
-                  {field.name}
-                  {field.required && <span className="ml-1 text-red-500">*</span>}
-                  {field.localized && <span className="ml-2 badge-brand">Localized</span>}
+       <label className="form-label">
+      {field.label}
+       {field.isRequired && <span className="ml-1 text-red-500">*</span>}
+  {field.isLocalized && <span className="ml-2 badge-brand">Localized</span>}
                 </label>
-                <span className="text-xs text-slate-400">{field.type}</span>
-              </div>
+  <span className="text-xs text-slate-400">{field.fieldType}</span>
+     </div>
               <Controller
-                control={control}
-                name={`fields.${field.apiKey}`}
-                render={({ field: f }) => (
-                  <FieldInput
-                    field={field}
-                    value={f.value}
-                    onChange={f.onChange}
-                  />
-                )}
-              />
+              control={control}
+                name={`fields.${field.handle}`}
+       render={({ field: f }) => (
+      <FieldInput
+        field={field}
+        value={f.value}
+               onChange={f.onChange}
+           />
+  )}
+        />
             </div>
-          ))}
+        ))}
         </div>
 
         {/* Sidebar */}

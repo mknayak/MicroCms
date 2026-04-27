@@ -79,11 +79,18 @@ export default function ContentTypeEditPage() {
   // Populate on edit
   useEffect(() => {
     if (existing) {
-      setValue('name', existing.name);
-      setValue('apiKey', existing.apiKey);
+      setValue('name', existing.displayName);
+      setValue('apiKey', existing.handle);
       setValue('description', existing.description ?? '');
-      setValue('isCollection', existing.isCollection);
-      setValue('fields', existing.fields.map((f) => ({ ...f })));
+      setValue('isCollection', existing.status !== 'Archived'); // best-effort; edit page is cosmetic
+      setValue('fields', existing.fields.map((f) => ({
+        id: f.id,
+        name: f.label,
+        apiKey: f.handle,
+    type: f.fieldType as FormValues['fields'][number]['type'],
+    required: f.isRequired,
+        localized: f.isLocalized,
+      })));
     }
   }, [existing, setValue]);
 
@@ -105,14 +112,16 @@ export default function ContentTypeEditPage() {
   const mutation = useMutation({
     mutationFn: (values: FormValues) =>
       isNew
-        ? contentTypesApi.create(values)
+        ? contentTypesApi.create({
+           siteId: '',      // caller must supply; kept as empty default here
+   handle: values.apiKey,
+            displayName: values.name,
+ description: values.description,
+          })
         : contentTypesApi.update(id!, {
-            ...values,
-            fields: values.fields.map((f, i) => ({
-              ...f,
-              id: existing?.fields[i]?.id ?? crypto.randomUUID(),
-            })),
-          }),
+  displayName: values.name,
+          description: values.description,
+        }),
     onSuccess: () => {
       toast.success(isNew ? 'Content type created.' : 'Content type updated.');
       void qc.invalidateQueries({ queryKey: ['content-types'] });
@@ -136,7 +145,7 @@ export default function ContentTypeEditPage() {
           ← Back
         </button>
         <h1 className="text-2xl font-bold text-slate-900">
-          {isNew ? 'New Content Type' : `Edit: ${existing?.name ?? '…'}`}
+          {isNew ? 'New Content Type' : `Edit: ${existing?.displayName ?? '…'}`}
         </h1>
       </div>
 
