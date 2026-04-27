@@ -46,4 +46,8 @@ public static class ContentPolicies
     // ── Layout policies ────────────────────────────────────────────────────
     public const string LayoutRead   = "Layout.Read";
     public const string LayoutManage = "Layout.Manage";
+
+    // ── Page Template policies ─────────────────────────────────────────────
+    public const string PageTemplateRead   = "PageTemplate.Read";
+    public const string PageTemplateManage = "PageTemplate.Manage";
 }

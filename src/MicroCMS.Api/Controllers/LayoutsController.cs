@@ -26,9 +26,8 @@ public sealed class LayoutsController : ApiControllerBase
     /// <summary>Gets a single layout by ID.</summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct = default) =>
-    OkOrProblem(await Sender.Send(new GetLayoutQuery(id), ct));
+        OkOrProblem(await Sender.Send(new GetLayoutQuery(id), ct));
 
     /// <summary>
  /// Creates a new layout.
@@ -45,7 +44,6 @@ public sealed class LayoutsController : ApiControllerBase
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Create(
         [FromBody] CreateLayoutCommand command,
   CancellationToken ct = default)
@@ -57,29 +55,43 @@ public sealed class LayoutsController : ApiControllerBase
     /// <summary>Updates a layout's name, template type, and shell template content.</summary>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
         Guid id,
       [FromBody] UpdateLayoutRequest request,
       CancellationToken ct = default) =>
-        OkOrProblem(await Sender.Send(new UpdateLayoutCommand(id, request.Name, request.TemplateType, request.ShellTemplate), ct));
+        OkOrProblem(await Sender.Send(new UpdateLayoutCommand(id, request.Name, request.TemplateType), ct));
+
+    /// <summary>
+    /// Replaces the zone tree for a layout.
+    /// The shell template is auto-regenerated from the new zone structure.
+    /// </summary>
+    [HttpPut("{id:guid}/zones")]
+    [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateZones(
+        Guid id, [FromBody] UpdateLayoutZonesRequest request, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new UpdateLayoutZonesCommand(id, request.Zones), ct));
+
+    /// <summary>Replaces the default component placements for a layout.</summary>
+    [HttpPut("{id:guid}/default-placements")]
+    [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateDefaultPlacements(
+    Guid id, [FromBody] UpdateDefaultPlacementsRequest request, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new UpdateLayoutDefaultPlacementsCommand(id, request.Placements), ct));
 
     /// <summary>Sets this layout as the site default. Clears IsDefault on any previous default.</summary>
     [HttpPost("{id:guid}/set-default")]
     [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SetDefault(
-        Guid id,
-      [FromQuery] Guid siteId,
-        CancellationToken ct = default) =>
+  public async Task<IActionResult> SetDefault(Guid id, [FromQuery] Guid siteId, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new SetDefaultLayoutCommand(siteId, id), ct));
 
     /// <summary>Deletes a layout. Pages that reference it will fall back to the site default.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default) =>
         NoContentOrProblem(await Sender.Send(new DeleteLayoutCommand(id), ct));
 }
 
-public sealed record UpdateLayoutRequest(string Name, string TemplateType, string? ShellTemplate);
+// ── Request bodies ────────────────────────────────────────────────────────────
+public sealed record UpdateLayoutRequest(string Name, string TemplateType);
+public sealed record UpdateLayoutZonesRequest(IReadOnlyList<LayoutZoneNodeDto> Zones);
+public sealed record UpdateDefaultPlacementsRequest(IReadOnlyList<LayoutDefaultPlacementDto> Placements);

@@ -7,8 +7,20 @@ using MicroCMS.Shared.Ids;
 namespace MicroCMS.Domain.Aggregates.Content;
 
 /// <summary>
+/// Discriminates what a ContentType represents.
+/// </summary>
+public enum ContentTypeKind
+{
+    /// <summary>Standard headless content (blog post, product, etc.)</summary>
+    Content = 0,
+    /// <summary>Page-type content. Entry creation triggers the page wizard.</summary>
+  Page = 1,
+    /// <summary>Auto-created backing type for a Component. Not user-visible in the type list.</summary>
+    Component = 2,
+}
+
+/// <summary>
 /// Content type aggregate root. Defines the schema (set of fields) for entries.
-/// Handle is the machine-readable API name; displayName is shown in the admin UI.
 /// </summary>
 public sealed class ContentType : AggregateRoot<ContentTypeId>
 {
@@ -17,13 +29,14 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     private ContentType() : base() { } // EF Core
 
     private ContentType(
-        ContentTypeId id,
+    ContentTypeId id,
         TenantId tenantId,
         SiteId siteId,
         string handle,
         string displayName,
         string? description,
-        LocalizationMode localizationMode) : base(id)
+        LocalizationMode localizationMode,
+        ContentTypeKind kind = ContentTypeKind.Content) : base(id)
     {
         TenantId = tenantId;
         SiteId = siteId;
@@ -31,21 +44,32 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         DisplayName = displayName;
         Description = description;
         LocalizationMode = localizationMode;
+      Kind = kind;
         Status = ContentTypeStatus.Draft;
         CreatedAt = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
+   UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public TenantId TenantId { get; private set; }
     public SiteId SiteId { get; private set; }
     public string Handle { get; private set; } = string.Empty;
-    public string DisplayName { get; private set; } = string.Empty;
+  public string DisplayName { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public LocalizationMode LocalizationMode { get; private set; }
     public ContentTypeStatus Status { get; private set; }
+
+    /// <summary>Discriminates what this content type represents.</summary>
+    public ContentTypeKind Kind { get; private set; } = ContentTypeKind.Content;
+
+    /// <summary>
+    /// The layout applied to pages of this type.
+    /// Only relevant when <see cref="Kind"/> == <see cref="ContentTypeKind.Page"/>.
+ /// </summary>
+    public LayoutId? LayoutId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
-    public DateTimeOffset UpdatedAt { get; private set; }
-  public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
+ public DateTimeOffset UpdatedAt { get; private set; }
+    public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
 
     public const int MaxHandleLength = 64;
     public const int MaxDisplayNameLength = 200;
@@ -57,23 +81,22 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         TenantId tenantId,
         SiteId siteId,
         string handle,
-        string displayName,
-        string? description = null,
-        LocalizationMode localizationMode = LocalizationMode.PerLocale)
+   string displayName,
+ string? description = null,
+        LocalizationMode localizationMode = LocalizationMode.PerLocale,
+        ContentTypeKind kind = ContentTypeKind.Content)
     {
-        ValidateHandle(handle);
-        ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
+    ValidateHandle(handle);
+ ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
 
         if (displayName.Length > MaxDisplayNameLength)
-        {
             throw new DomainException($"Display name must not exceed {MaxDisplayNameLength} characters.");
-        }
 
         var ct = new ContentType(
-            ContentTypeId.New(), tenantId, siteId,
-            handle.Trim(), displayName.Trim(), description?.Trim(), localizationMode);
+   ContentTypeId.New(), tenantId, siteId,
+   handle.Trim(), displayName.Trim(), description?.Trim(), localizationMode, kind);
 
-        ct.RaiseDomainEvent(new ContentTypeCreatedEvent(ct.Id, ct.TenantId, handle));
+    ct.RaiseDomainEvent(new ContentTypeCreatedEvent(ct.Id, ct.TenantId, handle));
         return ct;
     }
 
@@ -188,6 +211,29 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         _fields.Remove(field);
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    /// <summary>Sets or clears the layout associated with a Page-kind content type.</summary>
+    public void SetLayout(LayoutId? layoutId)
+    {
+        if (Kind != ContentTypeKind.Page)
+          throw new BusinessRuleViolationException(
+        "ContentType.NotPageKind",
+       "Layout can only be set on Page-kind content types.");
+     LayoutId = layoutId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Changes the kind of this content type. Only allowed from Content → Page or Page → Content.</summary>
+    public void SetKind(ContentTypeKind kind)
+    {
+        if (Kind == ContentTypeKind.Component)
+ throw new BusinessRuleViolationException(
+     "ContentType.ComponentKindImmutable",
+"Component-kind content types cannot change their kind.");
+        Kind = kind;
+        if (kind != ContentTypeKind.Page) LayoutId = null;
+    UpdatedAt = DateTimeOffset.UtcNow;
+ }
 
     // ── Private helpers ───────────────────────────────────────────────────
 

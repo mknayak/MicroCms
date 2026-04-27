@@ -11,7 +11,7 @@ internal sealed class ComponentConfiguration : IEntityTypeConfiguration<Componen
 {
     public void Configure(EntityTypeBuilder<Component> builder)
     {
-   builder.ToTable("Components");
+        builder.ToTable("Components");
 
         builder.HasKey(c => c.Id);
         builder.Property(c => c.Id)
@@ -35,7 +35,13 @@ internal sealed class ComponentConfiguration : IEntityTypeConfiguration<Componen
         builder.Property(c => c.ItemCount).IsRequired();
      builder.Property(c => c.TemplateType).HasConversion<string>().HasMaxLength(30).IsRequired();
     builder.Property(c => c.TemplateContent).HasColumnType("TEXT");
-        builder.Property(c => c.CreatedAt).IsRequired();
+
+      builder.Property(c => c.BackingContentTypeId)
+     .HasConversion(
+  id => id.HasValue ? id.Value.Value : (Guid?)null,
+  v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
+
+    builder.Property(c => c.CreatedAt).IsRequired();
     builder.Property(c => c.UpdatedAt).IsRequired();
 
         // FieldDefinitions owned collection

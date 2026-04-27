@@ -9,6 +9,10 @@ public sealed record ContentTypeDto(
     string? Description,
     string LocalizationMode,
     string Status,
+    /// <summary>Discriminates what this content type represents: Content, Page, or Component.</summary>
+    string Kind,
+    /// <summary>Layout assigned to this type when Kind == Page. Null otherwise.</summary>
+    Guid? LayoutId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<FieldDefinitionDto> Fields);
@@ -33,6 +37,7 @@ public sealed record ContentTypeListItemDto(
     string DisplayName,
     string Status,
     string LocalizationMode,
+    string Kind,
     int FieldCount,
     int EntryCount,
     int LocaleCount,

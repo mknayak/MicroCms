@@ -32,6 +32,9 @@ const ComponentItemListPage = lazy(() => import('@/pages/components/ComponentIte
 const ComponentItemEditorPage = lazy(() => import('@/pages/components/ComponentItemEditorPage'));
 const LayoutsPage = lazy(() => import('@/pages/layouts/LayoutsPage'));
 const PageDesignerPage = lazy(() => import('@/pages/designer/PageDesignerPage'));
+const LayoutDesignerPage = lazy(() => import('@/pages/layouts/LayoutDesignerPage'));
+const PageTemplatesPage = lazy(() => import('@/pages/page-templates/PageTemplatesPage'));
+const PageTemplateDesignerPage = lazy(() => import('@/pages/page-templates/PageTemplateDesignerPage'));
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -180,8 +183,12 @@ export default function App() {
                                         />
                                         <Route
                                             path="/designer"
+                                            element={<Navigate to="/pages" replace />}
+                                        />
+                                        <Route
+                                            path="/pages/:pageId/designer"
                                             element={
-                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Editor']}>
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin', 'ContentAdmin', 'Designer', 'Editor']}>
                                                     <Suspense fallback={<PageLoader />}>
                                                         <PageDesignerPage />
                                                     </Suspense>
@@ -246,6 +253,56 @@ export default function App() {
                                                 <Suspense fallback={<PageLoader />}>
                                                     <ComponentItemEditorPage />
                                                 </Suspense>
+                                            }
+                                        />
+                                        <Route
+                                            path="/layouts/:id/designer"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin', 'ContentAdmin', 'Designer', 'Editor']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <LayoutDesignerPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/page-templates"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin', 'ContentAdmin', 'Designer', 'Editor']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <PageTemplatesPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/page-templates/new"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Designer']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <PageTemplateDesignerPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/page-templates/:id/edit"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Designer']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <PageTemplateDesignerPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/page-templates/:id/designer"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin', 'ContentAdmin', 'Designer', 'Editor']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <PageTemplateDesignerPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
                                             }
                                         />
                                     </Route>

@@ -136,7 +136,20 @@ public static Page CreateCollection(
     public void SetLayout(LayoutId? layoutId)
     {
         LayoutId = layoutId;
-        UpdatedAt = DateTimeOffset.UtcNow;
+   UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// The reusable site template this page inherits component placements from.
+    /// <c>null</c> means the page has no inherited template — placements are page-specific only.
+    /// </summary>
+    public SiteTemplateId? SiteTemplateId { get; private set; }
+
+    /// <summary>Assigns or clears the site template for this page.</summary>
+    public void SetSiteTemplate(SiteTemplateId? siteTemplateId)
+    {
+        SiteTemplateId = siteTemplateId;
+   UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     /// <summary>

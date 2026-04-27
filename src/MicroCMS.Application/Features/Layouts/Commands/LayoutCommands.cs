@@ -5,26 +5,33 @@ using MicroCMS.Application.Features.Layouts.Dtos;
 
 namespace MicroCMS.Application.Features.Layouts.Commands;
 
-[HasPolicy(ContentPolicies.ComponentManage)]
+[HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record CreateLayoutCommand(
     Guid SiteId,
     string Name,
     string Key,
-    string TemplateType,
-    string? ShellTemplate,
-    bool IsDefault = false) : ICommand<LayoutDto>;
+    string TemplateType) : ICommand<LayoutDto>;
 
-[HasPolicy(ContentPolicies.ComponentManage)]
+[HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record UpdateLayoutCommand(
     Guid LayoutId,
     string Name,
-    string TemplateType,
-    string? ShellTemplate) : ICommand<LayoutDto>;
+    string TemplateType) : ICommand<LayoutDto>;
 
-[HasPolicy(ContentPolicies.ComponentManage)]
+[HasPolicy(ContentPolicies.LayoutManage)]
+public sealed record UpdateLayoutZonesCommand(
+    Guid LayoutId,
+    IReadOnlyList<LayoutZoneNodeDto> Zones) : ICommand<LayoutDto>;
+
+[HasPolicy(ContentPolicies.LayoutManage)]
+public sealed record UpdateLayoutDefaultPlacementsCommand(
+    Guid LayoutId,
+    IReadOnlyList<LayoutDefaultPlacementDto> Placements) : ICommand<LayoutDto>;
+
+[HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record SetDefaultLayoutCommand(
     Guid SiteId,
     Guid LayoutId) : ICommand<LayoutDto>;
 
-[HasPolicy(ContentPolicies.ComponentManage)]
+[HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record DeleteLayoutCommand(Guid LayoutId) : ICommand;

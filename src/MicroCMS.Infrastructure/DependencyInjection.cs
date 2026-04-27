@@ -9,6 +9,7 @@ using MicroCMS.Domain.Aggregates.Ai;
 using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Identity;
+using MicroCMS.Domain.Aggregates.Locks;
 using MicroCMS.Domain.Aggregates.Media;
 using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Aggregates.Plugins;
@@ -84,9 +85,9 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-       ConfigureDbProvider(options, provider, connectionString);
-   options.EnableSensitiveDataLogging(
-       sensitiveDataLoggingEnabled: IsDevEnvironment(configuration));
+            ConfigureDbProvider(options, provider, connectionString);
+            options.EnableSensitiveDataLogging(
+                sensitiveDataLoggingEnabled: IsDevEnvironment(configuration));
         });
     }
 
@@ -118,47 +119,53 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Tenant, TenantId>, EfRepository<Tenant, TenantId>>();
         services.AddScoped<IRepository<TenantSecuritySettings, TenantSecuritySettingsId>, EfRepository<TenantSecuritySettings, TenantSecuritySettingsId>>();
 
-// Sites
-  services.AddScoped<IRepository<Site, SiteId>, EfRepository<Site, SiteId>>();
+        // Sites
+        services.AddScoped<IRepository<Site, SiteId>, EfRepository<Site, SiteId>>();
         services.AddScoped<IRepository<SiteSettings, SiteId>, EfRepository<SiteSettings, SiteId>>();
         services.AddScoped<IRepository<ApiClient, ApiClientId>, EfRepository<ApiClient, ApiClientId>>();
 
         // Content
         services.AddScoped<IRepository<ContentType, ContentTypeId>, EfRepository<ContentType, ContentTypeId>>();
-   services.AddScoped<IRepository<Entry, EntryId>, EfRepository<Entry, EntryId>>();
+        services.AddScoped<IRepository<Entry, EntryId>, EfRepository<Entry, EntryId>>();
         services.AddScoped<IRepository<Folder, FolderId>, EfRepository<Folder, FolderId>>();
 
-   // Pages
+        // Pages
         services.AddScoped<IRepository<Page, PageId>, EfRepository<Page, PageId>>();
 
-      // Media
+        // Media
         services.AddScoped<IRepository<MediaAsset, MediaAssetId>, EfRepository<MediaAsset, MediaAssetId>>();
-   services.AddScoped<IRepository<MediaFolder, Guid>, EfRepository<MediaFolder, Guid>>();
+        services.AddScoped<IRepository<MediaFolder, Guid>, EfRepository<MediaFolder, Guid>>();
 
         // Taxonomy
-      services.AddScoped<IRepository<Category, CategoryId>, EfRepository<Category, CategoryId>>();
+        services.AddScoped<IRepository<Category, CategoryId>, EfRepository<Category, CategoryId>>();
         services.AddScoped<IRepository<Tag, TagId>, EfRepository<Tag, TagId>>();
 
-     // Identity
-     services.AddScoped<IRepository<User, UserId>, EfRepository<User, UserId>>();
-     services.AddScoped<IRepository<RefreshToken, RefreshTokenId>, EfRepository<RefreshToken, RefreshTokenId>>();
-     services.AddScoped<IRepository<LoginAttempt, LoginAttemptId>, EfRepository<LoginAttempt, LoginAttemptId>>();
+        // Identity
+        services.AddScoped<IRepository<User, UserId>, EfRepository<User, UserId>>();
+        services.AddScoped<IRepository<RefreshToken, RefreshTokenId>, EfRepository<RefreshToken, RefreshTokenId>>();
+        services.AddScoped<IRepository<LoginAttempt, LoginAttemptId>, EfRepository<LoginAttempt, LoginAttemptId>>();
 
- // Webhooks
-      services.AddScoped<IRepository<WebhookSubscription, WebhookSubscriptionId>, EfRepository<WebhookSubscription, WebhookSubscriptionId>>();
+        // Webhooks
+        services.AddScoped<IRepository<WebhookSubscription, WebhookSubscriptionId>, EfRepository<WebhookSubscription, WebhookSubscriptionId>>();
 
-     // Content pipeline services
+        // Content pipeline services
         services.AddScoped<IRepository<Component, ComponentId>, EfRepository<Component, ComponentId>>();
         services.AddScoped<IRepository<ComponentItem, ComponentItemId>, EfRepository<ComponentItem, ComponentItemId>>();
         services.AddScoped<IRepository<Layout, LayoutId>, EfRepository<Layout, LayoutId>>();
         services.AddScoped<IRepository<PageTemplate, PageTemplateId>, EfRepository<PageTemplate, PageTemplateId>>();
 
         // AI
-      services.AddScoped<IRepository<CopilotConversation, CopilotConversationId>, EfRepository<CopilotConversation, CopilotConversationId>>();
+        services.AddScoped<IRepository<CopilotConversation, CopilotConversationId>, EfRepository<CopilotConversation, CopilotConversationId>>();
         services.AddScoped<IRepository<AiProviderSettings, AiProviderSettingsId>, EfRepository<AiProviderSettings, AiProviderSettingsId>>();
 
         // Plugins
         services.AddScoped<IRepository<Plugin, PluginId>, EfRepository<Plugin, PluginId>>();
+
+        // Locks
+        services.AddScoped<IRepository<EditLock, EditLockId>, EfRepository<EditLock, EditLockId>>();
+
+        // Site Templates
+        services.AddScoped<IRepository<SiteTemplate, SiteTemplateId>, EfRepository<SiteTemplate, SiteTemplateId>>();
     }
 
     private static void RegisterCoreServices(IServiceCollection services)
@@ -169,7 +176,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ISecretHasher, Sha256SecretHasher>();
-     services.AddScoped<ILlmService, NullLlmService>();
+        services.AddScoped<ILlmService, NullLlmService>();
         services.AddScoped<IPreviewSecretProvider, SiteIdPreviewSecretProvider>();
 
         // Tenancy / install
@@ -195,25 +202,25 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddSingleton<IMimeTypeInspector, MimeTypeInspector>();
-    services.AddSingleton<IImageVariantService, ImageVariantService>();
+        services.AddSingleton<IImageVariantService, ImageVariantService>();
 
         services.Configure<HmacSigningOptions>(
      configuration.GetSection(HmacSigningOptions.SectionName));
-   services.AddScoped<IStorageSigningService, HmacStorageSigningService>();
+        services.AddScoped<IStorageSigningService, HmacStorageSigningService>();
 
         var clamAvEnabled = configuration.GetValue<bool>("ClamAv:Enabled");
         if (clamAvEnabled)
- {
-          services.Configure<ClamAvOptions>(configuration.GetSection(ClamAvOptions.SectionName));
+        {
+            services.Configure<ClamAvOptions>(configuration.GetSection(ClamAvOptions.SectionName));
             services.AddScoped<IClamAvScanner, ClamAvScanner>();
         }
-      else
-     {
-     services.AddScoped<IClamAvScanner, NoOpClamAvScanner>();
+        else
+        {
+            services.AddScoped<IClamAvScanner, NoOpClamAvScanner>();
         }
 
         var storageProvider = configuration.GetValue<string>("MicroCMS:Storage:Provider") ?? "Filesystem";
-      RegisterStorageProvider(services, configuration, storageProvider);
+        RegisterStorageProvider(services, configuration, storageProvider);
     }
 
     private static void RegisterStorageProvider(
@@ -266,53 +273,53 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.Configure<CacheOptions>(configuration.GetSection($"MicroCMS:{CacheOptions.SectionName}"));
 
-    var cacheProvider = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:Provider") ?? "None";
+        var cacheProvider = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:Provider") ?? "None";
         if (string.Equals(cacheProvider, "Redis", StringComparison.OrdinalIgnoreCase))
         {
-        var connectionString = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:ConnectionString");
-          if (!string.IsNullOrWhiteSpace(connectionString))
+            var connectionString = configuration.GetValue<string>($"MicroCMS:{CacheOptions.SectionName}:ConnectionString");
+            if (!string.IsNullOrWhiteSpace(connectionString))
             {
-         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
-      }
-     }
+                services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
+            }
+        }
 
         services.AddSingleton<MicroCMS.Application.Common.Interfaces.ICacheService, TwoTierCacheService>();
 
         // ── Search ─────────────────────────────────────────────────────────
-     services.Configure<SearchOptions>(configuration.GetSection($"MicroCMS:{SearchOptions.SectionName}"));
+        services.Configure<SearchOptions>(configuration.GetSection($"MicroCMS:{SearchOptions.SectionName}"));
 
-var searchProvider = configuration.GetValue<string>($"MicroCMS:{SearchOptions.SectionName}:Provider") ?? "Database";
+        var searchProvider = configuration.GetValue<string>($"MicroCMS:{SearchOptions.SectionName}:Provider") ?? "Database";
         RegisterSearchProvider(services, configuration, searchProvider);
     }
 
-private static void RegisterSearchProvider(
-   IServiceCollection services,
-        IConfiguration configuration,
-        string providerName)
+    private static void RegisterSearchProvider(
+       IServiceCollection services,
+            IConfiguration configuration,
+            string providerName)
     {
         if (string.Equals(providerName, "OpenSearch", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<OpenSearch.Client.IOpenSearchClient>(sp =>
        {
-                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value;
-        var pool = new OpenSearch.Net.SingleNodeConnectionPool(new Uri(opts.Endpoint));
-        var settings = new OpenSearch.Client.ConnectionSettings(pool);
-    if (!string.IsNullOrEmpty(opts.Username))
-    {
-                    settings = settings.BasicAuthentication(opts.Username, opts.Password);
-      }
-                return new OpenSearch.Client.OpenSearchClient(settings);
-            });
-  services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, OpenSearchService>();
+           var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value;
+           var pool = new OpenSearch.Net.SingleNodeConnectionPool(new Uri(opts.Endpoint));
+           var settings = new OpenSearch.Client.ConnectionSettings(pool);
+           if (!string.IsNullOrEmpty(opts.Username))
+           {
+               settings = settings.BasicAuthentication(opts.Username, opts.Password);
+           }
+           return new OpenSearch.Client.OpenSearchClient(settings);
+       });
+            services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, OpenSearchService>();
         }
         else if (string.Equals(providerName, "None", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<MicroCMS.Application.Common.Interfaces.ISearchService, NullSearchService>();
         }
-    else
-      {
-      // Default: "Database" — SQL LIKE via EF Core; no external dependencies required.
-       services.AddScoped<MicroCMS.Application.Common.Interfaces.ISearchService, DatabaseSearchService>();
+        else
+        {
+            // Default: "Database" — SQL LIKE via EF Core; no external dependencies required.
+            services.AddScoped<MicroCMS.Application.Common.Interfaces.ISearchService, DatabaseSearchService>();
         }
     }
 

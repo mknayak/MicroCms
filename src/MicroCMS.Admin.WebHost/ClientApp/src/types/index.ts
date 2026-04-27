@@ -83,6 +83,14 @@ export interface UpdateTenantRequest {
 // ─── Content Types ────────────────────────────────────────────────────────────
 
 /**
+ * Discriminates what a ContentType represents.
+ *  - Content  : standard headless content (blog post, product, etc.)
+ *  - Page     : page-typed content; creation triggers the page wizard
+ *  - Component: auto-created backing type for a Component; not user-visible in the type list
+ */
+export type ContentTypeKind = 'Content' | 'Page' | 'Component';
+
+/**
  * Matches the backend FieldType enum exactly (case-sensitive).
  */
 export type FieldType =
@@ -148,6 +156,10 @@ export interface ContentType {
   description?: string;
   localizationMode: string;
   status: string;
+  /** Discriminates what this content type represents. */
+  kind: ContentTypeKind;
+  /** Only set when kind === 'Page'. The layout applied to pages of this type. */
+  layoutId?: string;
   fields: FieldDefinitionDto[];
   createdAt: string;
   updatedAt: string;
@@ -497,21 +509,25 @@ export interface PageDto {
   seo?: PageSeoDto;
 }
 
-export interface CreateStaticPageRequest {
-  siteId: string;
-  title: string;
-  slug: string;
-  parentId?: string;
-  linkedEntryId?: string;
+/** Nested placement node — either a component leaf or a grid-row branch. */
+export interface SavePlacementNode {
+  type: 'component' | 'grid-row';
+  zone: string;
+  sortOrder: number;
+  // component-only:
+  componentId?: string;
+  boundItemId?: string;
+  isLayoutDefault?: boolean;
+  // grid-row-only:
+  columns?: Array<{
+    span: number;
+    zoneName: string;
+    placements: SavePlacementNode[];
+  }>;
 }
 
-export interface CreateCollectionPageRequest {
-  siteId: string;
-  title: string;
-  slug: string;
-  contentTypeId: string;
-  routePattern: string;
-  parentId?: string;
+export interface SavePageTemplateRequest {
+  placements: SavePlacementNode[];
 }
 
 export interface MovePageRequest {
@@ -542,10 +558,6 @@ export interface PageTemplatePlacementInput {
   sortOrder: number;
 }
 
-export interface SavePageTemplateRequest {
-  placements: PageTemplatePlacementInput[];
-}
-
 export interface SetPageSeoRequest {
   metaTitle: string | null;
   metaDescription: string | null;
@@ -555,6 +567,23 @@ export interface SetPageSeoRequest {
 
 export interface SetPageLinkedEntryRequest {
   entryId: string | null;
+}
+
+export interface CreateStaticPageRequest {
+  siteId: string;
+  title: string;
+  slug: string;
+  parentId?: string;
+  layoutId?: string;
+}
+
+export interface CreateCollectionPageRequest {
+  siteId: string;
+  title: string;
+  slug: string;
+  parentId?: string;
+  layoutId?: string;
+  collectionContentTypeId?: string;
 }
 
 // ─── Layouts ──────────────────────────────────────────────────────────────────
@@ -572,6 +601,30 @@ export interface LayoutListItem {
   updatedAt: string;
 }
 
+export interface LayoutColumnDef {
+  span: number;      // 1–12; all columns must sum to 12
+  zoneName: string;
+}
+
+/** A node in the layout's zone tree — either a simple zone or a grid row of column-zones. */
+export interface LayoutZoneNode {
+  id: string;
+  type: 'zone' | 'grid-row';
+  name: string; // machine name, used as token in shell template
+  label: string;       // display label in layout designer
+sortOrder: number;
+  columns?: LayoutColumnDef[];
+}
+
+/** A default component placement defined on the layout, inherited by all pages. */
+export interface LayoutDefaultPlacement {
+  componentId: string;
+  componentName: string;
+  zone: string;
+  sortOrder: number;
+  isLocked: boolean;
+}
+
 export interface LayoutDto {
   id: string;
   tenantId: string;
@@ -579,8 +632,11 @@ export interface LayoutDto {
   name: string;
   key: string;
   templateType: LayoutTemplateType;
+  /** Auto-generated from zones[]. Not editable directly via UI. */
   shellTemplate?: string;
   isDefault: boolean;
+  zones: LayoutZoneNode[];
+  defaultPlacements: LayoutDefaultPlacement[];
   createdAt: string;
   updatedAt: string;
 }
@@ -590,13 +646,19 @@ export interface CreateLayoutRequest {
   name: string;
   key: string;
   templateType: LayoutTemplateType;
-  shellTemplate?: string;
 }
 
 export interface UpdateLayoutRequest {
   name: string;
   templateType: LayoutTemplateType;
-  shellTemplate?: string;
+}
+
+export interface UpdateLayoutZonesRequest {
+  zones: LayoutZoneNode[];
+}
+
+export interface UpdateLayoutDefaultPlacementsRequest {
+  placements: LayoutDefaultPlacement[];
 }
 
 // ─── Sites ────────────────────────────────────────────────────────────────────
@@ -642,7 +704,7 @@ export interface TenantDetail {
 
 export interface OnboardTenantRequest {
   slug: string;
-  displayName: string;
+displayName: string;
   defaultLocale: string;
   timeZoneId: string;
   adminEmail: string;
@@ -689,7 +751,7 @@ export interface SearchResults {
 }
 
 export interface SearchParams {
-  query: string;
+query: string;
   siteId?: string;
   contentTypeId?: string;
   locale?: string;
@@ -858,4 +920,83 @@ export interface CreateApiClientRequest {
   keyType: ApiKeyType;
   scopes?: string[];
   expiresAt?: string;
+}
+
+/** Entity type being edited, for locking. */
+export type LockEntityType = 'entry' | 'page-template' | 'layout';
+
+/** Edit lock held by a user on an entity. */
+export interface EditLock {
+  entityId: string;
+  entityType: LockEntityType;
+  lockedByUserId: string;
+  lockedByDisplayName: string;
+  lockedAt: string;
+  expiresAt: string;
+}
+
+/** Acquire an edit lock on an entity. */
+export interface AcquireLockRequest {
+  entityId: string;
+  entityType: LockEntityType;
+}
+
+// ─── Item Picker ──────────────────────────────────────────────────────────────
+
+export interface ItemPickerResult {
+  id: string;
+  title: string;
+  status: 'Draft' | 'Published' | 'Archived';
+  updatedAt: string;
+  contentTypeId: string;
+}
+
+export interface ItemPickerParams {
+  contentTypeId: string;
+  search?: string;
+  status?: 'Draft' | 'Published' | 'Archived';
+  page?: number;
+  pageSize?: number;
+}
+
+// ─── Site Templates ───────────────────────────────────────────────────────────
+
+/** A reusable template: defines common component placements for a layout. */
+export interface SiteTemplateListItem {
+  id: string;
+  name: string;
+  description?: string;
+  layoutId: string;
+  layoutName: string;
+  pageCount: number;
+  updatedAt: string;
+}
+
+export interface SiteTemplateDto {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  layoutId: string;
+  layoutName?: string;
+  name: string;
+  description?: string;
+  placementsJson: string;
+  updatedAt: string;
+}
+
+export interface CreateSiteTemplateRequest {
+  siteId: string;
+  layoutId: string;
+  name: string;
+  description?: string;
+}
+
+export interface UpdateSiteTemplateRequest {
+  layoutId: string;
+  name: string;
+  description?: string;
+}
+
+export interface SaveSiteTemplateRequest {
+  placements: SavePlacementNode[];
 }

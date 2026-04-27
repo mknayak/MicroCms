@@ -14,6 +14,8 @@ public static class ContentTypeMapper
         ct.Description,
         ct.LocalizationMode.ToString(),
         ct.Status.ToString(),
+        ct.Kind.ToString(),
+        ct.LayoutId?.Value,
         ct.CreatedAt,
         ct.UpdatedAt,
         ct.Fields.Select(ToFieldDto).ToList().AsReadOnly());
@@ -25,6 +27,7 @@ public static class ContentTypeMapper
         ct.DisplayName,
   ct.Status.ToString(),
         ct.LocalizationMode.ToString(),
+        ct.Kind.ToString(),
         ct.Fields.Count,
         entryCount,
         localeCount,

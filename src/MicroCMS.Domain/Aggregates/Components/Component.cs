@@ -88,15 +88,20 @@ SiteId = siteId;
     public string Name { get; private set; } = string.Empty;
     public string Key { get; private set; } = string.Empty;
     public string? Description { get; private set; }
- public string Category { get; private set; } = "Content";
-    /// <summary>JSON-serialised list of zone names, e.g. ["hero-zone","features-zone"].</summary>
+    public string Category { get; private set; } = "Content";
     public string ZonesJson { get; private set; } = "[]";
     public int UsageCount { get; private set; }
     public int ItemCount { get; private set; }
-    /// <summary>The rendering engine used to turn TemplateContent into HTML.</summary>
     public RenderingTemplateType TemplateType { get; private set; } = RenderingTemplateType.Handlebars;
-    /// <summary>The raw template source code (Razor/Handlebars/React/Web Component markup).</summary>
     public string? TemplateContent { get; private set; }
+
+    /// <summary>
+    /// The auto-created <see cref="ContentType"/> that stores field data for items of this component.
+    /// Set once during component creation by <c>ComponentBackingTypeProvisioner</c>.
+    /// Never null after provisioning completes.
+    /// </summary>
+    public ContentTypeId? BackingContentTypeId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
@@ -170,6 +175,19 @@ SiteId = siteId;
  f.IsRequired, f.IsLocalized, f.IsUnique, f.SortOrder, f.Description);
         _fields.Add(field);
         }
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Called once by <c>ComponentBackingTypeProvisioner</c> after the backing ContentType is created.
+    /// </summary>
+    public void SetBackingContentType(ContentTypeId contentTypeId)
+    {
+      if (BackingContentTypeId is not null)
+            throw new BusinessRuleViolationException(
+          "Component.BackingTypeAlreadySet",
+          "Backing ContentType has already been assigned to this component.");
+        BackingContentTypeId = contentTypeId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

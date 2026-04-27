@@ -13,6 +13,7 @@ using MicroCMS.Domain.Specifications.Components;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Primitives;
 using MicroCMS.Shared.Results;
+using MicroCMS.Application.Features.Components.Services;
 
 namespace MicroCMS.Application.Features.Components.Handlers;
 
@@ -85,30 +86,29 @@ c.UpdatedAt);
 
 internal sealed class CreateComponentCommandHandler(
     IRepository<Component, ComponentId> repo,
-    ICurrentUser currentUser)
+    ICurrentUser currentUser,
+ComponentBackingTypeProvisioner backingTypeProvisioner)
     : IRequestHandler<CreateComponentCommand, Result<ComponentDto>>
 {
     public async Task<Result<ComponentDto>> Handle(CreateComponentCommand request, CancellationToken cancellationToken)
     {
- var fieldTypes = ParseFieldTypes(request.Fields);
+        var fieldTypes = ParseFieldTypes(request.Fields);
         var comp = Component.Create(
-        currentUser.TenantId,
-      new SiteId(request.SiteId),
-            request.Name,
-        request.Key,
-            request.Description,
-            request.Category,
-request.Zones ?? []);
+  currentUser.TenantId, new SiteId(request.SiteId),
+          request.Name, request.Key, request.Description,
+            request.Category, request.Zones ?? []);
 
         if (request.Fields is { Count: > 0 })
         {
-            foreach (var (f, ft) in request.Fields.Zip(fieldTypes))
-      {
-            comp.AddField(f.Handle, f.Label, ft, f.IsRequired, f.Description);
-   }
-   }
+ foreach (var (f, ft) in request.Fields.Zip(fieldTypes))
+   comp.AddField(f.Handle, f.Label, ft, f.IsRequired, f.Description);
+  }
 
         await repo.AddAsync(comp, cancellationToken);
+
+// Auto-create backing ContentType for this component
+     await backingTypeProvisioner.ProvisionAsync(comp, cancellationToken);
+
         return Result.Success(ComponentMapper.ToDto(comp));
     }
 

@@ -20,7 +20,7 @@ public sealed class ContentTypesController : ApiControllerBase
         [FromQuery] int pageSize = 20,
      CancellationToken cancellationToken = default)
     {
-     var result = await Sender.Send(new ListContentTypesQuery(siteId, page, pageSize), cancellationToken);
+        var result = await Sender.Send(new ListContentTypesQuery(siteId, page, pageSize), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -30,23 +30,21 @@ public sealed class ContentTypesController : ApiControllerBase
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new GetContentTypeQuery(id), cancellationToken);
-    return OkOrProblem(result);
+        return OkOrProblem(result);
     }
 
     [HttpPost]
     [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
- public async Task<IActionResult> Create(
-     [FromBody] CreateContentTypeRequest request,
-    CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Create(
+   [FromBody] CreateContentTypeRequest request, CancellationToken cancellationToken = default)
     {
         if (!Enum.TryParse<LocalizationMode>(request.LocalizationMode, ignoreCase: true, out var locMode))
-     locMode = LocalizationMode.PerLocale;
+            locMode = LocalizationMode.PerLocale;
 
         var result = await Sender.Send(
       new CreateContentTypeCommand(request.SiteId, request.Handle, request.DisplayName,
-                request.Description, locMode),
-      cancellationToken);
+    request.Description, locMode, request.Kind ?? "Content"),
+       cancellationToken);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
 
@@ -73,7 +71,7 @@ cancellationToken);
     public async Task<IActionResult> RemoveField(Guid id, Guid fieldId, CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new RemoveFieldCommand(id, fieldId), cancellationToken);
-     return OkOrProblem(result);
+        return OkOrProblem(result);
     }
 
     [HttpPost("{id:guid}/publish")]
@@ -96,36 +94,44 @@ cancellationToken);
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
-        Guid id,
-        [FromBody] UpdateContentTypeRequest request,
-        CancellationToken cancellationToken = default)
+        Guid id, [FromBody] UpdateContentTypeRequest request, CancellationToken cancellationToken = default)
     {
-  LocalizationMode? locMode = null;
+        LocalizationMode? locMode = null;
         if (request.LocalizationMode is not null &&
-    Enum.TryParse<LocalizationMode>(request.LocalizationMode, ignoreCase: true, out var parsed))
+       Enum.TryParse<LocalizationMode>(request.LocalizationMode, ignoreCase: true, out var parsed))
             locMode = parsed;
 
- var fields = request.Fields?
-            .Select(f => new UpdateFieldInput(
-                f.Id, f.Handle, f.Label, f.FieldType,
-            f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.SortOrder, f.Description))
-            .ToList();
+        var fields = request.Fields?
+    .Select(f => new UpdateFieldInput(
+       f.Id, f.Handle, f.Label, f.FieldType,
+     f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.SortOrder, f.Description))
+     .ToList();
 
- var result = await Sender.Send(
-   new UpdateContentTypeCommand(id, request.DisplayName, request.Description, locMode, fields),
-      cancellationToken);
- return OkOrProblem(result);
+        var result = await Sender.Send(
+       new UpdateContentTypeCommand(id, request.DisplayName, request.Description, locMode,
+           request.Kind, request.LayoutId, fields),
+       cancellationToken);
+        return OkOrProblem(result);
+    }
+
+    /// <summary>Sets the layout for a Page-kind content type.</summary>
+    [HttpPut("{id:guid}/layout")]
+    [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetLayout(
+        Guid id, [FromBody] SetContentTypeLayoutRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new SetContentTypeLayoutCommand(id, request.LayoutId), cancellationToken);
+        return OkOrProblem(result);
     }
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-  [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
-    var result = await Sender.Send(new DeleteContentTypeCommand(id), cancellationToken);
+        var result = await Sender.Send(new DeleteContentTypeCommand(id), cancellationToken);
         return NoContentOrProblem(result);
     }
 
@@ -141,19 +147,19 @@ cancellationToken);
     CancellationToken cancellationToken = default)
     {
         if (request.Fields?.Count > 50)
-   return UnprocessableEntity(new { detail = "Import is limited to 50 fields." });
+            return UnprocessableEntity(new { detail = "Import is limited to 50 fields." });
 
-   var fields = (request.Fields ?? [])
-          .Select(f => new ImportFieldInput(f.Handle, f.Label, f.FieldType,
-       f.IsRequired, f.IsLocalized))
-     .ToList();
+        var fields = (request.Fields ?? [])
+               .Select(f => new ImportFieldInput(f.Handle, f.Label, f.FieldType,
+            f.IsRequired, f.IsLocalized))
+          .ToList();
 
- var result = await Sender.Send(
-     new ImportContentTypeSchemaCommand(
-    request.SiteId, request.Handle, request.DisplayName,
-    request.Description, fields),
-         cancellationToken);
-   return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
+        var result = await Sender.Send(
+            new ImportContentTypeSchemaCommand(
+           request.SiteId, request.Handle, request.DisplayName,
+           request.Description, fields),
+                cancellationToken);
+        return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
 }
 
@@ -163,8 +169,9 @@ public sealed record CreateContentTypeRequest(
     Guid SiteId,
     string Handle,
     string DisplayName,
-    string? Description = null,
-    string? LocalizationMode = null);
+ string? Description = null,
+    string? LocalizationMode = null,
+    string? Kind = null);
 
 public sealed record AddFieldRequest(
     string Handle,
@@ -178,8 +185,10 @@ public sealed record AddFieldRequest(
 
 public sealed record UpdateContentTypeRequest(
     string DisplayName,
-string? Description = null,
-  string? LocalizationMode = null,
+    string? Description = null,
+    string? LocalizationMode = null,
+    string? Kind = null,
+    Guid? LayoutId = null,
     IReadOnlyList<UpdateFieldRequest>? Fields = null);
 
 public sealed record UpdateFieldRequest(
@@ -207,3 +216,5 @@ public sealed record ImportSchemaFieldRequest(
     string FieldType,
     bool IsRequired = false,
     bool IsLocalized = false);
+
+public sealed record SetContentTypeLayoutRequest(Guid? LayoutId);

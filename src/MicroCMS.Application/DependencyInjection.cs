@@ -4,6 +4,8 @@ using MediatR;
 using MicroCMS.Application.Common.Authorization;
 using MicroCMS.Application.Common.Behaviors;
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Features.Components.Services;
+using MicroCMS.Application.Features.Layouts.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroCMS.Application;
@@ -35,6 +37,8 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
 
         services.AddScoped<IApplicationAuthorizationService, DefaultApplicationAuthorizationService>();
+        services.AddScoped<LayoutShellGeneratorService>();
+        services.AddScoped<ComponentBackingTypeProvisioner>();
 
         return services;
     }

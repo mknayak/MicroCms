@@ -6,6 +6,7 @@ using MicroCMS.Application.Features.ContentTypes.Commands;
 using MicroCMS.Application.Features.ContentTypes.Dtos;
 using MicroCMS.Application.Features.ContentTypes.Mappers;
 using MicroCMS.Application.Features.Search.EventHandlers;
+using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
@@ -17,17 +18,17 @@ namespace MicroCMS.Application.Features.ContentTypes.Handlers;
 internal sealed class CreateContentTypeCommandHandler(
     IRepository<ContentType, ContentTypeId> repo,
     ICurrentUser currentUser)
-  : IRequestHandler<CreateContentTypeCommand, Result<ContentTypeDto>>
+    : IRequestHandler<CreateContentTypeCommand, Result<ContentTypeDto>>
 {
     public async Task<Result<ContentTypeDto>> Handle(CreateContentTypeCommand request, CancellationToken cancellationToken)
     {
-      var ct = ContentType.Create(
-     currentUser.TenantId,
-         new SiteId(request.SiteId),
-      request.Handle,
-      request.DisplayName,
-     request.Description,
-      request.Localization);
+        var kind = Enum.TryParse<ContentTypeKind>(request.Kind, ignoreCase: true, out var k)
+       ? k : ContentTypeKind.Content;
+
+        var ct = ContentType.Create(
+         currentUser.TenantId, new SiteId(request.SiteId),
+        request.Handle, request.DisplayName, request.Description,
+       request.Localization, kind);
 
         await repo.AddAsync(ct, cancellationToken);
         return Result.Success(ContentTypeMapper.ToDto(ct));
@@ -98,9 +99,9 @@ internal sealed class PublishContentTypeCommandHandler(
         return Result.Success(ContentTypeMapper.ToDto(ct));
     }
 
-  private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
-    cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
-        cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
+    private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
+      cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
+          cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
 }
 
 internal sealed class ArchiveContentTypeCommandHandler(
@@ -118,110 +119,100 @@ internal sealed class ArchiveContentTypeCommandHandler(
         return Result.Success(ContentTypeMapper.ToDto(ct));
     }
 
-  private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
-        cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
-        cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
+    private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
+          cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
+          cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
 }
 
 internal sealed class UpdateContentTypeCommandHandler(
     IRepository<ContentType, ContentTypeId> repo,
+ IRepository<Layout, LayoutId> layoutRepo,
     ICacheService cacheService)
     : IRequestHandler<UpdateContentTypeCommand, Result<ContentTypeDto>>
 {
     public async Task<Result<ContentTypeDto>> Handle(UpdateContentTypeCommand request, CancellationToken cancellationToken)
     {
         var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
-           ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
+     ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
 
         ct.Update(request.DisplayName, request.Description, request.Localization);
-
-        if (request.Fields is not null)
-        {
-            // Remove fields not present in the incoming list
-            var incomingIds = request.Fields
-                        .Where(f => f.Id.HasValue)
-                 .Select(f => f.Id!.Value)
-            .ToHashSet();
-
-            foreach (var existing in ct.Fields.Where(f => !incomingIds.Contains(f.Id)).ToList())
-                ct.RemoveField(existing.Id);
-
-            foreach (var f in request.Fields)
-            {
-                if (!Enum.TryParse<FieldType>(f.FieldType, ignoreCase: true, out var fieldType))
-                    throw new ValidationException([new ValidationFailure("FieldType", $"'{f.FieldType}' is not a valid FieldType.")]);
-
-                if (f.Id.HasValue)
-                    ct.UpdateField(f.Id.Value, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsIndexed, f.SortOrder, f.Description);
-                else
-                    ct.AddField(f.Handle, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsUnique,
-                        description: f.Description, isIndexed: f.IsIndexed);
-            }
-        }
+        await ApplyKindAndLayout(ct, request, layoutRepo, cancellationToken);
+        if (request.Fields is not null) ApplyFieldUpdates(ct, request.Fields);
 
         repo.Update(ct);
- await InvalidateAsync(ct.TenantId, ct.Id.Value, cancellationToken);
-   return Result.Success(ContentTypeMapper.ToDto(ct));
+        await InvalidateAsync(ct.TenantId, ct.Id.Value, cancellationToken);
+        return Result.Success(ContentTypeMapper.ToDto(ct));
+    }
+
+    private static async Task ApplyKindAndLayout(
+        ContentType ct, UpdateContentTypeCommand request,
+        IRepository<Layout, LayoutId> layoutRepo, CancellationToken cancellationToken)
+    {
+        if (request.Kind is not null &&
+          Enum.TryParse<ContentTypeKind>(request.Kind, ignoreCase: true, out var kind))
+            ct.SetKind(kind);
+
+        if (request.LayoutId.HasValue)
+        {
+            var layout = await layoutRepo.GetByIdAsync(new LayoutId(request.LayoutId.Value), cancellationToken)
+       ?? throw new NotFoundException(nameof(Layout), request.LayoutId.Value);
+            ct.SetLayout(layout.Id);
+        }
+    }
+
+    private static void ApplyFieldUpdates(ContentType ct, IReadOnlyList<UpdateFieldInput> fields)
+    {
+        var incomingIds = fields.Where(f => f.Id.HasValue).Select(f => f.Id!.Value).ToHashSet();
+        foreach (var existing in ct.Fields.Where(f => !incomingIds.Contains(f.Id)).ToList())
+            ct.RemoveField(existing.Id);
+
+        foreach (var f in fields)
+            ApplySingleField(ct, f);
+    }
+
+    private static void ApplySingleField(ContentType ct, UpdateFieldInput f)
+    {
+        if (!Enum.TryParse<FieldType>(f.FieldType, ignoreCase: true, out var fieldType))
+            throw new ValidationException([new ValidationFailure("FieldType", $"'{f.FieldType}' is not a valid FieldType.")]);
+
+        if (f.Id.HasValue)
+            ct.UpdateField(f.Id.Value, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsIndexed, f.SortOrder, f.Description);
+        else
+            ct.AddField(f.Handle, f.Label, fieldType, f.IsRequired, f.IsLocalized, f.IsUnique,
+             description: f.Description, isIndexed: f.IsIndexed);
     }
 
     private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
-    cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
-    cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
+           cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
+           cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
 }
 
-internal sealed class DeleteContentTypeCommandHandler(
+/// <summary>Sets or clears the layout on a Page-kind content type.</summary>
+internal sealed class SetContentTypeLayoutCommandHandler(
     IRepository<ContentType, ContentTypeId> repo,
-    ICacheService cacheService)
-    : IRequestHandler<DeleteContentTypeCommand, Result>
+    IRepository<Layout, LayoutId> layoutRepo,
+ ICacheService cacheService)
+    : IRequestHandler<SetContentTypeLayoutCommand, Result<ContentTypeDto>>
 {
-    public async Task<Result> Handle(DeleteContentTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ContentTypeDto>> Handle(SetContentTypeLayoutCommand request, CancellationToken cancellationToken)
     {
         var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
-      ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
+    ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
 
-        var tenantId = ct.TenantId;
-        var id = ct.Id.Value;
-        repo.Remove(ct);
-        await InvalidateAsync(tenantId, id, cancellationToken);
-        return Result.Success();
-    }
-
-    private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
-        cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
-      cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
-}
-
-internal sealed class ImportContentTypeSchemaCommandHandler(
-    IRepository<ContentType, ContentTypeId> repo,
-    ICurrentUser currentUser)
-    : IRequestHandler<ImportContentTypeSchemaCommand, Result<ContentTypeDto>>
-{
-    private const int MaxImportFields = 50;
-
-    public async Task<Result<ContentTypeDto>> Handle(ImportContentTypeSchemaCommand request, CancellationToken cancellationToken)
-    {
-        if (request.Fields.Count > MaxImportFields)
-            return Result.Failure<ContentTypeDto>(Error.Validation("Import.TooManyFields",
-     $"Import is limited to {MaxImportFields} fields."));
-
-        var ct = ContentType.Create(
-      currentUser.TenantId,
-       new SiteId(request.SiteId),
-        request.Handle,
-            request.DisplayName,
-            request.Description);
-
-   foreach (var field in request.Fields)
+        LayoutId? layoutId = null;
+        if (request.LayoutId.HasValue)
         {
-            if (!Enum.TryParse<FieldType>(field.FieldType, ignoreCase: true, out var fieldType))
-            continue;
-
-            ct.AddField(field.Handle, field.Label, fieldType,
-      field.IsRequired, field.IsLocalized,
-                description: null, isIndexed: false);
+            var layout = await layoutRepo.GetByIdAsync(new LayoutId(request.LayoutId.Value), cancellationToken)
+     ?? throw new NotFoundException(nameof(Layout), request.LayoutId.Value);
+            layoutId = layout.Id;
         }
 
-        await repo.AddAsync(ct, cancellationToken);
-     return Result.Success(ContentTypeMapper.ToDto(ct));
+        ct.SetLayout(layoutId);
+        repo.Update(ct);
+        await Task.WhenAll(
+       cacheService.RemoveAsync(CacheKeys.ContentType(ct.TenantId, ct.Id.Value), cancellationToken),
+        cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(ct.TenantId), cancellationToken));
+
+        return Result.Success(ContentTypeMapper.ToDto(ct));
     }
 }

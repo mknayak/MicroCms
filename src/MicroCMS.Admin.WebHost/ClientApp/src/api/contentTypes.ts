@@ -12,6 +12,7 @@ export interface CreateContentTypeRequest {
   displayName: string;
   description?: string;
   localizationMode?: string;
+  kind?: string;
 }
 
 export interface UpdateFieldRequest {
@@ -31,6 +32,8 @@ export interface UpdateContentTypeRequest {
   displayName: string;
   description?: string;
   localizationMode?: string;
+  kind?: string;
+  layoutId?: string;
   fields?: UpdateFieldRequest[];
 }
 

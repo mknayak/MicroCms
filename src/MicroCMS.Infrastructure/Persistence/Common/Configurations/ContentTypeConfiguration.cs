@@ -52,6 +52,17 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
             .HasMaxLength(32)
             .IsRequired();
 
+        builder.Property(ct => ct.Kind)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired()
+            .HasDefaultValue(ContentTypeKind.Content);
+
+        builder.Property(ct => ct.LayoutId)
+            .HasConversion(
+                id => id.HasValue ? id.Value.Value : (Guid?)null,
+                v => v.HasValue ? new LayoutId(v.Value) : (LayoutId?)null);
+
         builder.Property(ct => ct.CreatedAt).IsRequired();
         builder.Property(ct => ct.UpdatedAt).IsRequired();
 

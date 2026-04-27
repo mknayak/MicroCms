@@ -90,7 +90,11 @@ internal sealed class PageConfiguration : IEntityTypeConfiguration<Page>
     v => v.HasValue ? new EntryId(v.Value) : (EntryId?)null);
 
         builder.Property(p => p.CollectionContentTypeId)
-       .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
-      v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
+            .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
+        v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
+
+        builder.Property(p => p.SiteTemplateId)
+            .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
+         v => v.HasValue ? new SiteTemplateId(v.Value) : (SiteTemplateId?)null);
     }
 }

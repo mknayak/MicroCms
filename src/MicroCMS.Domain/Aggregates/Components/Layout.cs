@@ -25,130 +25,128 @@ public enum LayoutTemplateType
 }
 
 /// <summary>
-/// Defines the master HTML shell for one or more pages.
-///
-/// A layout wraps rendered zone HTML inside a full document structure
-/// (DOCTYPE, &lt;head&gt;, nav, footer, etc.).
-/// Named zones in <see cref="ShellTemplate"/> are replaced at render time
-/// by the accumulated HTML of all <see cref="ComponentPlacement"/> items
-/// that belong to that zone.
-///
-/// Zone placeholder syntax (all template types):
-///   <c>{{zone:hero-zone}}</c>
-///   <c>{{zone:content-zone}}</c>
-///   <c>{{zone:footer}}</c>
-///
-/// SEO placeholders (available in all template types):
-///   <c>{{seo:title}}</c>  <c>{{seo:description}}</c>  <c>{{seo:ogImage}}</c>
+/// Defines the master HTML shell, zone structure, and default component placements for pages.
+/// <para>
+/// Zones are stored as structured JSON (<see cref="ZonesJson"/>) and the
+/// <see cref="ShellTemplate"/> is auto-generated from them by the Application layer
+/// (<c>LayoutShellGeneratorService</c>). Direct edits to the shell template are not supported.
+/// </para>
 /// </summary>
 public sealed class Layout : AggregateRoot<LayoutId>
 {
     public const int MaxNameLength = 200;
     public const int MaxKeyLength = 100;
 
-    private Layout() : base() { } // EF Core
+    private Layout() : base() { }
 
     private Layout(
-        LayoutId id,
-      TenantId tenantId,
- SiteId siteId,
-        string name,
-  string key,
-        LayoutTemplateType templateType,
-        string? shellTemplate)
+        LayoutId id, TenantId tenantId, SiteId siteId,
+        string name, string key, LayoutTemplateType templateType)
         : base(id)
     {
-        TenantId = tenantId;
+   TenantId = tenantId;
         SiteId = siteId;
         Name = name;
         Key = key;
         TemplateType = templateType;
-        ShellTemplate = shellTemplate;
         IsDefault = false;
+        ZonesJson = BuildDefaultZonesJson();
+        DefaultPlacementsJson = "[]";
+      ShellTemplate = null;
         CreatedAt = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
+    UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public TenantId TenantId { get; private set; }
     public SiteId SiteId { get; private set; }
-
-    /// <summary>Human-readable name shown in the CMS, e.g. "Blog Layout".</summary>
     public string Name { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// Machine-readable handle used in templates and API responses, e.g. "blog-layout".
-    /// Unique per site.
-    /// </summary>
     public string Key { get; private set; } = string.Empty;
-
-    /// <summary>Which engine renders <see cref="ShellTemplate"/>.</summary>
     public LayoutTemplateType TemplateType { get; private set; }
 
     /// <summary>
-    /// The master shell template source.
-    /// Must contain at least one <c>{{zone:*}}</c> placeholder.
+    /// JSON array of <c>LayoutZoneNode</c> objects.
+    /// Default layout ships with three zones: header, content, footer.
+    /// </summary>
+public string ZonesJson { get; private set; } = "[]";
+
+    /// <summary>JSON array of <c>LayoutDefaultPlacement</c> objects pre-placed on every page.</summary>
+    public string DefaultPlacementsJson { get; private set; } = "[]";
+
+    /// <summary>
+    /// Auto-generated HTML shell. Set by <c>LayoutShellGeneratorService</c> whenever
+    /// <see cref="ZonesJson"/> changes. Never written directly by the UI.
     /// </summary>
     public string? ShellTemplate { get; private set; }
 
-    /// <summary>
-    /// When true this layout is used for pages that have no explicit layout assigned.
-    /// Only one layout per site can be default.
-    /// </summary>
     public bool IsDefault { get; private set; }
-
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
     // ── Factory ───────────────────────────────────────────────────────────
 
-    public static Layout Create(
-        TenantId tenantId,
-        SiteId siteId,
-        string name,
-    string key,
-        LayoutTemplateType templateType = LayoutTemplateType.Handlebars,
-        string? shellTemplate = null)
+public static Layout Create(
+        TenantId tenantId, SiteId siteId,
+  string name, string key,
+        LayoutTemplateType templateType = LayoutTemplateType.Handlebars)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
-
         if (name.Length > MaxNameLength)
-            throw new DomainException($"Layout name must not exceed {MaxNameLength} characters.");
+   throw new DomainException($"Layout name must not exceed {MaxNameLength} characters.");
         if (key.Length > MaxKeyLength)
-            throw new DomainException($"Layout key must not exceed {MaxKeyLength} characters.");
+       throw new DomainException($"Layout key must not exceed {MaxKeyLength} characters.");
 
-        return new Layout(LayoutId.New(), tenantId, siteId,
-                  name.Trim(), key.Trim().ToLowerInvariant(), templateType, shellTemplate?.Trim());
+ return new Layout(LayoutId.New(), tenantId, siteId,
+            name.Trim(), key.Trim().ToLowerInvariant(), templateType);
     }
 
     // ── Mutations ─────────────────────────────────────────────────────────
 
-    public void Update(string name, LayoutTemplateType templateType, string? shellTemplate)
+    public void Update(string name, LayoutTemplateType templateType)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        if (name.Length > MaxNameLength)
-            throw new DomainException($"Layout name must not exceed {MaxNameLength} characters.");
-
+      if (name.Length > MaxNameLength)
+  throw new DomainException($"Layout name must not exceed {MaxNameLength} characters.");
         Name = name.Trim();
         TemplateType = templateType;
-        ShellTemplate = shellTemplate?.Trim();
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     /// <summary>
-    /// Marks this layout as the site default.
-    /// The caller (application layer) must clear <c>IsDefault</c> on any previous default
-    /// within the same site before calling this, to maintain the single-default invariant.
-    /// </summary>
-    public void MarkAsDefault()
+  /// Replaces the zone tree JSON. The Application layer must call
+    /// <see cref="SetGeneratedShell"/> immediately after to keep the shell in sync.
+/// </summary>
+    public void UpdateZones(string zonesJson)
     {
-        IsDefault = true;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        ArgumentException.ThrowIfNullOrWhiteSpace(zonesJson, nameof(zonesJson));
+        ZonesJson = zonesJson;
+  UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void ClearDefault()
+    /// <summary>Replaces default placement JSON for this layout.</summary>
+    public void UpdateDefaultPlacements(string defaultPlacementsJson)
     {
-        IsDefault = false;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        ArgumentException.ThrowIfNullOrWhiteSpace(defaultPlacementsJson, nameof(defaultPlacementsJson));
+        DefaultPlacementsJson = defaultPlacementsJson;
+    UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    /// <summary>Called by <c>LayoutShellGeneratorService</c> after zone changes.</summary>
+    public void SetGeneratedShell(string shellTemplate)
+    {
+      ShellTemplate = shellTemplate;
+     UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkAsDefault() { IsDefault = true; UpdatedAt = DateTimeOffset.UtcNow; }
+    public void ClearDefault() { IsDefault = false; UpdatedAt = DateTimeOffset.UtcNow; }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private static string BuildDefaultZonesJson() =>
+        "[" +
+ "{\"id\":\"zone-header\",\"type\":\"zone\",\"name\":\"header\",\"label\":\"Header\",\"sortOrder\":0}," +
+        "{\"id\":\"zone-content\",\"type\":\"zone\",\"name\":\"content\",\"label\":\"Content\",\"sortOrder\":1}," +
+        "{\"id\":\"zone-footer\",\"type\":\"zone\",\"name\":\"footer\",\"label\":\"Footer\",\"sortOrder\":2}" +
+        "]";
 }

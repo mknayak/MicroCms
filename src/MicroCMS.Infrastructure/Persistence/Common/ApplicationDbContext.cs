@@ -12,6 +12,7 @@ using MicroCMS.Domain.Aggregates.Webhooks;
 using MicroCMS.Infrastructure.Persistence.Common.Interceptors;
 using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
+using MicroCMS.Domain.Aggregates.Locks;
 
 namespace MicroCMS.Infrastructure.Persistence.Common;
 
@@ -84,7 +85,9 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<CopilotConversation> CopilotConversations => Set<CopilotConversation>();
     public DbSet<AiProviderSettings> AiProviderSettings => Set<AiProviderSettings>();
     public DbSet<Plugin> Plugins => Set<Plugin>();
-    public DbSet<Layout>   Layouts  => Set<Layout>();
+    public DbSet<Layout> Layouts => Set<Layout>();
+    public DbSet<EditLock> EditLocks => Set<EditLock>();
+    public DbSet<SiteTemplate> SiteTemplates => Set<SiteTemplate>();
 
     // ── Model configuration ───────────────────────────────────────────────
 
@@ -132,6 +135,8 @@ public sealed class ApplicationDbContext : DbContext
         modelBuilder.Entity<Component>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);
         modelBuilder.Entity<ComponentItem>().HasQueryFilter(ci => _tenantFilter == null || ci.TenantId == _tenantFilter);
         modelBuilder.Entity<Layout>().HasQueryFilter(l => _tenantFilter == null || l.TenantId == _tenantFilter);
+        modelBuilder.Entity<SiteTemplate>().HasQueryFilter(st => _tenantFilter == null || st.TenantId == _tenantFilter);
+        // EditLock is not tenant-scoped — locks are global per entity ID
     }
 
     private void ApplyMediaFilters(ModelBuilder modelBuilder)
