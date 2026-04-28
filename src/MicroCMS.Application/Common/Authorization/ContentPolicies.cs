@@ -50,4 +50,8 @@ public static class ContentPolicies
     // ── Page Template policies ─────────────────────────────────────────────
     public const string PageTemplateRead   = "PageTemplate.Read";
     public const string PageTemplateManage = "PageTemplate.Manage";
+
+    // ── Package Manager policies ───────────────────────────────────────────
+    public const string PackageExport = "Package.Export";
+    public const string PackageImport = "Package.Import";
 }

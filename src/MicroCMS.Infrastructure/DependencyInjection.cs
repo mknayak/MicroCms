@@ -182,6 +182,9 @@ public static class DependencyInjection
         // Tenancy / install
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IInstallationStateService, InstallationStateService>();
+
+      // Package manager
+        services.AddScoped<IPackageService, MicroCMS.Infrastructure.PackageManager.PackageService>();
     }
 
     /// <summary>Sprint 5 — tenancy services: subdomain resolver, resolution middleware, and quota enforcement.</summary>

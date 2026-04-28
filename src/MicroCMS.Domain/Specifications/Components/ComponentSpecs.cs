@@ -53,3 +53,12 @@ public sealed class ComponentItemsCountSpec : BaseSpecification<ComponentItem>
     public ComponentItemsCountSpec(ComponentId componentId)
    : base(ci => ci.ComponentId == componentId) { }
 }
+
+/// <summary>All components for a site (no paging) — used by package manager export.</summary>
+public sealed class AllComponentsBySiteSpec : BaseSpecification<Component>
+{
+    public AllComponentsBySiteSpec(SiteId siteId) : base(c => c.SiteId == siteId)
+  {
+   ApplyOrderBy(c => c.Name);
+    }
+}

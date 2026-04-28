@@ -1021,3 +1021,86 @@ export interface SaveSiteTemplateRequest {
 export interface SetPageSiteTemplateRequest {
   siteTemplateId: string | null;
 }
+
+// ─── Package Manager ──────────────────────────────────────────────────────────
+
+export interface PackageContents {
+  contentTypeCount: number;
+  entryCount: number;
+  pageCount: number;
+  layoutCount: number;
+  mediaMetadataCount: number;
+  componentCount: number;
+  userCount: number;
+  siteCount: number;
+}
+
+export interface PackageManifest {
+  packageVersion: string;
+  createdAt: string;
+  tenantId: string;
+  siteId: string;
+  tenantSlug: string;
+  siteName: string;
+  contents: PackageContents;
+}
+
+export interface PackageItemStat {
+  category: string;
+  totalInPackage: number;
+  newItems: number;
+  existingItems: number;
+}
+
+export interface PackageAnalysisResult {
+  manifest: PackageManifest;
+  items: PackageItemStat[];
+  warnings: string[];
+}
+
+export type ConflictResolution = 'Skip' | 'Overwrite';
+
+export interface ImportOptions {
+  importContentTypes: boolean;
+  importEntries: boolean;
+  importPages: boolean;
+  importLayouts: boolean;
+  importMediaMetadata: boolean;
+  importComponents: boolean;
+importUsers: boolean;
+  importSiteSettings: boolean;
+  conflictResolution: ConflictResolution;
+}
+
+export interface ImportStepResult {
+  category: string;
+  imported: number;
+  skipped: number;
+  overwritten: number;
+  failed: number;
+  errors: string[];
+}
+
+export type ImportStatus = 'Running' | 'Completed' | 'CompletedWithErrors' | 'Failed';
+
+export interface ImportProgress {
+  status: ImportStatus;
+  currentStep: string;
+  totalSteps: number;
+  completedSteps: number;
+  stepResults: ImportStepResult[];
+  errorMessage?: string;
+}
+
+export interface ExportOptions {
+  tenantId: string;
+  siteId: string;
+  includeContentTypes: boolean;
+  includeEntries: boolean;
+  includePages: boolean;
+  includeLayouts: boolean;
+  includeMediaMetadata: boolean;
+  includeComponents: boolean;
+  includeUsers: boolean;
+  includeSiteSettings: boolean;
+}

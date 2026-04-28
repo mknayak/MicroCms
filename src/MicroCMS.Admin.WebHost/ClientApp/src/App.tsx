@@ -36,6 +36,10 @@ const LayoutDesignerPage = lazy(() => import('@/pages/layouts/LayoutDesignerPage
 const PageTemplatesPage = lazy(() => import('@/pages/page-templates/PageTemplatesPage'));
 const PageTemplateDesignerPage = lazy(() => import('@/pages/page-templates/PageTemplateDesignerPage'));
 
+// Package Manager
+const ExportPage = lazy(() => import('@/pages/packages/ExportPage'));
+const ImportPage = lazy(() => import('@/pages/packages/ImportPage'));
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -301,6 +305,26 @@ export default function App() {
                                                 <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin', 'ContentAdmin', 'Designer', 'Editor']}>
                                                     <Suspense fallback={<PageLoader />}>
                                                         <PageTemplateDesignerPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/export"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Designer']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <ExportPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/import"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Designer']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <ImportPage />
                                                     </Suspense>
                                                 </ProtectedRoute>
                                             }

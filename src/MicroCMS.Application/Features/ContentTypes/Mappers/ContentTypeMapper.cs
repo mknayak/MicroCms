@@ -18,7 +18,7 @@ public static class ContentTypeMapper
         ct.LayoutId?.Value,
         ct.CreatedAt,
         ct.UpdatedAt,
-        ct.Fields.Select(ToFieldDto).ToList().AsReadOnly());
+        ct.Fields.OrderBy(f => f.SortOrder).Select(ToFieldDto).ToList().AsReadOnly());
 
     public static ContentTypeListItemDto ToListItemDto(ContentType ct,
         int entryCount = 0, int localeCount = 0) => new(

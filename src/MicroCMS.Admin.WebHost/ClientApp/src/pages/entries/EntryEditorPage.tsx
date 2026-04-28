@@ -688,11 +688,8 @@ key={loc}
             </div>
           </div>
 
-          {/* Dynamic fields — rendered in sortOrder as defined in the schema */}
-        {selectedContentType?.fields
-       .slice()
-         .sort((a, b) => a.sortOrder - b.sortOrder)
- .map((field) => (
+          {/* Dynamic fields */}
+        {selectedContentType?.fields.map((field) => (
  <div key={field.id} className="card space-y-2">
   <div className="flex items-center justify-between">
        <div className="flex items-center gap-2">
