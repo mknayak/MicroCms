@@ -6,11 +6,10 @@ public sealed record DeliveryEntryDto(
     Guid SiteId,
     Guid ContentTypeId,
     string ContentTypeKey,
- string Slug,
+    string Slug,
     string Locale,
     string Status,
     object Fields,
-    SeoDto? Seo,
     DateTimeOffset? PublishedAt,
     DateTimeOffset UpdatedAt);
 
@@ -26,7 +25,7 @@ public sealed record DeliveryPageDto(
     Guid Id,
     Guid SiteId,
     string Title,
- string Slug,
+    string Slug,
     string PageType,
     Guid? ParentId,
     Guid? LinkedEntryId,
@@ -48,11 +47,11 @@ public sealed record DeliveryMediaAssetDto(
     Guid SiteId,
     string FileName,
     string MimeType,
- long SizeBytes,
+    long SizeBytes,
     int? WidthPx,
     int? HeightPx,
     string? AltText,
- IReadOnlyList<string> Tags,
+    IReadOnlyList<string> Tags,
     /// <summary>
     /// Ready-to-use URL. Public assets: direct provider URL.
     /// Private assets: time-limited signed URL (valid 1 hour).
@@ -69,9 +68,9 @@ public sealed record DeliveryMediaAssetDto(
 public sealed record RenderedPageDto(
     Guid PageId,
     string Slug,
- string Title,
+    string Title,
     /// <summary>Full HTML document. Non-null when rendered with a Layout shell.</summary>
     string? Html,
- /// <summary>Per-zone HTML fragments. Non-null when no Layout is configured (headless fallback).</summary>
+    /// <summary>Per-zone HTML fragments. Non-null when no Layout is configured (headless fallback).</summary>
     IReadOnlyDictionary<string, string>? Zones,
     SeoDto? Seo);

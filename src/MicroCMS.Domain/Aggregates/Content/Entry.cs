@@ -36,7 +36,6 @@ public sealed class Entry : AggregateRoot<EntryId>
         CurrentVersionNumber = 0;
         CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
-        Seo = SeoMetadata.Empty;
     }
 
     public TenantId TenantId { get; private set; }
@@ -54,7 +53,6 @@ public sealed class Entry : AggregateRoot<EntryId>
     public DateTimeOffset? ScheduledPublishAt { get; private set; }
     public DateTimeOffset? ScheduledUnpublishAt { get; private set; }
     public IReadOnlyList<EntryVersion> Versions => _versions.AsReadOnly();
-    public SeoMetadata Seo { get; private set; } = null!;
     public FolderId? FolderId { get; private set; }
 
     // ── Factory ────────────────────────────────────────────────────────────
@@ -99,14 +97,6 @@ public sealed class Entry : AggregateRoot<EntryId>
     {
         EnsureEditable();
         Slug = newSlug;
-        UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
-    /// <summary>Updates SEO metadata fields on the entry (GAP-08).</summary>
-    public void UpdateSeoMetadata(SeoMetadata seo)
-    {
-        ArgumentNullException.ThrowIfNull(seo, nameof(seo));
-        Seo = seo;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

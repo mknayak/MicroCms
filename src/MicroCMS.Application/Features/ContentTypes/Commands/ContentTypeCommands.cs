@@ -26,7 +26,12 @@ public sealed record AddFieldCommand(
     bool IsLocalized = false,
     bool IsUnique = false,
     bool IsIndexed = false,
-    string? Description = null) : ICommand<ContentTypeDto>;
+    bool IsList = false,
+    string? Description = null,
+    /// <summary>Static options for Enum fields. Ignored when DynamicSource is set.</summary>
+    IReadOnlyList<string>? Options = null,
+    /// <summary>Dynamic source config for Enum fields.</summary>
+    FieldDynamicSourceInput? DynamicSource = null) : ICommand<ContentTypeDto>;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record RemoveFieldCommand(
@@ -66,8 +71,23 @@ public sealed record UpdateFieldInput(
     bool IsLocalized = false,
     bool IsUnique = false,
     bool IsIndexed = false,
+    bool IsList = false,
     int SortOrder = 0,
-    string? Description = null);
+    string? Description = null,
+    /// <summary>Static options for Enum fields.</summary>
+    IReadOnlyList<string>? Options = null,
+    /// <summary>Dynamic source config for Enum fields.</summary>
+    FieldDynamicSourceInput? DynamicSource = null);
+
+/// <summary>
+/// DTO for specifying a dynamic entry source for Enum fields in commands.
+/// Mirrors <see cref="MicroCMS.Domain.Aggregates.Content.FieldDynamicSource"/>.
+/// </summary>
+public sealed record FieldDynamicSourceInput(
+    string ContentTypeHandle,
+    string LabelField = "title",
+    string ValueField = "slug",
+    string StatusFilter = "Published");
 
 /// <summary>Imports a ContentType schema from a JSON Schema document (BE-07c).</summary>
 [HasPolicy(ContentPolicies.ContentTypeManage)]

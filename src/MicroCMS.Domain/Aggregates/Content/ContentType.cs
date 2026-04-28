@@ -159,29 +159,30 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
 
     public FieldDefinition AddField(
         string handle,
-        string label,
+ string label,
         FieldType fieldType,
         bool isRequired = false,
-        bool isLocalized = false,
+     bool isLocalized = false,
         bool isUnique = false,
-        string? description = null,
-        string? validationJson = null,
-        bool isIndexed = false)
+      string? description = null,
+   string? validationJson = null,
+        bool isIndexed = false,
+        bool isList = false)
     {
         EnsureNotArchived();
 
         if (_fields.Exists(f => f.Handle.Equals(handle.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
-            throw new BusinessRuleViolationException(
-                "ContentType.DuplicateFieldHandle",
-                $"A field with handle '{handle}' already exists.");
+ throw new BusinessRuleViolationException(
+     "ContentType.DuplicateFieldHandle",
+            $"A field with handle '{handle}' already exists.");
         }
 
         var field = FieldDefinition.Create(
-            Id, handle, label, fieldType,
-            isRequired, isLocalized, isUnique,
-            sortOrder: _fields.Count,
-            description, validationJson, isIndexed);
+          Id, handle, label, fieldType,
+      isRequired, isLocalized, isUnique,
+         sortOrder: _fields.Count,
+            description, validationJson, isIndexed, isList);
 
         _fields.Add(field);
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -195,13 +196,15 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         bool isRequired,
         bool isLocalized,
         bool isIndexed,
+        bool isList,
         int sortOrder,
-        string? description)
+        string? description,
+        string? validationJson = null)
     {
         EnsureNotArchived();
         var field = GetFieldOrThrow(fieldId);
-        field.Update(label, fieldType, isRequired, isLocalized, isIndexed, sortOrder, description);
-        UpdatedAt = DateTimeOffset.UtcNow;
+field.Update(label, fieldType, isRequired, isLocalized, isIndexed, isList, sortOrder, description, validationJson);
+   UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void RemoveField(Guid fieldId)

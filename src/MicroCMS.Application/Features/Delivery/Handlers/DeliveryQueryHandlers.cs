@@ -32,7 +32,6 @@ internal static class DeliveryMapper
         e.Locale.Value,
         e.Status.ToString(),
         ParseJson(e.FieldsJson),
-        e.Seo is null ? null : new SeoDto(e.Seo.MetaTitle, e.Seo.MetaDescription, e.Seo.OgImage, e.Seo.CanonicalUrl),
         e.PublishedAt,
         e.UpdatedAt);
 

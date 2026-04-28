@@ -43,6 +43,7 @@ const mockContentTypes: ContentTypeListItem[] = [
     displayName: 'Blog Post',
     status: 'Active',
     localizationMode: 'PerLocale',
+    kind: 'Content',
     entryCount: 0,
     localeCount: 1,
     fieldCount: 2,

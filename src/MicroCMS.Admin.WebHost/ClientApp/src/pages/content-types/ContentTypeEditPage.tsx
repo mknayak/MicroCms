@@ -49,6 +49,7 @@ const fieldSchema = z.object({
   localized: z.boolean(),
   isIndexed: z.boolean(),
   isUnique: z.boolean(),
+  isList: z.boolean(),
 });
 
 const formSchema = z.object({
@@ -114,6 +115,7 @@ setValue('layoutId', existing.layoutId ?? '');
         type: f.fieldType as FormValues['fields'][number]['type'],
         required: f.isRequired, localized: f.isLocalized,
         isIndexed: f.isIndexed, isUnique: f.isUnique,
+        isList: f.isList,
       })));
 }
   }, [existing, setValue]);
@@ -146,7 +148,7 @@ setValue('layoutId', existing.layoutId ?? '');
    id: f.id, handle: toCamelCase(f.name) || `field${idx}`,
      label: f.name, fieldType: f.type, isRequired: f.required,
           isLocalized: f.localized, isUnique: f.isUnique,
-          isIndexed: f.isIndexed, sortOrder: idx,
+          isIndexed: f.isIndexed, isList: f.isList, sortOrder: idx,
         })),
       });
     },
@@ -161,7 +163,7 @@ setValue('layoutId', existing.layoutId ?? '');
   });
 
   const addField = () => {
-    append({ name: '', type: 'ShortText', required: false, localized: false, isIndexed: false, isUnique: false });
+    append({ name: '', type: 'ShortText', required: false, localized: false, isIndexed: false, isUnique: false, isList: false });
     setActiveFieldIdx(fields.length);
   };
 
@@ -286,7 +288,7 @@ setValue('layoutId', existing.layoutId ?? '');
      </select>
              </div>
          <div className="col-span-2 flex flex-wrap items-end gap-4 pb-1">
- {([['required', 'Required'], ['localized', 'Localized'], ['isIndexed', 'Indexed'], ['isUnique', 'Unique']] as const).map(([key, label]) => (
+ {([['required', 'Required'], ['localized', 'Localized'], ['isIndexed', 'Indexed'], ['isUnique', 'Unique'], ['isList', 'List (multi-value)']] as const).map(([key, label]) => (
        <label key={key} className="flex items-center gap-2 text-sm text-slate-700">
      <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.${key}`)} />
     {label}
@@ -297,7 +299,7 @@ setValue('layoutId', existing.layoutId ?? '');
    </div>
       )}
   </div>
-    ))}
+   ))}
    </div>
        </div>
           </>

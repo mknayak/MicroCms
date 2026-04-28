@@ -57,10 +57,16 @@ public sealed class ContentTypesController : ApiControllerBase
       CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(
-     new AddFieldCommand(
+ new AddFieldCommand(
    id, request.Handle, request.Label, request.FieldType,
      request.IsRequired, request.IsLocalized, request.IsUnique,
- request.IsIndexed, request.Description),
+ request.IsIndexed, request.IsList, request.Description,
+        request.Options,
+  request.DynamicSource is null ? null : new FieldDynamicSourceInput(
+      request.DynamicSource.ContentTypeHandle,
+  request.DynamicSource.LabelField,
+         request.DynamicSource.ValueField,
+     request.DynamicSource.StatusFilter)),
 cancellationToken);
         return OkOrProblem(result);
     }
@@ -104,8 +110,14 @@ cancellationToken);
 
         var fields = request.Fields?
     .Select(f => new UpdateFieldInput(
-       f.Id, f.Handle, f.Label, f.FieldType,
-     f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.SortOrder, f.Description))
+   f.Id, f.Handle, f.Label, f.FieldType,
+ f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.IsList, f.SortOrder, f.Description,
+  f.Options,
+        f.DynamicSource is null ? null : new FieldDynamicSourceInput(
+            f.DynamicSource.ContentTypeHandle,
+            f.DynamicSource.LabelField,
+    f.DynamicSource.ValueField,
+            f.DynamicSource.StatusFilter)))
      .ToList();
 
         var result = await Sender.Send(
@@ -161,6 +173,24 @@ cancellationToken);
                 cancellationToken);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
+
+    /// <summary>
+    /// Resolves the effective option list for an Enum field.
+    /// For static fields returns the stored options.
+    /// For dynamic fields queries published entries of the source content type.
+    /// Used by the schema designer (test button) and the entry editor (dropdown population).
+    /// </summary>
+    [HttpGet("{id:guid}/fields/{fieldId:guid}/enum-options")]
+    [ProducesResponseType(typeof(IReadOnlyList<EnumOptionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEnumOptions(
+    Guid id, Guid fieldId,
+        [FromQuery] Guid siteId,
+        CancellationToken cancellationToken = default)
+ {
+        var result = await Sender.Send(new ResolveEnumOptionsQuery(id, fieldId, siteId), cancellationToken);
+     return OkOrProblem(result);
+    }
 }
 
 // ── Request models ───────────────────────────────────────────────────────────
@@ -181,7 +211,12 @@ public sealed record AddFieldRequest(
     bool IsLocalized = false,
     bool IsUnique = false,
     bool IsIndexed = false,
-    string? Description = null);
+    bool IsList = false,
+    string? Description = null,
+    /// <summary>Static option list for Enum fields.</summary>
+    IReadOnlyList<string>? Options = null,
+    /// <summary>Dynamic source config for Enum fields.</summary>
+  FieldDynamicSourceRequest? DynamicSource = null);
 
 public sealed record UpdateContentTypeRequest(
     string DisplayName,
@@ -196,12 +231,15 @@ Guid? Id,
     string Handle,
     string Label,
     string FieldType,
-    bool IsRequired = false,
+  bool IsRequired = false,
     bool IsLocalized = false,
     bool IsUnique = false,
     bool IsIndexed = false,
-    int SortOrder = 0,
-    string? Description = null);
+ bool IsList = false,
+ int SortOrder = 0,
+    string? Description = null,
+    IReadOnlyList<string>? Options = null,
+    FieldDynamicSourceRequest? DynamicSource = null);
 
 public sealed record ImportSchemaRequest(
     Guid SiteId,
@@ -218,3 +256,10 @@ public sealed record ImportSchemaFieldRequest(
     bool IsLocalized = false);
 
 public sealed record SetContentTypeLayoutRequest(Guid? LayoutId);
+
+/// <summary>API request model for dynamic Enum source configuration.</summary>
+public sealed record FieldDynamicSourceRequest(
+    string ContentTypeHandle,
+    string LabelField = "title",
+    string ValueField = "slug",
+    string StatusFilter = "Published");

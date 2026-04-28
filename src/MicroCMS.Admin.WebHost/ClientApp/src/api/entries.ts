@@ -7,7 +7,6 @@ import type {
   EntryVersion,
   PagedResult,
   EntryListParams,
-  SeoMetadata,
 } from '@/types';
 
 export const entriesApi = {
@@ -22,9 +21,6 @@ export const entriesApi = {
 
   update: (id: string, data: UpdateEntryRequest): Promise<Entry> =>
     put<Entry>(`/entries/${id}`, data),
-
-  updateSeo: (id: string, seo: Partial<SeoMetadata & { metaTitle: string; metaDescription: string }>): Promise<Entry> =>
-    put<Entry>(`/entries/${id}/seo`, seo),
 
   publish: (id: string): Promise<Entry> =>
     post<Entry>(`/entries/${id}/publish`),

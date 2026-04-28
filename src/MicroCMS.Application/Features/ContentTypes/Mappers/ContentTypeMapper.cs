@@ -22,26 +22,33 @@ public static class ContentTypeMapper
 
     public static ContentTypeListItemDto ToListItemDto(ContentType ct,
         int entryCount = 0, int localeCount = 0) => new(
-     ct.Id.Value,
+        ct.Id.Value,
         ct.Handle,
         ct.DisplayName,
-  ct.Status.ToString(),
+        ct.Status.ToString(),
         ct.LocalizationMode.ToString(),
         ct.Kind.ToString(),
         ct.Fields.Count,
         entryCount,
         localeCount,
-  ct.UpdatedAt);
+        ct.UpdatedAt);
 
-    private static FieldDefinitionDto ToFieldDto(FieldDefinition f) => new(
-     f.Id,
-    f.Handle,
-        f.Label,
-        f.FieldType.ToString(),
-        f.IsRequired,
-      f.IsLocalized,
-    f.IsUnique,
-        f.IsIndexed,
-        f.SortOrder,
-        f.Description);
+    internal static FieldDefinitionDto ToFieldDto(FieldDefinition f)
+    {
+        var validation = f.Validation;
+        return new FieldDefinitionDto(
+            f.Id,
+            f.Handle,
+            f.Label,
+            f.FieldType.ToString(),
+            f.IsRequired,
+            f.IsLocalized,
+            f.IsUnique,
+            f.IsIndexed,
+            f.IsList,
+            f.SortOrder,
+            f.Description,
+            Options: validation?.Options,
+            DynamicSource: validation?.DynamicSource);
+    }
 }

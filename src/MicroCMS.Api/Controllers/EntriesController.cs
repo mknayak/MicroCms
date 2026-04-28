@@ -8,7 +8,6 @@ using MicroCMS.Application.Features.Entries.Commands.RollbackEntryVersion;
 using MicroCMS.Application.Features.Entries.Commands.SchedulePublish;
 using MicroCMS.Application.Features.Entries.Commands.UnpublishEntry;
 using MicroCMS.Application.Features.Entries.Commands.UpdateEntry;
-using MicroCMS.Application.Features.Entries.Commands.UpdateSeoMetadata;
 using MicroCMS.Application.Features.Entries.Commands.Workflow;
 using MicroCMS.Application.Features.Entries.Dtos;
 using MicroCMS.Application.Features.Entries.Queries.ExportEntries;
@@ -103,13 +102,6 @@ public sealed class EntriesController : ApiControllerBase
         Guid id, [FromBody] UpdateEntryRequest r, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(
             new UpdateEntryCommand(id, SerialiseFields(r.Fields), r.NewSlug, r.ChangeNote), ct));
-
-    [HttpPut("{id:guid}/seo")]
-    [ProducesResponseType(typeof(EntryDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateSeo(
-        Guid id, [FromBody] UpdateSeoRequest r, CancellationToken ct = default) =>
-        OkOrProblem(await Sender.Send(
-            new UpdateSeoMetadataCommand(id, r.MetaTitle, r.MetaDescription, r.CanonicalUrl, r.OgImage), ct));
 
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> Publish(Guid id, CancellationToken ct = default) =>
@@ -220,6 +212,5 @@ public sealed record UpdateEntryRequest(
 
 public sealed record ScheduleEntryRequest(DateTimeOffset PublishAt, DateTimeOffset? UnpublishAt = null);
 public sealed record RollbackEntryRequest(int TargetVersionNumber);
-public sealed record UpdateSeoRequest(string? MetaTitle, string? MetaDescription, string? CanonicalUrl = null, string? OgImage = null);
 public sealed record RejectRequest(string Reason);
 public sealed record BulkEntriesRequest(IReadOnlyList<Guid> EntryIds);

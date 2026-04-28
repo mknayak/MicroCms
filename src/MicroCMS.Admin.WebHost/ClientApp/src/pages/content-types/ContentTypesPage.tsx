@@ -183,9 +183,10 @@ export default function ContentTypesPage() {
 
   const items = (data?.items ?? []).filter(
     (ct) =>
-      !search ||
+    ct.kind !== 'Component' &&
+      (!search ||
       ct.displayName.toLowerCase().includes(search.toLowerCase()) ||
-      ct.handle.toLowerCase().includes(search.toLowerCase()),
+        ct.handle.toLowerCase().includes(search.toLowerCase())),
   );
 
   return (

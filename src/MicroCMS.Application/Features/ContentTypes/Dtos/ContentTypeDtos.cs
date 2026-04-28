@@ -1,3 +1,5 @@
+using MicroCMS.Domain.Aggregates.Content;
+
 namespace MicroCMS.Application.Features.ContentTypes.Dtos;
 
 public sealed record ContentTypeDto(
@@ -9,9 +11,7 @@ public sealed record ContentTypeDto(
     string? Description,
     string LocalizationMode,
     string Status,
-    /// <summary>Discriminates what this content type represents: Content, Page, or Component.</summary>
     string Kind,
-    /// <summary>Layout assigned to this type when Kind == Page. Null otherwise.</summary>
     Guid? LayoutId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
@@ -26,10 +26,20 @@ public sealed record FieldDefinitionDto(
     bool IsLocalized,
     bool IsUnique,
     bool IsIndexed,
+    bool IsList,
     int SortOrder,
     string? Description,
-    /// <summary>Allowed values for Enum-type fields. Null for all other field types.</summary>
-    IReadOnlyList<string>? Options = null);
+    /// <summary>
+    /// Static option list for Enum fields.
+    /// Null when the field uses a dynamic source or is not Enum.
+    /// </summary>
+    IReadOnlyList<string>? Options = null,
+    /// <summary>
+    /// Dynamic source config for Enum fields.
+    /// When set, the entry editor must query published entries of the referenced
+    /// content type to build the option list at render time.
+    /// </summary>
+    FieldDynamicSource? DynamicSource = null);
 
 public sealed record ContentTypeListItemDto(
     Guid Id,

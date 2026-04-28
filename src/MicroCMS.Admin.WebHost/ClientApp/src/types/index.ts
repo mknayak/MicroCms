@@ -134,6 +134,11 @@ export interface ContentTypeListItem {
   displayName: string;
   status: string;
   localizationMode: string;
+  /**
+   * Discriminates what this content type represents.
+   * Component-kind types are auto-created backing types and should be hidden in the UI.
+   */
+  kind: ContentTypeKind;
   /** Count of non-archived entries for this content type. */
   entryCount: number;
   /** Count of distinct locales used by entries of this type. */
@@ -177,10 +182,28 @@ export interface FieldDefinitionDto {
   isLocalized: boolean;
   isUnique: boolean;
   isIndexed: boolean;
+  /** When true the field stores a JSON array; the element type is fieldType. */
+  isList: boolean;
   sortOrder: number;
   description?: string;
-  /** Allowed values for Enum-type fields. Null/undefined for all other types. */
+  /** Static option list for Enum fields. Null when field uses a dynamic source. */
   options?: string[];
+  /** Dynamic source config for Enum fields. When set, options are resolved at runtime. */
+  dynamicSource?: FieldDynamicSource;
+}
+
+/** Describes how to resolve Enum options dynamically from published entries. */
+export interface FieldDynamicSource {
+  contentTypeHandle: string;
+  labelField: string;
+  valueField: string;
+  statusFilter: string;
+}
+
+/** Matches EnumOptionDto returned by GET /content-types/{id}/fields/{fieldId}/enum-options */
+export interface EnumOptionDto {
+  value: string;
+  label: string;
 }
 
 export interface CreateContentTypeRequest {
@@ -247,16 +270,8 @@ export interface Entry {
   scheduledPublishAt?: string;
   scheduledUnpublishAt?: string;
   folderId?: string;
-  seo?: SeoMetadata;
   /** All locale codes for which a variant of this entry exists. */
   localeVariants?: string[];
-}
-
-export interface SeoMetadata {
-  metaTitle?: string;
-  metaDescription?: string;
-  canonicalUrl?: string;
-  ogImage?: string;
 }
 
 export interface CreateEntryRequest {

@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { entriesApi } from '@/api/entries';
 import { contentTypesApi } from '@/api/contentTypes';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
-import { SeoPanel } from '@/components/SeoPanel';
 import type { EntryVersion, EntryStatus, FieldDefinitionDto } from '@/types';
 import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -53,31 +52,117 @@ function CharCounter({ value, max }: { value: string; max: number }) {
   );
 }
 
-// ─── Field Renderer ───────────────────────────────────────────────────────────
+// ─── List Field Wrapper ───────────────────────────────────────────────────────
 
-function FieldInput({ field, value, onChange }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void }) {
+/**
+ * Wraps any scalar FieldInput with add/remove list management.
+ * The stored value is always an array; each item is edited inline.
+ */
+function ListFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: FieldDefinitionDto;
+  value: unknown;
+  onChange: (val: unknown) => void;
+}) {
+  const items: unknown[] = Array.isArray(value) ? value : [];
+
+  const updateItem = (index: number, newVal: unknown) => {
+    const updated = [...items];
+    updated[index] = newVal;
+    onChange(updated);
+  };
+
+  const addItem = () => onChange([...items, '']);
+  const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
+
+  // For Enum multi-select we render checkboxes instead of a list of selects
+  if (field.fieldType === 'Enum' && field.options && field.options.length > 0) {
+    const selected = items.map(String);
+    const toggle = (opt: string) => {
+      const next = selected.includes(opt)
+      ? selected.filter((o) => o !== opt)
+        : [...selected, opt];
+      onChange(next);
+ };
+    return (
+      <div className="flex flex-wrap gap-2">
+        {field.options.map((opt) => (
+          <label key={opt} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:border-brand-300 hover:bg-brand-50">
+   <input
+              type="checkbox"
+   checked={selected.includes(opt)}
+              onChange={() => toggle(opt)}
+           className="h-4 w-4 rounded border-slate-300 text-brand-600"
+  />
+    {opt}
+          </label>
+        ))}
+      </div>
+    );
+  }
+
+  // Generic list: one scalar input per item
+  const scalarField = { ...field, isList: false }; // render scalar version inside
+  return (
+    <div className="space-y-2">
+      {items.map((item, idx) => (
+        <div key={idx} className="flex items-start gap-2">
+          <div className="flex-1">
+            <ScalarFieldInput field={scalarField} value={item} onChange={(v) => updateItem(idx, v)} />
+          </div>
+          <button
+     type="button"
+            onClick={() => removeItem(idx)}
+  className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-slate-300 hover:bg-red-50 hover:text-red-500"
+    aria-label="Remove item"
+     >
+     ✕
+ </button>
+        </div>
+      ))}
+      <button
+   type="button"
+        onClick={addItem}
+        className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+      >
+   <span className="text-base leading-none">+</span> Add item
+      </button>
+      {items.length > 0 && (
+      <p className="text-xs text-slate-400">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+      )}
+  </div>
+  );
+}
+
+// ─── Scalar Field Renderer ────────────────────────────────────────────────────
+// (renamed from FieldInput — handles single-value rendering)
+
+function ScalarFieldInput({ field, value, onChange }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void }) {
   switch (field.fieldType) {
     case 'RichText':
- return (
+      return (
         <div className="relative">
-          <RichTextEditor value={typeof value === 'string' ? value : ''} onChange={onChange} placeholder={`Write ${field.label}…`} />
-       <button type="button" className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-100">
-        <span>✦</span> AI Assist
-   </button>
- </div>
-      );
+       <RichTextEditor value={typeof value === 'string' ? value : ''} onChange={onChange} placeholder={`Write ${field.label}…`} />
+  <button type="button" className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-100">
+ <span>✦</span> AI Assist
+</button>
+     </div>
+ );
     case 'LongText':
     case 'Markdown':
       return <textarea value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} rows={6} className="form-input resize-y font-mono" placeholder={`Enter ${field.label}…`} />;
     case 'Json':
- return <textarea value={typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2)} onChange={(e) => onChange(e.target.value)} rows={8} className="form-input resize-y font-mono text-xs" placeholder="{}" spellCheck={false} />;
+      return <textarea value={typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2)} onChange={(e) => onChange(e.target.value)} rows={8} className="form-input resize-y font-mono text-xs" placeholder="{}" spellCheck={false} />;
     case 'Boolean':
       return (
-   <label className="flex cursor-pointer items-center gap-2">
-          <input type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-brand-600" />
+        <label className="flex cursor-pointer items-center gap-2">
+       <input type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-brand-600" />
           <span className="text-sm text-slate-700">{field.label}</span>
-    </label>
-  );
+        </label>
+      );
     case 'Integer':
       return <input type="number" step="1" value={typeof value === 'number' ? value : ''} onChange={(e) => onChange(e.target.valueAsNumber)} className="form-input" placeholder="0" />;
     case 'Decimal':
@@ -85,50 +170,60 @@ function FieldInput({ field, value, onChange }: { field: FieldDefinitionDto; val
     case 'DateTime':
       return <input type="datetime-local" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" />;
     case 'Color':
-      return (
-        <div className="flex items-center gap-3">
-          <input type="color" value={typeof value === 'string' && value ? value : '#000000'} onChange={(e) => onChange(e.target.value)} className="h-9 w-16 cursor-pointer rounded border border-slate-300 p-0.5" />
-      <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input font-mono" placeholder="#000000" />
-        </div>
+    return (
+     <div className="flex items-center gap-3">
+ <input type="color" value={typeof value === 'string' && value ? value : '#000000'} onChange={(e) => onChange(e.target.value)} className="h-9 w-16 cursor-pointer rounded border border-slate-300 p-0.5" />
+     <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input font-mono" placeholder="#000000" />
+ </div>
       );
- case 'Enum':
+    case 'Enum':
       if (field.options && field.options.length > 0) {
-  return (
-          <select value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input">
-            <option value="">— select —</option>
-   {field.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+        return (
+      <select value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input">
+      <option value="">— select —</option>
+ {field.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
           </select>
-      );
+    );
       }
       return <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" placeholder="Enter value…" />;
     case 'AssetReference':
     return (
-      <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+        <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-slate-400">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
           </div>
-        <p className="text-xs text-slate-500">Select from media library</p>
-       <button type="button" className="btn-secondary text-xs">Browse</button>
+          <p className="text-xs text-slate-500">Select from media library</p>
+      <button type="button" className="btn-secondary text-xs">Browse</button>
           {typeof value === 'string' && value && <p className="mt-1 font-mono text-xs text-slate-400 break-all">{value}</p>}
-        </div>
-      );
+      </div>
+  );
     case 'Reference':
-      return (
+return (
       <div className="flex items-center gap-2">
           <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input flex-1 font-mono" placeholder="Entry ID…" />
-  <span className="text-xs text-slate-400">(entry picker — phase 2)</span>
+    <span className="text-xs text-slate-400">(entry picker — phase 2)</span>
         </div>
       );
-    case 'Location':
+ case 'Location':
       return (
         <div className="grid grid-cols-2 gap-2">
-          <input type="number" step="any" value={typeof value === 'object' && value !== null && 'lat' in value ? (value as { lat: number }).lat : ''} onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lat: e.target.valueAsNumber })} className="form-input" placeholder="Latitude" />
-          <input type="number" step="any" value={typeof value === 'object' && value !== null && 'lng' in value ? (value as { lng: number }).lng : ''} onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lng: e.target.valueAsNumber })} className="form-input" placeholder="Longitude" />
-        </div>
+        <input type="number" step="any" value={typeof value === 'object' && value !== null && 'lat' in value ? (value as { lat: number }).lat : ''} onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lat: e.target.valueAsNumber })} className="form-input" placeholder="Latitude" />
+     <input type="number" step="any" value={typeof value === 'object' && value !== null && 'lng' in value ? (value as { lng: number }).lng : ''} onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lng: e.target.valueAsNumber })} className="form-input" placeholder="Longitude" />
+    </div>
       );
     default:
-return <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" placeholder={`Enter ${field.label}…`} />;
+    return <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" placeholder={`Enter ${field.label}…`} />;
   }
+}
+
+// ─── Field Renderer ───────────────────────────────────────────────────────────
+// Routes to list or scalar renderer based on field.isList
+
+function FieldInput({ field, value, onChange }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void }) {
+  if (field.isList) {
+    return <ListFieldInput field={field} value={value} onChange={onChange} />;
+  }
+  return <ScalarFieldInput field={field} value={value} onChange={onChange} />;
 }
 
 // ─── Publishing Panel ─────────────────────────────────────────────────────────
@@ -562,44 +657,36 @@ key={loc}
 
           {/* Dynamic fields */}
           {selectedContentType?.fields.map((field) => (
-     <div key={field.id} className="card space-y-2">
-           <div className="flex items-center justify-between">
+ <div key={field.id} className="card space-y-2">
+  <div className="flex items-center justify-between">
        <div className="flex items-center gap-2">
         <label className="form-label mb-0">
-          {field.label}
-              {field.isRequired && <span className="ml-1 text-red-500">*</span>}
+{field.label}
+   {field.isRequired && <span className="ml-1 text-red-500">*</span>}
   </label>
-             {field.isLocalized && <span className="badge-brand text-xs">Localized</span>}
+    {field.isLocalized && <span className="badge-brand text-xs">Localized</span>}
        {field.isIndexed && <span className="badge-amber text-xs">Indexed</span>}
      </div>
-      <div className="flex items-center gap-3">
-        {(field.fieldType === 'ShortText' || field.fieldType === 'LongText') && (
-          <>
+ <div className="flex items-center gap-3">
+{(field.fieldType === 'ShortText' || field.fieldType === 'LongText') && (
+       <>
      <CharCounter value={typeof watchedFields?.[field.handle] === 'string' ? watchedFields[field.handle] as string : ''} max={field.fieldType === 'ShortText' ? 100 : 500} />
-               <button type="button" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
+   <button type="button" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
   <span>✦</span> Generate with AI
       </button>
-        </>
+   </>
         )}
        <span className="text-xs text-slate-400">{field.fieldType}</span>
         </div>
-              </div>
+       </div>
     {field.description && <p className="text-xs text-slate-400">{field.description}</p>}
               <Controller
       control={control}
      name={`fields.${field.handle}`}
-        render={({ field: f }) => <FieldInput field={field} value={f.value} onChange={f.onChange} />}
-   />
+   render={({ field: f }) => <FieldInput field={field} value={f.value} onChange={f.onChange} />}
+/>
             </div>
           ))}
-
-     {/* SEO section — inline in main content */}
-          {!isNew && existing && (
-            <div className="card space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">SEO Metadata</h3>
-       <SeoPanel entryId={id!} initialSeo={existing.seo} />
-    </div>
-          )}
         </div>
 
         {/* ── Right sidebar ────────────────────────────────────────────── */}

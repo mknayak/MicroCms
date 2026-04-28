@@ -40,4 +40,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Entries\Commands\UpdateSeoMetadata\" />
+  </ItemGroup>
+
 </Project>

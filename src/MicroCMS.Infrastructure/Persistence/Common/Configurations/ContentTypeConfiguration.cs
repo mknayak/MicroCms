@@ -102,6 +102,7 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
             field.Property(f => f.IsLocalized).IsRequired();
             field.Property(f => f.IsUnique).IsRequired();
             field.Property(f => f.IsIndexed).IsRequired();
+            field.Property(f => f.IsList).IsRequired().HasDefaultValue(false);
             field.Property(f => f.SortOrder).IsRequired();
 
             field.Property(f => f.Description)

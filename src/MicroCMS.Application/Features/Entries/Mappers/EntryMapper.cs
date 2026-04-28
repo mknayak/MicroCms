@@ -33,9 +33,6 @@ public static class EntryMapper
         entry.ScheduledPublishAt,
         entry.ScheduledUnpublishAt,
         entry.FolderId?.Value,
-        entry.Seo is { } seo
-            ? new SeoMetadataDto(seo.MetaTitle, seo.MetaDescription, seo.CanonicalUrl, seo.OgImage)
-            : null,
         localeVariants);
 
     /// <summary>

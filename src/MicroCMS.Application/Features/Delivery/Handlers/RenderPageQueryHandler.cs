@@ -23,8 +23,7 @@ namespace MicroCMS.Application.Features.Delivery.Handlers;
 ///
 /// SEO resolution order (first non-null wins per field):
 ///   1. Page.Seo  — page-level override set via PUT /pages/{id}/seo
-///   2. LinkedEntry.Seo  — the entry linked to a Static page (if any)
-///   3. Page.Title  — used as seo:title fallback when nothing else is set
+///   2. Page.Title  — used as seo:title fallback when nothing else is set
 /// </summary>
 internal sealed class RenderPageBySlugQueryHandler(
     IRepository<Page, PageId> pageRepo,
@@ -82,38 +81,19 @@ layout, zones,
     // ── SEO resolution ────────────────────────────────────────────────────
 
   /// <summary>
-    /// Resolves SEO using a three-level fallback:
-    ///   Page.Seo → LinkedEntry.Seo → Page.Title as title fallback.
+    /// Resolves SEO using Page.Seo with Page.Title as title fallback.
     /// </summary>
-    private static async Task<SeoDto> ResolveSeoAsync(
+    private static Task<SeoDto> ResolveSeoAsync(
         Page page,
- IRepository<Entry, EntryId> entryRepo,
+        IRepository<Entry, EntryId> entryRepo,
         CancellationToken ct)
     {
-        var pageSeo = page.Seo;
-        var entrySeo = await LoadLinkedEntrySeoAsync(page, entryRepo, ct);
-        return MergeSeo(page.Title, pageSeo, entrySeo);
-    }
-
-    private static async Task<SeoMetadata?> LoadLinkedEntrySeoAsync(
-        Page page,
-      IRepository<Entry, EntryId> entryRepo,
-        CancellationToken ct)
-    {
-        if (!page.LinkedEntryId.HasValue) return null;
-        var entry = await entryRepo.GetByIdAsync(page.LinkedEntryId.Value, ct);
-        return entry?.Seo;
-  }
-
-    private static SeoDto MergeSeo(string pageTitle, SeoMetadata pageSeo, SeoMetadata? entrySeo)
-    {
-        var title = pageSeo.MetaTitle
-          ?? entrySeo?.MetaTitle
-                 ?? pageTitle;
-   var description = pageSeo.MetaDescription ?? entrySeo?.MetaDescription;
-        var ogImage     = pageSeo.OgImage          ?? entrySeo?.OgImage;
-        var canonical   = pageSeo.CanonicalUrl     ?? entrySeo?.CanonicalUrl;
-     return new SeoDto(title, description, ogImage, canonical);
+  var pageSeo = page.Seo;
+        var title       = pageSeo.MetaTitle     ?? page.Title;
+        var description = pageSeo.MetaDescription;
+        var ogImage     = pageSeo.OgImage;
+        var canonical   = pageSeo.CanonicalUrl;
+        return Task.FromResult(new SeoDto(title, description, ogImage, canonical));
     }
 
     // ── Zone rendering ────────────────────────────────────────────────────

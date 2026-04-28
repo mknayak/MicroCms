@@ -61,8 +61,10 @@ internal sealed class ComponentConfiguration : IEntityTypeConfiguration<Componen
   fieldBuilder.Property(f => f.FieldType).HasConversion<string>().HasMaxLength(32).IsRequired();
    fieldBuilder.Property(f => f.IsRequired).IsRequired();
   fieldBuilder.Property(f => f.IsLocalized).IsRequired();
-            fieldBuilder.Property(f => f.IsUnique).IsRequired();
-            fieldBuilder.Property(f => f.SortOrder).IsRequired();
+         fieldBuilder.Property(f => f.IsUnique).IsRequired();
+fieldBuilder.Property(f => f.IsIndexed).IsRequired();
+ fieldBuilder.Property(f => f.IsList).IsRequired().HasDefaultValue(false);
+         fieldBuilder.Property(f => f.SortOrder).IsRequired();
          fieldBuilder.Property(f => f.Description).HasMaxLength(FieldDefinition.MaxDescriptionLength);
             fieldBuilder.Property(f => f.ValidationJson);
         });

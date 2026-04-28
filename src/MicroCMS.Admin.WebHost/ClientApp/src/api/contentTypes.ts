@@ -2,9 +2,17 @@ import { get, post, put, del } from './client';
 import type {
   ContentType,
   ContentTypeListItem,
+  EnumOptionDto,
   PagedResult,
   PaginationParams,
 } from '@/types';
+
+export interface FieldDynamicSourceRequest {
+  contentTypeHandle: string;
+  labelField?: string;
+  valueField?: string;
+  statusFilter?: string;
+}
 
 export interface CreateContentTypeRequest {
   siteId: string;
@@ -24,8 +32,13 @@ export interface UpdateFieldRequest {
   isLocalized?: boolean;
   isUnique?: boolean;
   isIndexed?: boolean;
+  isList?: boolean;
   sortOrder?: number;
   description?: string;
+  /** Static options for Enum fields. */
+  options?: string[];
+  /** Dynamic source for Enum fields — mutually exclusive with options. */
+  dynamicSource?: FieldDynamicSourceRequest;
 }
 
 export interface UpdateContentTypeRequest {
@@ -69,4 +82,12 @@ export const contentTypesApi = {
 
   delete: (id: string): Promise<void> =>
     del(`/content-types/${id}`),
+
+  /**
+   * Resolves the effective option list for an Enum field.
+   * For static fields returns stored options.
+   * For dynamic fields queries published entries of the source content type.
+   */
+  getEnumOptions: (contentTypeId: string, fieldId: string, siteId: string): Promise<EnumOptionDto[]> =>
+    get<EnumOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/enum-options`, { params: { siteId } }),
 };

@@ -119,13 +119,14 @@ public async Task<EntryPayload> UnpublishEntryAsync(
     {
         var command = new AddFieldCommand(
      input.ContentTypeId,
-         input.Handle,
+       input.Handle,
           input.Label,
-         input.FieldType,
+       input.FieldType,
       input.IsRequired,
-            input.IsLocalized,
+         input.IsLocalized,
             input.IsUnique,
  false, // IsIndexed — not exposed via GraphQL input (defaults to false)
+   false, // IsList — not exposed via GraphQL input (defaults to false)
       input.Description);
 
         var result = await mediator.Send(command, cancellationToken);

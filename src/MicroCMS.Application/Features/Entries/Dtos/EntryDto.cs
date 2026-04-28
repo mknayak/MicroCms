@@ -28,13 +28,5 @@ public sealed record EntryDto(
     DateTimeOffset? ScheduledPublishAt,
     DateTimeOffset? ScheduledUnpublishAt,
     Guid? FolderId,
-    SeoMetadataDto? Seo,
     /// <summary>All locale codes for which a variant of this entry (same site+contentType+slug) exists.</summary>
     IReadOnlyList<string>? LocaleVariants = null);
-
-/// <summary>SEO metadata sub-DTO used within <see cref="EntryDto"/>.</summary>
-public sealed record SeoMetadataDto(
-    string? MetaTitle,
-    string? MetaDescription,
-    string? CanonicalUrl,
-    string? OgImage);

@@ -72,15 +72,6 @@ internal sealed class EntryConfiguration : IEntityTypeConfiguration<Entry>
                 id => id.HasValue ? id.Value.Value : (Guid?)null,
                 value => value.HasValue ? new FolderId(value.Value) : (FolderId?)null);
 
-        // ── GAP-08: SeoMetadata owned entity ──────────────────────────────
-        builder.OwnsOne(e => e.Seo, seo =>
-        {
-            seo.Property(s => s.MetaTitle).HasMaxLength(SeoMetadata.MaxMetaTitleLength).HasColumnName("SeoMetaTitle");
-            seo.Property(s => s.MetaDescription).HasMaxLength(SeoMetadata.MaxMetaDescriptionLength).HasColumnName("SeoMetaDescription");
-            seo.Property(s => s.CanonicalUrl).HasMaxLength(500).HasColumnName("SeoCanonicalUrl");
-            seo.Property(s => s.OgImage).HasMaxLength(500).HasColumnName("SeoOgImage");
-        });
-
         // Unique: slug per site per locale (content invariant in same locale must have unique slug)
         builder.HasIndex(e => new { e.SiteId, e.Locale, e.Slug }).IsUnique();
 
