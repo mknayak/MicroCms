@@ -453,362 +453,339 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
     };
 
     // Component-kind types are auto-created backing types — not directly editable.
-    // This check is AFTER all hooks to comply with React Rules of Hooks.
+  // This check is AFTER all hooks to comply with React Rules of Hooks.
     if (contentType.kind === 'Component') {
         return (
-    <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <span className="mt-0.5 shrink-0">⚙️</span>
-                    <div>
-            <p className="font-semibold">Component Backing Type</p>
-        <p className="mt-0.5 text-amber-700">
-       This content type was auto-created to store data for a Component. Its schema
-  is managed through the{' '}
-  <strong>Component Library</strong> — edit the component's fields there instead.
-   </p>
+   <div className="space-y-4">
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+     <span className="mt-0.5 shrink-0">⚙️</span>
+         <div>
+      <p className="font-semibold">Component Backing Type</p>
+               <p className="mt-0.5 text-amber-700">
+                 This content type was auto-created to store data for a Component. Its schema
+        is managed through the{' '}
+      <strong>Component Library</strong> — edit the component's fields there instead.
+</p>
+        </div>
+   </div>
+    </div>
+     );
+    }
+
+    // ── Edit view ───────────────────────────────────────────────────────────────
+    if (editing) {
+        return (
+        <form onSubmit={handleSubmit((v) => saveMutation.mutate(v))} className="space-y-5">
+           {/* Edit header */}
+  <div className="flex items-center justify-between gap-4">
+           <div>
+  <p className="text-sm font-semibold text-slate-800">
+   Editing Schema — {contentType.displayName}
+       </p>
+  <p className="text-xs text-slate-400 mt-0.5">Changes are saved when you click Save.</p>
+   </div>
+     <div className="flex items-center gap-2 shrink-0">
+      <button type="button" onClick={handleCancel} className="btn-secondary text-sm">
+      Cancel
+      </button>
+     <button
+         type="submit"
+            disabled={isSubmitting || !isDirty}
+             className="btn-primary text-sm disabled:opacity-50"
+      >
+         {isSubmitting ? 'Saving…' : 'Save Changes'}
+      </button>
+    </div>
      </div>
+
+        {/* Basic information */}
+      <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 space-y-4">
+<h3 className="text-sm font-semibold text-slate-800">Basic Information</h3>
+        <div className="grid grid-cols-2 gap-4">
+    <div>
+           <label className="form-label">Display Name</label>
+          <input className="form-input mt-1" {...register('name')} placeholder="Blog Post" />
+  {errors.name && <p className="form-error">{errors.name.message}</p>}
       </div>
+           <div>
+                <label className="form-label">API Key</label>
+      <div className="mt-1 flex">
+                   <span className="inline-flex items-center rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 px-3 text-xs text-slate-500 select-none">
+       api/v1/
+      </span>
+         <input
+      className="form-input rounded-l-none font-mono"
+   {...register('apiKey')}
+         placeholder="blog-post"
+        />
+       </div>
+            {errors.apiKey && <p className="form-error">{errors.apiKey.message}</p>}
+       </div>
+    <div className="col-span-2">
+   <label className="form-label">Description (optional)</label>
+    <input
+   className="form-input mt-1"
+      {...register('description')}
+                    placeholder="Describe this content type…"
+     />
             </div>
-    );
+                <div>
+      <label className="form-label">Localization Mode</label>
+       <select className="form-input mt-1" {...register('localizationMode')}>
+    <option value="PerLocale">Per-locale fields</option>
+    <option value="Shared">Shared (locale-independent)</option>
+      </select>
+    </div>
+  </div>
+    </div>
+
+     {/* Fields editor */}
+<div className="rounded-lg border border-slate-200 bg-white px-5 py-4 space-y-4">
+      <div className="flex items-center justify-between">
+<h3 className="text-sm font-semibold text-slate-800">Fields</h3>
+            <button type="button" onClick={addField} className="btn-secondary text-xs">
+    + Add Field
+    </button>
+            </div>
+
+        {fields.length === 0 && (
+     <p className="text-sm text-slate-400">No fields yet. Click "+ Add Field" to start.</p>
+      )}
+
+          <div className="space-y-3">
+          {fields.map((field, idx) => (
+        <div
+     key={field.id}
+    className={`rounded-lg border p-4 ${activeFieldIdx === idx ? 'border-brand-300 bg-brand-50/40' : 'border-slate-200'}`}
+             >
+        {/* Field summary row */}
+       <div
+      className="flex cursor-pointer items-center justify-between"
+              onClick={() => setActiveFieldIdx(activeFieldIdx === idx ? null : idx)}
+          >
+           <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-800">
+      {watch(`fields.${idx}.name`) || (
+         <span className="text-slate-400">Unnamed field</span>
+          )}
+           </span>
+     <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${FIELD_TYPE_COLORS[watch(`fields.${idx}.type`)] ?? 'bg-slate-100 text-slate-600'}`}>
+              {FIELD_TYPE_LABELS[watch(`fields.${idx}.type`)] ?? watch(`fields.${idx}.type`)}
+         </span>
+          {watch(`fields.${idx}.required`) && (
+     <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">Required</span>
+        )}
+      {watch(`fields.${idx}.localized`) && (
+        <span className="rounded bg-brand-100 px-1.5 py-0.5 text-xs font-medium text-brand-700">Localized</span>
+          )}
+             {watch(`fields.${idx}.isIndexed`) && (
+          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">Indexed</span>
+ )}
+        </div>
+           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+         <button
+        type="button"
+      onClick={() => { if (idx > 0) move(idx, idx - 1); }}
+disabled={idx === 0}
+          className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+           aria-label="Move up"
+        >↑</button>
+         <button
+   type="button"
+       onClick={() => { if (idx < fields.length - 1) move(idx, idx + 1); }}
+      disabled={idx === fields.length - 1}
+ className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+aria-label="Move down"
+          >↓</button>
+         <button
+      type="button"
+onClick={() => remove(idx)}
+    className="text-red-400 hover:text-red-600"
+     aria-label="Remove"
+  >✕</button>
+               </div>
+      </div>
+
+          {/* Field detail (expanded) */}
+  {activeFieldIdx === idx && (
+         <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+             <div>
+   <label className="form-label">Name</label>
+           <input className="form-input mt-1" {...register(`fields.${idx}.name`)} />
+       {errors.fields?.[idx]?.name && (
+        <p className="form-error">{errors.fields[idx]?.name?.message}</p>
+ )}
+       </div>
+  <div>
+                   <label className="form-label">Type</label>
+        <select className="form-input mt-1" {...register(`fields.${idx}.type`)}>
+       {FIELD_TYPES.map((ft) => (
+       <option key={ft.value} value={ft.value}>{ft.label}</option>
+         ))}
+           </select>
+      </div>
+        <div className="col-span-2 flex flex-wrap items-center gap-4 pt-1">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+     <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.required`)} />
+   Required
+     </label>
+       <label className="flex items-center gap-2 text-sm text-slate-700">
+           <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.localized`)} />
+    Localized
+    </label>
+     <label className="flex items-center gap-2 text-sm text-slate-700">
+       <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.isIndexed`)} />
+  Indexed
+     </label>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+           <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.isUnique`)} />
+  Unique
+           </label>
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.isList`)} />
+    List (multi-value)
+    </label>
+      </div>
+
+   {/* Enum options — only shown when type is Enum */}
+        {watch(`fields.${idx}.type`) === 'Enum' && (
+      <EnumOptionsEditor
+       contentTypeId={contentType.id}
+  fieldId={field.id}
+   siteId={siteId}
+      enumMode={watch(`fields.${idx}.enumMode`) ?? 'static'}
+                staticOptions={watch(`fields.${idx}.staticOptions`) ?? []}
+     onEnumModeChange={(mode) => setValue(`fields.${idx}.enumMode`, mode)}
+       onStaticOptionsChange={(opts) => setValue(`fields.${idx}.staticOptions`, opts)}
+       register={register}
+         prefix={`fields.${idx}.dynamicSource`}
+        />
+   )}
+               </div>
+         </div>
+             )}
+  </div>
+              ))}
+           </div>
+
+        {/* Bottom save/cancel */}
+            <div className="flex justify-end gap-3 pb-2">
+              <button type="button" onClick={handleCancel} className="btn-secondary">Cancel</button>
+          <button
+          type="submit"
+  disabled={isSubmitting || !isDirty}
+            className="btn-primary disabled:opacity-50"
+     >
+        {isSubmitting ? 'Saving…' : 'Save Changes'}
+      </button>
+        </div>
+           </div>
+    </form>
+        );
     }
 
     // ── Read-only view ──────────────────────────────────────────────────────────
     const sortedFields = (contentType.fields ?? []).slice().sort((a, b) => a.sortOrder - b.sortOrder);
 
-        return (
-            <div className="space-y-4">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <p className="text-sm font-medium text-slate-700">
-                            Schema Definition — {contentType.displayName}
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-400">
-                            Last edited {formatDistanceToNow(new Date(contentType.updatedAt), { addSuffix: true })}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button className="btn-secondary text-sm">Export JSON Schema</button>
-                        <button onClick={() => setEditing(true)} className="btn-primary text-sm">
-                            ✏ Edit Schema
-                        </button>
-                    </div>
-                </div>
-
-                {/* Info banner */}
-                <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                    <span className="mt-0.5">ℹ</span>
-                    <span>
-                        Click <strong>Edit Schema</strong> to add, remove, or reorder fields.
-                    </span>
-                </div>
-
-                {/* Basic info */}
-                <div className="rounded-lg border border-slate-200 bg-white px-5 py-4">
-                    <div className="grid grid-cols-2 gap-6 text-sm">
-                        <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase mb-1">Display Name</p>
-                            <p className="font-medium text-slate-800">{contentType.displayName}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase mb-1">API Key</p>
-                            <p className="font-mono text-slate-700">{contentType.handle}</p>
-                        </div>
-                        {contentType.description && (
-                            <div className="col-span-2">
-                                <p className="text-xs font-medium text-slate-500 uppercase mb-1">Description</p>
-                                <p className="text-slate-600">{contentType.description}</p>
-                            </div>
-                        )}
-                        <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase mb-1">Localization</p>
-                            <p className="text-slate-700">
-                                {contentType.localizationMode === 'Shared'
-                                    ? 'Shared (locale-independent)'
-                                    : 'Per-locale fields'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Fields table */}
-                <div className="overflow-x-auto rounded-lg border border-slate-200">
-                    <table className="min-w-full divide-y divide-slate-200 text-sm">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th className="w-6 px-3 py-3" />
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Field Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">API Key</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Required</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Localized</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Indexed</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Validators</th>
-                                <th className="px-4 py-3" />
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                            {sortedFields.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
-                                        No fields defined yet.{' '}
-                                        <button onClick={() => setEditing(true)} className="text-brand-600 hover:underline">
-                                            Add the first field
-                                        </button>.
-                                    </td>
-                                </tr>
-                            ) : (
-                                sortedFields.map((f) => (
-                                    <ReadOnlyFieldRow key={f.id} field={f} onEdit={() => setEditing(true)} />
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Field type legend */}
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="font-medium">Field Types:</span>
-                    {Object.entries(FIELD_TYPE_LABELS).map(([k, v]) => (
-                        <span
-                            key={k}
-                            className={`rounded px-2 py-0.5 font-medium ${FIELD_TYPE_COLORS[k] ?? 'bg-slate-100 text-slate-600'}`}
-                        >
-                            {v}
-                        </span>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    // ── Edit view ───────────────────────────────────────────────────────────────
     return (
-        <form onSubmit={handleSubmit((v) => saveMutation.mutate(v))} className="space-y-5">
-            {/* Edit header */}
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                        Editing Schema — {contentType.displayName}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">Changes are saved when you click Save.</p>
+        <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
+         <div>
+   <p className="text-sm font-medium text-slate-700">
+         Schema Definition — {contentType.displayName}
+      </p>
+            <p className="mt-0.5 text-xs text-slate-400">
+      Last edited {formatDistanceToNow(new Date(contentType.updatedAt), { addSuffix: true })}
+             </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <button type="button" onClick={handleCancel} className="btn-secondary text-sm">
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || !isDirty}
-                        className="btn-primary text-sm disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Saving…' : 'Save Changes'}
-                    </button>
-                </div>
+             <div className="flex items-center gap-2 shrink-0">
+          <button className="btn-secondary text-sm">Export JSON Schema</button>
+          <button onClick={() => setEditing(true)} className="btn-primary text-sm">
+       ✏ Edit Schema
+     </button>
+        </div>
+       </div>
+
+   {/* Info banner */}
+     <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+       <span className="mt-0.5">ℹ</span>
+         <span>Click <strong>Edit Schema</strong> to add, remove, or reorder fields.</span>
             </div>
 
-            {/* Basic information */}
-            <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 space-y-4">
-                <h3 className="text-sm font-semibold text-slate-800">Basic Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="form-label">Display Name</label>
-                        <input className="form-input mt-1" {...register('name')} placeholder="Blog Post" />
-                        {errors.name && <p className="form-error">{errors.name.message}</p>}
-                    </div>
-                    <div>
-                        <label className="form-label">API Key</label>
-                        <div className="mt-1 flex">
-                            <span className="inline-flex items-center rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 px-3 text-xs text-slate-500 select-none">
-                                api/v1/
-                            </span>
-                            <input
-                                className="form-input rounded-l-none font-mono"
-                                {...register('apiKey')}
-                                placeholder="blog-post"
-                            />
-                        </div>
-                        {errors.apiKey && <p className="form-error">{errors.apiKey.message}</p>}
-                    </div>
-                    <div className="col-span-2">
-                        <label className="form-label">Description (optional)</label>
-                        <input
-                            className="form-input mt-1"
-                            {...register('description')}
-                            placeholder="Describe this content type…"
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Localization Mode</label>
-                        <select className="form-input mt-1" {...register('localizationMode')}>
-                            <option value="PerLocale">Per-locale fields</option>
-                            <option value="Shared">Shared (locale-independent)</option>
-                        </select>
-                    </div>
-                </div>
+   {/* Basic info */}
+            <div className="rounded-lg border border-slate-200 bg-white px-5 py-4">
+      <div className="grid grid-cols-2 gap-6 text-sm">
+ <div>
+             <p className="text-xs font-medium text-slate-500 uppercase mb-1">Display Name</p>
+       <p className="font-medium text-slate-800">{contentType.displayName}</p>
+     </div>
+  <div>
+         <p className="text-xs font-medium text-slate-500 uppercase mb-1">API Key</p>
+       <p className="font-mono text-slate-700">{contentType.handle}</p>
+     </div>
+            {contentType.description && (
+                <div className="col-span-2">
+    <p className="text-xs font-medium text-slate-500 uppercase mb-1">Description</p>
+      <p className="text-slate-600">{contentType.description}</p>
+        </div>
+             )}
+           <div>
+   <p className="text-xs font-medium text-slate-500 uppercase mb-1">Localization</p>
+ <p className="text-slate-700">
+       {contentType.localizationMode === 'Shared'
+       ? 'Shared (locale-independent)'
+      : 'Per-locale fields'}
+            </p>
+    </div>
+          </div>
             </div>
 
-            {/* Fields editor */}
-            <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-800">Fields</h3>
-                    <button type="button" onClick={addField} className="btn-secondary text-xs">
-                        + Add Field
-                    </button>
-                </div>
-
-                {fields.length === 0 && (
-                    <p className="text-sm text-slate-400">No fields yet. Click "+ Add Field" to start.</p>
-                )}
-
-                <div className="space-y-3">
-                    {fields.map((field, idx) => (
-                        <div
-                            key={field.id}
-                            className={`rounded-lg border p-4 ${activeFieldIdx === idx ? 'border-brand-300 bg-brand-50/40' : 'border-slate-200'
-                                }`}
-                        >
-                            {/* Field summary row */}
-                            <div
-                                className="flex cursor-pointer items-center justify-between"
-                                onClick={() => setActiveFieldIdx(activeFieldIdx === idx ? null : idx)}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-slate-800">
-                                        {watch(`fields.${idx}.name`) || (
-                                            <span className="text-slate-400">Unnamed field</span>
-                                        )}
-                                    </span>
-                                    <span
-                                        className={`rounded px-1.5 py-0.5 text-xs font-medium ${FIELD_TYPE_COLORS[watch(`fields.${idx}.type`)] ?? 'bg-slate-100 text-slate-600'
-                                            }`}
-                                    >
-                                        {FIELD_TYPE_LABELS[watch(`fields.${idx}.type`)] ?? watch(`fields.${idx}.type`)}
-                                    </span>
-                                    {watch(`fields.${idx}.required`) && (
-                                        <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">
-                                            Required
-                                        </span>
-                                    )}
-                                    {watch(`fields.${idx}.localized`) && (
-                                        <span className="rounded bg-brand-100 px-1.5 py-0.5 text-xs font-medium text-brand-700">
-                                            Localized
-                                        </span>
-                                    )}
-                                    {watch(`fields.${idx}.isIndexed`) && (
-                                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
-                                            Indexed
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                    <button
-                                        type="button"
-                                        onClick={() => { if (idx > 0) move(idx, idx - 1); }}
-                                        disabled={idx === 0}
-                                        className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
-                                        aria-label="Move up"
-                                    >
-                                        ↑
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => { if (idx < fields.length - 1) move(idx, idx + 1); }}
-                                        disabled={idx === fields.length - 1}
-                                        className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
-                                        aria-label="Move down"
-                                    >
-                                        ↓
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => remove(idx)}
-                                        className="text-red-400 hover:text-red-600"
-                                        aria-label="Remove"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Field detail (expanded) */}
-                            {activeFieldIdx === idx && (
-                                <div className="mt-4 space-y-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="form-label">Name</label>
-                                            <input className="form-input mt-1" {...register(`fields.${idx}.name`)} />
-                                            {errors.fields?.[idx]?.name && (
-                                                <p className="form-error">{errors.fields[idx]?.name?.message}</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="form-label">Type</label>
-                                            <select className="form-input mt-1" {...register(`fields.${idx}.type`)}>
-                                                {FIELD_TYPES.map((ft) => (
-                                                    <option key={ft.value} value={ft.value}>{ft.label}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="col-span-2 flex flex-wrap items-center gap-4 pt-1">
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.required`)} />
-                                                Required
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.localized`)} />
-                                                Localized
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.isIndexed`)} />
-                                                Indexed
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.isUnique`)} />
-                                                Unique
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.isList`)} />
-                                                List (multi-value)
-                                            </label>
-                                        </div>
-
-                                        {/* Enum options — only shown when type is Enum */}
-                                        {watch(`fields.${idx}.type`) === 'Enum' && (
-                                            <EnumOptionsEditor
-                                                contentTypeId={contentType.id}
-                                                fieldId={field.id}
-                                                siteId={siteId}
-                                                enumMode={watch(`fields.${idx}.enumMode`) ?? 'static'}
-                                                staticOptions={watch(`fields.${idx}.staticOptions`) ?? []}
-                                                onEnumModeChange={(mode) => setValue(`fields.${idx}.enumMode`, mode)}
-                                                onStaticOptionsChange={(opts) => setValue(`fields.${idx}.staticOptions`, opts)}
-                                                register={register}
-                                                prefix={`fields.${idx}.dynamicSource`}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                            )},
-
-                        </div>
-                    ))}
-                </div>
-
-                {/* Bottom save/cancel */}
-                <div className="flex justify-end gap-3 pb-2">
-                    <button type="button" onClick={handleCancel} className="btn-secondary">
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || !isDirty}
-                        className="btn-primary disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Saving…' : 'Save Changes'}
-                    </button>
-                </div>
+    {/* Fields table */}
+            <div className="overflow-x-auto rounded-lg border border-slate-200">
+   <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <thead className="bg-slate-50">
+       <tr>
+   <th className="w-6 px-3 py-3" />
+       <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Field Name</th>
+       <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">API Key</th>
+   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
+      <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Required</th>
+       <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Localized</th>
+               <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Indexed</th>
+       <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Validators</th>
+           <th className="px-4 py-3" />
+</tr>
+   </thead>
+   <tbody className="divide-y divide-slate-100 bg-white">
+            {sortedFields.length === 0 ? (
+               <tr>
+          <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
+         No fields defined yet.{' '}
+         <button onClick={() => setEditing(true)} className="text-brand-600 hover:underline">
+     Add the first field
+  </button>.
+                  </td>
+            </tr>
+        ) : (
+  sortedFields.map((f) => (
+             <ReadOnlyFieldRow key={f.id} field={f} onEdit={() => setEditing(true)} />
+      ))
+         )}
+                 </tbody>
+         </table>
             </div>
-        </form>
+
+            {/* Field type legend */}
+ <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+           <span className="font-medium">Field Types:</span>
+           {Object.entries(FIELD_TYPE_LABELS).map(([k, v]) => (
+   <span key={k} className={`rounded px-2 py-0.5 font-medium ${FIELD_TYPE_COLORS[k] ?? 'bg-slate-100 text-slate-600'}`}>
+        {v}
+          </span>
+    ))}
+         </div>
+        </div>
     );
 }

@@ -476,6 +476,10 @@ export default function EntryEditorPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isNew = !id;
+  // Content type is locked when it was pre-supplied via ?contentTypeId= in the URL.
+  // This happens when navigating from a content type's entry list or from a component.
+  const lockedContentTypeId = isNew ? (searchParams.get('contentTypeId') ?? '') : '';
+  const isContentTypeLocked = isNew && lockedContentTypeId !== '';
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { selectedSiteId, selectedSite } = useSite();
@@ -494,7 +498,7 @@ export default function EntryEditorPage() {
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors, isSubmitting, isDirty } } = useForm<FormValues>({
     resolver: zodResolver(baseSchema),
-defaultValues: { slug: '', contentTypeId: searchParams.get('contentTypeId') ?? '', locale: 'en', fields: {} },
+  defaultValues: { slug: '', contentTypeId: lockedContentTypeId, locale: 'en', fields: {} },
   });
 
   const selectedContentTypeId = watch('contentTypeId');
@@ -555,7 +559,15 @@ defaultValues: { slug: '', contentTypeId: searchParams.get('contentTypeId') ?? '
   const currentStatus = (existing?.status ?? 'Draft') as EntryStatus;
   const entryTitle = typeof existing?.fields?.title === 'string' ? existing.fields.title : existing?.slug;
   const contentTypeName = contentTypes?.items.find((ct) => ct.id === (existing?.contentTypeId ?? selectedContentTypeId))?.displayName;
-  const domainPrefix = selectedSite?.customDomain ? `${selectedSite.customDomain}/` : 'blog.acmecorp.ai/';
+
+  // ── Slug prefix ────────────────────────────────────────────────────────
+  // Format: {domain}/{contentTypeHandle}/
+  // Domain: custom domain when set, otherwise the site handle (never a dummy value).
+  const siteDomain = selectedSite?.customDomain ?? selectedSite?.handle ?? '…';
+  const contentTypeHandle = selectedContentType?.handle ?? '';
+  const domainPrefix = contentTypeHandle
+    ? `${siteDomain}/${contentTypeHandle}/`
+    : `${siteDomain}/`;
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -631,13 +643,34 @@ key={loc}
      {isNew && (
             <div className="card space-y-2">
        <label className="form-label">Content Type</label>
+            {isContentTypeLocked ? (
+    // Pre-selected via URL — show a locked read-only badge so the user
+          // knows which type they're creating for, but cannot change it.
+       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+     {contentTypes ? (
+           <span className="flex-1 text-sm font-medium text-slate-800">
+         {contentTypes.items.find((ct) => ct.id === lockedContentTypeId)?.displayName ?? lockedContentTypeId}
+         </span>
+      ) : (
+ <span className="flex-1 h-4 w-32 animate-pulse rounded bg-slate-200" />
+     )}
+ <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-500">
+          Locked
+  </span>
+              </div>
+     ) : (
+              <>
         <select className="form-input" {...register('contentTypeId')}>
-          <option value="">Select content type…</option>
-      {contentTypes?.items.map((ct) => <option key={ct.id} value={ct.id}>{ct.displayName}</option>)}
-  </select>
-      {errors.contentTypeId && <p className="form-error">{errors.contentTypeId.message}</p>}
-     </div>
-      )}
+      <option value="">Select content type…</option>
+   {contentTypes?.items.map((ct) => (
+   <option key={ct.id} value={ct.id}>{ct.displayName}</option>
+))}
+            </select>
+        {errors.contentTypeId && <p className="form-error">{errors.contentTypeId.message}</p>}
+       </>
+    )}
+ </div>
+        )}
 
           {/* URL Slug */}
        <div className="card space-y-2">
@@ -655,8 +688,11 @@ key={loc}
             </div>
           </div>
 
-          {/* Dynamic fields */}
-          {selectedContentType?.fields.map((field) => (
+          {/* Dynamic fields — rendered in sortOrder as defined in the schema */}
+        {selectedContentType?.fields
+       .slice()
+         .sort((a, b) => a.sortOrder - b.sortOrder)
+ .map((field) => (
  <div key={field.id} className="card space-y-2">
   <div className="flex items-center justify-between">
        <div className="flex items-center gap-2">
