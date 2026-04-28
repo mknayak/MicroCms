@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { pagesApi } from '@/api/pages';
-import { layoutsApi } from '@/api/layouts';
 import { contentTypesApi } from '@/api/contentTypes';
 import { useSite } from '@/contexts/SiteContext';
 import { flattenTree, buildBreadcrumb } from './helpers';
@@ -23,12 +22,6 @@ export default function PagesPage() {
     const { data: tree = [], isLoading: treeLoading } = useQuery({
         queryKey: ['pages', siteId],
         queryFn: () => pagesApi.getTree(siteId),
-        enabled: !!siteId,
-    });
-
-    const { data: layouts = [] } = useQuery({
-        queryKey: ['layouts', siteId],
-        queryFn: () => layoutsApi.list(siteId),
         enabled: !!siteId,
     });
 
@@ -228,7 +221,7 @@ export default function PagesPage() {
 
                 {/* RIGHT — detail panel */}
                 {detailOpen && selectedId && (
-                    <PageDetailPanel pageId={selectedId} siteId={siteId} layouts={layouts}
+                    <PageDetailPanel pageId={selectedId} siteId={siteId}
                         onClose={() => setDetailOpen(false)} />
                 )}
             </div>

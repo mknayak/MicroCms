@@ -40,7 +40,10 @@ public sealed class ComponentBackingTypeProvisioner(
     await contentTypeRepo.AddAsync(contentType, ct);
 
       component.SetBackingContentType(contentType.Id);
-      componentRepo.Update(component);
+  // Do NOT call componentRepo.Update here — the component is already tracked
+      // by EF (state: Added or Modified). Calling Update() would forcibly set the
+      // state to Modified, which causes a DbUpdateConcurrencyException when EF
+      // tries to UPDATE a row that has not been inserted yet.
 
         await unitOfWork.SaveChangesAsync(ct);
     }

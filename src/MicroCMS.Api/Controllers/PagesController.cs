@@ -60,6 +60,19 @@ public sealed class PagesController : ApiControllerBase
             Guid id, [FromBody] SetPageLayoutRequest r, CancellationToken ct = default) =>
          OkOrProblem(await Sender.Send(new SetPageLayoutCommand(id, r.LayoutId), ct));
 
+    // ── Site template assignment ───────────────────────────────────────────
+
+    /// <summary>
+    /// Assigns or clears the site template this page inherits component placements from.
+    /// Pass <c>null</c> as <c>siteTemplateId</c> to clear the link (page-specific placements only).
+    /// </summary>
+    [HttpPut("{id:guid}/site-template")]
+    [ProducesResponseType(typeof(PageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetSiteTemplate(
+      Guid id, [FromBody] SetPageSiteTemplateRequest r, CancellationToken ct = default) =>
+  OkOrProblem(await Sender.Send(new SetPageSiteTemplateCommand(id, r.SiteTemplateId), ct));
+
     // ── PageTemplate (zone placements) ────────────────────────────────────
 
     /// <summary>
@@ -147,3 +160,6 @@ public sealed record SetPageSeoRequest(
     string? OgImage);
 
 public sealed record SetPageLinkedEntryRequest(Guid? EntryId);
+
+// ── New: site-template assignment body ────────────────────────────────────────
+public sealed record SetPageSiteTemplateRequest(Guid? SiteTemplateId);

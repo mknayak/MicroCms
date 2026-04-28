@@ -168,6 +168,90 @@ function PalettePanel({ components, search, setSearch, onDragStart }: {
 
 // ─── Canvas Zone ─────────────────────────────────────────────────────────────
 
+function CanvasColZone({
+    zoneName,
+    placements,
+    selectedLocalId,
+    onSelect,
+    onMoveUp,
+    onMoveDown,
+    onRemove,
+    onDrop,
+    previewMode,
+}: {
+    zoneName: string;
+    placements: DesignerPlacement[];
+    selectedLocalId: string | null;
+    onSelect: (id: string) => void;
+    onMoveUp: (id: string) => void;
+    onMoveDown: (id: string) => void;
+    onRemove: (id: string) => void;
+    onDrop: (zone: string, comp: { id: string; name: string; key: string; category: string }) => void;
+    previewMode: boolean;
+}) {
+    const [dragOver, setDragOver] = useState(false);
+    return (
+   <div>
+    {!previewMode && (
+          <p className="mb-1 truncate font-mono text-[9px] text-slate-400">{zoneName}</p>
+   )}
+     <div
+           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+  onDragLeave={() => setDragOver(false)}
+onDrop={(e) => {
+  e.preventDefault(); setDragOver(false);
+          const raw = e.dataTransfer.getData('application/microcms-comp');
+              if (raw) try { onDrop(zoneName, JSON.parse(raw)); } catch { /* ignore */ }
+     }}
+                className={`relative min-h-[60px] rounded-lg border-2 border-dashed transition-colors ${previewMode ? 'border-transparent'
+          : dragOver ? 'border-brand-400 bg-brand-50/40'
+               : placements.length === 0 ? 'border-slate-200 bg-slate-50/60'
+          : 'border-transparent hover:border-slate-200'}`}>
+          {placements.length === 0 && !previewMode && (
+   <div className="flex h-14 items-center justify-center">
+        <div className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400">
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+       </svg>
+         Drop here
+    </div>
+        </div>
+                )}
+   {placements.map((p) => {
+          const isSelected = p.localId === selectedLocalId;
+       return (
+      <div key={p.localId} onClick={() => !previewMode && onSelect(p.localId)}
+       className={`group relative cursor-pointer border-2 transition-all ${previewMode ? 'border-transparent'
+      : isSelected ? 'border-brand-500 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
+ : 'border-transparent hover:border-brand-300/60'}`}>
+   {!previewMode && (
+   <div className={`absolute right-0 top-0 z-20 flex items-center rounded-bl-md bg-brand-600 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <span className="border-r border-white/20 px-2 py-1 text-[10px] font-bold text-white/90">{p.componentName}</span>
+        {p.isLayoutDefault && <span className="border-r border-white/20 px-2 py-1 text-[9px] text-amber-200">inherited</span>}
+    {!p.isLayoutDefault && (
+          <>
+        <button onClick={(e) => { e.stopPropagation(); onMoveUp(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
+<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+    </button>
+  <button onClick={(e) => { e.stopPropagation(); onMoveDown(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
+      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+ </button>
+ <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="px-1.5 py-1 text-red-300 hover:bg-white/20">
+      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+         </button>
+         </>
+          )}
+           </div>
+    )}
+  <ComponentPreview component={p} />
+  </div>
+         );
+                })}
+     </div>
+</div>
+    );
+}
+
 function CanvasZone({
     zone, placements, selectedLocalId, onSelect, onMoveUp, onMoveDown, onRemove, onDrop, previewMode, isInherited,
 }: {
@@ -197,63 +281,85 @@ function CanvasZone({
                     {isInherited && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600">from template</span>}
                 </div>
             )}
-            {/* Drop area */}
-            <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                    e.preventDefault(); setDragOver(false);
-                    const raw = e.dataTransfer.getData('application/microcms-comp');
-                    if (raw) try { onDrop(zone.name, JSON.parse(raw)); } catch { /* ignore */ }
-                }}
-                className={`relative min-h-[60px] rounded-lg border-2 border-dashed transition-colors ${previewMode ? 'border-transparent'
-                        : dragOver ? 'border-brand-400 bg-brand-50/40'
-                            : placements.length === 0 ? 'border-slate-200 bg-slate-50/60'
-                                : 'border-transparent hover:border-slate-200'}`}>
 
-                {placements.length === 0 && !previewMode && (
-                    <div className="flex h-14 items-center justify-center">
-                        <div className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400">
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Drop a component here
-                        </div>
-                    </div>
-                )}
+            {/* Grid-row: render column drop zones side by side */}
+        {zone.type === 'grid-row' && zone.columns?.length ? (
+         <div className="grid grid-cols-12 gap-2">
+    {zone.columns.map((col) => (
+       <div key={col.zoneName} style={{ gridColumn: `span ${col.span}` }}>
+         <CanvasColZone
+         zoneName={col.zoneName}
+     placements={placements.filter((p) => p.zone === col.zoneName)}
+          selectedLocalId={selectedLocalId}
+      onSelect={onSelect}
+          onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+        onRemove={onRemove}
+      onDrop={onDrop}
+previewMode={previewMode}
+      />
+  </div>
+      ))}
+     </div>
+      ) : (
+   /* Regular zone: single drop area */
+  <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+       onDragLeave={() => setDragOver(false)}
+       onDrop={(e) => {
+     e.preventDefault(); setDragOver(false);
+          const raw = e.dataTransfer.getData('application/microcms-comp');
+   if (raw) try { onDrop(zone.name, JSON.parse(raw)); } catch { /* ignore */ }
+          }}
+          className={`relative min-h-[60px] rounded-lg border-2 border-dashed transition-colors ${previewMode ? 'border-transparent'
+       : dragOver ? 'border-brand-400 bg-brand-50/40'
+           : placements.length === 0 ? 'border-slate-200 bg-slate-50/60'
+           : 'border-transparent hover:border-slate-200'}`}>
 
-                {placements.map((p) => {
-                    const isSelected = p.localId === selectedLocalId;
-                    return (
-                        <div key={p.localId} onClick={() => !previewMode && onSelect(p.localId)}
-                            className={`group relative cursor-pointer border-2 transition-all ${previewMode ? 'border-transparent'
-                                    : isSelected ? 'border-brand-500 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
-                                        : 'border-transparent hover:border-brand-300/60'}`}>
-                            {!previewMode && (
-                                <div className={`absolute right-0 top-0 z-20 flex items-center rounded-bl-md bg-brand-600 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    <span className="border-r border-white/20 px-2 py-1 text-[10px] font-bold text-white/90">{p.componentName}</span>
-                                    {p.isLayoutDefault && <span className="border-r border-white/20 px-2 py-1 text-[9px] text-amber-200">inherited</span>}
-                                    {!p.isLayoutDefault && (
-                                        <>
-                                            <button onClick={(e) => { e.stopPropagation(); onMoveUp(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
-                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); onMoveDown(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
-                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="px-1.5 py-1 text-red-300 hover:bg-white/20">
-                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                            <ComponentPreview component={p} />
-                        </div>
-                    );
-                })}
-            </div>
+        {placements.length === 0 && !previewMode && (
+              <div className="flex h-14 items-center justify-center">
+     <div className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400">
+         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+            Drop a component here
+       </div>
+      </div>
+                    )}
+
+   {placements.map((p) => {
+        const isSelected = p.localId === selectedLocalId;
+            return (
+                   <div key={p.localId} onClick={() => !previewMode && onSelect(p.localId)}
+             className={`group relative cursor-pointer border-2 transition-all ${previewMode ? 'border-transparent'
+      : isSelected ? 'border-brand-500 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
+   : 'border-transparent hover:border-brand-300/60'}`}>
+      {!previewMode && (
+       <div className={`absolute right-0 top-0 z-20 flex items-center rounded-bl-md bg-brand-600 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <span className="border-r border-white/20 px-2 py-1 text-[10px] font-bold text-white/90">{p.componentName}</span>
+    {p.isLayoutDefault && <span className="border-r border-white/20 px-2 py-1 text-[9px] text-amber-200">inherited</span>}
+         {!p.isLayoutDefault && (
+         <>
+ <button onClick={(e) => { e.stopPropagation(); onMoveUp(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+    </button>
+         <button onClick={(e) => { e.stopPropagation(); onMoveDown(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
+           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+   </button>
+                 <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="px-1.5 py-1 text-red-300 hover:bg-white/20">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+       </button>
+  </>
+          )}
+              </div>
+   )}
+        <ComponentPreview component={p} />
+             </div>
+      );
+        })}
+                </div>
+            )}
         </div>
-    );
+ );
 }
 
 // ─── Component Preview ────────────────────────────────────────────────────────
@@ -365,7 +471,7 @@ function PropertiesPanel({ selected, placements, onRemove }: {
     );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main ┬────────────────────────────────────────────────────────────────────
 
 export default function PageDesignerPage() {
     const qc = useQueryClient();
@@ -403,28 +509,40 @@ export default function PageDesignerPage() {
         enabled: !!selectedSiteId,
     });
 
+    // Load site-template first — its layoutId is needed to resolve assignedLayoutId
+    const siteTemplateId = (pageDetail as any)?.siteTemplateId as string | undefined;
+    const { data: siteTemplate } = useQuery({
+        queryKey: ['site-template', siteTemplateId],
+     queryFn: () => siteTemplatesApi.get(siteTemplateId!),
+     enabled: !!siteTemplateId,
+        staleTime: 30_000,
+    });
+
+    // Fall back to the site-template's layoutId so grid-row zones from the
+// template's layout are shown even when the page has no layout assigned.
     const assignedLayoutId = pageDetail?.layoutId
+        ?? siteTemplate?.layoutId
         ?? allLayouts.find((l) => l.isDefault)?.id;
 
     // Fetch the full LayoutDto (contains zones[]) for the assigned layout
     const { data: assignedLayout } = useQuery({
         queryKey: ['layout', assignedLayoutId],
         queryFn: () => layoutsApi.get(assignedLayoutId!),
-        enabled: !!assignedLayoutId,
+     enabled: !!assignedLayoutId,
     });
 
     // Zones from the layout — fall back to a reasonable default only when no layout exists
     const zones: LayoutZoneNode[] = assignedLayout?.zones?.length
-        ? [...assignedLayout.zones].sort((a, b) => a.sortOrder - b.sortOrder)
+      ? [...assignedLayout.zones].sort((a, b) => a.sortOrder - b.sortOrder)
         : [
-            { id: 'z1', type: 'zone', name: 'header', label: 'Header', sortOrder: 0 },
+         { id: 'z1', type: 'zone', name: 'header', label: 'Header', sortOrder: 0 },
             { id: 'z2', type: 'zone', name: 'content', label: 'Content', sortOrder: 1 },
             { id: 'z3', type: 'zone', name: 'footer', label: 'Footer', sortOrder: 2 },
         ];
 
     // Load template for the page (includes template-inherited placements)
     const { data: loadedTemplate } = useQuery({
-        queryKey: ['page-template', pageId],
+   queryKey: ['page-template', pageId],
         queryFn: async () => {
             try { return await pagesApi.getTemplate(pageId!); }
             catch (e) { if (e instanceof ApiError && e.status === 404) return null; throw e; }
@@ -432,46 +550,40 @@ export default function PageDesignerPage() {
         enabled: !!pageId,
     });
 
-    // Load site-template inherited placements (if the page is linked to a template)
-    const siteTemplateId = (pageDetail as any)?.siteTemplateId as string | undefined;
-    const { data: siteTemplate } = useQuery({
-        queryKey: ['site-template', siteTemplateId],
-        queryFn: () => siteTemplatesApi.get(siteTemplateId!),
-        enabled: !!siteTemplateId,
-        staleTime: 30_000,
-    });
-
-    // Initialise canvas: inherited placements (locked) + page-specific placements
+ // Don't initialise until siteTemplate has finished loading.
+    // Previously the effect ran as soon as loadedTemplate resolved, but siteTemplate
+    // arrived later — so inherited placements were always empty.
     useEffect(() => {
         if (initialised || !pageId || loadedTemplate === undefined) return;
+        if (siteTemplateId && siteTemplate === undefined) return;
 
         // Inherited from site template (locked — cannot be removed)
         let inherited: DesignerPlacement[] = [];
-        if (siteTemplate) {
-            try {
-                const parsed = JSON.parse(siteTemplate.placementsJson ?? '[]') as DesignerPlacement[];
-                inherited = parsed.map((p) => {
-                    const comp = allComponents.find((c) => c.id === p.componentId);
-                    return { ...p, localId: `tpl-${uid()}`, componentName: comp?.name ?? p.componentName, isLayoutDefault: true };
-                });
+    if (siteTemplate) {
+         try {
+       const parsed = JSON.parse(siteTemplate.placementsJson ?? '[]') as DesignerPlacement[];
+    inherited = parsed.map((p) => {
+      const comp = allComponents.find((c) => c.id === p.componentId);
+         return { ...p, localId: `tpl-${uid()}`, componentName: comp?.name ?? p.componentName, isLayoutDefault: true };
+  });
             } catch { /* ignore */ }
-        }
+      }
 
         // Page-specific placements
         const pageSpecific: DesignerPlacement[] = (loadedTemplate?.placements ?? []).map((p) => {
-            const comp = allComponents.find((c) => c.id === p.componentId);
-            return {
+ const comp = allComponents.find((c) => c.id === p.componentId);
+        return {
                 localId: uid(), type: 'component' as const,
                 componentId: p.componentId, componentName: comp?.name ?? p.componentId,
-                componentKey: comp?.key ?? '', componentCategory: comp?.category ?? 'Content',
-                zone: p.zone, sortOrder: p.sortOrder, isLayoutDefault: false,
+       componentKey: comp?.key ?? '', componentCategory: comp?.category ?? 'Content',
+    zone: p.zone, sortOrder: p.sortOrder, isLayoutDefault: false,
             };
-        });
+    });
 
         setPlacements([...inherited, ...pageSpecific]);
         setInitialised(true);
         setDirty(false);
-    }, [pageId, loadedTemplate, siteTemplate, allComponents, initialised]);
+    }, [pageId, loadedTemplate, siteTemplate, siteTemplateId, allComponents, initialised]);
 
     // Reset when pageId changes
     const prevPageId = useRef('');
@@ -631,22 +743,30 @@ export default function PageDesignerPage() {
                             </div>
                         )}
                         <div className="p-6">
-                            {zones.map((zone) => (
-                                <CanvasZone
-                                    key={zone.id}
-                                    zone={zone}
-                                    placements={placements.filter((p) => p.zone === zone.name)}
-                                    selectedLocalId={selectedLocalId}
-                                    onSelect={setSelectedLocalId}
-                                    onMoveUp={handleMoveUp}
-                                    onMoveDown={handleMoveDown}
-                                    onRemove={handleRemove}
-                                    onDrop={handleDrop}
-                                    previewMode={previewMode}
-                                    isInherited={placements.some((p) => p.zone === zone.name && p.isLayoutDefault)}
-                                />
-                            ))}
-                        </div>
+        {zones.map((zone) => {
+               const colZoneNames = zone.columns?.map((c) => c.zoneName) ?? [];
+      const zonePlacements = placements.filter((p) =>
+             zone.type === 'grid-row'
+               ? colZoneNames.includes(p.zone)
+     : p.zone === zone.name,
+   );
+      return (
+   <CanvasZone
+          key={zone.id}
+  zone={zone}
+       placements={zonePlacements}
+     selectedLocalId={selectedLocalId}
+   onSelect={setSelectedLocalId}
+                 onMoveUp={handleMoveUp}
+          onMoveDown={handleMoveDown}
+     onRemove={handleRemove}
+onDrop={handleDrop}
+            previewMode={previewMode}
+      isInherited={zonePlacements.some((p) => p.isLayoutDefault)}
+         />
+         );
+  })}
+    </div>
                     </div>
                 </div>
 

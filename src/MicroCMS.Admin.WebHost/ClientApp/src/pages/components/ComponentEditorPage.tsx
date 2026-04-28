@@ -32,10 +32,8 @@ const CATEGORIES: ComponentCategory[] = [
 ];
 
 const TEMPLATE_TYPES: { value: RenderingTemplateType; label: string; ext: string }[] = [
-  { value: 'RazorPartial', label: 'Razor Partial (.cshtml)', ext: '.cshtml' },
-{ value: 'Handlebars',   label: 'Handlebars (.hbs)',     ext: '.hbs'  },
-  { value: 'React',        label: 'React (.tsx)',          ext: '.tsx'    },
-  { value: 'WebComponent', label: 'Web Component',   ext: '.html'   },
+  { value: 'Handlebars',   label: 'Handlebars (.hbs)', ext: '.hbs'   },
+  { value: 'WebComponent', label: 'HTML (.html)',       ext: '.html'  },
 ];
 
 // ─── Schema ───────────────────────────────────────────────────────────────────

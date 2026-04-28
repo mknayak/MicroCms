@@ -505,6 +505,8 @@ export interface PageDto {
   routePattern?: string;
   depth: number;
   layoutId?: string;
+  /** ID of the SiteTemplate this page inherits shared placements from. */
+  siteTemplateId?: string;
   /** Page-level SEO metadata; null/undefined when none have been set. */
   seo?: PageSeoDto;
 }
@@ -999,4 +1001,8 @@ export interface UpdateSiteTemplateRequest {
 
 export interface SaveSiteTemplateRequest {
   placements: SavePlacementNode[];
+}
+
+export interface SetPageSiteTemplateRequest {
+  siteTemplateId: string | null;
 }

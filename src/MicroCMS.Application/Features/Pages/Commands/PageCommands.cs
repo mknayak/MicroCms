@@ -24,7 +24,8 @@ public sealed record PageDto(
     Guid? ParentId, Guid? LinkedEntryId, Guid? CollectionContentTypeId,
     string? RoutePattern, int Depth, Guid? LayoutId,
     /// <summary>Page-level SEO metadata; null when none have been set.</summary>
-    PageSeoDto? Seo = null);
+    PageSeoDto? Seo = null,
+    Guid? SiteTemplateId = null);
 
 public sealed record PageSeoDto(
     string? MetaTitle,
@@ -63,6 +64,10 @@ public sealed record DeletePageCommand(Guid PageId) : ICommand;
 /// <summary>Assigns or clears the Layout for a page. Pass null LayoutId to use the site default.</summary>
 [HasPolicy(ContentPolicies.TenantManage)]
 public sealed record SetPageLayoutCommand(Guid PageId, Guid? LayoutId) : ICommand<PageDto>;
+
+/// <summary>Assigns or clears the site template inherited by this page.</summary>
+[HasPolicy(ContentPolicies.TenantManage)]
+public sealed record SetPageSiteTemplateCommand(Guid PageId, Guid? SiteTemplateId) : ICommand<PageDto>;
 
 /// <summary>Creates or fully replaces the PageTemplate (zone placements) for a page.</summary>
 [HasPolicy(ContentPolicies.TenantManage)]
@@ -259,10 +264,23 @@ internal sealed class SetPageLayoutCommandHandler(IRepository<Page, PageId> page
     public async Task<Result<PageDto>> Handle(SetPageLayoutCommand request, CancellationToken cancellationToken)
     {
         var page = await pageRepository.GetByIdAsync(new PageId(request.PageId), cancellationToken)
-          ?? throw new NotFoundException(nameof(Page), request.PageId);
-        page.SetLayout(request.LayoutId.HasValue ? new LayoutId(request.LayoutId.Value) : (LayoutId?)null);
+     ?? throw new NotFoundException(nameof(Page), request.PageId);
+      page.SetLayout(request.LayoutId.HasValue ? new LayoutId(request.LayoutId.Value) : (LayoutId?)null);
         pageRepository.Update(page);
         return Result.Success(PageMapper.ToDto(page));
+    }
+}
+
+internal sealed class SetPageSiteTemplateCommandHandler(IRepository<Page, PageId> pageRepository)
+    : IRequestHandler<SetPageSiteTemplateCommand, Result<PageDto>>
+{
+    public async Task<Result<PageDto>> Handle(SetPageSiteTemplateCommand request, CancellationToken cancellationToken)
+    {
+        var page = await pageRepository.GetByIdAsync(new PageId(request.PageId), cancellationToken)
+  ?? throw new NotFoundException(nameof(Page), request.PageId);
+     page.SetSiteTemplate(request.SiteTemplateId.HasValue ? new SiteTemplateId(request.SiteTemplateId.Value) : (SiteTemplateId?)null);
+      pageRepository.Update(page);
+   return Result.Success(PageMapper.ToDto(page));
     }
 }
 
@@ -384,8 +402,9 @@ internal static class PageMapper
     internal static PageDto ToDto(Page p) => new(
       p.Id.Value, p.SiteId.Value, p.Title, p.Slug.Value, p.PageType.ToString(),
         p.ParentId?.Value, p.LinkedEntryId?.Value, p.CollectionContentTypeId?.Value,
-        p.RoutePattern, p.Depth, p.LayoutId?.Value,
+      p.RoutePattern, p.Depth, p.LayoutId?.Value,
       p.Seo is { MetaTitle: null, MetaDescription: null, CanonicalUrl: null, OgImage: null }
-    ? null
-            : new PageSeoDto(p.Seo.MetaTitle, p.Seo.MetaDescription, p.Seo.CanonicalUrl, p.Seo.OgImage));
+       ? null
+    : new PageSeoDto(p.Seo.MetaTitle, p.Seo.MetaDescription, p.Seo.CanonicalUrl, p.Seo.OgImage),
+        p.SiteTemplateId?.Value);
 }
