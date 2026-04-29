@@ -84,6 +84,23 @@ public sealed class Site : Entity<SiteId>
         IsActive = true;
     }
 
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        if (name.Length > MaxNameLength)
+            throw new DomainException($"Site name must not exceed {MaxNameLength} characters.");
+        Name = name.Trim();
+    }
+
+    public void SetDefaultLocale(Locale locale)
+    {
+        ArgumentNullException.ThrowIfNull(locale);
+        DefaultLocale = locale;
+    }
+
+    public void SetCustomDomain(CustomDomain? domain) =>
+        CustomDomain = domain;
+
     /// <summary>Adds or replaces a deployment environment of a given type (GAP-17).</summary>
     public void AddEnvironment(EnvironmentType type, string url, bool isLive = false)
     {

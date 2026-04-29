@@ -81,20 +81,33 @@ internal sealed class PageConfiguration : IEntityTypeConfiguration<Page>
 
     private static void ConfigureNullableIds(EntityTypeBuilder<Page> builder)
     {
-        builder.Property(p => p.ParentId)
-            .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
-          v => v.HasValue ? new PageId(v.Value) : (PageId?)null);
-
-        builder.Property(p => p.LinkedEntryId)
-            .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
-    v => v.HasValue ? new EntryId(v.Value) : (EntryId?)null);
-
-        builder.Property(p => p.CollectionContentTypeId)
-            .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
-        v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
-
-        builder.Property(p => p.SiteTemplateId)
-            .HasConversion(id => id.HasValue ? (Guid?)id.Value.Value : null,
-         v => v.HasValue ? new SiteTemplateId(v.Value) : (SiteTemplateId?)null);
+        ConfigureNullablePageId(builder);
+        ConfigureNullableEntryId(builder);
+        ConfigureNullableContentTypeId(builder);
+        ConfigureNullableSiteTemplateId(builder);
     }
+
+    private static void ConfigureNullablePageId(EntityTypeBuilder<Page> builder) =>
+        builder.Property(p => p.ParentId)
+            .HasConversion(
+                id => id.HasValue ? (Guid?)id.Value.Value : null,
+                v => v.HasValue ? new PageId(v.Value) : (PageId?)null);
+
+    private static void ConfigureNullableEntryId(EntityTypeBuilder<Page> builder) =>
+        builder.Property(p => p.LinkedEntryId)
+            .HasConversion(
+                id => id.HasValue ? (Guid?)id.Value.Value : null,
+                v => v.HasValue ? new EntryId(v.Value) : (EntryId?)null);
+
+    private static void ConfigureNullableContentTypeId(EntityTypeBuilder<Page> builder) =>
+        builder.Property(p => p.CollectionContentTypeId)
+            .HasConversion(
+                id => id.HasValue ? (Guid?)id.Value.Value : null,
+                v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
+
+    private static void ConfigureNullableSiteTemplateId(EntityTypeBuilder<Page> builder) =>
+        builder.Property(p => p.SiteTemplateId)
+            .HasConversion(
+                id => id.HasValue ? (Guid?)id.Value.Value : null,
+                v => v.HasValue ? new SiteTemplateId(v.Value) : (SiteTemplateId?)null);
 }

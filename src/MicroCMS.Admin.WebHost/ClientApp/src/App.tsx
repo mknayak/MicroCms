@@ -40,6 +40,9 @@ const PageTemplateDesignerPage = lazy(() => import('@/pages/page-templates/PageT
 const ExportPage = lazy(() => import('@/pages/packages/ExportPage'));
 const ImportPage = lazy(() => import('@/pages/packages/ImportPage'));
 
+// Site management
+const SiteSettingPage = lazy(() => import('@/pages/sites/SiteSettingPage'));
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -161,6 +164,16 @@ export default function App() {
                                                 <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin']}>
                                                     <Suspense fallback={<PageLoader />}>
                                                         <SettingsPage />
+                                                    </Suspense>
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/sites/:id"
+                                            element={
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin']}>
+                                                    <Suspense fallback={<PageLoader />}>
+                                                        <SiteSettingPage />
                                                     </Suspense>
                                                 </ProtectedRoute>
                                             }

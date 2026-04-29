@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Aggregates.Settings;
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,41 @@ internal sealed class SiteSettingsConfiguration : IEntityTypeConfiguration<SiteS
 
      builder.Ignore(s => s.Locales);
 
-  builder.Ignore(s => s.DomainEvents);
+        // ── Owned site-level config entries (GAP-AI-1) ───────────────────
+        builder.OwnsMany(s => s.ConfigEntries, entry =>
+        {
+            entry.ToTable("SiteConfigEntries");
+
+            entry.WithOwner().HasForeignKey("SiteSettingsId");
+
+            entry.HasKey(e => e.Id);
+            entry.Property(e => e.Id)
+                .HasConversion(id => id.Value, value => new ConfigEntryId(value))
+                .ValueGeneratedNever();
+
+            entry.Property(e => e.Key)
+                .HasMaxLength(ConfigEntry.MaxKeyLength)
+                .IsRequired();
+
+            entry.Property(e => e.Value)
+                .HasMaxLength(ConfigEntry.MaxValueLength)
+                .IsRequired();
+
+            entry.Property(e => e.Category)
+                .HasMaxLength(ConfigEntry.MaxCategoryLength)
+                .IsRequired()
+                .HasDefaultValue("general");
+
+            entry.Property(e => e.IsSecret).IsRequired();
+            entry.Property(e => e.UpdatedAt).IsRequired();
+
+            entry.HasIndex("SiteSettingsId", nameof(ConfigEntry.Key)).IsUnique();
+        });
+
+        builder.Navigation(s => s.ConfigEntries)
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasField("_configEntries");
+
+        builder.Ignore(s => s.DomainEvents);
     }
 }

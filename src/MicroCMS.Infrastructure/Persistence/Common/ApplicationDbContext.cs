@@ -6,6 +6,7 @@ using MicroCMS.Domain.Aggregates.Identity;
 using MicroCMS.Domain.Aggregates.Media;
 using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Aggregates.Plugins;
+using MicroCMS.Domain.Aggregates.Settings;
 using MicroCMS.Domain.Aggregates.Taxonomy;
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Aggregates.Webhooks;
@@ -63,6 +64,7 @@ public sealed class ApplicationDbContext : DbContext
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantSecuritySettings> TenantSecuritySettings => Set<TenantSecuritySettings>();
+    public DbSet<TenantConfig> TenantConfigs => Set<TenantConfig>();
     public DbSet<Site> Sites => Set<Site>();
     public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
     public DbSet<ApiClient> ApiClients => Set<ApiClient>();
@@ -124,6 +126,7 @@ public sealed class ApplicationDbContext : DbContext
         ApplyMediaFilters(modelBuilder);
         ApplyIdentityAndSecurityFilters(modelBuilder);
         ApplyTaxonomyFilters(modelBuilder);
+        ApplySettingsFilters(modelBuilder);
     }
 
     private void ApplyContentFilters(ModelBuilder modelBuilder)
@@ -157,6 +160,16 @@ public sealed class ApplicationDbContext : DbContext
     {
         modelBuilder.Entity<Category>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);
         modelBuilder.Entity<Tag>().HasQueryFilter(t => _tenantFilter == null || t.TenantId == _tenantFilter);
+    }
+
+    /// <summary>
+    /// <see cref="TenantConfig"/> uses <c>TenantId</c> as its PK;
+    /// the filter compares Id directly to <c>_tenantFilter</c>.
+    /// </summary>
+    private void ApplySettingsFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TenantConfig>()
+            .HasQueryFilter(tc => _tenantFilter == null || tc.Id == _tenantFilter);
     }
 
     /// <summary>

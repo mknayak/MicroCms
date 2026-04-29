@@ -7,6 +7,7 @@ using MicroCMS.Application.Common.Markers;
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications.Tenant;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
@@ -54,52 +55,58 @@ public sealed record UpdateSiteSettingsCommand(
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 internal sealed class UpsertSiteEnvironmentCommandHandler(
-    IRepository<Site, SiteId> siteRepository)
+    IRepository<Domain.Aggregates.Tenant.Tenant, TenantId> tenantRepository)
     : IRequestHandler<UpsertSiteEnvironmentCommand, Result<SiteEnvironmentDto>>
 {
     public async Task<Result<SiteEnvironmentDto>> Handle(
         UpsertSiteEnvironmentCommand request, CancellationToken cancellationToken)
     {
-        var site = await siteRepository.GetByIdAsync(new SiteId(request.SiteId), cancellationToken)
-     ?? throw new NotFoundException(nameof(Site), request.SiteId);
-
         if (!Enum.TryParse<EnvironmentType>(request.EnvironmentType, ignoreCase: true, out var envType))
             return Result.Failure<SiteEnvironmentDto>(
                 Error.Validation("Site.InvalidEnvironmentType", $"'{request.EnvironmentType}' is not a valid environment type."));
 
-   site.AddEnvironment(envType, request.Url, request.IsLive);
- siteRepository.Update(site);
+        var siteId = new SiteId(request.SiteId);
+        var tenants = await tenantRepository.ListAsync(new TenantBySiteIdSpec(siteId), cancellationToken);
+        var tenant = tenants.FirstOrDefault()
+            ?? throw new NotFoundException(nameof(Site), request.SiteId);
+
+        var site = tenant.Sites.First(s => s.Id == siteId);
+        site.AddEnvironment(envType, request.Url, request.IsLive);
+        tenantRepository.Update(tenant);
 
         var env = site.Environments.First(e => e.Type == envType);
-    return Result.Success(new SiteEnvironmentDto(env.Type.ToString(), env.Url, env.SslStatus.ToString(), env.IsLive));
+        return Result.Success(new SiteEnvironmentDto(env.Type.ToString(), env.Url, env.SslStatus.ToString(), env.IsLive));
     }
 }
 
 internal sealed class UpdateSiteSettingsCommandHandler(
     IRepository<SiteSettings, SiteId> settingsRepository,
- IRepository<Site, SiteId> siteRepository)
+    IRepository<Domain.Aggregates.Tenant.Tenant, TenantId> tenantRepository)
     : IRequestHandler<UpdateSiteSettingsCommand, Result<SiteSettingsDto>>
 {
     public async Task<Result<SiteSettingsDto>> Handle(
-    UpdateSiteSettingsCommand request, CancellationToken cancellationToken)
+        UpdateSiteSettingsCommand request, CancellationToken cancellationToken)
     {
-        _ = await siteRepository.GetByIdAsync(new SiteId(request.SiteId), cancellationToken)
- ?? throw new NotFoundException(nameof(Site), request.SiteId);
-
         var siteId = new SiteId(request.SiteId);
+
+        // Site is owned by Tenant — validate existence through the aggregate root.
+        var tenants = await tenantRepository.ListAsync(new TenantBySiteIdSpec(siteId), cancellationToken);
+        var tenant = tenants.FirstOrDefault()
+            ?? throw new NotFoundException(nameof(Site), request.SiteId);
+
         var settings = await settingsRepository.GetByIdAsync(siteId, cancellationToken);
         if (settings is null)
-     {
-  var firstLocale = request.Locales.FirstOrDefault() ?? "en";
- settings = SiteSettings.CreateDefault(siteId, new TenantId(Guid.Empty), Locale.Create(firstLocale));
-       await settingsRepository.AddAsync(settings, cancellationToken);
+        {
+            var firstLocale = request.Locales.FirstOrDefault() ?? "en";
+            settings = SiteSettings.CreateDefault(siteId, tenant.Id, Locale.Create(firstLocale));
+            await settingsRepository.AddAsync(settings, cancellationToken);
         }
 
-    settings.UpdateFeatureFlags(
+        settings.UpdateFeatureFlags(
             request.VersioningEnabled, request.WorkflowEnabled,
-          request.SchedulingEnabled, request.PreviewEnabled, request.AiEnabled);
-   settings.SetPreviewUrlTemplate(request.PreviewUrlTemplate);
-     settings.SetCorsOrigins(request.CorsOrigins);
+            request.SchedulingEnabled, request.PreviewEnabled, request.AiEnabled);
+        settings.SetPreviewUrlTemplate(request.PreviewUrlTemplate);
+        settings.SetCorsOrigins(request.CorsOrigins);
         settings.SetLocales(request.Locales);
         settingsRepository.Update(settings);
 

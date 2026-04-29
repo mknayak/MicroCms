@@ -348,20 +348,36 @@ Security items:
 ### Sprint 14 — AI Core + Provider Adapters
 **Goal:** All four AI interfaces operational with at least AzureOpenAI and Ollama adapters; budget enforcement live.
 
-Deliverables:
-- `AiOrchestrator`: routes calls to the tenant's configured provider(s).
-- `ProviderRegistry`: maps provider names to `IAiCompletionProvider` implementations; region-aware.
-- `BudgetService`: tracks token usage per tenant/user; returns `429` when limit exceeded.
-- `PiiRedactor`: strips PII from prompts before dispatch; regex + NER-based.
-- `PromptLibrary`: CRUD for system and tenant-level prompts with semantic versioning.
+#### Settings Capability (GAP-AI-1) — prerequisite for all AI runtime configuration ✅
+- `ConfigEntryId` strongly-typed ID in `MicroCMS.Shared`. ✅
+- `ConfigEntry` domain entity (`Key`, `Value`, `Category`, `IsSecret`, `UpdatedAt`) in `MicroCMS.Domain.Aggregates.Settings`. ✅
+- `TenantConfig` aggregate root (1-to-1 with `Tenant`; `UpsertEntry`, `RemoveEntry`, `GetEntry`). ✅
+- `SiteSettings` extended with `ConfigEntries` collection and matching `UpsertEntry` / `RemoveEntry` / `GetEntry` methods. ✅
+- `ISettingsReader` interface in `MicroCMS.Application.Common.Interfaces` — site→tenant resolution chain, typed `GetAsync<T>`. ✅
+- `AiSettingKeys` static class in `MicroCMS.Application.Features.Settings` — all `ai:*` key constants. ✅
+- `TenantConfigConfiguration` EF Core config → `TenantConfigs` + `TenantConfigEntries` tables. ✅
+- `SiteSettingsConfiguration` extended → `SiteConfigEntries` table. ✅
+- `TenantConfig` global query filter added to `ApplicationDbContext`. ✅
+- `SettingsReader` infrastructure implementation — cache-aside (TTL 5 min, tag `settings:{tenantId}`). ✅
+- `IRepository<TenantConfig, TenantId>` registered in DI. ✅
+- `ISettingsReader` → `SettingsReader` registered in DI. ✅
+- EF Core migration: `AddSettingsCapability` (adds `TenantConfigs`, `TenantConfigEntries`, `SiteConfigEntries` tables). 🔲
+
+#### AI Core
+- `AiOrchestrator`: routes calls to the tenant's configured provider — reads `AiSettingKeys.Provider` via `ISettingsReader`.
+- `ProviderRegistry`: maps provider names to `IAiCompletionProvider` implementations; enforces `AiSettingKeys.DataResidencyRegion`.
+- `BudgetService`: tracks token usage per tenant/user; reads cap from `AiSettingKeys.BudgetMaxTokensPerDay` via `ISettingsReader`; returns `429` when exceeded.
+- `PiiRedactor`: strips PII before dispatch; reads `AiSettingKeys.PiiRedactionEnabled` via `ISettingsReader`.
+- `PromptLibrary`: resolves system prompts from `ISettingsReader` by `AiSettingKeys.SystemPrompt*` keys — no hardcoded strings.
 - `StructuredOutputValidator`: validates AI response against JSON Schema; repair loop (max 2 retries).
 - Concrete adapters: `AzureOpenAICompletionProvider`, `OllamaCompletionProvider`.
 - AI feature handlers: draft generation, rewrite, summarization, SEO assistance, translation.
-- Admin UI: AI settings screen (provider config, budget limits, prompt library CRUD).
-- Application unit tests for orchestrator and budget service.
+- Admin UI: AI settings tab (provider, endpoint, budget, per-prompt CRUD backed by `SiteSettings.UpsertEntry` / `TenantConfig.UpsertEntry`).
+- Application unit tests for orchestrator and budget service (≥ 80% coverage).
 
 Security items:
-- Provider registry blocks calls to non-compliant regions per tenant's data-residency policy.
+- `AiSettingKeys.ApiKey` and `AiSettingKeys.VectorStoreApiKey` stored with `isSecret: true`; value redacted in read API responses.
+- Provider registry blocks calls to non-compliant regions per `AiSettingKeys.DataResidencyRegion`.
 - Prompt injection detection on user-supplied content.
 - All AI calls and responses audit-logged; PII redacted in logs.
 
@@ -436,7 +452,7 @@ Security items:
 | 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
 | 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
 | 13 | Webhooks, Events & Plugins | Plugin System | 🔲 Not started | — |
-| 14 | AI Module | AI Core + Provider Adapters | 🔲 Not started | — |
+| 14 | AI Module | AI Core + Provider Adapters | 🔄 In progress | — |
 | 15 | AI Module | RAG, Semantic Search & AI Safety | 🔲 Not started | — |
 | 16 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
 

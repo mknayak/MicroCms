@@ -13,6 +13,7 @@ using MicroCMS.Domain.Aggregates.Locks;
 using MicroCMS.Domain.Aggregates.Media;
 using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Aggregates.Plugins;
+using MicroCMS.Domain.Aggregates.Settings;
 using MicroCMS.Domain.Aggregates.Taxonomy;
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Aggregates.Webhooks;
@@ -26,6 +27,7 @@ using MicroCMS.Infrastructure.Identity;
 using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Search;
+using MicroCMS.Infrastructure.Settings;
 using MicroCMS.Infrastructure.Storage.AzureBlob;
 using MicroCMS.Infrastructure.Storage.Filesystem;
 using MicroCMS.Infrastructure.Storage.Imaging;
@@ -119,6 +121,9 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Tenant, TenantId>, EfRepository<Tenant, TenantId>>();
         services.AddScoped<IRepository<TenantSecuritySettings, TenantSecuritySettingsId>, EfRepository<TenantSecuritySettings, TenantSecuritySettingsId>>();
 
+        // Settings (GAP-AI-1)
+        services.AddScoped<IRepository<TenantConfig, TenantId>, EfRepository<TenantConfig, TenantId>>();
+
         // Sites
         services.AddScoped<IRepository<Site, SiteId>, EfRepository<Site, SiteId>>();
         services.AddScoped<IRepository<SiteSettings, SiteId>, EfRepository<SiteSettings, SiteId>>();
@@ -178,6 +183,9 @@ public static class DependencyInjection
         services.AddScoped<ISecretHasher, Sha256SecretHasher>();
         services.AddScoped<ILlmService, NullLlmService>();
         services.AddScoped<IPreviewSecretProvider, SiteIdPreviewSecretProvider>();
+
+        // Settings reader — site→tenant resolution with cache-aside (GAP-AI-1)
+        services.AddScoped<ISettingsReader, SettingsReader>();
 
         // Tenancy / install
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();

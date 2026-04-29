@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Aggregates.Settings;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
@@ -13,6 +14,7 @@ public sealed class SiteSettings : AggregateRoot<SiteId>
 {
     private readonly List<string> _corsOrigins = [];
     private readonly List<string> _locales = [];
+    private readonly List<ConfigEntry> _configEntries = [];
 
     private SiteSettings() : base() { } // EF Core
 
@@ -32,6 +34,9 @@ public sealed class SiteSettings : AggregateRoot<SiteId>
     public DateTimeOffset UpdatedAt { get; private set; }
     public IReadOnlyList<string> CorsOrigins => _corsOrigins.AsReadOnly();
     public IReadOnlyList<string> Locales => _locales.AsReadOnly();
+
+    /// <summary>Site-level key-value configuration overrides (GAP-AI-1).</summary>
+    public IReadOnlyList<ConfigEntry> ConfigEntries => _configEntries.AsReadOnly();
 
     // ── Factory ────────────────────────────────────────────────────────────
 
@@ -78,8 +83,38 @@ public sealed class SiteSettings : AggregateRoot<SiteId>
    var list = localeCodes.Select(c => c.Trim()).Where(c => c.Length > 0).Distinct().ToList();
         if (list.Count == 0)
             throw new DomainException("A site must support at least one locale.");
-     _locales.Clear();
-        _locales.AddRange(list);
-    UpdatedAt = DateTimeOffset.UtcNow;
-    }
-}
+             _locales.Clear();
+             _locales.AddRange(list);
+         UpdatedAt = DateTimeOffset.UtcNow;
+         }
+
+         /// <summary>Inserts or replaces the site-level config entry for <paramref name="key"/>.</summary>
+         public void UpsertEntry(string key, string value, string category = "general", bool isSecret = false)
+         {
+             ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+
+             var existing = _configEntries.Find(e => e.Key == key);
+             if (existing is not null)
+             {
+                 existing.Update(value, category, isSecret);
+             }
+             else
+             {
+                 _configEntries.Add(ConfigEntry.Create(key, value, category, isSecret));
+             }
+
+             UpdatedAt = DateTimeOffset.UtcNow;
+         }
+
+         /// <summary>Removes the site-level config entry for <paramref name="key"/>. No-op if absent.</summary>
+         public void RemoveEntry(string key)
+         {
+             ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+             _configEntries.RemoveAll(e => e.Key == key);
+             UpdatedAt = DateTimeOffset.UtcNow;
+         }
+
+         /// <summary>Returns the site-level config entry for <paramref name="key"/>, or <c>null</c>.</summary>
+         public ConfigEntry? GetEntry(string key) =>
+             _configEntries.Find(e => e.Key == key);
+     }

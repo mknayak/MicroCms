@@ -689,6 +689,48 @@ export interface Site {
   customDomain?: string;
 }
 
+export interface SiteEnvironment {
+  type: string;      // 'Production' | 'Staging' | 'Development'
+  url: string;
+  sslStatus: string;
+  isLive: boolean;
+}
+
+export interface SiteDetail extends Site {
+  tenantId: string;
+  createdAt: string;
+  environments: SiteEnvironment[];
+}
+
+export interface SiteSettingsDto {
+  siteId: string;
+  previewUrlTemplate?: string;
+  versioningEnabled: boolean;
+  workflowEnabled: boolean;
+  schedulingEnabled: boolean;
+  previewEnabled: boolean;
+  aiEnabled: boolean;
+  corsOrigins: string[];
+  locales: string[];
+}
+
+export interface UpdateSiteRequest {
+  name: string;
+  defaultLocale: string;
+  customDomain?: string;
+}
+
+export interface UpdateSiteSettingsRequest {
+  previewUrlTemplate?: string;
+  versioningEnabled: boolean;
+  workflowEnabled: boolean;
+  schedulingEnabled: boolean;
+  previewEnabled: boolean;
+  aiEnabled: boolean;
+  corsOrigins: string[];
+  locales: string[];
+}
+
 export interface CreateSiteRequest {
   name: string;
   handle: string;

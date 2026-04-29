@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSite } from '@/contexts/SiteContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -120,13 +121,13 @@ const NAV_SECTIONS: NavSection[] = [
       },
       {
         label: 'Settings',
-href: '/settings',
-     roles: ['SystemAdmin', 'TenantAdmin'],
-    icon: (
-   <Icon
+        href: '/settings',
+        roles: ['SystemAdmin', 'TenantAdmin'],
+        icon: (
+          <Icon
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-          d2="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-        />
+            d2="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
         ),
       },
     ],
@@ -175,6 +176,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false }: SidebarProps) {
   const { user, hasRole } = useAuth();
+  const { selectedSite } = useSite();
 
   const canSeeSection = (section: NavSection) =>
     !section.roles || section.roles.some((r) => hasRole(r));
@@ -249,6 +251,33 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
             </div>
           );
         })}
+
+        {/* Dynamic: Site Settings for the currently selected site */}
+        {selectedSite && (hasRole('SystemAdmin') || hasRole('TenantAdmin') || hasRole('SiteAdmin')) && (
+          <div className="mt-4">
+            {!collapsed && (
+              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Site Settings
+              </p>
+            )}
+            <NavLink
+              to={`/sites/${selectedSite.id}`}
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-brand-50 text-brand-700'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                  collapsed && 'justify-center',
+                )
+              }
+              title={collapsed ? selectedSite.name : undefined}
+            >
+              <Icon d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              {!collapsed && <span className="truncate">{selectedSite.name}</span>}
+            </NavLink>
+          </div>
+        )}
       </nav>
 
       {/* User footer */}
