@@ -455,6 +455,7 @@ Security items:
 | 14 | AI Module | AI Core + Provider Adapters | 🔄 In progress | — |
 | 15 | AI Module | RAG, Semantic Search & AI Safety | 🔲 Not started | — |
 | 16 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
+| 17 | Taxonomy Integration | Taxonomy Integration with Entries | 🔲 Not started | — |
 
 ---
 
@@ -477,6 +478,129 @@ Security items:
 | 11 | Playwright (Headless starter E2E) | Homepage → entry → search | 🔲 |
 | 14 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
 | 16 | E2E.Tests | All happy paths | 🔲 |
+| 17 | Domain.UnitTests (Taxonomy) | Entry taxonomy assignment, cross-site validation | 🔲 |
+| 17 | Infrastructure.IntegrationTests (Taxonomy) | Join tables, cascade behavior, filtering specs | 🔲 |
+| 17 | Application.UnitTests (Taxonomy) | Command validation, DTO population, filtering queries | 🔲 |
+| 17 | Api.ContractTests (Taxonomy) | Taxonomy filtering, bulk update, entryCount | 🔲 |
+| 17 | Vitest (Taxonomy UI) | Category/tag selector, filter badges, API integration | 🔲 |
+
+---
+
+## Phase 8 — Taxonomy Integration & Polish (Sprint 17)
+
+### Sprint 17 — Taxonomy Integration with Entries
+**Goal:** Connect the existing Taxonomy system (Categories & Tags) to Entries, making it fully functional across domain/API/UI layers.
+
+**Current State:** Categories and Tags exist as standalone aggregates with CRUD operations and an admin UI, but cannot be assigned to entries. The `Entry` aggregate has no relationship to taxonomy, and the entry editor has no taxonomy selector.
+
+Deliverables:
+
+**Domain Layer:**
+- Add `_categoryIds` and `_tagIds` collections to `Entry` aggregate (`List<CategoryId>` / `List<TagId>`).
+- Add public properties: `IReadOnlyList<CategoryId> CategoryIds` and `IReadOnlyList<TagId> TagIds`.
+- Add methods:
+  - `AssignCategories(IEnumerable<CategoryId> categoryIds)` — replaces current categories; validates all IDs belong to same site.
+  - `AssignTags(IEnumerable<TagId> tagIds)` — replaces current tags; validates all IDs belong to same site.
+  - `ClearCategories()` / `ClearTags()` — remove all assignments.
+- Raise domain events: `EntryTaxonomyUpdatedEvent` (includes entry ID, category IDs, tag IDs).
+- Unit tests: verify cross-site taxonomy rejection, category/tag assignment/clear, and event raising.
+
+**Infrastructure Layer:**
+- EF Core configuration for many-to-many relationships in `EntryConfiguration`:
+  - Join table `EntryCategories` (EntryId, CategoryId) with composite key.
+  - Join table `EntryTags` (EntryId, TagId) with composite key.
+  - Navigation property configuration (shadow FK or explicit owned collection — TBD in implementation).
+- Add migration: `Add_Entry_Taxonomy_Relations`.
+- Update `SpecificationEvaluator` to support taxonomy filtering specs.
+- New specifications:
+  - `EntriesByCategorySpec(CategoryId)` — returns all entries in a category.
+  - `EntriesByTagSpec(TagId)` — returns all entries with a tag.
+- Integration tests: verify join table population, cross-tenant isolation, cascade behavior (deleting category/tag should not delete entries).
+
+**Application Layer:**
+- Extend `EntryDto` with:
+  - `List<Guid> CategoryIds`
+  - `List<Guid> TagIds`
+  - Optional expanded DTOs: `List<CategoryDto>? Categories`, `List<TagDto>? Tags` (lazy-loaded on demand).
+- New command: `UpdateEntryTaxonomyCommand(Guid EntryId, List<Guid> CategoryIds, List<Guid> TagIds)`.
+- Handler: `UpdateEntryTaxonomyCommandHandler` — validates taxonomy IDs exist in same site, calls `entry.AssignCategories/AssignTags`, commits via `IUnitOfWork`.
+- Extend `CreateEntryCommand` and `UpdateEntryCommand` to accept optional `CategoryIds` and `TagIds`.
+- Update `GetEntryQueryHandler` to populate `CategoryIds` / `TagIds` in DTO.
+- Update `ListEntriesQueryHandler` to support filtering by category/tag:
+  - Add `CategoryId?` and `TagId?` to `ListEntriesQuery`.
+  - Use `EntriesByCategorySpec` / `EntriesByTagSpec` in handler.
+- Extend `CategoryDto` and `TagDto` with computed `int EntryCount` (populated by a separate query counting entries with that taxonomy).
+- Unit tests: command validation (invalid taxonomy IDs, cross-site taxonomy), handler round-trip, filtering by category/tag.
+
+**API Layer:**
+- `EntriesController`:
+  - `GET /api/v1/entries?categoryId={guid}` — filter by category.
+  - `GET /api/v1/entries?tagId={guid}` — filter by tag.
+  - `PUT /api/v1/entries/{id}/taxonomy` — bulk update taxonomy (accepts `UpdateEntryTaxonomyCommand`).
+- `TaxonomyController`:
+  - Update `GET /api/v1/taxonomy/categories` and `GET /api/v1/taxonomy/tags` responses to include `entryCount` field.
+  - Optional: `GET /api/v1/taxonomy/categories/{id}/entries` — returns all entries in a category (shortcut for `GET /entries?categoryId=...`).
+- Swagger annotations updated for new endpoints and DTO fields.
+- Contract tests: verify taxonomy filtering, bulk update, `entryCount` populated correctly.
+
+**Admin UI (React):**
+- `EntryEditorPage.tsx`:
+  - Add **Taxonomy** card below URL slug, above dynamic fields.
+  - Multi-select for categories: searchable dropdown with hierarchical display (parent → child indentation).
+  - Multi-select for tags: tag input with autocomplete (type to search, create new tags inline if allowed).
+  - Use `taxonomyApi.listCategories(siteId)` and `taxonomyApi.listTags(siteId)` to populate options.
+  - On save, include `categoryIds` and `tagIds` in `CreateEntryCommand` / `UpdateEntryCommand`.
+- `EntriesPage.tsx`:
+  - Add filter dropdown: "Filter by Category" and "Filter by Tag" in the toolbar.
+  - Pass `categoryId` or `tagId` query param to `entriesApi.list(...)`.
+  - Display active filters as removable badges (e.g., `🏷️ React [×]`).
+- `TaxonomyPage.tsx`:
+  - Display `entryCount` next to each category/tag name (e.g., `Web Development (23 entries)`).
+  - Make category/tag names clickable → navigates to `EntriesPage` with filter applied.
+- Vitest tests: render taxonomy selector, simulate category/tag selection, verify API payload.
+
+**GraphQL API:**
+- `EntryType`:
+  - Add fields: `categories: [Category!]!` and `tags: [Tag!]!`.
+  - Implement resolvers using `EntriesByCategorySpec` / `EntriesByTagSpec` (avoid N+1 with DataLoader).
+- `CategoryType` and `TagType`:
+  - Add field: `entryCount: Int!`.
+  - Add field: `entries(first: Int, after: String): EntryConnection` — paginated entries with this taxonomy.
+- Update schema documentation.
+- Contract tests: verify taxonomy fields resolve correctly, no N+1 queries.
+
+**Search Integration (Elasticsearch/Meilisearch):**
+- Update `EntrySearchIndexerEventHandler` to index `categoryIds` and `tagIds` as searchable/facetable fields.
+- Add facet support to `SearchEntriesQuery`: return category/tag facets for filtered results (e.g., "3 entries in React category, 5 in TypeScript tag").
+- Admin UI search: display facets in sidebar, allow filtering by taxonomy in global search.
+
+**Performance:**
+- Add indexes: `CREATE INDEX idx_entry_categories ON EntryCategories(CategoryId)`, `CREATE INDEX idx_entry_tags ON EntryTags(TagId)`.
+- Benchmark: ensure `GET /entries?categoryId=X` with 10,000 entries returns in <200ms (P95).
+
+**Documentation:**
+- Update API docs with taxonomy filtering examples.
+- Add section to user guide: "Organizing Content with Categories and Tags".
+- Cookbook entry: "How to build a tag cloud widget using the Delivery API".
+
+**Security:**
+- Enforce same-site taxonomy assignment: reject `UpdateEntryTaxonomyCommand` if any category/tag belongs to a different site.
+- Validate `CanEditEntry` permission before allowing taxonomy updates.
+- Audit log: track taxonomy changes in entry version history (store `categoryIds`/`tagIds` in `EntryVersion.FieldsJson` metadata).
+
+**Observability:**
+- Emit metric: `microcms.entries.taxonomy_updated_total` (counter).
+- Log taxonomy assignment failures at `Warning` level (invalid IDs, cross-site attempts).
+
+**Acceptance Criteria:**
+1. Entry editor displays taxonomy selectors; saving an entry with categories/tags persists to DB.
+2. Entries page filters by category/tag; clicking a tag in taxonomy page navigates to filtered entries.
+3. GraphQL query `{ entry(id: "...") { categories { name } tags { name } } }` returns correct taxonomy.
+4. Search results include taxonomy facets; selecting a facet filters results.
+5. Deleting a category/tag does **not** delete entries (verified by integration test).
+6. Cross-tenant taxonomy assignment blocked at domain layer (verified by unit test).
+7. API contract tests pass for all new endpoints.
+8. Admin UI E2E test: create entry → assign 2 categories + 3 tags → save → reload page → verify taxonomy persisted.
 
 ---
 
@@ -488,6 +612,7 @@ Security items:
 | Outbox `TenantId` validation on dispatch | Sprint 12 | Dispatcher not yet implemented |
 | Real virus-scan pipeline (ClamAV) for `MediaAsset` | ~~Sprint 8~~ ✅ Done | `MediaScanJob` + `ClamAvScanner` TCP client implemented |
 | Token revocation on Admin UI logout | Sprint 7 | Requires identity layer revocation endpoint |
+| Taxonomy integration with Entries | Sprint 17 | Requires completed Admin UI, GraphQL API, and Search infrastructure |
 
 ---
 

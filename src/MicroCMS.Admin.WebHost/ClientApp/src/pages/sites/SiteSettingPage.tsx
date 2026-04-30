@@ -668,7 +668,7 @@ export default function SiteSettingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-slate-500">
         <button onClick={() => navigate('/settings')} className="hover:text-slate-900">

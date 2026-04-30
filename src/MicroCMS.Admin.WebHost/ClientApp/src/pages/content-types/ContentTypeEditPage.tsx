@@ -168,13 +168,13 @@ setValue('layoutId', existing.layoutId ?? '');
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
   <div className="flex items-center gap-3">
         <button onClick={() => navigate('/content-types')} className="btn-secondary">← Back</button>
         <h1 className="text-2xl font-bold text-slate-900">
           {isNew ? 'New Content Type' : `Edit: ${existing?.displayName ?? '…'}`}
-   </h1>
+    </h1>
       </div>
 
     {isNew && !selectedSiteId && (
