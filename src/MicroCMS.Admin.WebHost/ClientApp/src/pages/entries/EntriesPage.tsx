@@ -72,7 +72,7 @@ function BulkActionsBar({
 
 export default function EntriesPage() {
     const qc = useQueryClient();
-    const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
+    const { selectedSiteId, selectedSite, isLoading: siteLoading, isSwitching } = useSite();
     const siteId = selectedSiteId ?? '';
 
     const [search, setSearch] = useState('');
@@ -167,7 +167,7 @@ export default function EntriesPage() {
         window.open(url, '_blank');
     }
 
-    if (siteLoading) {
+    if (siteLoading || isSwitching) {
         return (
             <div className="space-y-4">
                 {Array.from({ length: 6 }).map((_, i) => (

@@ -45,7 +45,8 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isAuthenticated || user?.siteId || sites.length === 0) return;
     const defaultSite = sites.find((s) => s.isActive) ?? sites[0];
-    void switchSite(defaultSite.id);
+    setIsSwitching(true);
+    void switchSite(defaultSite.id).finally(() => setIsSwitching(false));
   }, [isAuthenticated, user?.siteId, sites, switchSite]);
 
   const selectedSiteId = user?.siteId ?? null;

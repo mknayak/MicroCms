@@ -85,7 +85,7 @@ function NoSiteSelected() {
 
 export default function TaxonomyPage() {
   const qc = useQueryClient();
-  const { selectedSite, isLoading: siteLoading } = useSite();
+  const { selectedSite, isLoading: siteLoading, isSwitching } = useSite();
   const [activeTab, setActiveTab] = useState<'categories' | 'tags'>('categories');
 
   const { data: categories, isLoading: catsLoading } = useQuery({
@@ -136,7 +136,7 @@ export default function TaxonomyPage() {
     },
   });
 
-  if (siteLoading) {
+  if (siteLoading || isSwitching) {
     return (
       <div className="space-y-4">
         {Array.from({ length: 6 }).map((_, i) => (

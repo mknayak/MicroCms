@@ -4,6 +4,7 @@ using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Auth.Commands;
 using MicroCMS.Application.Features.Auth.Dtos;
 using MicroCMS.Domain.Aggregates.Identity;
+using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Specifications.Identity;
 using MicroCMS.Shared.Ids;
@@ -21,6 +22,7 @@ internal sealed class LoginCommandHandler(
     IRepository<User, UserId> userRepo,
     IRepository<RefreshToken, RefreshTokenId> tokenRepo,
     IRepository<LoginAttempt, LoginAttemptId> attemptRepo,
+    IRepository<Tenant, TenantId> tenantRepo,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
     IUnitOfWork unitOfWork,
@@ -47,12 +49,19 @@ internal sealed class LoginCommandHandler(
         }
 
         // 3. Issue tokens — embed the user's first site so Category-1 APIs need no siteId param.
-        // TenantAdmin roles are tenant-wide (SiteId == null); site-scoped roles carry a SiteId.
-        // Fall back to the first site-scoped role if no tenant-wide default site is available.
+        // Prefer a site-scoped role's SiteId; fall back to the first active site on the tenant.
+        // TODO: replace with explicit user→site mapping when the site-selector feature is built.
         var defaultSiteId = user.Roles
             .Where(r => r.SiteId is not null)
             .Select(r => r.SiteId)
             .FirstOrDefault();
+
+        if (defaultSiteId is null)
+        {
+            var tenant = await tenantRepo.GetByIdAsync(user.TenantId, cancellationToken);
+            var firstSite = tenant?.Sites.FirstOrDefault(s => s.IsActive) ?? tenant?.Sites.FirstOrDefault();
+            defaultSiteId = firstSite?.Id;
+        }
 
         var accessToken = tokenService.GenerateAccessToken(user, defaultSiteId);
         var (rawRefresh, refreshHash) = tokenService.GenerateRefreshToken();

@@ -12,7 +12,7 @@ import { ChildCard } from './ChildCard';
 import type { PageTreeNode } from '@/types';
 
 export default function PagesPage() {
-    const { selectedSite, isLoading: siteLoading } = useSite();
+    const { selectedSite, isLoading: siteLoading, isSwitching } = useSite();
 
     const [selectedId, setSelectedId] = useState('');
     const [detailOpen, setDetailOpen] = useState(false);
@@ -38,7 +38,7 @@ export default function PagesPage() {
     const handleCardClick = (page: PageTreeNode) => { setSelectedId(page.id); setDetailOpen(true); };
     const navigate = useNavigate();
 
-    if (siteLoading) return (
+    if (siteLoading || isSwitching) return (
         <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />)}
         </div>

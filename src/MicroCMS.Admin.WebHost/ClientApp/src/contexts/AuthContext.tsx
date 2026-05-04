@@ -58,12 +58,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     (response: AuthTokenResponse) => {
       tokenStorage.set(response.accessToken);
       tokenStorage.setRefresh(response.refreshToken);
+      const payload = parseJwt(response.accessToken);
       setUser({
         id: response.user.userId,
         email: response.user.email,
         displayName: response.user.displayName,
         roles: response.user.roles,
         tenantId: extractTenantId(response.accessToken),
+        siteId: payload?.['site_id'] ? String(payload['site_id']) : undefined,
       });
       scheduleRefresh(response.accessTokenExpiry);
     },

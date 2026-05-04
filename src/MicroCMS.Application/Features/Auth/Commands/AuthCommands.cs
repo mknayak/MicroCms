@@ -1,5 +1,6 @@
 using MediatR;
 using MicroCMS.Application.Common.Attributes;
+using MicroCMS.Application.Common.Security;
 using MicroCMS.Application.Features.Auth.Dtos;
 using MicroCMS.Shared.Results;
 
@@ -23,6 +24,7 @@ public sealed record RefreshTokenCommand(
 /// The user must have a role on the requested site.
 /// Returns a fresh token pair with the new <c>site_id</c> claim embedded.
 /// </summary>
+[HasPolicy(AuthorizationPolicies.TenantMember)]
 public sealed record SwitchSiteCommand(Guid SiteId) : IRequest<Result<AuthTokenResponse>>;
 
 /// <summary>Revokes the supplied refresh token (single-device logout).</summary>

@@ -1,5 +1,7 @@
 namespace MicroCMS.Application.Common.Authorization;
 
+using MicroCMS.Application.Common.Security;
+
 /// <summary>
 /// Maps built-in role names to the set of policies they satisfy.
 /// </summary>
@@ -126,6 +128,10 @@ public static class RolePermissions
     /// <summary>Returns true if any of the given roles grants the specified policy.</summary>
     public static bool IsGranted(IReadOnlyList<string> roles, string policy)
     {
+        // TenantMember is satisfied by any authenticated user who holds a known role.
+        if (string.Equals(policy, AuthorizationPolicies.TenantMember, StringComparison.OrdinalIgnoreCase))
+            return roles.Any(r => _map.ContainsKey(r));
+
         foreach (var role in roles)
         {
             if (_map.TryGetValue(role, out var policies) && policies.Contains(policy))
