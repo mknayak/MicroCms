@@ -25,6 +25,9 @@
     <ProjectReference Include="..\MicroCMS.Ai.Abstractions\MicroCMS.Ai.Abstractions.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.Core\MicroCMS.Ai.Core.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.Providers.AzureOpenAI\MicroCMS.Ai.Providers.AzureOpenAI.csproj" />
+    <ProjectReference Include="..\MicroCMS.Ai.Providers.Ollama\MicroCMS.Ai.Providers.Ollama.csproj" />
+    <ProjectReference Include="..\MicroCMS.Ai.Core\MicroCMS.Ai.Core.csproj" />
+    <ProjectReference Include="..\MicroCMS.Ai.Providers.AzureOpenAI\MicroCMS.Ai.Providers.AzureOpenAI.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.Providers.OpenAI\MicroCMS.Ai.Providers.OpenAI.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.Providers.Anthropic\MicroCMS.Ai.Providers.Anthropic.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.Providers.Bedrock\MicroCMS.Ai.Providers.Bedrock.csproj" />

@@ -16,6 +16,7 @@
     <ProjectReference Include="..\MicroCMS.Domain\MicroCMS.Domain.csproj" />
     <ProjectReference Include="..\MicroCMS.Application\MicroCMS.Application.csproj" />
     <ProjectReference Include="..\MicroCMS.Shared\MicroCMS.Shared.csproj" />
+    <ProjectReference Include="..\MicroCMS.Ai.Abstractions\MicroCMS.Ai.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

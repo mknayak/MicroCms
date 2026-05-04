@@ -11,11 +11,11 @@ namespace MicroCMS.Api.Controllers;
 [Authorize]
 public sealed class AiWritingController : ApiControllerBase
 {
-[HttpPost("{entryId:guid}/draft")]
+    [HttpPost("{entryId:guid}/draft")]
     [ProducesResponseType(typeof(AiContentResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> Draft(
-    Guid entryId, [FromBody] DraftRequest r, CancellationToken ct = default) =>
-  OkOrProblem(await Sender.Send(new DraftContentCommand(entryId, r.Prompt, r.Locale), ct));
+        Guid entryId, [FromBody] DraftRequest r, CancellationToken ct = default) =>
+      OkOrProblem(await Sender.Send(new DraftContentCommand(entryId, r.Prompt, r.Locale), ct));
 
     [HttpPost("{entryId:guid}/rewrite")]
     [ProducesResponseType(typeof(AiContentResult), StatusCodes.Status200OK)]
@@ -29,12 +29,12 @@ public sealed class AiWritingController : ApiControllerBase
        Guid entryId, [FromBody] ToneRequest r, CancellationToken ct = default) =>
       OkOrProblem(await Sender.Send(new ChangeToneCommand(entryId, r.FieldHandle, r.Tone), ct));
 
- [HttpGet("{entryId:guid}/summarize")]
+    [HttpGet("{entryId:guid}/summarize")]
     [ProducesResponseType(typeof(AiContentResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> Summarize(
-   Guid entryId, [FromQuery] string fieldHandle,
-   [FromQuery] int maxSentences = 3, CancellationToken ct = default) =>
-  OkOrProblem(await Sender.Send(new SummarizeContentCommand(entryId, fieldHandle, maxSentences), ct));
+      Guid entryId, [FromQuery] string fieldHandle,
+      [FromQuery] int maxSentences = 3, CancellationToken ct = default) =>
+     OkOrProblem(await Sender.Send(new SummarizeContentCommand(entryId, fieldHandle, maxSentences), ct));
 
     [HttpPost("{entryId:guid}/translate")]
     [ProducesResponseType(typeof(MicroCMS.Application.Features.Entries.Dtos.EntryDto), StatusCodes.Status200OK)]

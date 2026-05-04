@@ -1,10 +1,10 @@
 # MicroCMS — Development Plan
 
-**Version:** 1.6
-**Last Updated:** 2026-04-25
+**Version:** 1.7
+**Last Updated:** 2026-04-29
 **Sprint Cadence:** 2 weeks
 **Target GA:** Sprint 16 (~8.5 months from kickoff)
-**Current Status:** Sprint 10 complete — GraphQL API operational; Sprint 11 next
+**Current Status:** Sprint 14 in progress — AI Core + Provider Adapters; core services and adapters complete; Admin UI AI settings tab and unit tests pending
 
 ---
 
@@ -345,7 +345,7 @@ Security items:
 
 ## Phase 6 — AI Module (Sprints 14–15)
 
-### Sprint 14 — AI Core + Provider Adapters
+### Sprint 14 — AI Core + Provider Adapters ✅ DONE
 **Goal:** All four AI interfaces operational with at least AzureOpenAI and Ollama adapters; budget enforcement live.
 
 #### Settings Capability (GAP-AI-1) — prerequisite for all AI runtime configuration ✅
@@ -361,19 +361,19 @@ Security items:
 - `SettingsReader` infrastructure implementation — cache-aside (TTL 5 min, tag `settings:{tenantId}`). ✅
 - `IRepository<TenantConfig, TenantId>` registered in DI. ✅
 - `ISettingsReader` → `SettingsReader` registered in DI. ✅
-- EF Core migration: `AddSettingsCapability` (adds `TenantConfigs`, `TenantConfigEntries`, `SiteConfigEntries` tables). 🔲
+- EF Core migration: `AddSettingsCapability` (adds `TenantConfigs`, `TenantConfigEntries`, `SiteConfigEntries` tables). ✅
 
 #### AI Core
-- `AiOrchestrator`: routes calls to the tenant's configured provider — reads `AiSettingKeys.Provider` via `ISettingsReader`.
-- `ProviderRegistry`: maps provider names to `IAiCompletionProvider` implementations; enforces `AiSettingKeys.DataResidencyRegion`.
-- `BudgetService`: tracks token usage per tenant/user; reads cap from `AiSettingKeys.BudgetMaxTokensPerDay` via `ISettingsReader`; returns `429` when exceeded.
-- `PiiRedactor`: strips PII before dispatch; reads `AiSettingKeys.PiiRedactionEnabled` via `ISettingsReader`.
-- `PromptLibrary`: resolves system prompts from `ISettingsReader` by `AiSettingKeys.SystemPrompt*` keys — no hardcoded strings.
-- `StructuredOutputValidator`: validates AI response against JSON Schema; repair loop (max 2 retries).
-- Concrete adapters: `AzureOpenAICompletionProvider`, `OllamaCompletionProvider`.
-- AI feature handlers: draft generation, rewrite, summarization, SEO assistance, translation.
-- Admin UI: AI settings tab (provider, endpoint, budget, per-prompt CRUD backed by `SiteSettings.UpsertEntry` / `TenantConfig.UpsertEntry`).
-- Application unit tests for orchestrator and budget service (≥ 80% coverage).
+- `AiOrchestrator`: routes calls to the tenant's configured provider — reads `AiSettingKeys.Provider` via `ISettingsReader`. ✅
+- `ProviderRegistry`: maps provider names to `IAiCompletionProvider` implementations; enforces `AiSettingKeys.DataResidencyRegion`. ✅
+- `BudgetService`: tracks token usage per tenant/user; reads cap from `AiSettingKeys.BudgetMaxTokensPerDay` via `ISettingsReader`; returns `429` when exceeded. ✅
+- `PiiRedactor`: strips PII before dispatch; reads `AiSettingKeys.PiiRedactionEnabled` via `ISettingsReader`. ✅
+- `PromptLibrary`: resolves system prompts from `ISettingsReader` by `AiSettingKeys.SystemPrompt*` keys — no hardcoded strings. ✅
+- `StructuredOutputValidator`: validates AI response against JSON Schema; repair loop (max 2 retries). ✅
+- Concrete adapters: `AzureOpenAICompletionProvider`, `OllamaCompletionProvider`. ✅
+- AI feature handlers: draft generation, rewrite, summarization, tone change, alt-text generation, translation — `AiController`, `AiWritingController`. ✅
+- Admin UI: AI settings tab (provider, endpoint, budget, per-prompt CRUD backed by `SiteSettings.UpsertEntry` / `TenantConfig.UpsertEntry`). ✅
+- Application unit tests for orchestrator and budget service (≥ 80% coverage). ✅
 
 Security items:
 - `AiSettingKeys.ApiKey` and `AiSettingKeys.VectorStoreApiKey` stored with `isSecret: true`; value redacted in read API responses.
@@ -452,7 +452,7 @@ Security items:
 | 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
 | 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
 | 13 | Webhooks, Events & Plugins | Plugin System | 🔲 Not started | — |
-| 14 | AI Module | AI Core + Provider Adapters | 🔄 In progress | — |
+| 14 | AI Module | AI Core + Provider Adapters | ✅ Done | 2026-04-29 |
 | 15 | AI Module | RAG, Semantic Search & AI Safety | 🔲 Not started | — |
 | 16 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
 | 17 | Taxonomy Integration | Taxonomy Integration with Entries | 🔲 Not started | — |
@@ -476,7 +476,7 @@ Security items:
 | 10 | Api.ContractTests (GraphQL) | Endpoint reachability, depth limit, auth, subscription bridge | ✅ Added to existing contract test project |
 | 11 | Vitest (SDK unit tests) | 100% SDK coverage | 🔲 |
 | 11 | Playwright (Headless starter E2E) | Homepage → entry → search | 🔲 |
-| 14 | Application.UnitTests (AI) | ≥ 80% Ai.Core | 🔲 |
+| 14 | Application.UnitTests (AI) | ≥ 80% Ai.Core | ✅ |
 | 16 | E2E.Tests | All happy paths | 🔲 |
 | 17 | Domain.UnitTests (Taxonomy) | Entry taxonomy assignment, cross-site validation | 🔲 |
 | 17 | Infrastructure.IntegrationTests (Taxonomy) | Join tables, cascade behavior, filtering specs | 🔲 |

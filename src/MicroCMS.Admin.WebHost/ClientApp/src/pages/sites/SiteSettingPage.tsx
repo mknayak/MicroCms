@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { sitesApi } from '@/api/sites';
+import type { ConfigEntryDto, ExportConfigResponse, ImportConfigEntryItem } from '@/api/sites';
 import { apiClientsApi } from '@/api/apiClients';
 import { ApiError } from '@/api/client';
 import type { ApiClientDto, ApiClientCreatedDto, ApiKeyType } from '@/types';
@@ -640,15 +641,510 @@ function ApiKeysTab({ siteId }: { siteId: string }) {
   );
 }
 
+// ─── AI Settings tab ─────────────────────────────────────────────────────────
+
+const AI_SECTIONS = [
+  {
+    title: 'Provider',
+    description: 'Configure which AI provider powers this site and how it connects.',
+    fields: [
+      { key: 'ai:provider', label: 'Provider', placeholder: 'azure_openai | openai | ollama | anthropic', isSecret: false },
+      { key: 'ai:endpoint', label: 'Endpoint URL', placeholder: 'https://…', isSecret: false },
+      { key: 'ai:api_key', label: 'API Key', placeholder: '••••••••', isSecret: true },
+      { key: 'ai:model', label: 'Model', placeholder: 'gpt-4o', isSecret: false },
+      { key: 'ai:azure_deployment', label: 'Azure Deployment Name', placeholder: 'my-gpt4o-deployment', isSecret: false },
+    ],
+  },
+  {
+    title: 'Generation Defaults',
+    description: 'Default parameters applied to every completion request unless overridden.',
+    fields: [
+      { key: 'ai:max_tokens', label: 'Max Tokens', placeholder: '2048', isSecret: false },
+      { key: 'ai:temperature', label: 'Temperature (0.0 – 2.0)', placeholder: '0.7', isSecret: false },
+      { key: 'ai:data_residency_region', label: 'Data Residency Region', placeholder: 'eastus', isSecret: false },
+    ],
+  },
+  {
+    title: 'Budget',
+    description: 'Cap daily token usage or monthly cost to prevent runaway spend.',
+    fields: [
+      { key: 'ai:budget:max_tokens_per_day', label: 'Max Tokens / Day (0 = unlimited)', placeholder: '100000', isSecret: false },
+      { key: 'ai:budget:monthly_cost_cap_usd', label: 'Monthly Cost Cap (USD)', placeholder: '50.00', isSecret: false },
+    ],
+  },
+  {
+    title: 'Safety',
+    description: 'PII redaction and prompt-injection protection settings.',
+    fields: [
+      { key: 'ai:pii_redaction_enabled', label: 'PII Redaction Enabled', placeholder: 'true | false', isSecret: false },
+      { key: 'ai:prompt_injection_detection_enabled', label: 'Prompt Injection Detection', placeholder: 'true | false', isSecret: false },
+    ],
+  },
+  {
+    title: 'Entry Content Prompts',
+    description: 'System and user prompts used when generating entry field content. Supports {contentType} and {instructions} placeholders.',
+    fields: [
+      { key: 'AI.Entry.ContentSystemPrompt', label: 'System Prompt', placeholder: 'You are a professional content writer…', isSecret: false, multiline: true },
+      { key: 'AI.Entry.ContentUserPromt', label: 'User Prompt Template', placeholder: 'Write a {contentType} article about: {instructions}', isSecret: false, multiline: true },
+    ],
+  },
+  {
+    title: 'Page SEO Prompts',
+    description: 'Prompts used by the SEO assistant for page optimisation. Supports {pageTitle}, {pageContent}, {targetKeywords}.',
+    fields: [
+      { key: 'AI.Page.SEOSystemPrompt', label: 'System Prompt', placeholder: 'You are an SEO specialist…', isSecret: false, multiline: true },
+      { key: 'AI.Page.SEOUserPrompt', label: 'User Prompt Template', placeholder: 'Optimise the SEO for: {pageTitle}…', isSecret: false, multiline: true },
+    ],
+  },
+] as const;
+
+interface AiField {
+  key: string;
+  label: string;
+  placeholder: string;
+  isSecret: boolean;
+  multiline?: boolean;
+}
+
+function AiSettingField({
+  siteId,
+  field,
+  currentEntry,
+}: {
+  siteId: string;
+  field: AiField;
+  currentEntry?: ConfigEntryDto;
+}) {
+  const qc = useQueryClient();
+  const [value, setValue] = useState(currentEntry?.isSecret ? '' : (currentEntry?.value ?? ''));
+  const [editing, setEditing] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!currentEntry?.isSecret) setValue(currentEntry?.value ?? '');
+  }, [currentEntry]);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      sitesApi.upsertConfigEntry(siteId, field.key, {
+        value,
+        category: 'ai',
+        isSecret: field.isSecret,
+      }),
+    onSuccess: () => {
+      toast.success(`Saved ${field.label}.`);
+      setEditing(false);
+      void qc.invalidateQueries({ queryKey: ['site-config', siteId, 'ai'] });
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => sitesApi.deleteConfigEntry(siteId, field.key),
+    onSuccess: () => {
+      toast.success(`Cleared ${field.label}.`);
+      setValue('');
+      void qc.invalidateQueries({ queryKey: ['site-config', siteId, 'ai'] });
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
+  });
+
+  const isSet = !!currentEntry;
+  const displayValue = currentEntry?.isSecret
+    ? (revealed ? currentEntry.value : '••••••••••••')
+    : (currentEntry?.value ?? '');
+
+  return (
+    <div className="py-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700">{field.label}</label>
+            {field.isSecret && (
+              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">SECRET</span>
+            )}
+            {isSet && (
+              <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">SET</span>
+            )}
+          </div>
+          <p className="mt-0.5 font-mono text-[11px] text-slate-400">{field.key}</p>
+
+          {editing ? (
+            <div className="mt-2 space-y-2">
+              {field.multiline ? (
+                <textarea
+                  rows={4}
+                  className="form-input w-full font-mono text-xs"
+                  placeholder={field.placeholder}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  autoFocus
+                />
+              ) : (
+                <input
+                  type={field.isSecret ? 'password' : 'text'}
+                  className="form-input w-full"
+                  placeholder={field.placeholder}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  autoFocus
+                />
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="btn-primary text-xs"
+                  onClick={() => saveMutation.mutate()}
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => {
+                    setEditing(false);
+                    setValue(currentEntry?.isSecret ? '' : (currentEntry?.value ?? ''));
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            isSet && (
+              <div className="mt-1 flex items-center gap-2">
+                <span className={`font-mono text-xs text-slate-600 ${field.multiline ? 'line-clamp-2 whitespace-pre-wrap' : ''}`}>
+                  {displayValue}
+                </span>
+                {field.isSecret && (
+                  <button
+                    type="button"
+                    className="text-xs text-slate-400 underline hover:text-slate-600"
+                    onClick={() => setRevealed((v) => !v)}
+                  >
+                    {revealed ? 'hide' : 'reveal'}
+                  </button>
+                )}
+              </div>
+            )
+          )}
+        </div>
+
+        {!editing && (
+          <div className="flex flex-shrink-0 items-center gap-2 pt-0.5">
+            <button
+              type="button"
+              className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              onClick={() => {
+                setValue(currentEntry?.isSecret ? '' : (currentEntry?.value ?? ''));
+                setEditing(true);
+              }}
+            >
+              {isSet ? 'Edit' : 'Set'}
+            </button>
+            {isSet && (
+              <button
+                type="button"
+                className="rounded border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                onClick={() => {
+                  if (confirm(`Clear "${field.label}"?`)) deleteMutation.mutate();
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AiSettingsTab({ siteId }: { siteId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['site-config', siteId, 'ai'],
+    queryFn: () => sitesApi.getConfig(siteId, 'ai'),
+  });
+
+  const entryMap = new Map<string, ConfigEntryDto>(
+    (data?.entries ?? []).map((e) => [e.key, e])
+  );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <strong>Tip:</strong> You can bulk-import all AI settings at once via the{' '}
+        <strong>Import / Export</strong> tab above using the reference{' '}
+        <code className="font-mono text-xs">ai.settings.json</code> file.
+        Secret values (API keys) must always be set individually.
+      </div>
+
+      {AI_SECTIONS.map((section) => (
+        <div key={section.title} className="card">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
+            <p className="text-xs text-slate-500">{section.description}</p>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {(section.fields as readonly AiField[]).map((field) => (
+              <AiSettingField
+                key={field.key}
+                siteId={siteId}
+                field={field}
+                currentEntry={entryMap.get(field.key)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Import / Export tab ──────────────────────────────────────────────────────
+
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'All categories' },
+  { value: 'ai', label: 'AI Settings (ai)' },
+  { value: 'media', label: 'Media (media)' },
+  { value: 'webhooks', label: 'Webhooks (webhooks)' },
+  { value: 'general', label: 'General (general)' },
+];
+
+function ImportExportTab({ siteId }: { siteId: string }) {
+  const qc = useQueryClient();
+
+  // ── Export ────────────────────────────────────────────────────────────────
+  const [exportCategory, setExportCategory] = useState('ai');
+  const [exportResult, setExportResult] = useState<ExportConfigResponse | null>(null);
+
+  const exportMutation = useMutation({
+    mutationFn: () => sitesApi.exportConfig(siteId, exportCategory || undefined),
+    onSuccess: (data) => {
+      setExportResult(data);
+      toast.success(`Exported ${data.entries.length} entr${data.entries.length === 1 ? 'y' : 'ies'}.`);
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Export failed.'),
+  });
+
+  function downloadJson() {
+    if (!exportResult) return;
+    const blob = new Blob([JSON.stringify(exportResult, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = exportCategory ? `${exportCategory}.settings.json` : 'site.settings.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Import ────────────────────────────────────────────────────────────────
+  const [importText, setImportText] = useState('');
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [parsedEntries, setParsedEntries] = useState<ImportConfigEntryItem[] | null>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setImportText(text);
+      tryParseJson(text);
+    };
+    reader.readAsText(file);
+  }
+
+  function tryParseJson(text: string) {
+    setParseError(null);
+    setParsedEntries(null);
+    try {
+      const parsed = JSON.parse(text) as unknown;
+      // Accept both a raw ExportConfigResponse envelope and a plain array
+      let entries: ImportConfigEntryItem[];
+      if (Array.isArray(parsed)) {
+        entries = parsed as ImportConfigEntryItem[];
+      } else if (parsed && typeof parsed === 'object' && 'entries' in parsed && Array.isArray((parsed as ExportConfigResponse).entries)) {
+        entries = (parsed as ExportConfigResponse).entries;
+      } else {
+        setParseError('JSON must be an array of entries or an exported settings envelope.');
+        return;
+      }
+      // Filter out secrets (they cannot be imported this way)
+      const nonSecret = entries.filter((e) => !e.isSecret);
+      if (nonSecret.length < entries.length) {
+        toast('Secret entries were skipped — set them individually via the AI Settings tab.', { icon: '⚠️' });
+      }
+      setParsedEntries(nonSecret);
+    } catch {
+      setParseError('Invalid JSON. Please check the file and try again.');
+    }
+  }
+
+  const importMutation = useMutation({
+    mutationFn: () => sitesApi.importConfig(siteId, { entries: parsedEntries! }),
+    onSuccess: (data) => {
+      toast.success(`Imported ${data.entries.length} entr${data.entries.length === 1 ? 'y' : 'ies'} successfully.`);
+      setParsedEntries(null);
+      setImportText('');
+      void qc.invalidateQueries({ queryKey: ['site-config', siteId] });
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Import failed.'),
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Export */}
+      <div className="card">
+        <h3 className="mb-1 text-sm font-semibold text-slate-900">Export Settings</h3>
+        <p className="mb-4 text-xs text-slate-500">
+          Download non-secret site config entries as a JSON file you can import into another site or keep as a backup.
+          Secret values (API keys) are never exported.
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Category</label>
+            <select
+              className="form-input text-sm"
+              value={exportCategory}
+              onChange={(e) => { setExportCategory(e.target.value); setExportResult(null); }}
+            >
+              {CATEGORY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            className="btn-primary text-sm"
+            onClick={() => exportMutation.mutate()}
+            disabled={exportMutation.isPending}
+          >
+            {exportMutation.isPending ? 'Exporting…' : 'Export'}
+          </button>
+          {exportResult && (
+            <button
+              type="button"
+              className="btn-secondary text-sm"
+              onClick={downloadJson}
+            >
+              ↓ Download JSON ({exportResult.entries.length} entries)
+            </button>
+          )}
+        </div>
+
+        {exportResult && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Preview</span>
+              <span className="text-[10px] text-slate-400">
+                Exported at {new Date(exportResult.exportedAt).toLocaleString()}
+              </span>
+            </div>
+            <pre className="mt-1 max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-700">
+              {JSON.stringify(exportResult, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+
+      {/* Import */}
+      <div className="card">
+        <h3 className="mb-1 text-sm font-semibold text-slate-900">Import Settings</h3>
+        <p className="mb-4 text-xs text-slate-500">
+          Upload a previously exported JSON file to bulk-upsert config entries. Existing keys not present in the
+          file are preserved. Secret entries in the file are automatically skipped.
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Upload JSON file{' '}
+              <span className="text-slate-400">(or paste below)</span>
+            </label>
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded file:border file:border-slate-300 file:bg-white file:px-3 file:py-1 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-50"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Or paste JSON
+            </label>
+            <textarea
+              className="form-input w-full font-mono text-xs"
+              rows={8}
+              placeholder={'[\n  { "key": "AI.Entry.ContentSystemPrompt", "value": "You are…", "category": "ai", "isSecret": false }\n]'}
+              value={importText}
+              onChange={(e) => { setImportText(e.target.value); tryParseJson(e.target.value); }}
+              spellCheck={false}
+            />
+          </div>
+
+          {parseError && (
+            <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{parseError}</p>
+          )}
+
+          {parsedEntries && (
+            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+              ✓ {parsedEntries.length} entr{parsedEntries.length === 1 ? 'y' : 'ies'} ready to import:
+              <ul className="mt-1 list-inside list-disc font-mono">
+                {parsedEntries.slice(0, 8).map((e) => (
+                  <li key={e.key}>{e.key} <span className="text-green-600">({e.category})</span></li>
+                ))}
+                {parsedEntries.length > 8 && <li>…and {parsedEntries.length - 8} more</li>}
+              </ul>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="btn-primary text-sm"
+            disabled={!parsedEntries || parsedEntries.length === 0 || importMutation.isPending}
+            onClick={() => importMutation.mutate()}
+          >
+            {importMutation.isPending ? 'Importing…' : `Import ${parsedEntries?.length ?? 0} entries`}
+          </button>
+        </div>
+      </div>
+
+      {/* Reference file hint */}
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+        <strong>Reference file:</strong> A starter <code className="font-mono">ai.settings.json</code> containing
+        all prompt templates and non-secret AI defaults is available in the repository at{' '}
+        <code className="font-mono">docs/ai.settings.json</code>. Import it here to pre-populate prompts,
+        then set your API key individually in the <strong>AI Settings</strong> tab.
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = 'general' | 'features' | 'cors' | 'apikeys';
+type Tab = 'general' | 'features' | 'cors' | 'apikeys' | 'ai' | 'importexport';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'features', label: 'Features' },
   { id: 'cors', label: 'CORS & Locales' },
   { id: 'apikeys', label: 'API Keys' },
+  { id: 'ai', label: 'AI Settings' },
+  { id: 'importexport', label: 'Import / Export' },
 ];
 
 export default function SiteSettingPage() {
@@ -721,6 +1217,8 @@ export default function SiteSettingPage() {
       {tab === 'features' && <FeaturesTab siteId={id} />}
       {tab === 'cors' && <CorsLocalesTab siteId={id} />}
       {tab === 'apikeys' && <ApiKeysTab siteId={id} />}
+      {tab === 'ai' && <AiSettingsTab siteId={id} />}
+      {tab === 'importexport' && <ImportExportTab siteId={id} />}
     </div>
   );
 }

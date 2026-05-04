@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Hellang.Middleware.ProblemDetails;
+using MicroCMS.Ai.Core;
 using MicroCMS.Application;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Security;
@@ -322,6 +323,47 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
     internal static WebApplicationBuilder AddAiServices(
         this WebApplicationBuilder builder)
     {
+        builder.Services.AddAiCore();
+
+        // Register AI provider factories
+        builder.Services.AddSingleton(sp =>
+        {
+            var registry = sp.GetRequiredService<MicroCMS.Ai.Core.Services.ProviderRegistry>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+            // Register Azure OpenAI providers
+            registry.RegisterCompletionProvider("azure_openai", (endpoint, apiKey) =>
+            {
+                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAICompletionProvider>();
+                var deploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT") ?? "gpt-4";
+                return new MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAICompletionProvider(endpoint, apiKey, deploymentName, logger);
+            });
+
+            registry.RegisterEmbeddingProvider("azure_openai", (endpoint, apiKey) =>
+            {
+                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAIEmbeddingProvider>();
+                var deploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_EMBEDDING_DEPLOYMENT") ?? "text-embedding-ada-002";
+                return new MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAIEmbeddingProvider(endpoint, apiKey, deploymentName, logger);
+            });
+
+            // Register Ollama providers
+            registry.RegisterCompletionProvider("ollama", (endpoint, apiKey) =>
+            {
+                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider>();
+                var model = Environment.GetEnvironmentVariable("OLLAMA_MODEL") ?? "llama3";
+                return new MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider(endpoint, model, logger);
+            });
+
+            registry.RegisterEmbeddingProvider("ollama", (endpoint, apiKey) =>
+            {
+                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider>();
+                var model = Environment.GetEnvironmentVariable("OLLAMA_EMBEDDING_MODEL") ?? "nomic-embed-text";
+                return new MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider(endpoint, model, logger);
+            });
+
+            return registry;
+        });
+
         return builder;
     }
 

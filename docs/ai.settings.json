@@ -1,0 +1,161 @@
+{
+  "$schema": "https://microcms.io/schemas/site-config-import.json",
+  "_description": "Reference AI settings for MicroCMS. Import via: POST /api/v1/sites/{siteId}/config/import",
+  "_notes": [
+    "Secret values (ai:api_key, ai:vector_store:api_key) are NOT included here.",
+    "Set them separately via PUT /api/v1/sites/{siteId}/config/{key} with isSecret:true.",
+    "Prompt placeholders: {contentType}, {fieldName}, {instructions}, {pageTitle}, {pageContent}, {targetKeywords}",
+    "Copy this file, fill in your values, then POST the 'entries' array to the import endpoint."
+  ],
+  "entries": [
+    {
+      "key": "ai:provider",
+      "value": "ollama",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Supported values: azure_openai | openai | ollama | anthropic"
+    },
+    {
+      "key": "ai:endpoint",
+      "value": "http://localhost:11434",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Provider API base URL. Azure: https://{resource}.openai.azure.com. OpenAI: https://api.openai.com/v1"
+    },
+    {
+      "key": "ai:model",
+      "value": "llama3",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Model identifier. Azure/OpenAI: gpt-4o. Ollama: llama3, mistral. Anthropic: claude-3-5-sonnet-20241022"
+    },
+    {
+      "key": "ai:azure_deployment",
+      "value": "",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Azure OpenAI only: deployment name. Leave blank for other providers."
+    },
+    {
+      "key": "ai:max_tokens",
+      "value": "2048",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Default maximum tokens per completion request."
+    },
+    {
+      "key": "ai:temperature",
+      "value": "0.7",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Sampling temperature (0.0–2.0). Lower = more deterministic. Higher = more creative."
+    },
+    {
+      "key": "ai:data_residency_region",
+      "value": "",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Restrict AI calls to a specific region. E.g. eastus, westeurope. Leave blank to allow any."
+    },
+
+    {
+      "_section": "Budget & Safety",
+      "key": "ai:budget:max_tokens_per_day",
+      "value": "500000",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Maximum tokens consumed per day across all users of this site. 0 = unlimited."
+    },
+    {
+      "key": "ai:budget:monthly_cost_cap_usd",
+      "value": "50.00",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Monthly cost cap in USD. 0 = unlimited."
+    },
+    {
+      "key": "ai:pii_redaction_enabled",
+      "value": "true",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Redact PII (emails, phone numbers, SSNs) from user content before sending to provider."
+    },
+    {
+      "key": "ai:prompt_injection_detection_enabled",
+      "value": "true",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Detect and reject prompt injection attempts in user-supplied content."
+    },
+
+    {
+      "_section": "Prompt Templates — Entry Content",
+      "key": "AI.Entry.ContentSystemPrompt",
+      "value": "You are an expert content writer for a headless CMS. Your task is to generate high-quality, structured content based on the content type schema provided. Follow these rules strictly:\n1. Output ONLY valid JSON that matches the provided field schema — no markdown, no explanation.\n2. Use professional, engaging language appropriate for the content type.\n3. Keep each field within its stated character or word limit.\n4. Never invent facts; base all content on the instructions provided.\n5. If a field is marked optional and no relevant content exists, output an empty string for that field.",
+      "category": "ai:prompts",
+      "isSecret": false,
+      "_comment": "System prompt for entry content generation. Defines role, output format, and quality constraints."
+    },
+    {
+      "key": "AI.Entry.ContentUserPromt",
+      "value": "Generate content for a '{contentType}' entry.\n\nField to populate: {fieldName}\nInstructions: {instructions}\n\nRespond with a JSON object containing only the field '{fieldName}' and its generated value.",
+      "category": "ai:prompts",
+      "isSecret": false,
+      "_comment": "User prompt template for entry content generation. Placeholders: {contentType}, {fieldName}, {instructions}."
+    },
+
+    {
+      "_section": "Prompt Templates — Page SEO",
+      "key": "AI.Page.SEOSystemPrompt",
+      "value": "You are an SEO specialist. Analyse the provided page content and produce SEO metadata. Follow these rules:\n1. Output ONLY valid JSON with the exact fields: metaTitle, metaDescription, focusKeyword, suggestedKeywords, readabilityScore.\n2. metaTitle: 50–60 characters, includes focus keyword near the start.\n3. metaDescription: 150–160 characters, compelling, includes focus keyword.\n4. focusKeyword: single most important keyword phrase.\n5. suggestedKeywords: array of 3–5 secondary keyword phrases.\n6. readabilityScore: integer 0–100 (Flesch–Kincaid estimate).\n7. Do not add markdown, explanations, or any text outside the JSON object.",
+      "category": "ai:prompts",
+      "isSecret": false,
+      "_comment": "System prompt for page SEO assistance. Defines output JSON schema and SEO guidelines."
+    },
+    {
+      "key": "AI.Page.SEOUserPrompt",
+      "value": "Analyse the following page and produce SEO metadata.\n\nPage title: {pageTitle}\nPage content:\n{pageContent}\n\nTarget keywords (optional): {targetKeywords}\n\nReturn the JSON SEO metadata object.",
+      "category": "ai:prompts",
+      "isSecret": false,
+      "_comment": "User prompt template for page SEO. Placeholders: {pageTitle}, {pageContent}, {targetKeywords}."
+    },
+
+    {
+      "_section": "Vector / RAG (Sprint 15)",
+      "key": "ai:vector_store:provider",
+      "value": "qdrant",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Vector store provider. Supported: pgvector | qdrant. Leave blank to disable RAG."
+    },
+    {
+      "key": "ai:vector_store:endpoint",
+      "value": "http://localhost:6333",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Vector store endpoint URL."
+    },
+    {
+      "key": "ai:embedding_model",
+      "value": "nomic-embed-text",
+      "category": "ai",
+      "isSecret": false,
+      "_comment": "Embedding model. Ollama: nomic-embed-text. OpenAI: text-embedding-3-small. Azure: text-embedding-ada-002."
+    }
+  ],
+
+  "_secretKeysNotIncluded": [
+    {
+      "key": "ai:api_key",
+      "category": "ai",
+      "isSecret": true,
+      "_howToSet": "PUT /api/v1/sites/{siteId}/config/ai:api_key  body: { \"value\": \"sk-...\", \"category\": \"ai\", \"isSecret\": true }"
+    },
+    {
+      "key": "ai:vector_store:api_key",
+      "category": "ai",
+      "isSecret": true,
+      "_howToSet": "PUT /api/v1/sites/{siteId}/config/ai:vector_store:api_key  body: { \"value\": \"...\", \"category\": \"ai\", \"isSecret\": true }"
+    }
+  ]
+}

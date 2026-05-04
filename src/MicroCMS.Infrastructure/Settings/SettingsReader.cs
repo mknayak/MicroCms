@@ -4,6 +4,7 @@ using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Shared.Ids;
 using Microsoft.Extensions.Logging;
+using AiSettingsReader = MicroCMS.Ai.Abstractions.Interfaces.ISettingsReader;
 
 namespace MicroCMS.Infrastructure.Settings;
 
@@ -16,7 +17,7 @@ namespace MicroCMS.Infrastructure.Settings;
 ///   Tag  <c>settings:{tenantId}</c>         → both keys; invalidated together on write
 ///   TTL  5 minutes
 /// </summary>
-internal sealed class SettingsReader : ISettingsReader
+internal sealed class SettingsReader : ISettingsReader, AiSettingsReader
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
@@ -99,6 +100,48 @@ internal sealed class SettingsReader : ISettingsReader
         _logger.LogDebug(
             "Invalidated settings cache for tenant {TenantId} (triggered by site {SiteId}).",
             settings.TenantId, siteId);
+    }
+
+    /// <inheritdoc cref="AiSettingsReader.GetAsync{T}(TenantId, SiteId?, string, T, CancellationToken)"/>
+    async Task<T> AiSettingsReader.GetAsync<T>(
+        TenantId tenantId,
+        SiteId? siteId,
+        string key,
+        T defaultValue,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+
+        string? raw = null;
+
+        // Site-level override
+        if (siteId.HasValue)
+        {
+            var (siteEntries, _) = await LoadSiteEntriesAsync(siteId.Value, cancellationToken);
+            raw = siteEntries.FirstOrDefault(e => e.Key == key)?.Value;
+        }
+
+        // Tenant-level fallback
+        if (raw is null)
+        {
+            var tenantEntries = await LoadTenantEntriesAsync(tenantId, cancellationToken);
+            raw = tenantEntries.FirstOrDefault(e => e.Key == key)?.Value;
+        }
+
+        if (raw is null)
+            return defaultValue;
+
+        try
+        {
+            return (T)Convert.ChangeType(raw, typeof(T));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Settings key '{Key}' value '{Value}' cannot be converted to {Type}. Using default.",
+                key, raw, typeof(T).Name);
+            return defaultValue;
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

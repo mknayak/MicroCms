@@ -22,12 +22,12 @@ public sealed class ComponentsController : ApiControllerBase
         [FromQuery] int pageSize = 50,
   CancellationToken cancellationToken = default)
     {
-   var result = await Sender.Send(new ListComponentsQuery(siteId, page, pageSize), cancellationToken);
-      return OkOrProblem(result);
+        var result = await Sender.Send(new ListComponentsQuery(siteId, page, pageSize), cancellationToken);
+        return OkOrProblem(result);
     }
 
     [HttpGet("{id:guid}")]
-  [ProducesResponseType(typeof(ComponentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ComponentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken = default)
     {
@@ -43,16 +43,16 @@ public sealed class ComponentsController : ApiControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(command, cancellationToken);
-     return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
+        return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
 
-[HttpPut("{id:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ComponentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
-        Guid id,
-        [FromBody] UpdateComponentRequest request,
-      CancellationToken cancellationToken = default)
+            Guid id,
+            [FromBody] UpdateComponentRequest request,
+          CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(
  new UpdateComponentCommand(id, request.Name, request.Description,
@@ -62,7 +62,7 @@ public sealed class ComponentsController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
- [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
@@ -87,16 +87,16 @@ public sealed class ComponentsController : ApiControllerBase
 
     // ── Component items (instances) ──────────────────────────────────────
 
-  [HttpGet("{id:guid}/items")]
+    [HttpGet("{id:guid}/items")]
     [ProducesResponseType(typeof(PagedList<ComponentItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListItems(
-        Guid id,
-    [FromQuery] string? status = null,
-     [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50,
-        CancellationToken cancellationToken = default)
+          Guid id,
+      [FromQuery] string? status = null,
+       [FromQuery] int page = 1,
+          [FromQuery] int pageSize = 50,
+          CancellationToken cancellationToken = default)
     {
-    var result = await Sender.Send(new ListComponentItemsQuery(id, status, page, pageSize), cancellationToken);
+        var result = await Sender.Send(new ListComponentItemsQuery(id, status, page, pageSize), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -105,8 +105,8 @@ public sealed class ComponentsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetItem(
      Guid id, Guid itemId, CancellationToken cancellationToken = default)
- {
-   var result = await Sender.Send(new GetComponentItemQuery(id, itemId), cancellationToken);
+    {
+        var result = await Sender.Send(new GetComponentItemQuery(id, itemId), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -145,8 +145,8 @@ public sealed class ComponentsController : ApiControllerBase
     public async Task<IActionResult> PublishItem(
         Guid id, Guid itemId, CancellationToken cancellationToken = default)
     {
-    var result = await Sender.Send(new PublishComponentItemCommand(id, itemId), cancellationToken);
- return NoContentOrProblem(result);
+        var result = await Sender.Send(new PublishComponentItemCommand(id, itemId), cancellationToken);
+        return NoContentOrProblem(result);
     }
 
     [HttpPost("{id:guid}/items/{itemId:guid}/archive")]
@@ -155,7 +155,7 @@ public sealed class ComponentsController : ApiControllerBase
     public async Task<IActionResult> ArchiveItem(
       Guid id, Guid itemId, CancellationToken cancellationToken = default)
     {
-     var result = await Sender.Send(new ArchiveComponentItemCommand(id, itemId), cancellationToken);
+        var result = await Sender.Send(new ArchiveComponentItemCommand(id, itemId), cancellationToken);
         return NoContentOrProblem(result);
     }
 
@@ -166,7 +166,7 @@ public sealed class ComponentsController : ApiControllerBase
     Guid id, Guid itemId, CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new DeleteComponentItemCommand(id, itemId), cancellationToken);
-   return NoContentOrProblem(result);
+        return NoContentOrProblem(result);
     }
 }
 

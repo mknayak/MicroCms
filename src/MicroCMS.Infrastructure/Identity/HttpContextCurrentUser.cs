@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using MicroCMS.Ai.Abstractions.Interfaces;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Shared.Ids;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +20,7 @@ namespace MicroCMS.Infrastructure.Identity;
 /// or query strings, which can be spoofed. The JWT signature is verified by the
 /// <c>AddJwtBearer</c> middleware before this service is called.
 /// </summary>
-internal sealed class HttpContextCurrentUser : ICurrentUser
+internal sealed class HttpContextCurrentUser : ICurrentUser, IAiCurrentUser
 {
     // With MapInboundClaims = false, claim names match the JWT token exactly.
     private const string TenantIdClaimType = "tenant_id";

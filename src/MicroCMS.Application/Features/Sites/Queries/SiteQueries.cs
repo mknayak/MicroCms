@@ -1,5 +1,4 @@
 using MediatR;
-using MediatR;
 using MicroCMS.Application.Common.Attributes;
 using MicroCMS.Application.Common.Authorization;
 using MicroCMS.Application.Common.Exceptions;
@@ -36,6 +35,14 @@ public sealed record GetSiteQuery(Guid SiteId) : IQuery<SiteDetailDto>;
 [HasPolicy(ContentPolicies.TenantManage)]
 public sealed record GetSiteSettingsQuery(Guid SiteId) : IQuery<SiteSettingsDto>;
 
+/// <summary>
+/// Returns all config entries for a site, optionally filtered by category.
+/// Secret values are redacted (returned as "***").
+/// </summary>
+[HasPolicy(ContentPolicies.TenantManage)]
+public sealed record GetSiteConfigEntriesQuery(Guid SiteId, string? Category = null)
+    : IQuery<SiteConfigEntriesDto>;
+
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 internal sealed class GetSiteQueryHandler(
@@ -63,7 +70,6 @@ internal sealed class GetSiteSettingsQueryHandler(
     public async Task<Result<SiteSettingsDto>> Handle(
         GetSiteSettingsQuery request, CancellationToken cancellationToken)
     {
-        // Verify the site exists (Site is owned by Tenant — must query via aggregate root).
         var siteId = new SiteId(request.SiteId);
         var tenants = await tenantRepo.ListAsync(new TenantBySiteIdSpec(siteId), cancellationToken);
         if (!tenants.Any())
@@ -71,7 +77,6 @@ internal sealed class GetSiteSettingsQueryHandler(
 
         var settings = await settingsRepo.GetByIdAsync(siteId, cancellationToken);
 
-        // Return defaults when no settings row exists yet.
         if (settings is null)
         {
             return Result.Success(new SiteSettingsDto(
@@ -87,6 +92,28 @@ internal sealed class GetSiteSettingsQueryHandler(
         }
 
         return Result.Success(SiteSettingsMapper.ToDto(settings));
+    }
+}
+
+internal sealed class GetSiteConfigEntriesQueryHandler(
+    IRepository<SiteSettings, SiteId> settingsRepo)
+    : IRequestHandler<GetSiteConfigEntriesQuery, Result<SiteConfigEntriesDto>>
+{
+    public async Task<Result<SiteConfigEntriesDto>> Handle(
+        GetSiteConfigEntriesQuery request, CancellationToken cancellationToken)
+    {
+        var siteId = new SiteId(request.SiteId);
+        var settings = await settingsRepo.GetByIdAsync(siteId, cancellationToken);
+        if (settings is null)
+            throw new NotFoundException(nameof(SiteSettings), request.SiteId);
+
+        var entries = settings.ConfigEntries
+            .Where(e => request.Category is null ||
+                        e.Category.StartsWith(request.Category, StringComparison.OrdinalIgnoreCase))
+            .Select(ConfigEntryMapper.ToDto)
+            .ToList();
+
+        return Result.Success(new SiteConfigEntriesDto(request.SiteId, entries));
     }
 }
 

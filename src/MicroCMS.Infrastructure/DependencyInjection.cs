@@ -176,7 +176,9 @@ public static class DependencyInjection
     private static void RegisterCoreServices(IServiceCollection services)
     {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+        services.AddScoped<HttpContextCurrentUser>();
+        services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<HttpContextCurrentUser>());
+        services.AddScoped<MicroCMS.Ai.Abstractions.Interfaces.IAiCurrentUser>(sp => sp.GetRequiredService<HttpContextCurrentUser>());
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
@@ -185,7 +187,9 @@ public static class DependencyInjection
         services.AddScoped<IPreviewSecretProvider, SiteIdPreviewSecretProvider>();
 
         // Settings reader — site→tenant resolution with cache-aside (GAP-AI-1)
-        services.AddScoped<ISettingsReader, SettingsReader>();
+        services.AddScoped<SettingsReader>();
+        services.AddScoped<ISettingsReader>(sp => sp.GetRequiredService<SettingsReader>());
+        services.AddScoped<MicroCMS.Ai.Abstractions.Interfaces.ISettingsReader>(sp => sp.GetRequiredService<SettingsReader>());
 
         // Tenancy / install
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();

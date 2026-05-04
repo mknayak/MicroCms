@@ -13,8 +13,8 @@ public sealed class ApiClientsController : ApiControllerBase
     [ProducesResponseType(typeof(ApiClientCreatedDto), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create(
    [FromBody] CreateApiClientCommand command, CancellationToken ct = default)
-{
-  var result = await Sender.Send(command, ct);
+    {
+        var result = await Sender.Send(command, ct);
         return result.IsSuccess
      ? StatusCode(StatusCodes.Status201Created, result.Value)
    : ToProblemResult(result.Error);
