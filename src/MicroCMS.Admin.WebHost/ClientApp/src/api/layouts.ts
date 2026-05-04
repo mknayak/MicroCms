@@ -11,8 +11,8 @@ import type {
 } from '@/types';
 
 export const layoutsApi = {
-  list: (siteId: string): Promise<LayoutListItem[]> =>
-    get<LayoutListItem[]>('/layouts', { params: { siteId } }),
+  list: (): Promise<LayoutListItem[]> =>
+    get<LayoutListItem[]>('/layouts'),
 
   get: (id: string): Promise<LayoutDto> =>
     get<LayoutDto>(`/layouts/${id}`),
@@ -29,8 +29,8 @@ export const layoutsApi = {
   updateDefaultPlacements: (id: string, data: UpdateLayoutDefaultPlacementsRequest): Promise<LayoutDto> =>
     put<LayoutDto>(`/layouts/${id}/default-placements`, data),
 
-  setDefault: (id: string, siteId: string): Promise<LayoutDto> =>
-    post<LayoutDto>(`/layouts/${id}/set-default`, null, { params: { siteId } }),
+  setDefault: (id: string): Promise<LayoutDto> =>
+    post<LayoutDto>(`/layouts/${id}/set-default`, null),
 
   delete: (id: string): Promise<void> =>
     del(`/layouts/${id}`),

@@ -14,8 +14,8 @@ import type {
 } from '@/types';
 
 export const pagesApi = {
-    getTree: (siteId: string): Promise<PageTreeNode[]> =>
-        get<PageTreeNode[]>(`/pages`, { params: { siteId } }),
+    getTree: (): Promise<PageTreeNode[]> =>
+        get<PageTreeNode[]>(`/pages`),
 
     getPage: (id: string): Promise<PageDto> =>
         get<PageDto>(`/pages/${id}`),

@@ -63,11 +63,11 @@ export const mediaApi = {
 
   // ── Folder CRUD ────────────────────────────────────────────────────────
 
-  listFolders: (siteId: string, parentFolderId?: string): Promise<MediaFolder[]> =>
-    get<MediaFolder[]>('/media/folders', { params: { siteId, parentFolderId } }),
+  listFolders: (parentFolderId?: string): Promise<MediaFolder[]> =>
+    get<MediaFolder[]>('/media/folders', { params: { parentFolderId } }),
 
-  createFolder: (siteId: string, name: string, parentFolderId?: string): Promise<MediaFolder> =>
-    post<MediaFolder>('/media/folders', { siteId, name, parentFolderId }),
+  createFolder: (name: string, parentFolderId?: string): Promise<MediaFolder> =>
+    post<MediaFolder>('/media/folders', { name, parentFolderId }),
 
   renameFolder: (id: string, newName: string): Promise<MediaFolder> =>
     patch<MediaFolder>(`/media/folders/${id}/rename`, { newName }),

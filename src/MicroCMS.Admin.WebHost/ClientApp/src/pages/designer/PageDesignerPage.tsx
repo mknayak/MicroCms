@@ -6,7 +6,6 @@ import { componentsApi } from '@/api/components';
 import { pagesApi } from '@/api/pages';
 import { layoutsApi } from '@/api/layouts';
 import { siteTemplatesApi } from '@/api/siteTemplates';
-import { useSite } from '@/contexts/SiteContext';
 import type { ComponentListItem, ComponentCategory, LayoutZoneNode } from '@/types';
 import type { ViewportSize, DesignerPlacement } from './designerTypes';
 import { ApiError } from '@/api/client';
@@ -475,7 +474,6 @@ function PropertiesPanel({ selected, placements, onRemove }: {
 
 export default function PageDesignerPage() {
     const qc = useQueryClient();
-    const { selectedSiteId } = useSite();
     const { pageId } = useParams<{ pageId: string }>();
     const navigate = useNavigate();
 
@@ -490,9 +488,8 @@ export default function PageDesignerPage() {
 
     // ── Data ─────────────────────────────────────────────────────────────────
     const { data: componentsResult } = useQuery({
-        queryKey: ['components', selectedSiteId],
-        queryFn: () => componentsApi.list({ siteId: selectedSiteId!, pageSize: 200 }),
-        enabled: !!selectedSiteId,
+        queryKey: ['components'],
+        queryFn: () => componentsApi.list({ pageSize: 200 }),
     });
     const allComponents = componentsResult?.items ?? [];
 
@@ -504,9 +501,8 @@ export default function PageDesignerPage() {
 
     // Load the page's assigned layout to get its zones
     const { data: allLayouts = [] } = useQuery({
-        queryKey: ['layouts', selectedSiteId],
-        queryFn: () => layoutsApi.list(selectedSiteId!),
-        enabled: !!selectedSiteId,
+        queryKey: ['layouts'],
+        queryFn: () => layoutsApi.list(),
     });
 
     // Load site-template first — its layoutId is needed to resolve assignedLayoutId
@@ -672,10 +668,6 @@ export default function PageDesignerPage() {
         : viewport === 'mobile'
             ? 'mx-auto max-w-[375px] rounded-lg shadow-xl overflow-hidden'
             : 'w-full';
-
-    if (!selectedSiteId) {
-        return <div className="flex h-full items-center justify-center text-sm text-slate-500">No site selected.</div>;
-    }
 
     if (!pageId) {
         return (

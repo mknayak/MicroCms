@@ -2,8 +2,8 @@ import { get, post, put, del } from './client';
 import type { SiteTemplateDto, SiteTemplateListItem, CreateSiteTemplateRequest, UpdateSiteTemplateRequest, SaveSiteTemplateRequest } from '@/types';
 
 export const siteTemplatesApi = {
-  list: (siteId: string): Promise<SiteTemplateListItem[]> =>
-    get<SiteTemplateListItem[]>('/site-templates', { params: { siteId } }),
+  list: (): Promise<SiteTemplateListItem[]> =>
+    get<SiteTemplateListItem[]>('/site-templates'),
 
   get: (id: string): Promise<SiteTemplateDto> =>
  get<SiteTemplateDto>(`/site-templates/${id}`),

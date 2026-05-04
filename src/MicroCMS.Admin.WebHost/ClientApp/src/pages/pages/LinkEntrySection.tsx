@@ -7,10 +7,9 @@ import { ApiError } from '@/api/client';
 import type { PageDto } from '@/types';
 
 export function LinkEntrySection({
-  pageId, siteId, page: _page,
+  pageId, page: _page,
 }: {
   pageId: string;
-  siteId: string;
   page: PageDto;
 }) {
   const qc = useQueryClient();
@@ -18,8 +17,8 @@ export function LinkEntrySection({
   const [selectedEntryId, setSelectedEntryId] = useState('');
 
   const { data: results, isFetching } = useQuery({
-    queryKey: ['entries-search', siteId, search],
-queryFn: () => entriesApi.list({ siteId, search: search || undefined, pageSize: 20 }),
+    queryKey: ['entries-search', search],
+queryFn: () => entriesApi.list({ search: search || undefined, pageSize: 20 }),
     enabled: true,
     staleTime: 10_000,
   });
@@ -29,7 +28,7 @@ queryFn: () => entriesApi.list({ siteId, search: search || undefined, pageSize: 
     onSuccess: () => {
   toast.success('Entry linked.');
    void qc.invalidateQueries({ queryKey: ['page-detail', pageId] });
-    void qc.invalidateQueries({ queryKey: ['pages', siteId] });
+    void qc.invalidateQueries({ queryKey: ['pages'] });
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });

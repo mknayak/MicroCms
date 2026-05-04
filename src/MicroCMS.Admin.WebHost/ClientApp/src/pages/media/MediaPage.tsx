@@ -3,7 +3,6 @@ import { useDropzone } from 'react-dropzone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { mediaApi } from '@/api/media';
-import { useSite } from '@/contexts/SiteContext';
 import type { MediaAsset, MediaFolder } from '@/types';
 import { ApiError } from '@/api/client';
 
@@ -45,13 +44,7 @@ function ScanStatusBadge({ status }: { status: string }) {
 
 // ─── Folder Sidebar ───────────────────────────────────────────────────────────
 
-interface FolderSidebarProps {
-  siteId: string;
-  activeFolderId: string | null;
-  onSelect: (id: string | null) => void;
-}
-
-function FolderSidebar({ siteId, activeFolderId, onSelect }: FolderSidebarProps) {
+function FolderSidebar({ activeFolderId, onSelect }: { activeFolderId: string | null; onSelect: (id: string | null) => void }) {
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -59,18 +52,17 @@ function FolderSidebar({ siteId, activeFolderId, onSelect }: FolderSidebarProps)
   const [renameValue, setRenameValue] = useState('');
 
   const { data: folders = [], isLoading } = useQuery({
-    queryKey: ['media-folders', siteId],
-    queryFn: () => mediaApi.listFolders(siteId),
-    enabled: !!siteId,
+    queryKey: ['media-folders'],
+    queryFn: () => mediaApi.listFolders(),
   });
 
   const createMutation = useMutation({
-    mutationFn: () => mediaApi.createFolder(siteId, newName.trim()),
+    mutationFn: () => mediaApi.createFolder(newName.trim()),
     onSuccess: () => {
     toast.success('Folder created.');
       setCreating(false);
       setNewName('');
-      void qc.invalidateQueries({ queryKey: ['media-folders', siteId] });
+      void qc.invalidateQueries({ queryKey: ['media-folders'] });
     },
     onError: (err) =>
       toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Create failed.'),
@@ -81,7 +73,7 @@ function FolderSidebar({ siteId, activeFolderId, onSelect }: FolderSidebarProps)
     onSuccess: () => {
       toast.success('Folder renamed.');
     setRenamingId(null);
-      void qc.invalidateQueries({ queryKey: ['media-folders', siteId] });
+      void qc.invalidateQueries({ queryKey: ['media-folders'] });
     },
     onError: (err) =>
       toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Rename failed.'),
@@ -92,7 +84,7 @@ function FolderSidebar({ siteId, activeFolderId, onSelect }: FolderSidebarProps)
     onSuccess: (_, id) => {
       toast.success('Folder deleted.');
       if (activeFolderId === id) onSelect(null);
-      void qc.invalidateQueries({ queryKey: ['media-folders', siteId] });
+      void qc.invalidateQueries({ queryKey: ['media-folders'] });
     },
   onError: (err) =>
       toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
@@ -456,8 +448,6 @@ function BulkToolbar({
 
 export default function MediaPage() {
   const qc = useQueryClient();
-  const { selectedSiteId } = useSite();
-  const siteId = selectedSiteId ?? '';
 
   const [view, setView]    = useState<'grid' | 'list'>('grid');
   const [search, setSearch]         = useState('');
@@ -547,13 +537,10 @@ mutationFn: () => mediaApi.bulkDelete([...checkedIds]),
   return (
     <div className="flex gap-6 pb-24">
       {/* Folder sidebar */}
-   {siteId && (
-        <FolderSidebar
-          siteId={siteId}
- activeFolderId={activeFolderId}
-          onSelect={(id) => { setActiveFolderId(id); setPage(1); setCheckedIds(new Set()); }}
-        />
-      )}
+      <FolderSidebar
+        activeFolderId={activeFolderId}
+        onSelect={(id) => { setActiveFolderId(id); setPage(1); setCheckedIds(new Set()); }}
+      />
 
       {/* Main content */}
       <div className="min-w-0 flex-1 space-y-6">

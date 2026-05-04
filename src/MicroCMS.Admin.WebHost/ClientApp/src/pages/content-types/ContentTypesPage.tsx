@@ -6,7 +6,6 @@ import { contentTypesApi } from '@/api/contentTypes';
 import type { ContentTypeListItem } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { ApiError } from '@/api/client';
-import { useSite } from '@/contexts/SiteContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -159,13 +158,12 @@ function DeleteModal({
 
 export default function ContentTypesPage() {
   const qc = useQueryClient();
-  const { selectedSiteId } = useSite();
   const [toDelete, setToDelete] = useState<ContentTypeListItem | null>(null);
   const [search, setSearch] = useState('');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['content-types', { siteId: selectedSiteId }],
-    queryFn: () => contentTypesApi.list({ pageSize: 100, siteId: selectedSiteId ?? undefined }),
+    queryKey: ['content-types'],
+    queryFn: () => contentTypesApi.list({ pageSize: 100 }),
   });
 
   const deleteMutation = useMutation({

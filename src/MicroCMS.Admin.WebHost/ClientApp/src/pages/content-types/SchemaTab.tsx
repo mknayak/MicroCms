@@ -9,7 +9,6 @@ import { contentTypesApi } from '@/api/contentTypes';
 import type { ContentType, FieldDefinitionDto, FieldType } from '@/types';
 import { ApiError } from '@/api/client';
 import { FIELD_TYPE_COLORS, FIELD_TYPE_LABELS } from './contentTypeDetail.shared';
-import { useSite } from '@/contexts/SiteContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -186,13 +185,11 @@ function StaticTagInput({
 function DynamicSourceEditor({
     contentTypeId,
     fieldId,
-    siteId,
     register,
     prefix,
 }: {
     contentTypeId: string;
     fieldId?: string;
-    siteId: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     register: any;
     prefix: string;
@@ -201,10 +198,10 @@ function DynamicSourceEditor({
     const [previewOptions, setPreviewOptions] = useState<Array<{ value: string; label: string }> | null>(null);
 
     const testQuery = async () => {
-        if (!fieldId || !siteId) { toast.error('Save the field first to test the dynamic source.'); return; }
+        if (!fieldId) { toast.error('Save the field first to test the dynamic source.'); return; }
         setTesting(true);
         try {
-            const opts = await contentTypesApi.getEnumOptions(contentTypeId, fieldId, siteId);
+            const opts = await contentTypesApi.getEnumOptions(contentTypeId, fieldId);
             setPreviewOptions(opts);
             toast.success(`Resolved ${opts.length} option${opts.length !== 1 ? 's' : ''}.`);
         } catch {
@@ -286,7 +283,6 @@ function DynamicSourceEditor({
 function EnumOptionsEditor({
     contentTypeId,
     fieldId,
-    siteId,
     enumMode,
     staticOptions,
     onEnumModeChange,
@@ -296,7 +292,6 @@ function EnumOptionsEditor({
 }: {
     contentTypeId: string;
     fieldId?: string;
-    siteId: string;
     enumMode: 'static' | 'dynamic';
     staticOptions: string[];
     onEnumModeChange: (mode: 'static' | 'dynamic') => void;
@@ -334,7 +329,6 @@ function EnumOptionsEditor({
                 <DynamicSourceEditor
                     contentTypeId={contentTypeId}
                     fieldId={fieldId}
-                    siteId={siteId}
                     register={register}
                     prefix={prefix}
                 />
@@ -347,8 +341,6 @@ function EnumOptionsEditor({
 
 export function SchemaTab({ contentType }: { contentType: ContentType }) {
     const qc = useQueryClient();
-    const { selectedSiteId } = useSite();
-  const siteId = selectedSiteId ?? '';
     const [editing, setEditing] = useState(false);
     const [activeFieldIdx, setActiveFieldIdx] = useState<number | null>(null);
 
@@ -653,7 +645,6 @@ onClick={() => remove(idx)}
       <EnumOptionsEditor
        contentTypeId={contentType.id}
   fieldId={field.id}
-   siteId={siteId}
       enumMode={watch(`fields.${idx}.enumMode`) ?? 'static'}
                 staticOptions={watch(`fields.${idx}.staticOptions`) ?? []}
      onEnumModeChange={(mode) => setValue(`fields.${idx}.enumMode`, mode)}

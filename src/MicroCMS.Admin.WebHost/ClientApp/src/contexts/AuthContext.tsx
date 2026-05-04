@@ -11,6 +11,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  switchSite: (siteId: string) => Promise<void>;
   hasRole: (role: string) => boolean;
 }
 
@@ -133,6 +134,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const switchSite = useCallback(
+    async (siteId: string): Promise<void> => {
+      const response = await authApi.switchSite({ siteId });
+      applyTokenResponse(response);
+    },
+    [applyTokenResponse],
+  );
+
   const hasRole = useCallback(
     (role: string): boolean => user?.roles.includes(role) ?? false,
     [user],
@@ -145,9 +154,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isLoading,
       login,
       logout,
+      switchSite,
       hasRole,
     }),
-    [user, isLoading, login, logout, hasRole],
+    [user, isLoading, login, logout, switchSite, hasRole],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -191,6 +201,7 @@ function extractUserFromClaims(payload: Record<string, unknown>): CurrentUser {
     displayName: String(payload['display_name'] ?? payload['email'] ?? ''),
     roles,
     tenantId: String(payload['tenant_id'] ?? ''),
+    siteId: payload['site_id'] ? String(payload['site_id']) : undefined,
   };
 }
 

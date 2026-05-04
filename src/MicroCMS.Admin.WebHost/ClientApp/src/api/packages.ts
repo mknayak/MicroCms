@@ -18,7 +18,7 @@ export const packagesApi = {
     const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const a = document.createElement('a');
  a.href = url;
-    a.download = `mcms-export-${options.siteId}-${ts}.zip`;
+    a.download = `mcms-export-${ts}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

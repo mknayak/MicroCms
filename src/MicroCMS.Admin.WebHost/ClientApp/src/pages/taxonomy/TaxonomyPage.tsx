@@ -27,13 +27,13 @@ type TagForm = z.infer<typeof tagSchema>;
 
 // ─── Category Tree ────────────────────────────────────────────────────────────
 
-function CategoryItem({ cat, siteId, depth = 0 }: { cat: Category; siteId: string; depth?: number }) {
+function CategoryItem({ cat, depth = 0 }: { cat: Category; depth?: number }) {
   const qc = useQueryClient();
   const deleteMut = useMutation({
     mutationFn: () => taxonomyApi.deleteCategory(cat.id),
     onSuccess: () => {
       toast.success('Category deleted.');
-      void qc.invalidateQueries({ queryKey: ['categories', siteId] });
+      void qc.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
   });
@@ -60,7 +60,7 @@ return (
       {cat.children && cat.children.length > 0 && (
         <ul>
           {cat.children.map((child) => (
-     <CategoryItem key={child.id} cat={child} siteId={siteId} depth={depth + 1} />
+     <CategoryItem key={child.id} cat={child} depth={depth + 1} />
           ))}
         </ul>
       )}
@@ -85,20 +85,17 @@ function NoSiteSelected() {
 
 export default function TaxonomyPage() {
   const qc = useQueryClient();
-  const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
-  const siteId = selectedSiteId ?? '';
+  const { selectedSite, isLoading: siteLoading } = useSite();
   const [activeTab, setActiveTab] = useState<'categories' | 'tags'>('categories');
 
   const { data: categories, isLoading: catsLoading } = useQuery({
-    queryKey: ['categories', siteId],
-    queryFn: () => taxonomyApi.getCategories(siteId),
-    enabled: !!siteId,
+    queryKey: ['categories'],
+    queryFn: () => taxonomyApi.getCategories(),
   });
 
   const { data: tags, isLoading: tagsLoading } = useQuery({
-    queryKey: ['tags', siteId],
-    queryFn: () => taxonomyApi.getTags(siteId),
-    enabled: !!siteId,
+    queryKey: ['tags'],
+    queryFn: () => taxonomyApi.getTags(),
   });
 
   const {
@@ -107,10 +104,10 @@ export default function TaxonomyPage() {
   } = useForm<CategoryForm>({ resolver: zodResolver(categorySchema) });
 
   const createCategoryMutation = useMutation({
-    mutationFn: (data: CategoryForm) => taxonomyApi.createCategory({ siteId, ...data }),
+    mutationFn: (data: CategoryForm) => taxonomyApi.createCategory(data),
     onSuccess: () => {
       toast.success('Category created.');
-      void qc.invalidateQueries({ queryKey: ['categories', siteId] });
+      void qc.invalidateQueries({ queryKey: ['categories'] });
   resetCat();
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
@@ -122,10 +119,10 @@ export default function TaxonomyPage() {
   } = useForm<TagForm>({ resolver: zodResolver(tagSchema) });
 
   const createTagMutation = useMutation({
-    mutationFn: (data: TagForm) => taxonomyApi.createTag({ siteId, ...data }),
+    mutationFn: (data: TagForm) => taxonomyApi.createTag(data),
     onSuccess: () => {
       toast.success('Tag created.');
-      void qc.invalidateQueries({ queryKey: ['tags', siteId] });
+      void qc.invalidateQueries({ queryKey: ['tags'] });
       resetTag();
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
@@ -135,7 +132,7 @@ export default function TaxonomyPage() {
     mutationFn: (id: string) => taxonomyApi.deleteTag(id),
     onSuccess: () => {
       toast.success('Tag deleted.');
-      void qc.invalidateQueries({ queryKey: ['tags', siteId] });
+      void qc.invalidateQueries({ queryKey: ['tags'] });
     },
   });
 
@@ -149,7 +146,7 @@ export default function TaxonomyPage() {
     );
   }
 
-  if (!siteId) return <NoSiteSelected />;
+  if (!selectedSite) return <NoSiteSelected />;
 
   return (
     <div className="space-y-6">
@@ -189,7 +186,7 @@ export default function TaxonomyPage() {
       </div>
             ) : (
               <ul className="divide-y divide-slate-50">
-    {(categories ?? []).map((cat) => <CategoryItem key={cat.id} cat={cat} siteId={siteId} />)}
+    {(categories ?? []).map((cat) => <CategoryItem key={cat.id} cat={cat} />)}
      </ul>
             )}
           </div>

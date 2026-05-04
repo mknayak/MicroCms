@@ -46,7 +46,12 @@ export interface CurrentUser {
   displayName: string;
   roles: string[];
   tenantId: string;
+  siteId?: string;
   avatarUrl?: string;
+}
+
+export interface SwitchSiteRequest {
+  siteId: string;
 }
 
 export interface ChangePasswordRequest {
@@ -390,14 +395,12 @@ export interface Tag {
 }
 
 export interface CreateCategoryRequest {
-  siteId: string;
   name: string;
   slug: string;
   parentId?: string;
 }
 
 export interface CreateTagRequest {
-  siteId: string;
   name: string;
   slug: string;
 }
@@ -587,7 +590,6 @@ export interface SetPageLinkedEntryRequest {
 }
 
 export interface CreateStaticPageRequest {
-  siteId: string;
   title: string;
   slug: string;
   parentId?: string;
@@ -595,7 +597,6 @@ export interface CreateStaticPageRequest {
 }
 
 export interface CreateCollectionPageRequest {
-  siteId: string;
   title: string;
   slug: string;
   parentId?: string;
@@ -659,7 +660,6 @@ export interface LayoutDto {
 }
 
 export interface CreateLayoutRequest {
-  siteId: string;
   name: string;
   key: string;
   templateType: LayoutTemplateType;
@@ -810,8 +810,7 @@ export interface SearchResults {
 }
 
 export interface SearchParams {
-query: string;
-  siteId?: string;
+  query: string;
   contentTypeId?: string;
   locale?: string;
   status?: string;
@@ -894,7 +893,6 @@ export interface ComponentListItem {
 }
 
 export interface CreateComponentRequest {
-  siteId: string;
   name: string;
   key: string;
   description?: string;
@@ -942,7 +940,6 @@ export interface UpdateComponentItemRequest {
 }
 
 export interface ComponentListParams extends PaginationParams {
-  siteId?: string;
   category?: ComponentCategory;
   search?: string;
 }
@@ -974,7 +971,6 @@ export interface ApiClientCreatedDto {
 }
 
 export interface CreateApiClientRequest {
-  siteId: string;
   name: string;
   keyType: ApiKeyType;
   scopes?: string[];
@@ -1044,7 +1040,6 @@ export interface SiteTemplateDto {
 }
 
 export interface CreateSiteTemplateRequest {
-  siteId: string;
   layoutId: string;
   name: string;
   description?: string;
@@ -1136,7 +1131,7 @@ export interface ImportProgress {
 
 export interface ExportOptions {
   tenantId: string;
-  siteId: string;
+  siteId?: string;
   includeContentTypes: boolean;
   includeEntries: boolean;
   includePages: boolean;

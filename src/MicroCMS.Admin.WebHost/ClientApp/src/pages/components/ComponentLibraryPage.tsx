@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { componentsApi } from '@/api/components';
-import { useSite } from '@/contexts/SiteContext';
 import { ApiError } from '@/api/client';
 import type { ComponentCategory, ComponentListItem } from '@/types';
 
@@ -175,16 +174,14 @@ function ComponentCard({
 export default function ComponentLibraryPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-const { selectedSiteId } = useSite();
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<ComponentCategory | 'All'>('All');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['components', selectedSiteId],
+    queryKey: ['components'],
     queryFn: () =>
-      componentsApi.list({ siteId: selectedSiteId ?? undefined, pageSize: 100 }),
-    enabled: !!selectedSiteId,
+      componentsApi.list({ pageSize: 100 }),
   });
 
   const deleteMutation = useMutation({
@@ -202,7 +199,6 @@ const { selectedSiteId } = useSite();
   const createMutation = useMutation({
     mutationFn: (data: CreateForm) =>
       componentsApi.create({
-      siteId: selectedSiteId!,
         ...data,
       }),
  onSuccess: (comp) => {
@@ -255,16 +251,6 @@ const matchSearch =
     },
     {},
   );
-
-  if (!selectedSiteId) {
-    return (
-    <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-     <p className="text-sm font-medium text-slate-500">
-          No site selected. Choose a site from the top bar.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

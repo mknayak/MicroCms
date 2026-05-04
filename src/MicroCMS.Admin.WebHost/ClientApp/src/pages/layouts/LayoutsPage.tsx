@@ -28,9 +28,8 @@ const TEMPLATE_TYPE_BADGE: Record<LayoutTemplateType, string> = {
 
 // ─── Editor panel (create / rename only) ─────────────────────────────────────
 
-function LayoutEditor({ layout, siteId, onClose }: {
+function LayoutEditor({ layout, onClose }: {
   layout: LayoutDto | null;
-  siteId: string;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
@@ -45,14 +44,14 @@ function LayoutEditor({ layout, siteId, onClose }: {
   const templateType = form.watch('templateType');
 
   const createMutation = useMutation({
-    mutationFn: (data: LayoutForm) => layoutsApi.create({ siteId, ...data }),
-    onSuccess: () => { toast.success('Layout created.'); void qc.invalidateQueries({ queryKey: ['layouts', siteId] }); onClose(); },
+    mutationFn: (data: LayoutForm) => layoutsApi.create(data),
+    onSuccess: () => { toast.success('Layout created.'); void qc.invalidateQueries({ queryKey: ['layouts'] }); onClose(); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Create failed.'),
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: LayoutForm) => layoutsApi.update(layout!.id, data),
-    onSuccess: () => { toast.success('Layout saved.'); void qc.invalidateQueries({ queryKey: ['layouts', siteId] }); onClose(); },
+    onSuccess: () => { toast.success('Layout saved.'); void qc.invalidateQueries({ queryKey: ['layouts'] }); onClose(); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
   });
 
@@ -110,19 +109,19 @@ function LayoutEditor({ layout, siteId, onClose }: {
 
 // ─── Layout row ───────────────────────────────────────────────────────────────
 
-function LayoutRow({ layout, siteId, onEdit }: { layout: LayoutListItem; siteId: string; onEdit: (id: string) => void }) {
+function LayoutRow({ layout, onEdit }: { layout: LayoutListItem; onEdit: (id: string) => void }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
   const setDefaultMutation = useMutation({
-    mutationFn: () => layoutsApi.setDefault(layout.id, siteId),
-    onSuccess: () => { toast.success(`"${layout.name}" is now the default layout.`); void qc.invalidateQueries({ queryKey: ['layouts', siteId] }); },
+    mutationFn: () => layoutsApi.setDefault(layout.id),
+    onSuccess: () => { toast.success(`"${layout.name}" is now the default layout.`); void qc.invalidateQueries({ queryKey: ['layouts'] }); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => layoutsApi.delete(layout.id),
-    onSuccess: () => { toast.success('Layout deleted.'); void qc.invalidateQueries({ queryKey: ['layouts', siteId] }); },
+    onSuccess: () => { toast.success('Layout deleted.'); void qc.invalidateQueries({ queryKey: ['layouts'] }); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
   });
 
@@ -176,15 +175,13 @@ function LayoutRow({ layout, siteId, onEdit }: { layout: LayoutListItem; siteId:
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LayoutsPage() {
-  const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
-  const siteId = selectedSiteId ?? '';
+  const { selectedSite, isLoading: siteLoading } = useSite();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorLayout, setEditorLayout] = useState<LayoutDto | null>(null);
 
   const { data: layouts, isLoading } = useQuery({
-    queryKey: ['layouts', siteId],
-    queryFn: () => layoutsApi.list(siteId),
-    enabled: !!siteId,
+    queryKey: ['layouts'],
+    queryFn: () => layoutsApi.list(),
   });
 
   const openNew = () => { setEditorLayout(null); setEditorOpen(true); };
@@ -195,15 +192,9 @@ export default function LayoutsPage() {
 
   if (siteLoading) return <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />)}</div>;
 
-  if (!siteId) return (
-    <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-      <p className="text-sm font-medium text-slate-500">No site selected.</p>
-    </div>
-  );
-
   return (
     <>
-   {editorOpen && <LayoutEditor layout={editorLayout} siteId={siteId} onClose={() => setEditorOpen(false)} />}
+   {editorOpen && <LayoutEditor layout={editorLayout} onClose={() => setEditorOpen(false)} />}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -239,7 +230,7 @@ export default function LayoutsPage() {
       </tr>
          </thead>
           <tbody className="divide-y divide-slate-100">
-      {(layouts ?? []).map((l) => <LayoutRow key={l.id} layout={l} siteId={siteId} onEdit={openEdit} />)}
+      {(layouts ?? []).map((l) => <LayoutRow key={l.id} layout={l} onEdit={openEdit} />)}
          </tbody>
    </table>
           )}

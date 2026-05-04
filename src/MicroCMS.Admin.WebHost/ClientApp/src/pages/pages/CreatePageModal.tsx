@@ -10,9 +10,8 @@ import type { StaticForm, CollectionForm } from './schemas';
 import type { PageTreeNode, ContentTypeListItem } from '@/types';
 
 export function CreatePageModal({
-  siteId, parentId, flatPages, contentTypes, onClose,
+  parentId, flatPages, contentTypes, onClose,
 }: {
-  siteId: string;
   parentId?: string;
   flatPages: PageTreeNode[];
   contentTypes: ContentTypeListItem[];
@@ -25,13 +24,13 @@ export function CreatePageModal({
   const cf = useForm<CollectionForm>({ resolver: zodResolver(collectionSchema), defaultValues: { parentId: parentId ?? '' } });
 
   const cs = useMutation({
-    mutationFn: (d: StaticForm) => pagesApi.createStatic({ siteId, ...d }),
-    onSuccess: () => { toast.success('Page created.'); void qc.invalidateQueries({ queryKey: ['pages', siteId] }); onClose(); },
+    mutationFn: (d: StaticForm) => pagesApi.createStatic({ ...d }),
+    onSuccess: () => { toast.success('Page created.'); void qc.invalidateQueries({ queryKey: ['pages'] }); onClose(); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
   const cc = useMutation({
-    mutationFn: (d: CollectionForm) => pagesApi.createCollection({ siteId, ...d }),
-    onSuccess: () => { toast.success('Collection page created.'); void qc.invalidateQueries({ queryKey: ['pages', siteId] }); onClose(); },
+    mutationFn: (d: CollectionForm) => pagesApi.createCollection({ ...d }),
+    onSuccess: () => { toast.success('Collection page created.'); void qc.invalidateQueries({ queryKey: ['pages'] }); onClose(); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
 

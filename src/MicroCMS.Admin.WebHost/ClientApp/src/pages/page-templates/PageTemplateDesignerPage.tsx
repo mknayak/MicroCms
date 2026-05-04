@@ -12,7 +12,6 @@ import toast from 'react-hot-toast';
 import { siteTemplatesApi } from '@/api/siteTemplates';
 import { layoutsApi } from '@/api/layouts';
 import { componentsApi } from '@/api/components';
-import { useSite } from '@/contexts/SiteContext';
 import type { ComponentListItem, ComponentCategory, LayoutZoneNode } from '@/types';
 import type { PlacementNode } from '../designer/designerTypes';
 import { ApiError } from '@/api/client';
@@ -216,7 +215,6 @@ function ZoneStrip({
 export default function PageTemplateDesignerPage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
-  const { selectedSiteId } = useSite();
 
   const [placements, setPlacements] = useState<PlacementNode[]>([]);
   const [initialised, setInitialised] = useState(false);
@@ -237,9 +235,8 @@ export default function PageTemplateDesignerPage() {
   });
 
   const { data: componentsResult } = useQuery({
-    queryKey: ['components', selectedSiteId],
-    queryFn: () => componentsApi.list({ siteId: selectedSiteId!, pageSize: 200 }),
-    enabled: !!selectedSiteId,
+    queryKey: ['components'],
+    queryFn: () => componentsApi.list({ pageSize: 200 }),
   });
   const allComponents = componentsResult?.items ?? [];
 

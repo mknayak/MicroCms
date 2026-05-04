@@ -17,7 +17,8 @@ interface SiteContextValue {
   sites: Site[];
   selectedSite: Site | null;
   selectedSiteId: string | null;
-  setSelectedSiteId: (id: string) => void;
+  setSelectedSiteId: (id: string) => Promise<void>;
+  isSwitching: boolean;
   isLoading: boolean;
 }
 
@@ -25,12 +26,11 @@ interface SiteContextValue {
 
 const SiteContext = createContext<SiteContextValue | null>(null);
 
-const STORAGE_KEY = 'microcms:selectedSiteId';
-
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function SiteProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, switchSite } = useAuth();
+  const [isSwitching, setIsSwitching] = useState(false);
 
   const { data: tenant, isLoading } = useQuery({
     queryKey: ['current-tenant'],
@@ -41,25 +41,27 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
 
   const sites: Site[] = tenant?.sites ?? [];
 
-  // Restore persisted selection; fall back to the first active site
-  const [selectedSiteId, setSelectedSiteIdState] = useState<string | null>(() => {
-    return localStorage.getItem(STORAGE_KEY);
-  });
-
-  // Once sites load, validate the persisted id or pick a default
+  // Auto-switch to the first active site when no site is embedded in the token
   useEffect(() => {
-    if (sites.length === 0) return;
-    const ids = sites.map((s) => s.id);
-    if (selectedSiteId && ids.includes(selectedSiteId)) return; // still valid
+    if (!isAuthenticated || user?.siteId || sites.length === 0) return;
     const defaultSite = sites.find((s) => s.isActive) ?? sites[0];
-    setSelectedSiteIdState(defaultSite.id);
-    localStorage.setItem(STORAGE_KEY, defaultSite.id);
-  }, [sites, selectedSiteId]);
+    void switchSite(defaultSite.id);
+  }, [isAuthenticated, user?.siteId, sites, switchSite]);
 
-  const setSelectedSiteId = useCallback((id: string) => {
-    setSelectedSiteIdState(id);
-    localStorage.setItem(STORAGE_KEY, id);
-  }, []);
+  const selectedSiteId = user?.siteId ?? null;
+
+  const setSelectedSiteId = useCallback(
+    async (id: string): Promise<void> => {
+      if (id === selectedSiteId) return;
+      setIsSwitching(true);
+      try {
+        await switchSite(id);
+      } finally {
+        setIsSwitching(false);
+      }
+    },
+    [selectedSiteId, switchSite],
+  );
 
   const selectedSite = useMemo(
     () => sites.find((s) => s.id === selectedSiteId) ?? null,
@@ -67,8 +69,8 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo<SiteContextValue>(
-    () => ({ sites, selectedSite, selectedSiteId, setSelectedSiteId, isLoading }),
-    [sites, selectedSite, selectedSiteId, setSelectedSiteId, isLoading],
+    () => ({ sites, selectedSite, selectedSiteId, setSelectedSiteId, isSwitching, isLoading }),
+    [sites, selectedSite, selectedSiteId, setSelectedSiteId, isSwitching, isLoading],
   );
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
@@ -77,7 +79,8 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useSite(): SiteContextValue {
-const ctx = useContext(SiteContext);
+  const ctx = useContext(SiteContext);
   if (!ctx) throw new Error('useSite must be used within SiteProvider');
   return ctx;
 }
+

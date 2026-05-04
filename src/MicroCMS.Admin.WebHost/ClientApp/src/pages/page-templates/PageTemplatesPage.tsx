@@ -24,18 +24,15 @@ type FormValues = z.infer<typeof schema>;
 
 function TemplateModal({
   existing,
-  siteId,
   onClose,
 }: {
   existing: SiteTemplateDto | null;
-  siteId: string;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
   const { data: layouts = [] } = useQuery({
-    queryKey: ['layouts', siteId],
-    queryFn: () => layoutsApi.list(siteId),
-    enabled: !!siteId,
+    queryKey: ['layouts'],
+    queryFn: () => layoutsApi.list(),
   });
 
   const form = useForm<FormValues>({
@@ -46,14 +43,14 @@ function TemplateModal({
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: FormValues) => siteTemplatesApi.create({ siteId, ...data }),
-    onSuccess: () => { toast.success('Template created.'); void qc.invalidateQueries({ queryKey: ['site-templates', siteId] }); onClose(); },
+    mutationFn: (data: FormValues) => siteTemplatesApi.create(data),
+    onSuccess: () => { toast.success('Template created.'); void qc.invalidateQueries({ queryKey: ['site-templates'] }); onClose(); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Create failed.'),
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: FormValues) => siteTemplatesApi.update(existing!.id, data),
-    onSuccess: () => { toast.success('Template saved.'); void qc.invalidateQueries({ queryKey: ['site-templates', siteId] }); onClose(); },
+    onSuccess: () => { toast.success('Template saved.'); void qc.invalidateQueries({ queryKey: ['site-templates'] }); onClose(); },
   onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
   });
 
@@ -152,8 +149,7 @@ function TemplateRow({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PageTemplatesPage() {
-  const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
-  const siteId = selectedSiteId ?? '';
+  const { selectedSite, isLoading: siteLoading } = useSite();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -161,14 +157,13 @@ export default function PageTemplatesPage() {
   const [editTarget, setEditTarget] = useState<SiteTemplateDto | null>(null);
 
   const { data: templates, isLoading } = useQuery({
-    queryKey: ['site-templates', siteId],
-    queryFn: () => siteTemplatesApi.list(siteId),
-    enabled: !!siteId,
+    queryKey: ['site-templates'],
+    queryFn: () => siteTemplatesApi.list(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => siteTemplatesApi.delete(id),
-    onSuccess: () => { toast.success('Template deleted.'); void qc.invalidateQueries({ queryKey: ['site-templates', siteId] }); },
+    onSuccess: () => { toast.success('Template deleted.'); void qc.invalidateQueries({ queryKey: ['site-templates'] }); },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
   });
 
@@ -179,11 +174,10 @@ export default function PageTemplatesPage() {
   };
 
   if (siteLoading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />)}</div>;
-  if (!siteId) return <div className="py-24 text-center text-sm text-slate-500">No site selected.</div>;
 
   return (
     <>
-      {modalOpen && <TemplateModal existing={editTarget} siteId={siteId} onClose={() => setModalOpen(false)} />}
+      {modalOpen && <TemplateModal existing={editTarget} onClose={() => setModalOpen(false)} />}
 
       <div className="space-y-6">
         {/* Header */}

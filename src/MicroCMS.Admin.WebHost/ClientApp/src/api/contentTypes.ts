@@ -15,7 +15,6 @@ export interface FieldDynamicSourceRequest {
 }
 
 export interface CreateContentTypeRequest {
-  siteId: string;
   handle: string;
   displayName: string;
   description?: string;
@@ -51,7 +50,6 @@ export interface UpdateContentTypeRequest {
 }
 
 export interface ImportSchemaRequest {
-  siteId: string;
   handle: string;
   displayName: string;
   description?: string;
@@ -65,7 +63,7 @@ export interface ImportSchemaRequest {
 }
 
 export const contentTypesApi = {
-  list: (params?: PaginationParams & { siteId?: string }): Promise<PagedResult<ContentTypeListItem>> =>
+  list: (params?: PaginationParams): Promise<PagedResult<ContentTypeListItem>> =>
     get<PagedResult<ContentTypeListItem>>('/content-types', { params }),
 
   getById: (id: string): Promise<ContentType> =>
@@ -88,6 +86,6 @@ export const contentTypesApi = {
    * For static fields returns stored options.
    * For dynamic fields queries published entries of the source content type.
    */
-  getEnumOptions: (contentTypeId: string, fieldId: string, siteId: string): Promise<EnumOptionDto[]> =>
-    get<EnumOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/enum-options`, { params: { siteId } }),
+  getEnumOptions: (contentTypeId: string, fieldId: string): Promise<EnumOptionDto[]> =>
+    get<EnumOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/enum-options`),
 };

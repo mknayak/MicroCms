@@ -486,7 +486,7 @@ function ApiKeysTab({ siteId }: { siteId: string }) {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateKeyForm) =>
-      apiClientsApi.create({ siteId, name: data.name, keyType: data.keyType }),
+      apiClientsApi.create({ name: data.name, keyType: data.keyType }),
     onSuccess: (result) => {
       setNewKey(result);
       setShowCreate(false);

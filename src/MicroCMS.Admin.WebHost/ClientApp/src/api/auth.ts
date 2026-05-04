@@ -1,5 +1,5 @@
 import { post } from './client';
-import type { AuthTokenResponse, ChangePasswordRequest } from '@/types';
+import type { AuthTokenResponse, ChangePasswordRequest, SwitchSiteRequest } from '@/types';
 
 export const authApi = {
   /** POST /api/v1/auth/login */
@@ -25,4 +25,8 @@ export const authApi = {
   /** POST /api/v1/auth/set-password — for newly invited users */
   setInitialPassword: (userId: string, newPassword: string): Promise<void> =>
     post<void>('/auth/set-password', { userId, newPassword }),
+
+  /** POST /api/v1/auth/switch-site — issues a new token pair for the given site */
+  switchSite: (data: SwitchSiteRequest): Promise<AuthTokenResponse> =>
+    post<AuthTokenResponse>('/auth/switch-site', data),
 };

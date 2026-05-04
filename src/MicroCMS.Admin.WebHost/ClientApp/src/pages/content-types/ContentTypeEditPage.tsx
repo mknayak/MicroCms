@@ -9,7 +9,6 @@ import { contentTypesApi } from '@/api/contentTypes';
 import { layoutsApi } from '@/api/layouts';
 import type { FieldType } from '@/types';
 import { ApiError } from '@/api/client';
-import { useSite } from '@/contexts/SiteContext';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -73,7 +72,6 @@ export default function ContentTypeEditPage() {
   const isNew = !id;
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { selectedSiteId } = useSite();
   const [activeFieldIdx, setActiveFieldIdx] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<EditorTab>('general');
 
@@ -84,9 +82,8 @@ export default function ContentTypeEditPage() {
   });
 
 const { data: layouts } = useQuery({
-    queryKey: ['layouts', selectedSiteId],
-    queryFn: () => layoutsApi.list(selectedSiteId!),
-    enabled: !!selectedSiteId,
+    queryKey: ['layouts'],
+    queryFn: () => layoutsApi.list(),
   });
 
   const {
@@ -132,9 +129,8 @@ setValue('layoutId', existing.layoutId ?? '');
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
       if (isNew) {
-    if (!selectedSiteId) throw new Error('Please select a site.');
    return contentTypesApi.create({
-          siteId: selectedSiteId, handle: values.apiKey,
+          handle: values.apiKey,
     displayName: values.name, description: values.description,
           localizationMode: values.localizationMode, kind: values.kind,
         });
@@ -176,12 +172,6 @@ setValue('layoutId', existing.layoutId ?? '');
           {isNew ? 'New Content Type' : `Edit: ${existing?.displayName ?? '…'}`}
     </h1>
       </div>
-
-    {isNew && !selectedSiteId && (
-  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          ⚠ Please select a site from the top bar before creating a content type.
-      </div>
-      )}
 
       {/* Tabs */}
       {!isNew && (
@@ -362,7 +352,7 @@ setValue('layoutId', existing.layoutId ?? '');
         {/* Actions */}
         <div className="flex justify-end gap-3">
           <button type="button" onClick={() => navigate('/content-types')} className="btn-secondary">Cancel</button>
-       <button type="submit" disabled={isSubmitting || (isNew && !selectedSiteId)} className="btn-primary">
+       <button type="submit" disabled={isSubmitting} className="btn-primary">
    {isSubmitting ? 'Saving…' : isNew ? 'Create Content Type' : 'Save Changes'}
           </button>
         </div>

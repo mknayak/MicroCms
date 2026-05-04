@@ -12,17 +12,15 @@ import { ChildCard } from './ChildCard';
 import type { PageTreeNode } from '@/types';
 
 export default function PagesPage() {
-    const { selectedSiteId, selectedSite, isLoading: siteLoading } = useSite();
-    const siteId = selectedSiteId ?? '';
+    const { selectedSite, isLoading: siteLoading } = useSite();
 
     const [selectedId, setSelectedId] = useState('');
     const [detailOpen, setDetailOpen] = useState(false);
     const [createModal, setCreateModal] = useState<{ open: boolean; parentId?: string }>({ open: false });
 
     const { data: tree = [], isLoading: treeLoading } = useQuery({
-        queryKey: ['pages', siteId],
-        queryFn: () => pagesApi.getTree(siteId),
-        enabled: !!siteId,
+        queryKey: ['pages'],
+        queryFn: () => pagesApi.getTree(),
     });
 
     const { data: ctResult } = useQuery({
@@ -46,7 +44,7 @@ export default function PagesPage() {
         </div>
     );
 
-    if (!siteId) return (
+    if (!selectedSite) return (
         <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <p className="text-sm text-slate-500">No site selected. Choose a site from the top bar.</p>
         </div>
@@ -55,7 +53,7 @@ export default function PagesPage() {
     return (
         <>
             {createModal.open && (
-                <CreatePageModal siteId={siteId} parentId={createModal.parentId} flatPages={flatPages}
+                <CreatePageModal parentId={createModal.parentId} flatPages={flatPages}
                     contentTypes={contentTypes} onClose={() => setCreateModal({ open: false })} />
             )}
 
@@ -221,7 +219,7 @@ export default function PagesPage() {
 
                 {/* RIGHT — detail panel */}
                 {detailOpen && selectedId && (
-                    <PageDetailPanel pageId={selectedId} siteId={siteId}
+                    <PageDetailPanel pageId={selectedId}
                         onClose={() => setDetailOpen(false)} />
                 )}
             </div>

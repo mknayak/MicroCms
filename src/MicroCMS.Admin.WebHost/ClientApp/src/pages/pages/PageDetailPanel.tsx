@@ -80,10 +80,9 @@ ogImage   !== (page.seo?.ogImage ?? '');
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
 export function PageDetailPanel({
-  pageId, siteId, onClose,
+  pageId, onClose,
 }: {
   pageId: string;
-  siteId: string;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
@@ -113,9 +112,8 @@ export function PageDetailPanel({
   });
 
   const { data: siteTemplates = [] } = useQuery({
-    queryKey: ['site-templates', siteId],
-    queryFn: () => siteTemplatesApi.list(siteId),
-    enabled: !!siteId,
+    queryKey: ['site-templates'],
+    queryFn: () => siteTemplatesApi.list(),
   });
 
   useEffect(() => {
@@ -147,7 +145,7 @@ export function PageDetailPanel({
     onSuccess: () => {
       toast.success('Page deleted.');
    onClose();
-      void qc.invalidateQueries({ queryKey: ['pages', siteId] });
+      void qc.invalidateQueries({ queryKey: ['pages'] });
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
@@ -220,7 +218,7 @@ export function PageDetailPanel({
          : 'Collection pages render entries dynamically.'}
                 </p>
               </div>
-            <LinkEntrySection pageId={pageId} siteId={siteId} page={page} />
+            <LinkEntrySection pageId={pageId} page={page} />
      </div>
           ) : !linkedEntry ? (
         <div className="flex-1 space-y-2 p-4">

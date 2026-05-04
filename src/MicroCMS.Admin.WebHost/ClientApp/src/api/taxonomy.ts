@@ -2,8 +2,8 @@ import { get, post, put, del } from './client';
 import type { Category, Tag, CreateCategoryRequest, CreateTagRequest } from '@/types';
 
 export const taxonomyApi = {
-  getCategories: (siteId: string): Promise<Category[]> =>
-    get<Category[]>('/taxonomy/categories', { params: { siteId } }),
+  getCategories: (): Promise<Category[]> =>
+    get<Category[]>('/taxonomy/categories'),
 
   createCategory: (data: CreateCategoryRequest): Promise<Category> =>
     post<Category>('/taxonomy/categories', data),
@@ -14,8 +14,8 @@ export const taxonomyApi = {
   deleteCategory: (id: string): Promise<void> =>
     del(`/taxonomy/categories/${id}`),
 
-  getTags: (siteId: string): Promise<Tag[]> =>
-    get<Tag[]>('/taxonomy/tags', { params: { siteId } }),
+  getTags: (): Promise<Tag[]> =>
+    get<Tag[]>('/taxonomy/tags'),
 
   createTag: (data: CreateTagRequest): Promise<Tag> =>
     post<Tag>('/taxonomy/tags', data),
