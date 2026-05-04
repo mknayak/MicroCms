@@ -166,12 +166,15 @@ internal sealed class UpdateLayoutDefaultPlacementsCommandHandler(
 }
 
 internal sealed class SetDefaultLayoutCommandHandler(
-    IRepository<Layout, LayoutId> repo)
+    IRepository<Layout, LayoutId> repo,
+    ICurrentUser currentUser)
     : IRequestHandler<SetDefaultLayoutCommand, Result<LayoutDto>>
 {
     public async Task<Result<LayoutDto>> Handle(SetDefaultLayoutCommand request, CancellationToken cancellationToken)
     {
-     var siteId = new SiteId(request.SiteId);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<LayoutDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var existing = await repo.ListAsync(new DefaultLayoutBySiteSpec(siteId), cancellationToken);
         foreach (var l in existing) { l.ClearDefault(); repo.Update(l); }
 
@@ -199,13 +202,18 @@ internal sealed class DeleteLayoutCommandHandler(
 
 // ── Query handlers ────────────────────────────────────────────────────────────
 
-internal sealed class ListLayoutsQueryHandler(IRepository<Layout, LayoutId> repo)
+internal sealed class ListLayoutsQueryHandler(
+    IRepository<Layout, LayoutId> repo,
+    ICurrentUser currentUser)
  : IRequestHandler<ListLayoutsQuery, Result<IReadOnlyList<LayoutListItemDto>>>
 {
     public async Task<Result<IReadOnlyList<LayoutListItemDto>>> Handle(
         ListLayoutsQuery request, CancellationToken cancellationToken)
     {
-        var items = await repo.ListAsync(new LayoutsBySiteSpec(new SiteId(request.SiteId)), cancellationToken);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<LayoutListItemDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
+        var items = await repo.ListAsync(new LayoutsBySiteSpec(siteId), cancellationToken);
         return Result.Success<IReadOnlyList<LayoutListItemDto>>(
    items.Select(LayoutMapper.ToListItemDto).ToList().AsReadOnly());
   }

@@ -13,8 +13,8 @@ public sealed class PagesController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<PageTreeNode>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTree(
-    [FromQuery] Guid siteId, CancellationToken ct = default) =>
-   OkOrProblem(await Sender.Send(new GetSiteTreeQuery(siteId), ct));
+    CancellationToken ct = default) =>
+   OkOrProblem(await Sender.Send(new GetSiteTreeQuery(), ct));
 
     [HttpPost("static")]
     [ProducesResponseType(typeof(PageDto), StatusCodes.Status201Created)]
@@ -22,7 +22,7 @@ public sealed class PagesController : ApiControllerBase
         [FromBody] CreateStaticPageCommand command, CancellationToken ct = default)
     {
         var result = await Sender.Send(command, ct);
-        return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
+        return CreatedOrProblem(result, nameof(GetTree), null);
     }
 
     [HttpPost("collection")]
@@ -31,7 +31,7 @@ public sealed class PagesController : ApiControllerBase
         [FromBody] CreateCollectionPageCommand command, CancellationToken ct = default)
     {
         var result = await Sender.Send(command, ct);
-        return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
+        return CreatedOrProblem(result, nameof(GetTree), null);
     }
 
     [HttpPut("{id:guid}/move")]

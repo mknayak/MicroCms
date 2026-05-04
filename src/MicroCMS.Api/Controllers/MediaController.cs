@@ -1,4 +1,5 @@
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Features.Ai.AltText;
 using MicroCMS.Application.Features.Media.Commands;
 using MicroCMS.Application.Features.Media.Dtos;
 using MicroCMS.Application.Features.Media.Queries;
@@ -23,12 +24,11 @@ public sealed class MediaController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(PagedList<MediaAssetListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-        [FromQuery] Guid siteId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ListMediaAssetsQuery(siteId, page, pageSize), cancellationToken);
+        var result = await Sender.Send(new ListMediaAssetsQuery(page, pageSize), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -55,7 +55,6 @@ public sealed class MediaController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Upload(
-        [FromQuery] Guid siteId,
         [FromQuery] Guid? folderId,
         CancellationToken cancellationToken = default)
     {
@@ -80,7 +79,6 @@ public sealed class MediaController : ApiControllerBase
                 var contentLength = Request.ContentLength ?? 0;
 
                 var command = new UploadMediaAssetCommand(
-                    siteId,
                     fileName,
                     section.Body,
                     contentLength,
@@ -126,6 +124,19 @@ public sealed class MediaController : ApiControllerBase
             new UpdateMediaAssetMetadataCommand(id, request.AltText, request.Tags), cancellationToken);
         return OkOrProblem(result);
     }
+
+    // ── AI Alt Text ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Uses a vision-capable LLM to generate descriptive alt text for an image asset
+    /// and persists it on the asset record.
+    /// </summary>
+    [HttpPost("{id:guid}/alt-text")]
+    [ProducesResponseType(typeof(MediaAssetDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> GenerateAltText(Guid id, CancellationToken cancellationToken = default) =>
+        OkOrProblem(await Sender.Send(new GenerateAltTextCommand(id), cancellationToken));
 
     // ── Signed URL (Sprint 8) ─────────────────────────────────────────────
 
@@ -252,11 +263,10 @@ public sealed class MediaController : ApiControllerBase
     [HttpGet("folders")]
     [ProducesResponseType(typeof(IReadOnlyList<MediaFolderDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListFolders(
-        [FromQuery] Guid siteId,
         [FromQuery] Guid? parentFolderId,
         CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ListMediaFoldersQuery(siteId, parentFolderId), cancellationToken);
+        var result = await Sender.Send(new ListMediaFoldersQuery(parentFolderId), cancellationToken);
         return OkOrProblem(result);
     }
 

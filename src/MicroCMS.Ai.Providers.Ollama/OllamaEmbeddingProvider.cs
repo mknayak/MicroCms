@@ -22,7 +22,8 @@ public sealed class OllamaEmbeddingProvider : IAiEmbeddingProvider
     public OllamaEmbeddingProvider(
         string endpoint,
         string model,
-        ILogger<OllamaEmbeddingProvider> logger)
+        ILogger<OllamaEmbeddingProvider> logger,
+        string? apiKey = null)
     {
         _endpoint = endpoint?.TrimEnd('/') ?? throw new ArgumentNullException(nameof(endpoint));
         _model = model ?? throw new ArgumentNullException(nameof(model));
@@ -33,6 +34,10 @@ public sealed class OllamaEmbeddingProvider : IAiEmbeddingProvider
             BaseAddress = new Uri(_endpoint),
             Timeout = TimeSpan.FromMinutes(5)
         };
+
+        if (!string.IsNullOrWhiteSpace(apiKey))
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
     }
 
     public async Task<EmbeddingResponse> EmbedAsync(

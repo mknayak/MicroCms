@@ -35,10 +35,10 @@ public sealed class AiOrchestrator
     /// </summary>
     public async Task<CompletionResponse> CompleteAsync(
         CompletionRequest request,
+        SiteId? siteId = null,
         CancellationToken cancellationToken = default)
     {
         var tenantId = _currentUser.TenantId;
-        var siteId = (SiteId?)null;
 
         // Read provider configuration from settings
         var providerName = await _settingsReader.GetAsync<string>(
@@ -125,10 +125,10 @@ public sealed class AiOrchestrator
     /// </summary>
     public async IAsyncEnumerable<CompletionChunk> StreamAsync(
         CompletionRequest request,
+        SiteId? siteId = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var tenantId = _currentUser.TenantId;
-        var siteId = (SiteId?)null;
 
         var providerName = await _settingsReader.GetAsync<string>(
             tenantId,
@@ -185,10 +185,10 @@ public sealed class AiOrchestrator
     /// </summary>
     public async Task<EmbeddingResponse> EmbedAsync(
         EmbeddingRequest request,
+        SiteId? siteId = null,
         CancellationToken cancellationToken = default)
     {
         var tenantId = _currentUser.TenantId;
-        var siteId = (SiteId?)null;
 
         var providerName = await _settingsReader.GetAsync<string>(
             tenantId,

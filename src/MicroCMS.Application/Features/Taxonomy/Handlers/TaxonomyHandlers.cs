@@ -32,7 +32,7 @@ internal sealed class CreateCategoryCommandHandler(
     {
      var parentId = request.ParentId.HasValue ? new CategoryId(request.ParentId.Value) : (CategoryId?)null;
         var category = Category.Create(
-   currentUser.TenantId, new SiteId(request.SiteId),
+   currentUser.TenantId, currentUser.SiteId ?? new SiteId(Guid.Empty),
    request.Name, Slug.Create(request.Slug), parentId, request.Description);
 
  await repo.AddAsync(category, cancellationToken);
@@ -60,9 +60,9 @@ internal sealed class CreateTagCommandHandler(
 {
     public async Task<Result<TagDto>> Handle(CreateTagCommand request, CancellationToken cancellationToken)
     {
-var tag = Tag.Create(
-       currentUser.TenantId, new SiteId(request.SiteId),
-  request.Name, Slug.Create(request.Slug));
+      var tag = Tag.Create(
+     currentUser.TenantId, currentUser.SiteId ?? new SiteId(Guid.Empty),
+request.Name, Slug.Create(request.Slug));
         await repo.AddAsync(tag, cancellationToken);
    return Result.Success(TaxonomyMapper.ToDto(tag));
     }
@@ -82,23 +82,31 @@ internal sealed class DeleteTagCommandHandler(
 }
 
 internal sealed class ListCategoriesQueryHandler(
-    IRepository<Category, CategoryId> repo)
+    IRepository<Category, CategoryId> repo,
+    ICurrentUser currentUser)
     : IRequestHandler<ListCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>
 {
     public async Task<Result<IReadOnlyList<CategoryDto>>> Handle(ListCategoriesQuery request, CancellationToken cancellationToken)
     {
-        var items = await repo.ListAsync(new CategoriesBySiteSpec(new SiteId(request.SiteId)), cancellationToken);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<CategoryDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
+        var items = await repo.ListAsync(new CategoriesBySiteSpec(siteId), cancellationToken);
      return Result.Success<IReadOnlyList<CategoryDto>>(items.Select(TaxonomyMapper.ToDto).ToList().AsReadOnly());
     }
 }
 
 internal sealed class ListTagsQueryHandler(
-    IRepository<Tag, TagId> repo)
+    IRepository<Tag, TagId> repo,
+    ICurrentUser currentUser)
     : IRequestHandler<ListTagsQuery, Result<IReadOnlyList<TagDto>>>
 {
     public async Task<Result<IReadOnlyList<TagDto>>> Handle(ListTagsQuery request, CancellationToken cancellationToken)
     {
-     var items = await repo.ListAsync(new TagsBySiteSpec(new SiteId(request.SiteId)), cancellationToken);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<TagDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
+        var items = await repo.ListAsync(new TagsBySiteSpec(siteId), cancellationToken);
         return Result.Success<IReadOnlyList<TagDto>>(items.Select(TaxonomyMapper.ToDto).ToList().AsReadOnly());
     }
 }

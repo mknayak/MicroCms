@@ -14,7 +14,7 @@ public sealed class WebhooksController : ApiControllerBase
  [FromBody] CreateWebhookRequest r, CancellationToken ct = default)
   {
   var result = await Sender.Send(
-   new CreateWebhookCommand(r.SiteId, r.TargetUrl, r.HashedSecret, r.Events, r.MaxRetries), ct);
+   new CreateWebhookCommand(r.TargetUrl, r.HashedSecret, r.Events, r.MaxRetries), ct);
         return result.IsSuccess
       ? StatusCode(StatusCodes.Status201Created, result.Value)
    : ToProblemResult(result.Error);
@@ -31,7 +31,7 @@ public sealed class WebhooksController : ApiControllerBase
 }
 
 public sealed record CreateWebhookRequest(
-    Guid? SiteId, string TargetUrl, string HashedSecret,
+    string TargetUrl, string HashedSecret,
     IReadOnlyList<string> Events, int MaxRetries = 3);
 
 public sealed record UpdateWebhookRequest(IReadOnlyList<string> Events, bool IsActive);

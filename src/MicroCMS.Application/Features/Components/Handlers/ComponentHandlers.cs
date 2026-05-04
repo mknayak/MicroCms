@@ -274,12 +274,15 @@ internal sealed class DeleteComponentItemCommandHandler(
 // ── Query handlers ────────────────────────────────────────────────────────────
 
 internal sealed class ListComponentsQueryHandler(
-  IRepository<Component, ComponentId> repo)
+  IRepository<Component, ComponentId> repo,
+  ICurrentUser currentUser)
     : IRequestHandler<ListComponentsQuery, Result<PagedList<ComponentListItemDto>>>
 {
     public async Task<Result<PagedList<ComponentListItemDto>>> Handle(ListComponentsQuery request, CancellationToken cancellationToken)
     {
-        var siteId = new SiteId(request.SiteId);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<PagedList<ComponentListItemDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var items = await repo.ListAsync(new ComponentsBySiteSpec(siteId, request.Page, request.PageSize), cancellationToken);
         var total = await repo.CountAsync(new ComponentsBySiteCountSpec(siteId), cancellationToken);
         return Result.Success(PagedList<ComponentListItemDto>.Create(

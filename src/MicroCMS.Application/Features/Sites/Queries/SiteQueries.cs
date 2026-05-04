@@ -104,8 +104,9 @@ internal sealed class GetSiteConfigEntriesQueryHandler(
     {
         var siteId = new SiteId(request.SiteId);
         var settings = await settingsRepo.GetByIdAsync(siteId, cancellationToken);
+
         if (settings is null)
-            throw new NotFoundException(nameof(SiteSettings), request.SiteId);
+            return Result.Success(new SiteConfigEntriesDto(request.SiteId, []));
 
         var entries = settings.ConfigEntries
             .Where(e => request.Category is null ||

@@ -24,9 +24,10 @@ internal sealed class HttpContextCurrentUser : ICurrentUser, IAiCurrentUser
 {
     // With MapInboundClaims = false, claim names match the JWT token exactly.
     private const string TenantIdClaimType = "tenant_id";
-    private const string SubjectClaimType = "sub";    // raw JWT "sub" claim — no longer remapped by JwtBearer
-    private const string EmailClaimType = "email";
-    private const string RoleClaimType = "role";                       // custom claim — short form matches JWT token
+    private const string SiteIdClaimType   = "site_id";
+    private const string SubjectClaimType  = "sub";    // raw JWT "sub" claim — no longer remapped by JwtBearer
+    private const string EmailClaimType    = "email";
+    private const string RoleClaimType     = "role";                       // custom claim — short form matches JWT token
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -55,6 +56,15 @@ internal sealed class HttpContextCurrentUser : ICurrentUser, IAiCurrentUser
         {
             var claim = User?.FindFirst(TenantIdClaimType)?.Value;
             return TenantId.TryParse(claim ?? string.Empty, out var id) ? id : TenantId.Empty;
+        }
+    }
+
+    public SiteId? SiteId
+    {
+        get
+        {
+            var claim = User?.FindFirst(SiteIdClaimType)?.Value;
+            return Guid.TryParse(claim, out var id) ? new SiteId(id) : null;
         }
     }
 

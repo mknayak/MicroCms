@@ -9,7 +9,6 @@ namespace MicroCMS.Application.Features.ContentTypes.Commands;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record CreateContentTypeCommand(
-    Guid SiteId,
     string Handle,
     string DisplayName,
     string? Description = null,
@@ -92,7 +91,6 @@ public sealed record FieldDynamicSourceInput(
 /// <summary>Imports a ContentType schema from a JSON Schema document (BE-07c).</summary>
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record ImportContentTypeSchemaCommand(
-  Guid SiteId,
     string Handle,
     string DisplayName,
     string? Description,

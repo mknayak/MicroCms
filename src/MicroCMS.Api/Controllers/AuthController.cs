@@ -50,6 +50,27 @@ public sealed class AuthController : ApiControllerBase
         return OkOrProblem(result);
     }
 
+    // ── POST /api/v1/auth/switch-site ─────────────────────────────────────
+
+    /// <summary>
+    /// Issues a new token pair scoped to the requested site.
+    /// The <c>site_id</c> claim in the returned access token changes to the new site;
+    /// all Category-1 APIs (entries, media, content types, etc.) will operate against it.
+    /// The user must have at least one role on the target site.
+    /// </summary>
+    [Authorize]
+    [HttpPost("switch-site")]
+    [ProducesResponseType(typeof(AuthTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SwitchSite(
+        [FromBody] SwitchSiteRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new SwitchSiteCommand(request.SiteId);
+        var result = await Sender.Send(command, cancellationToken);
+        return OkOrProblem(result);
+    }
+
     // ── POST /api/v1/auth/logout ──────────────────────────────────────────
 
     /// <summary>Revokes the supplied refresh token (single-device logout).</summary>

@@ -19,9 +19,8 @@ public sealed class SiteTemplatesController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<SiteTemplateListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-        [FromQuery] Guid siteId,
         CancellationToken ct = default) =>
-OkOrProblem(await Sender.Send(new ListSiteTemplatesQuery(siteId), ct));
+OkOrProblem(await Sender.Send(new ListSiteTemplatesQuery(), ct));
 
     /// <summary>Gets a single site template by ID.</summary>
     [HttpGet("{id:guid}")]
@@ -40,7 +39,7 @@ OkOrProblem(await Sender.Send(new ListSiteTemplatesQuery(siteId), ct));
         CancellationToken ct = default)
     {
   var result = await Sender.Send(
-   new CreateSiteTemplateCommand(request.SiteId, request.LayoutId, request.Name, request.Description), ct);
+   new CreateSiteTemplateCommand(request.LayoutId, request.Name, request.Description), ct);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
 
@@ -80,7 +79,6 @@ public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default)
 // ── Request bodies ────────────────────────────────────────────────────────────
 
 public sealed record CreateSiteTemplateRequest(
-    Guid SiteId,
   Guid LayoutId,
     string Name,
     string? Description);

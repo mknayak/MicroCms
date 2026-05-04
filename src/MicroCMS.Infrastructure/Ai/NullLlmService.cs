@@ -1,4 +1,5 @@
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Infrastructure.Ai;
 
@@ -10,17 +11,17 @@ namespace MicroCMS.Infrastructure.Ai;
 /// </summary>
 internal sealed class NullLlmService : ILlmService
 {
-    public Task<LlmResponse> CompleteAsync(LlmRequest request, CancellationToken cancellationToken = default)
- => Task.FromResult(new LlmResponse(
-     Content: string.Empty,
+    public Task<LlmResponse> CompleteAsync(LlmRequest request, SiteId? siteId = null, CancellationToken cancellationToken = default)
+        => Task.FromResult(new LlmResponse(
+            Content: string.Empty,
             PromptTokens: 0,
-        CompletionTokens: 0,
-      ProviderName: "null",
-  Model: "none"));
+            CompletionTokens: 0,
+            ProviderName: "null",
+            Model: "none"));
 
-  public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
-  {
+    public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, SiteId? siteId = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
         await Task.CompletedTask;
-    yield break;
+        yield break;
     }
 }

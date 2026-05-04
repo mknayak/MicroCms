@@ -54,7 +54,7 @@ public sealed class UploadMediaAssetCommandHandler(
 
         var asset = MediaAsset.Create(
             currentUser.TenantId,
-            new SiteId(request.SiteId),
+            currentUser.SiteId ?? new SiteId(Guid.Empty),
             metadata,
             storageKey,
             currentUser.UserId,

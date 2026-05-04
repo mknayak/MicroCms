@@ -30,7 +30,6 @@ public sealed record UpdateLayoutDefaultPlacementsCommand(
 
 [HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record SetDefaultLayoutCommand(
-    Guid SiteId,
     Guid LayoutId) : ICommand<LayoutDto>;
 
 [HasPolicy(ContentPolicies.LayoutManage)]

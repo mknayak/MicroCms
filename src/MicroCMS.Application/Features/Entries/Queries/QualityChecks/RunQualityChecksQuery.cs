@@ -60,7 +60,7 @@ public sealed class RunQualityChecksQueryHandler(
  Temperature: 0.2f,
             ResponseFormat: "json_object");
 
-        var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+        var response = await llm.CompleteAsync(llmRequest, entry.SiteId, cancellationToken);
     var (grammarScore, readabilityGrade, suggestions) = ParseLlmReport(response.Content);
 
         var report = new QualityCheckReport(

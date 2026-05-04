@@ -25,6 +25,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
     {
         _currentUser.TenantId.Returns(_tenantId);
         _currentUser.UserId.Returns(Guid.NewGuid());
+        _currentUser.SiteId.Returns(new SiteId(_siteId));
         _mimeInspector.DetectAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns("image/jpeg");
         _storage.UploadAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -36,7 +37,6 @@ public sealed class UploadMediaAssetCommandHandlerTests
     {
         // Arrange
         var command = new UploadMediaAssetCommand(
-            _siteId,
             "photo.jpg",
             new MemoryStream(new byte[1024]),
             1024,
@@ -62,7 +62,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
             .Returns("image/jpeg");
 
         var command = new UploadMediaAssetCommand(
-            _siteId, "photo.jpg", new MemoryStream(new byte[512]), 512, "image/png");
+            "photo.jpg", new MemoryStream(new byte[512]), 512, "image/png");
 
         var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
 
@@ -80,7 +80,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
         // Arrange
         var overLimit = MicroCMS.Domain.ValueObjects.AssetMetadata.MaxFileSizeBytes + 1;
         var command = new UploadMediaAssetCommand(
-            _siteId, "huge.bin", Stream.Null, overLimit, "application/octet-stream");
+            "huge.bin", Stream.Null, overLimit, "application/octet-stream");
 
         var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
 
@@ -97,7 +97,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
     public async Task Handle_ShouldCallStorageProvider_WithTenantId()
     {
         var command = new UploadMediaAssetCommand(
-            _siteId, "doc.pdf", new MemoryStream(new byte[256]), 256, "application/pdf");
+            "doc.pdf", new MemoryStream(new byte[256]), 256, "application/pdf");
 
         var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
         await sut.Handle(command, CancellationToken.None);

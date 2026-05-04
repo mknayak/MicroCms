@@ -7,7 +7,6 @@ namespace MicroCMS.Application.Features.Folders.Commands;
 /// <summary>Creates a new content folder within a site (GAP-02).</summary>
 [HasPolicy(ContentPolicies.FolderManage)]
 public sealed record CreateFolderCommand(
- Guid SiteId,
     string Name,
   Guid? ParentFolderId = null) : ICommand<FolderDto>;
 

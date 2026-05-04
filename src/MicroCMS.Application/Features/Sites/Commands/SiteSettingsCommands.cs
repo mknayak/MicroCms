@@ -95,20 +95,21 @@ internal sealed class UpdateSiteSettingsCommandHandler(
             ?? throw new NotFoundException(nameof(Site), request.SiteId);
 
         var settings = await settingsRepository.GetByIdAsync(siteId, cancellationToken);
-        if (settings is null)
+        bool isNew = settings is null;
+        if (isNew)
         {
             var firstLocale = request.Locales.FirstOrDefault() ?? "en";
             settings = SiteSettings.CreateDefault(siteId, tenant.Id, Locale.Create(firstLocale));
             await settingsRepository.AddAsync(settings, cancellationToken);
         }
 
-        settings.UpdateFeatureFlags(
+        settings!.UpdateFeatureFlags(
             request.VersioningEnabled, request.WorkflowEnabled,
             request.SchedulingEnabled, request.PreviewEnabled, request.AiEnabled);
         settings.SetPreviewUrlTemplate(request.PreviewUrlTemplate);
         settings.SetCorsOrigins(request.CorsOrigins);
         settings.SetLocales(request.Locales);
-        settingsRepository.Update(settings);
+        if (!isNew) settingsRepository.Update(settings);
 
         return Result.Success(SiteSettingsMapper.ToDto(settings));
     }

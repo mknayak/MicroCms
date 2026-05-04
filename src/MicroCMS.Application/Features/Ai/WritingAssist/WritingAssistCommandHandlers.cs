@@ -26,7 +26,7 @@ public sealed class DraftContentCommandHandler(
    UserMessage: $"Draft content for: {request.Prompt}",
      FeatureHint: "writing_assist");
 
-  var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+  var response = await llm.CompleteAsync(llmRequest, siteId: null, cancellationToken);
    return Result.Success(new AiContentResult(
       response.Content, response.PromptTokens, response.CompletionTokens, response.ProviderName));
     }
@@ -48,7 +48,7 @@ public sealed class RewriteContentCommandHandler(
      UserMessage: $"Rewrite the following content. Instructions: {request.Instructions}\n\nContent:\n{entry.FieldsJson}",
    FeatureHint: "writing_assist");
 
-        var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+        var response = await llm.CompleteAsync(llmRequest, entry.SiteId, cancellationToken);
   return Result.Success(new AiContentResult(
    response.Content, response.PromptTokens, response.CompletionTokens, response.ProviderName));
     }
@@ -70,7 +70,7 @@ public sealed class ChangeToneCommandHandler(
         UserMessage: entry.FieldsJson,
     FeatureHint: "writing_assist");
 
- var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+ var response = await llm.CompleteAsync(llmRequest, entry.SiteId, cancellationToken);
      return Result.Success(new AiContentResult(
     response.Content, response.PromptTokens, response.CompletionTokens, response.ProviderName));
     }
@@ -92,7 +92,7 @@ public sealed class SummarizeContentCommandHandler(
    UserMessage: entry.FieldsJson,
    FeatureHint: "writing_assist");
 
- var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+ var response = await llm.CompleteAsync(llmRequest, entry.SiteId, cancellationToken);
   return Result.Success(new AiContentResult(
    response.Content, response.PromptTokens, response.CompletionTokens, response.ProviderName));
   }

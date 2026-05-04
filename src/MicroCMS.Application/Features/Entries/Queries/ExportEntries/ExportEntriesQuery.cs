@@ -11,7 +11,6 @@ namespace MicroCMS.Application.Features.Entries.Queries.ExportEntries;
 /// </summary>
 [HasPolicy(ContentPolicies.EntryExport)]
 public sealed record ExportEntriesQuery(
-    Guid SiteId,
     Guid? ContentTypeId = null,
     ExportFormat Format = ExportFormat.Json) : IQuery<ExportResult>;
 

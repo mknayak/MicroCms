@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Aggregates.Identity;
+using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Application.Common.Interfaces;
 
@@ -10,10 +11,12 @@ namespace MicroCMS.Application.Common.Interfaces;
 public interface ITokenService
 {
     /// <summary>
-    /// Issues a signed JWT access token for the given user.
+    /// Issues a signed JWT access token for the given user, optionally scoped to a site.
+    /// When <paramref name="siteId"/> is supplied the <c>site_id</c> claim is embedded
+    /// so downstream services can resolve the working site without request parameters.
     /// Token lifetime is controlled by <c>Jwt:AccessTokenMinutes</c> configuration.
     /// </summary>
-    string GenerateAccessToken(User user);
+    string GenerateAccessToken(User user, SiteId? siteId = null);
 
     /// <summary>
     /// Generates a cryptographically-secure opaque refresh token.

@@ -16,17 +16,20 @@ public sealed class GenerateDraftCommandHandler : IRequestHandler<GenerateDraftC
     private readonly IRepository<ContentType, ContentTypeId> _contentTypeRepository;
     private readonly ILlmService _llmService;
     private readonly ISettingsReader _settingsReader;
+    private readonly ICurrentUser _currentUser;
     private readonly ILogger<GenerateDraftCommandHandler> _logger;
 
     public GenerateDraftCommandHandler(
         IRepository<ContentType, ContentTypeId> contentTypeRepository,
         ILlmService llmService,
         ISettingsReader settingsReader,
+        ICurrentUser currentUser,
         ILogger<GenerateDraftCommandHandler> logger)
     {
         _contentTypeRepository = contentTypeRepository;
         _llmService = llmService;
         _settingsReader = settingsReader;
+        _currentUser = currentUser;
         _logger = logger;
     }
 
@@ -34,7 +37,7 @@ public sealed class GenerateDraftCommandHandler : IRequestHandler<GenerateDraftC
         GenerateDraftCommand request,
         CancellationToken cancellationToken)
     {
-        var siteId = new SiteId(request.SiteId);
+        var siteId = _currentUser.SiteId;
         var contentTypeId = new ContentTypeId(request.ContentTypeId);
         var contentType = await _contentTypeRepository.GetByIdAsync(contentTypeId, cancellationToken);
 
@@ -45,8 +48,11 @@ public sealed class GenerateDraftCommandHandler : IRequestHandler<GenerateDraftC
         var schema = BuildSchema(contentType);
         var schemaJson = JsonSerializer.Serialize(schema);
 
-        var systemPrompt = await _settingsReader.GetAsync(siteId, AiSettingKeys.EntryContentSystemPrompt, cancellationToken);
-        var userPromptTemplate = await _settingsReader.GetAsync(siteId, AiSettingKeys.EntryContentUserPrompt, cancellationToken);
+        if (siteId is null)
+            return Result.Failure<GeneratedDraftDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
+        var systemPrompt = await _settingsReader.GetAsync(siteId.Value, AiSettingKeys.EntryContentSystemPrompt, cancellationToken);
+        var userPromptTemplate = await _settingsReader.GetAsync(siteId.Value, AiSettingKeys.EntryContentUserPrompt, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(systemPrompt) || string.IsNullOrWhiteSpace(userPromptTemplate))
             return Result.Failure<GeneratedDraftDto>(
@@ -64,7 +70,7 @@ public sealed class GenerateDraftCommandHandler : IRequestHandler<GenerateDraftC
             FeatureHint: "draft_generation",
             ResponseFormat: "json_object");
 
-        var response = await _llmService.CompleteAsync(llmRequest, cancellationToken);
+        var response = await _llmService.CompleteAsync(llmRequest, siteId, cancellationToken);
 
         Dictionary<string, object> fields;
         try

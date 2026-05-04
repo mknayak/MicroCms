@@ -39,7 +39,7 @@ public sealed class GenerateAltTextCommandHandler(
             UserMessage: $"Image filename: {asset.Metadata.FileName}. Storage key: {asset.StorageKey}.",
      FeatureHint: "alt_text");
 
-        var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+        var response = await llm.CompleteAsync(llmRequest, siteId: null, cancellationToken);
      asset.SetAiAltText(response.Content.Trim());
    assetRepository.Update(asset);
 

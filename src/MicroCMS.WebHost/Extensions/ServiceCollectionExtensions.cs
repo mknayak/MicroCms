@@ -53,7 +53,7 @@ internal static class ServiceCollectionExtensions
     /// <summary>
     /// Scheme name used as the ASP.NET Core default.
     /// It reads the <c>iss</c> claim from the incoming Bearer token and
- /// forwards to the matching per-client scheme, so each client's tokens
+    /// forwards to the matching per-client scheme, so each client's tokens
     /// are validated against their own Secret/Issuer/Audience.
     /// </summary>
     private const string DispatchScheme = "JwtDispatch";
@@ -90,32 +90,32 @@ internal static class ServiceCollectionExtensions
             c => c.Scheme,
     StringComparer.OrdinalIgnoreCase);
 
-  var authBuilder = builder.Services
-        .AddAuthentication(DispatchScheme)
-            .AddPolicyScheme(DispatchScheme, "JWT dispatch by issuer", opts =>
-            {
-    opts.ForwardDefaultSelector = ctx =>
-      SelectScheme(ctx, issuerToScheme, trustedClients[0].Scheme);
-      });
+        var authBuilder = builder.Services
+              .AddAuthentication(DispatchScheme)
+                  .AddPolicyScheme(DispatchScheme, "JWT dispatch by issuer", opts =>
+                  {
+                      opts.ForwardDefaultSelector = ctx =>
+                  SelectScheme(ctx, issuerToScheme, trustedClients[0].Scheme);
+                  });
 
         foreach (var (_, scheme, options) in trustedClients)
         {
-var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret));
-       authBuilder.AddJwtBearer(scheme, opt =>
-            {
-        opt.MapInboundClaims = false;
-        opt.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-         ValidateAudience = true,
-               ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-     ValidIssuer = options.Issuer,
-      ValidAudience = options.Audience,
-               IssuerSigningKey = signingKey,
-        ClockSkew = TimeSpan.FromSeconds(30),
-      };
-       });
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret));
+            authBuilder.AddJwtBearer(scheme, opt =>
+                 {
+                     opt.MapInboundClaims = false;
+                     opt.TokenValidationParameters = new TokenValidationParameters
+                     {
+                         ValidateIssuer = true,
+                         ValidateAudience = true,
+                         ValidateLifetime = true,
+                         ValidateIssuerSigningKey = true,
+                         ValidIssuer = options.Issuer,
+                         ValidAudience = options.Audience,
+                         IssuerSigningKey = signingKey,
+                         ClockSkew = TimeSpan.FromSeconds(30),
+                     };
+                 });
         }
 
         RegisterAuthorizationPolicies(builder);
@@ -132,71 +132,71 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
     HttpContext ctx,
         Dictionary<string, string> issuerToScheme,
         string fallbackScheme)
- {
+    {
         var authHeader = ctx.Request.Headers.Authorization.FirstOrDefault();
         if (authHeader?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) != true)
-     return fallbackScheme;
+            return fallbackScheme;
 
         var rawToken = authHeader["Bearer ".Length..].Trim();
         try
-    {
+        {
             var handler = new JwtSecurityTokenHandler();
             if (handler.CanReadToken(rawToken))
             {
-           var jwt = handler.ReadJwtToken(rawToken);
-       if (issuerToScheme.TryGetValue(jwt.Issuer, out var targetScheme))
-          return targetScheme;
+                var jwt = handler.ReadJwtToken(rawToken);
+                if (issuerToScheme.TryGetValue(jwt.Issuer, out var targetScheme))
+                    return targetScheme;
             }
- }
+        }
         catch { /* malformed token — fall through */ }
 
-     return fallbackScheme;
+        return fallbackScheme;
     }
 
     private static void RegisterAuthorizationPolicies(WebApplicationBuilder builder)
     {
-      builder.Services.AddAuthorization(opt =>
-     {
-            opt.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-  .RequireAuthenticatedUser()
-   .Build();
+        builder.Services.AddAuthorization(opt =>
+       {
+           opt.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+.RequireAuthenticatedUser()
+.Build();
 
-            opt.AddPolicy(AuthorizationPolicies.TenantMember,   p => p.RequireAuthenticatedUser());
-          opt.AddPolicy(AuthorizationPolicies.TenantAdmin,    p => p.RequireClaim("role", "TenantAdmin"));
-   opt.AddPolicy(AuthorizationPolicies.ContentAuthor,  p => p.RequireClaim("role", "Author", "Editor", "Approver", "Publisher", "TenantAdmin"));
-            opt.AddPolicy(AuthorizationPolicies.ContentEditor,  p => p.RequireClaim("role", "Editor", "Approver", "Publisher", "TenantAdmin"));
-            opt.AddPolicy(AuthorizationPolicies.ContentApprover,p => p.RequireClaim("role", "Approver", "Publisher", "TenantAdmin"));
-    opt.AddPolicy(AuthorizationPolicies.ContentPublisher,p => p.RequireClaim("role", "Publisher", "TenantAdmin"));
-      opt.AddPolicy(AuthorizationPolicies.ApiKey,          p => p.RequireClaim("auth_method", "api_key"));
-        });
+           opt.AddPolicy(AuthorizationPolicies.TenantMember, p => p.RequireAuthenticatedUser());
+           opt.AddPolicy(AuthorizationPolicies.TenantAdmin, p => p.RequireClaim("role", "TenantAdmin"));
+           opt.AddPolicy(AuthorizationPolicies.ContentAuthor, p => p.RequireClaim("role", "Author", "Editor", "Approver", "Publisher", "TenantAdmin"));
+           opt.AddPolicy(AuthorizationPolicies.ContentEditor, p => p.RequireClaim("role", "Editor", "Approver", "Publisher", "TenantAdmin"));
+           opt.AddPolicy(AuthorizationPolicies.ContentApprover, p => p.RequireClaim("role", "Approver", "Publisher", "TenantAdmin"));
+           opt.AddPolicy(AuthorizationPolicies.ContentPublisher, p => p.RequireClaim("role", "Publisher", "TenantAdmin"));
+           opt.AddPolicy(AuthorizationPolicies.ApiKey, p => p.RequireClaim("auth_method", "api_key"));
+       });
     }
 
     private static void RegisterCorsAndRateLimiting(WebApplicationBuilder builder)
     {
-    builder.Services.AddCors(opt =>
- opt.AddDefaultPolicy(policy =>
-      policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+        builder.Services.AddCors(opt =>
+     opt.AddDefaultPolicy(policy =>
+          policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
         builder.Services.AddRateLimiter(opt =>
         {
- opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-   opt.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
-         {
-                var partitionKey = ctx.User?.FindFirst("tenant_id")?.Value
-      ?? ctx.Connection.RemoteIpAddress?.ToString()
-           ?? "anon";
+            opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            opt.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+                  {
+                      var partitionKey = ctx.User?.FindFirst("tenant_id")?.Value
+   ?? ctx.Connection.RemoteIpAddress?.ToString()
+        ?? "anon";
 
-    return RateLimitPartition.GetTokenBucketLimiter(partitionKey, _ =>
-     new TokenBucketRateLimiterOptions
-         {
-      TokenLimit = 200,
-         TokensPerPeriod = 200,
-               ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-          QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-     QueueLimit = 10,
-         });
-      });
-     });
+                      return RateLimitPartition.GetTokenBucketLimiter(partitionKey, _ =>
+              new TokenBucketRateLimiterOptions
+              {
+                  TokenLimit = 200,
+                  TokensPerPeriod = 200,
+                  ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                  QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                  QueueLimit = 10,
+              });
+                  });
+        });
     }
 
     // ── Application layer ─────────────────────────────────────────────────
@@ -204,7 +204,7 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
     internal static WebApplicationBuilder AddApplicationServices(
         this WebApplicationBuilder builder)
     {
- builder.Services.AddApplication();
+        builder.Services.AddApplication();
         return builder;
     }
 
@@ -214,8 +214,8 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
         this WebApplicationBuilder builder)
     {
         builder.Services.AddInfrastructure(builder.Configuration);
-  builder.Services.AddDeliveryServices(setAsDefaultScheme: false);
- return builder;
+        builder.Services.AddDeliveryServices(setAsDefaultScheme: false);
+        return builder;
     }
 
     // ── REST API layer ────────────────────────────────────────────────────
@@ -228,9 +228,9 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
         builder.Services
    .AddControllers(options =>
 {
-                // Apply kebab-case to all [controller] and [action] route tokens.
-           options.Conventions.Add(new RouteTokenTransformerConvention(kebabTransformer));
-       })
+    // Apply kebab-case to all [controller] and [action] route tokens.
+    options.Conventions.Add(new RouteTokenTransformerConvention(kebabTransformer));
+})
             .AddApplicationPart(typeof(MicroCMS.Api.AssemblyReference).Assembly);
 
         // Also register as the global slug constraint so parameter transformers in
@@ -241,34 +241,52 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
         builder.Services
             .AddApiVersioning(opt =>
           {
-         opt.DefaultApiVersion = new ApiVersion(1, 0);
-          opt.AssumeDefaultVersionWhenUnspecified = true;
-                opt.ReportApiVersions = true;
-            })
+              opt.DefaultApiVersion = new ApiVersion(1, 0);
+              opt.AssumeDefaultVersionWhenUnspecified = true;
+              opt.ReportApiVersions = true;
+          })
             .AddApiExplorer(opt =>
 {
-     opt.GroupNameFormat = "'v'VVV";
-   opt.SubstituteApiVersionInUrl = true;
-            });
+    opt.GroupNameFormat = "'v'VVV";
+    opt.SubstituteApiVersionInUrl = true;
+});
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(opt =>
         {
-   opt.SwaggerDoc("v1", new OpenApiInfo
-        {
-  Title = "MicroCMS API",
-            Version = "v1",
-    Description = "Headless CMS REST API",
-        });
+            opt.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "MicroCMS API",
+                Version = "v1",
+                Description = "Headless CMS REST API",
+            });
 
-      opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-     {
-       In = ParameterLocation.Header,
-    Description = "Enter JWT token",
-     Name = "Authorization",
-            Type = SecuritySchemeType.Http,
-   BearerFormat = "JWT",
-     Scheme = "Bearer",
+            // Convert PascalCase controller name to spaced words for Swagger tags (groups).
+            // e.g. "ApiClients" → "Api Clients", "ContentTypes" → "Content Types"
+            opt.TagActionsBy(api =>
+            {
+                if (api.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor cad)
+                    return new[] { PascalToWords(cad.ControllerName) };
+                return new[] { api.GroupName ?? "Other" };
+            });
+
+            // Generate human-readable operation IDs used as request names in Postman.
+            // e.g. EntriesController.List → "Entries - List", AuthController.Login → "Auth - Login"
+            opt.CustomOperationIds(api =>
+            {
+                if (api.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor cad)
+                    return $"{PascalToWords(cad.ControllerName)} - {PascalToWords(cad.ActionName)}";
+                return null;
+            });
+
+            opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Enter JWT token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer",
             });
 
             opt.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -285,21 +303,27 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
    Array.Empty<string>()
                 },
       });
-  });
+        });
 
-  builder.Services.AddProblemDetails(opt =>
-        {
-   opt.MapToStatusCode<NotFoundException>(StatusCodes.Status404NotFound);
-        opt.MapToStatusCode<ConflictException>(StatusCodes.Status409Conflict);
-            opt.MapToStatusCode<ForbiddenException>(StatusCodes.Status403Forbidden);
-    opt.MapToStatusCode<UnauthorizedException>(StatusCodes.Status401Unauthorized);
-   opt.MapToStatusCode<ValidationException>(StatusCodes.Status422UnprocessableEntity);
-            opt.MapToStatusCode<DomainException>(StatusCodes.Status400BadRequest);
- opt.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
-    });
+        builder.Services.AddProblemDetails(opt =>
+              {
+                  opt.MapToStatusCode<NotFoundException>(StatusCodes.Status404NotFound);
+                  opt.MapToStatusCode<ConflictException>(StatusCodes.Status409Conflict);
+                  opt.MapToStatusCode<ForbiddenException>(StatusCodes.Status403Forbidden);
+                  opt.MapToStatusCode<UnauthorizedException>(StatusCodes.Status401Unauthorized);
+                  opt.MapToStatusCode<ValidationException>(StatusCodes.Status422UnprocessableEntity);
+                  opt.MapToStatusCode<DomainException>(StatusCodes.Status400BadRequest);
+                  opt.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
+              });
 
-    return builder;
+        return builder;
     }
+
+    /// <summary>Inserts a space before each uppercase letter that follows a lowercase letter or
+    /// before an uppercase letter that precedes a lowercase letter in a run of caps.
+    /// e.g. "ApiClients" → "Api Clients", "ContentTypes" → "Content Types"</summary>
+    private static string PascalToWords(string value) =>
+        Regex.Replace(value, @"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", " ");
 
     // ── GraphQL layer ─────────────────────────────────────────────────────
 
@@ -315,7 +339,7 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
     internal static WebApplicationBuilder AddPluginHosting(
         this WebApplicationBuilder builder)
     {
-     return builder;
+        return builder;
     }
 
     // ── AI services ───────────────────────────────────────────────────────
@@ -325,13 +349,17 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
     {
         builder.Services.AddAiCore();
 
-        // Register AI provider factories
-        builder.Services.AddSingleton(sp =>
+        // Replace the ProviderRegistry singleton registered by AddAiCore() with a factory that
+        // constructs the instance directly — avoiding the circular-resolution deadlock that
+        // occurs when a factory calls sp.GetRequiredService<ProviderRegistry>() on itself.
+        builder.Services.AddSingleton<MicroCMS.Ai.Core.Services.ProviderRegistry>(sp =>
         {
-            var registry = sp.GetRequiredService<MicroCMS.Ai.Core.Services.ProviderRegistry>();
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+            var registry = new MicroCMS.Ai.Core.Services.ProviderRegistry(
+                sp,
+                loggerFactory.CreateLogger<MicroCMS.Ai.Core.Services.ProviderRegistry>());
 
-            // Register Azure OpenAI providers
+            // ── Azure OpenAI ──────────────────────────────────────────────────────
             registry.RegisterCompletionProvider("azure_openai", (endpoint, apiKey) =>
             {
                 var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAICompletionProvider>();
@@ -346,19 +374,19 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
                 return new MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAIEmbeddingProvider(endpoint, apiKey, deploymentName, logger);
             });
 
-            // Register Ollama providers
+            // ── Ollama ────────────────────────────────────────────────────────────
             registry.RegisterCompletionProvider("ollama", (endpoint, apiKey) =>
             {
                 var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider>();
                 var model = Environment.GetEnvironmentVariable("OLLAMA_MODEL") ?? "llama3";
-                return new MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider(endpoint, model, logger);
+                return new MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider(endpoint, model, logger, apiKey);
             });
 
             registry.RegisterEmbeddingProvider("ollama", (endpoint, apiKey) =>
             {
                 var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider>();
                 var model = Environment.GetEnvironmentVariable("OLLAMA_EMBEDDING_MODEL") ?? "nomic-embed-text";
-                return new MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider(endpoint, model, logger);
+                return new MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider(endpoint, model, logger, apiKey);
             });
 
             return registry;
@@ -376,6 +404,6 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)
    .AddHealthChecks()
             .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
 
-     return builder;
+        return builder;
     }
 }

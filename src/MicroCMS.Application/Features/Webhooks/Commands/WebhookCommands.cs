@@ -29,8 +29,7 @@ public sealed record WebhookSubscriptionDto(
 /// </summary>
 [HasPolicy(ContentPolicies.TenantManage)]
 public sealed record CreateWebhookCommand(
-    Guid? SiteId,
-  string TargetUrl,
+    string TargetUrl,
     string HashedSecret,
     IReadOnlyList<string> Events,
     int MaxRetries = 3) : ICommand<WebhookSubscriptionDto>;
@@ -56,7 +55,7 @@ internal sealed class CreateWebhookCommandHandler(
     public async Task<Result<WebhookSubscriptionDto>> Handle(
        CreateWebhookCommand request, CancellationToken cancellationToken)
     {
-      var siteId = request.SiteId.HasValue ? new SiteId(request.SiteId.Value) : (SiteId?)null;
+      var siteId = currentUser.SiteId;
       var sub = WebhookSubscription.Create(
   currentUser.TenantId, siteId,
    request.TargetUrl, request.HashedSecret,

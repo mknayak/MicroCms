@@ -87,13 +87,16 @@ internal sealed class GetMediaAssetQueryHandler(
 }
 
 internal sealed class ListMediaAssetsQueryHandler(
-    IRepository<MediaAsset, MediaAssetId> repo)
+    IRepository<MediaAsset, MediaAssetId> repo,
+    ICurrentUser currentUser)
     : IRequestHandler<ListMediaAssetsQuery, Result<PagedList<MediaAssetListItemDto>>>
 {
     public async Task<Result<PagedList<MediaAssetListItemDto>>> Handle(ListMediaAssetsQuery request, CancellationToken cancellationToken)
     {
-var siteId = new SiteId(request.SiteId);
-     var items = await repo.ListAsync(new MediaAssetsBySitePagedSpec(siteId, request.Page, request.PageSize), cancellationToken);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<PagedList<MediaAssetListItemDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
+        var items = await repo.ListAsync(new MediaAssetsBySitePagedSpec(siteId, request.Page, request.PageSize), cancellationToken);
      var total = await repo.CountAsync(new MediaAssetsBySiteSpec(siteId), cancellationToken);
 
      return Result.Success(PagedList<MediaAssetListItemDto>.Create(

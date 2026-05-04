@@ -29,6 +29,7 @@ public sealed class CreateEntryCommandHandlerTests
 
         _currentUser.TenantId.Returns(_tenantId);
         _currentUser.UserId.Returns(Guid.NewGuid());
+        _currentUser.SiteId.Returns(_siteId);
         _currentUser.IsAuthenticated.Returns(true);
 
         // No slug conflicts by default
@@ -44,7 +45,6 @@ public sealed class CreateEntryCommandHandlerTests
     {
         // Arrange
         var command = new CreateEntryCommand(
-            SiteId: _siteId.Value,
             ContentTypeId: ContentTypeId.New().Value,
             Slug: "my-article",
             Locale: "en",
@@ -77,7 +77,6 @@ public sealed class CreateEntryCommandHandlerTests
             .Returns(new[] { existingEntry });
 
         var command = new CreateEntryCommand(
-            SiteId: existingSiteId.Value,
             ContentTypeId: ContentTypeId.New().Value,
             Slug: "taken-slug",
             Locale: "en");
@@ -96,7 +95,6 @@ public sealed class CreateEntryCommandHandlerTests
     {
         // Arrange
         var command = new CreateEntryCommand(
-            SiteId: _siteId.Value,
             ContentTypeId: ContentTypeId.New().Value,
             Slug: "defaults-entry",
             Locale: "en-US");

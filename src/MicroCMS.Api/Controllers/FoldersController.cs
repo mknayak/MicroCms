@@ -12,8 +12,8 @@ public sealed class FoldersController : ApiControllerBase
   [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<FolderTreeNode>), StatusCodes.Status200OK)]
   public async Task<IActionResult> GetTree(
- [FromQuery] Guid siteId, CancellationToken ct = default) =>
-  OkOrProblem(await Sender.Send(new GetFolderTreeQuery(siteId), ct));
+ CancellationToken ct = default) =>
+  OkOrProblem(await Sender.Send(new GetFolderTreeQuery(), ct));
 
  [HttpPost]
     [ProducesResponseType(typeof(FolderDto), StatusCodes.Status201Created)]
@@ -21,7 +21,7 @@ public sealed class FoldersController : ApiControllerBase
   [FromBody] CreateFolderCommand command, CancellationToken ct = default)
     {
        var result = await Sender.Send(command, ct);
-    return CreatedOrProblem(result, nameof(GetTree), new { siteId = command.SiteId });
+    return CreatedOrProblem(result, nameof(GetTree), null);
   }
 
     [HttpPut("{id:guid}")]

@@ -55,10 +55,13 @@ internal sealed class CreateContentTypeCommandHandler(
 {
     public async Task<Result<ContentTypeDto>> Handle(CreateContentTypeCommand request, CancellationToken cancellationToken)
     {
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<ContentTypeDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var kind = Enum.TryParse<ContentTypeKind>(request.Kind, ignoreCase: true, out var k)
             ? k : ContentTypeKind.Content;
         var ct = ContentType.Create(
-      currentUser.TenantId, new SiteId(request.SiteId),
+      currentUser.TenantId, siteId,
             request.Handle, request.DisplayName, request.Description,
             request.Localization, kind);
    await repo.AddAsync(ct, cancellationToken);

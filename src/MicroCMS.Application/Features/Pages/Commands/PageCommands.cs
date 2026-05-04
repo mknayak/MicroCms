@@ -46,12 +46,12 @@ public sealed record PageTemplatePlacementInput(Guid ComponentId, string Zone, i
 
 [HasPolicy(ContentPolicies.TenantManage)]
 public sealed record CreateStaticPageCommand(
-    Guid SiteId, string Title, string Slug,
+    string Title, string Slug,
     Guid? ParentId = null, Guid? LinkedEntryId = null) : ICommand<PageDto>;
 
 [HasPolicy(ContentPolicies.TenantManage)]
 public sealed record CreateCollectionPageCommand(
-    Guid SiteId, string Title, string Slug,
+    string Title, string Slug,
     Guid ContentTypeId, string RoutePattern,
     Guid? ParentId = null) : ICommand<PageDto>;
 
@@ -93,7 +93,7 @@ public sealed record LinkPageEntryCommand(Guid PageId, Guid? EntryId) : ICommand
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 [HasPolicy(ContentPolicies.EntryRead)]
-public sealed record GetSiteTreeQuery(Guid SiteId) : IQuery<IReadOnlyList<PageTreeNode>>;
+public sealed record GetSiteTreeQuery() : IQuery<IReadOnlyList<PageTreeNode>>;
 
 public sealed record PageTreeNode(
   Guid Id, string Title, string Slug, string PageType,
@@ -132,7 +132,7 @@ internal sealed class CreateStaticPageCommandHandler(
         var linkedEntryId = request.LinkedEntryId.HasValue ? new EntryId(request.LinkedEntryId.Value) : (EntryId?)null;
 
         var page = Page.CreateStatic(
-            currentUser.TenantId, new SiteId(request.SiteId),
+            currentUser.TenantId, currentUser.SiteId ?? new SiteId(Guid.Empty),
    request.Title, Slug.Create(request.Slug),
             parentId, linkedEntryId, depth: request.ParentId.HasValue ? 1 : 0);
 
@@ -151,7 +151,7 @@ internal sealed class CreateStaticPageCommandHandler(
         Page page, CreateStaticPageCommand request, CancellationToken cancellationToken)
     {
         // Locate the built-in "page" ContentType for this site.
-        var siteId = new SiteId(request.SiteId);
+        var siteId = currentUser.SiteId ?? new SiteId(Guid.Empty);
         var spec = new ContentTypeByHandleAndSiteSpec(siteId, "page");
         var types = await contentTypeRepository.ListAsync(spec, cancellationToken);
         var pageContentType = types.FirstOrDefault();
@@ -203,7 +203,7 @@ internal sealed class CreateCollectionPageCommandHandler(
     {
         var parentId = request.ParentId.HasValue ? new PageId(request.ParentId.Value) : (PageId?)null;
         var page = Page.CreateCollection(
-        currentUser.TenantId, new SiteId(request.SiteId),
+        currentUser.TenantId, currentUser.SiteId ?? new SiteId(Guid.Empty),
          request.Title, Slug.Create(request.Slug),
          new ContentTypeId(request.ContentTypeId), request.RoutePattern,
             parentId, depth: request.ParentId.HasValue ? 1 : 0);
@@ -238,14 +238,19 @@ internal sealed class DeletePageCommandHandler(IRepository<Page, PageId> pageRep
     }
 }
 
-internal sealed class GetSiteTreeQueryHandler(IRepository<Page, PageId> pageRepository)
+internal sealed class GetSiteTreeQueryHandler(
+    IRepository<Page, PageId> pageRepository,
+    ICurrentUser currentUser)
     : IRequestHandler<GetSiteTreeQuery, Result<IReadOnlyList<PageTreeNode>>>
 {
     public async Task<Result<IReadOnlyList<PageTreeNode>>> Handle(
           GetSiteTreeQuery request, CancellationToken cancellationToken)
     {
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<PageTreeNode>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var pages = await pageRepository.ListAsync(
-  new PagesBySiteSpec(new SiteId(request.SiteId)), cancellationToken);
+  new PagesBySiteSpec(siteId), cancellationToken);
         return Result.Success(BuildTree(pages, parentId: null));
     }
 

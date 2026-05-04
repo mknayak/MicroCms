@@ -58,7 +58,8 @@ internal sealed class UpdateTenantSettingsCommandHandler(
 }
 
 internal sealed class AddSiteCommandHandler(
-    IRepository<Domain.Aggregates.Tenant.Tenant, TenantId> tenantRepo)
+    IRepository<Domain.Aggregates.Tenant.Tenant, TenantId> tenantRepo,
+    IRepository<SiteSettings, SiteId> siteSettingsRepo)
     : IRequestHandler<AddSiteCommand, Result<SiteDto>>
 {
     public async Task<Result<SiteDto>> Handle(AddSiteCommand request, CancellationToken cancellationToken)
@@ -66,10 +67,14 @@ internal sealed class AddSiteCommandHandler(
         var tenant = await tenantRepo.GetByIdAsync(new TenantId(request.TenantId), cancellationToken)
                 ?? throw new NotFoundException(nameof(Domain.Aggregates.Tenant.Tenant), request.TenantId);
 
+        var locale = Locale.Create(request.DefaultLocale);
         var site = tenant.AddSite(
                 request.Name,
                 Slug.Create(request.Handle),
-                Locale.Create(request.DefaultLocale));
+                locale);
+
+        var siteSettings = SiteSettings.CreateDefault(site.Id, tenant.Id, locale);
+        await siteSettingsRepo.AddAsync(siteSettings, cancellationToken);
 
         tenantRepo.Update(tenant);
         return Result.Success(TenantMapper.ToSiteDto(site));

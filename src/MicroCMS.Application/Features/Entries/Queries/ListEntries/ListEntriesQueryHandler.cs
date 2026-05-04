@@ -23,17 +23,18 @@ public sealed class ListEntriesQueryHandler(
         ListEntriesQuery request,
         CancellationToken cancellationToken)
     {
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<PagedList<EntryListItemDto>>(NoSiteContext());
+
         var tenantId = currentUser.TenantId;
         var cacheKey = CacheKeys.EntryList(
-            tenantId, request.SiteId, request.StatusFilter,
+            tenantId, siteId.Value, request.StatusFilter,
             request.ContentTypeId, request.Locale, request.FolderId,
             request.PageNumber, request.PageSize);
 
         var cached = await cacheService.GetAsync<PagedList<EntryListItemDto>>(cacheKey, cancellationToken);
         if (cached is not null)
             return Result.Success(cached);
-
-        var siteId = new SiteId(request.SiteId);
 
         var listSpec = new EntriesBySiteSpec(
             siteId, request.StatusFilter, request.ContentTypeId,
@@ -54,4 +55,7 @@ public sealed class ListEntriesQueryHandler(
 
         return Result.Success(paged);
     }
+
+    private static Error NoSiteContext() =>
+        Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first.");
 }

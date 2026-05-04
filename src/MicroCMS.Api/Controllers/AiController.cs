@@ -42,7 +42,6 @@ public sealed class AiController : ApiControllerBase
     {
         var command = new GenerateDraftCommand
         {
-            SiteId = request.SiteId,
             ContentTypeId = request.ContentTypeId,
             Prompt = request.Prompt,
             Context = request.Context
@@ -58,9 +57,6 @@ public sealed class AiController : ApiControllerBase
     /// </summary>
     public sealed class GenerateDraftRequest
     {
-        /// <summary>ID of the site this draft belongs to.</summary>
-        public required Guid SiteId { get; init; }
-
         /// <summary>
         /// ID of the content type to generate content for.
         /// </summary>

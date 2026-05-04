@@ -33,7 +33,6 @@ public sealed class EntriesController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(PagedList<EntryListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-        [FromQuery] Guid siteId,
         [FromQuery] string? status,
         [FromQuery] Guid? contentTypeId,
         [FromQuery] string? locale,
@@ -42,7 +41,7 @@ public sealed class EntriesController : ApiControllerBase
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default) =>
         OkOrProblem(await Sender.Send(
-            new ListEntriesQuery(siteId, status, contentTypeId, locale, folderId, pageNumber, pageSize),
+            new ListEntriesQuery(status, contentTypeId, locale, folderId, pageNumber, pageSize),
             cancellationToken));
 
     [HttpGet("{id:guid}")]
@@ -75,11 +74,11 @@ public sealed class EntriesController : ApiControllerBase
     [HttpGet("export")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Export(
-        [FromQuery] Guid siteId, [FromQuery] Guid? contentTypeId,
+        [FromQuery] Guid? contentTypeId,
         [FromQuery] ExportFormat format = ExportFormat.Json,
         CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ExportEntriesQuery(siteId, contentTypeId, format), cancellationToken);
+        var result = await Sender.Send(new ExportEntriesQuery(contentTypeId, format), cancellationToken);
         if (result.IsFailure) return ToProblemResult(result.Error);
         return File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
     }
@@ -91,7 +90,7 @@ public sealed class EntriesController : ApiControllerBase
     public async Task<IActionResult> Create([FromBody] CreateEntryRequest r, CancellationToken ct = default)
     {
         var fieldsJson = SerialiseFields(r.Fields);
-        var command = new CreateEntryCommand(r.SiteId, r.ContentTypeId, r.Slug, r.Locale, fieldsJson);
+        var command = new CreateEntryCommand(r.ContentTypeId, r.Slug, r.Locale, fieldsJson);
         var result = await Sender.Send(command, ct);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
@@ -198,7 +197,6 @@ public sealed class EntriesController : ApiControllerBase
 
 /// <summary>Payload for POST /entries. Fields are a structured JSON object.</summary>
 public sealed record CreateEntryRequest(
-    Guid SiteId,
     Guid ContentTypeId,
     string Slug,
     string Locale,

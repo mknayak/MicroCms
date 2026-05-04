@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Domain.Aggregates.Identity;
+using MicroCMS.Shared.Ids;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -35,11 +36,11 @@ internal sealed class JwtTokenService : ITokenService
     }
 
     /// <inheritdoc/>
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, SiteId? siteId = null)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        var claims = BuildClaims(user);
+        var claims = BuildClaims(user, siteId);
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -73,7 +74,7 @@ internal sealed class JwtTokenService : ITokenService
 
     // ── Private helpers ───────────────────────────────────────────────────
 
-    private static IEnumerable<Claim> BuildClaims(User user)
+    private static IEnumerable<Claim> BuildClaims(User user, SiteId? siteId)
     {
         var claims = new List<Claim>
         {
@@ -84,16 +85,14 @@ internal sealed class JwtTokenService : ITokenService
             new("display_name", user.DisplayName.Value),
         };
 
+        if (siteId is not null)
+            claims.Add(new Claim("site_id", siteId.Value.ToString()));
+
         foreach (var role in user.Roles)
         {
-            // Emit the role Name (e.g. "TenantAdmin") — not WorkflowRole.ToString()
-            // so the claim value matches Roles.* constants used by RolePermissions
-            // and the Admin SPA sidebar filter.
             claims.Add(new Claim("role", role.Name));
             if (role.SiteId.HasValue)
-            {
                 claims.Add(new Claim($"site_role:{role.SiteId.Value}", role.Name));
-            }
         }
 
         return claims;

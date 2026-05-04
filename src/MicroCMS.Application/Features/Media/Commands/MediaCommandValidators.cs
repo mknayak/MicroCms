@@ -16,8 +16,6 @@ public sealed class UploadMediaAssetCommandValidator : AbstractValidator<UploadM
 
     public UploadMediaAssetCommandValidator()
     {
-        RuleFor(x => x.SiteId).NotEmpty();
-
         RuleFor(x => x.FileName)
             .NotEmpty()
             .MaximumLength(AssetMetadata.MaxFileNameLength)

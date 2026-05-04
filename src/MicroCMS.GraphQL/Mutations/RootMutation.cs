@@ -25,7 +25,6 @@ public sealed class RootMutation
         CancellationToken cancellationToken)
     {
         var command = new CreateEntryCommand(
-            input.SiteId,
       input.ContentTypeId,
             input.Slug,
         input.Locale,
@@ -100,7 +99,6 @@ public async Task<EntryPayload> UnpublishEntryAsync(
         CancellationToken cancellationToken)
     {
         var command = new CreateContentTypeCommand(
-     input.SiteId,
             input.Handle,
       input.DisplayName,
       input.Description);

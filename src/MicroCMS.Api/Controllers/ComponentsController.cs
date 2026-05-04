@@ -17,12 +17,11 @@ public sealed class ComponentsController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(PagedList<ComponentListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-      [FromQuery] Guid siteId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
   CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ListComponentsQuery(siteId, page, pageSize), cancellationToken);
+        var result = await Sender.Send(new ListComponentsQuery(page, pageSize), cancellationToken);
         return OkOrProblem(result);
     }
 

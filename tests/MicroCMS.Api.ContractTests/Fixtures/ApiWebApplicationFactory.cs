@@ -4,6 +4,7 @@ using MicroCMS.Shared.Ids;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -24,6 +25,16 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
     {
     ArgumentNullException.ThrowIfNull(builder);
  builder.UseEnvironment("Testing");
+
+        // Force SQLite provider so UseDatabaseAsync calls EnsureCreated (not MigrateAsync)
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["MicroCMS:Database:Provider"] = "Sqlite",
+            });
+        });
+
    builder.ConfigureServices(services =>
         {
    var currentUser = Substitute.For<ICurrentUser>();

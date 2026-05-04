@@ -15,10 +15,9 @@ public sealed class TaxonomyController : ApiControllerBase
     [HttpGet("categories")]
     [ProducesResponseType(typeof(IReadOnlyList<CategoryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListCategories(
-     [FromQuery] Guid siteId,
         CancellationToken cancellationToken = default)
     {
-    var result = await Sender.Send(new ListCategoriesQuery(siteId), cancellationToken);
+    var result = await Sender.Send(new ListCategoriesQuery(), cancellationToken);
      return OkOrProblem(result);
     }
 
@@ -49,10 +48,9 @@ public sealed class TaxonomyController : ApiControllerBase
     [HttpGet("tags")]
     [ProducesResponseType(typeof(IReadOnlyList<TagDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListTags(
-     [FromQuery] Guid siteId,
       CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ListTagsQuery(siteId), cancellationToken);
+        var result = await Sender.Send(new ListTagsQuery(), cancellationToken);
      return OkOrProblem(result);
     }
 

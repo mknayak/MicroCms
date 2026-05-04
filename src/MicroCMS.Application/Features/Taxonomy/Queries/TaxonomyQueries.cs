@@ -6,7 +6,7 @@ using MicroCMS.Application.Features.Taxonomy.Dtos;
 namespace MicroCMS.Application.Features.Taxonomy.Queries;
 
 [HasPolicy(ContentPolicies.TaxonomyRead)]
-public sealed record ListCategoriesQuery(Guid SiteId) : IQuery<IReadOnlyList<CategoryDto>>;
+public sealed record ListCategoriesQuery() : IQuery<IReadOnlyList<CategoryDto>>;
 
 [HasPolicy(ContentPolicies.TaxonomyRead)]
-public sealed record ListTagsQuery(Guid SiteId) : IQuery<IReadOnlyList<TagDto>>;
+public sealed record ListTagsQuery() : IQuery<IReadOnlyList<TagDto>>;

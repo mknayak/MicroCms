@@ -183,7 +183,9 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ISecretHasher, Sha256SecretHasher>();
-        services.AddScoped<ILlmService, NullLlmService>();
+        // LlmServiceAdapter bridges ILlmService → AiOrchestrator → tenant-configured provider.
+        // NullLlmService is only used as a fallback when AiOrchestrator cannot be resolved.
+        services.AddScoped<ILlmService, LlmServiceAdapter>();
         services.AddScoped<IPreviewSecretProvider, SiteIdPreviewSecretProvider>();
 
         // Settings reader — site→tenant resolution with cache-aside (GAP-AI-1)

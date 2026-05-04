@@ -23,7 +23,16 @@ public sealed class TenantResolutionMiddleware(
 
     private static readonly HashSet<string> _exemptPrefixes = new(StringComparer.OrdinalIgnoreCase)
     {
-    "/health", "/swagger", "/metrics", "/favicon.ico"
+        "/health",
+        "/swagger",
+        "/metrics",
+        "/favicon.ico",
+        // Auth endpoints are anonymous (login/refresh) or carry tenant identity via JWT claims
+        // already handled by the DbContext query-filter. Resolving here adds a DB round-trip
+        // and emits a misleading 'no tenant resolved' warning for every unauthenticated call.
+        "/api/v1/auth",
+        // Install endpoints are anonymous by design and pre-date any tenant.
+        "/api/v1/install",
     };
 
     public async Task InvokeAsync(HttpContext context, ITenantResolver resolver)
@@ -51,11 +60,15 @@ public sealed class TenantResolutionMiddleware(
 
     private static bool IsExemptPath(PathString path)
     {
-foreach (var prefix in _exemptPrefixes)
+        // Normalise consecutive slashes (e.g. "//api/v1/auth/login" → "/api/v1/auth/login")
+        // that can appear when a reverse-proxy or PathBase prefix is misconfigured.
+        var normalised = new PathString("/" + path.Value?.TrimStart('/'));
+
+        foreach (var prefix in _exemptPrefixes)
         {
-     if (path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase))
-    return true;
- }
-    return false;
+            if (normalised.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 }

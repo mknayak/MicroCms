@@ -50,7 +50,8 @@ internal sealed class ListContentTypesQueryHandler(
     public async Task<Result<PagedList<ContentTypeListItemDto>>> Handle(ListContentTypesQuery request, CancellationToken cancellationToken)
 {
      var tenantId = currentUser.TenantId;
-        var cacheKey = CacheKeys.ContentTypeList(tenantId, request.SiteId, request.Page, request.PageSize);
+        var siteId = currentUser.SiteId;
+        var cacheKey = CacheKeys.ContentTypeList(tenantId, siteId?.Value, request.Page, request.PageSize);
 
   var cached = await cacheService.GetAsync<PagedList<ContentTypeListItemDto>>(cacheKey, cancellationToken);
         if (cached is not null)
@@ -59,11 +60,10 @@ internal sealed class ListContentTypesQueryHandler(
         ISpecification<ContentType> spec;
       ISpecification<ContentType> countSpec;
 
-        if (request.SiteId.HasValue)
+        if (siteId is not null)
     {
-    var siteId = new SiteId(request.SiteId.Value);
- spec = new ContentTypesBySitePagedSpec(siteId, request.Page, request.PageSize);
-            countSpec = new ContentTypesBySiteSpec(siteId);
+ spec = new ContentTypesBySitePagedSpec(siteId.Value, request.Page, request.PageSize);
+            countSpec = new ContentTypesBySiteSpec(siteId.Value);
         }
         else
 {

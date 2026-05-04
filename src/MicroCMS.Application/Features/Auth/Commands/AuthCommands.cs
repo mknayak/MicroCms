@@ -18,6 +18,13 @@ public sealed record LoginCommand(
 public sealed record RefreshTokenCommand(
     string RefreshToken) : IRequest<Result<AuthTokenResponse>>;
 
+/// <summary>
+/// Issues a new access token scoped to a different site.
+/// The user must have a role on the requested site.
+/// Returns a fresh token pair with the new <c>site_id</c> claim embedded.
+/// </summary>
+public sealed record SwitchSiteCommand(Guid SiteId) : IRequest<Result<AuthTokenResponse>>;
+
 /// <summary>Revokes the supplied refresh token (single-device logout).</summary>
 [AllowAnonymousRequest]
 public sealed record RevokeTokenCommand(

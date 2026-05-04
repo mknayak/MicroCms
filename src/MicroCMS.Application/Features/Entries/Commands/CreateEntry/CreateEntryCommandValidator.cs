@@ -10,9 +10,6 @@ public sealed class CreateEntryCommandValidator : AbstractValidator<CreateEntryC
 {
     public CreateEntryCommandValidator()
     {
-        RuleFor(c => c.SiteId)
-            .NotEmpty().WithMessage("SiteId is required.");
-
         RuleFor(c => c.ContentTypeId)
             .NotEmpty().WithMessage("ContentTypeId is required.");
 

@@ -17,7 +17,6 @@ public sealed class SearchController : ApiControllerBase
     [ProducesResponseType(typeof(SearchResults), StatusCodes.Status200OK)]
     public async Task<IActionResult> Search(
         [FromQuery] string q,
-        [FromQuery] Guid? siteId = null,
 [FromQuery] Guid? contentTypeId = null,
       [FromQuery] string? locale = null,
     [FromQuery] string? status = "Published",
@@ -27,7 +26,6 @@ public sealed class SearchController : ApiControllerBase
     {
  var query = new SearchEntriesQuery(
    Query: q ?? string.Empty,
-            SiteId: siteId,
       ContentTypeId: contentTypeId,
      Locale: locale,
      Status: status,

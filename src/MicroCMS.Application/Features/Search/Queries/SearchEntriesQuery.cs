@@ -14,7 +14,6 @@ namespace MicroCMS.Application.Features.Search.Queries;
 [HasPolicy(ContentPolicies.EntryRead)]
 public sealed record SearchEntriesQuery(
     string Query,
-    Guid? SiteId = null,
     Guid? ContentTypeId = null,
     string? Locale = null,
     string? Status = "Published",
@@ -31,7 +30,7 @@ internal sealed class SearchEntriesQueryHandler(
     {
         var req = new SearchRequest(
             request.Query ?? string.Empty,
-            request.SiteId,
+            currentUser.SiteId?.Value,
      request.ContentTypeId,
     request.Locale,
  request.Status,

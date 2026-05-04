@@ -7,7 +7,6 @@ namespace MicroCMS.Application.Features.SiteTemplates.Commands;
 
 [HasPolicy(ContentPolicies.PageTemplateManage)]
 public sealed record CreateSiteTemplateCommand(
-    Guid SiteId,
     Guid LayoutId,
     string Name,
     string? Description) : ICommand<SiteTemplateDto>;

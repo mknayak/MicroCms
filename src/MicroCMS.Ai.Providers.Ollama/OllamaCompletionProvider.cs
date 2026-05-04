@@ -31,6 +31,7 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
         string endpoint,
         string model,
         ILogger<OllamaCompletionProvider> logger,
+        string? apiKey = null,
         HttpClient? httpClient = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(model, nameof(model));
@@ -43,6 +44,10 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
 
         _httpClient.BaseAddress = new Uri(baseAddress);
         _httpClient.Timeout = TimeSpan.FromMinutes(5);
+
+        if (!string.IsNullOrWhiteSpace(apiKey))
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
         _model = model;
         _logger = logger;

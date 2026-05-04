@@ -51,8 +51,14 @@ internal sealed class RefreshTokenCommandHandler(
         if (!user.IsActive)
             throw new UnauthorizedException("User account is inactive.");
 
-        // Generate new pair
-        var accessToken = tokenService.GenerateAccessToken(user);
+        // Generate new pair — preserve the site_id from the user's first site-scoped role
+        // so the rotated token maintains the same working-site context.
+        var currentSiteId = user.Roles
+            .Where(r => r.SiteId is not null)
+            .Select(r => r.SiteId)
+            .FirstOrDefault();
+
+        var accessToken = tokenService.GenerateAccessToken(user, currentSiteId);
         var (rawNewRefresh, newRefreshHash) = tokenService.GenerateRefreshToken();
         var newExpiry = dateTime.UtcNow.Add(RefreshTokenLifetime);
 

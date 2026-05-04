@@ -12,7 +12,6 @@ namespace MicroCMS.Application.Features.Entries.Commands.CreateEntry;
 /// </summary>
 [HasPolicy(ContentPolicies.EntryCreate)]
 public sealed record CreateEntryCommand(
-    Guid SiteId,
     Guid ContentTypeId,
     string Slug,
     string Locale,

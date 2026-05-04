@@ -8,7 +8,6 @@ namespace MicroCMS.Application.Features.Components.Queries;
 
 [HasPolicy(ContentPolicies.ComponentRead)]
 public sealed record ListComponentsQuery(
-    Guid SiteId,
     int Page = 1,
     int PageSize = 50) : IQuery<PagedList<ComponentListItemDto>>;
 

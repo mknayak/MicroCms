@@ -30,6 +30,7 @@ public sealed class ListEntriesQueryHandlerTests
         _cache = Substitute.For<ICacheService>();
         _currentUser = Substitute.For<ICurrentUser>();
         _currentUser.TenantId.Returns(_tenantId);
+        _currentUser.SiteId.Returns(_siteId);
 
     // Cache always misses in unit tests.
         _cache.GetAsync<object>(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -53,7 +54,7 @@ public sealed class ListEntriesQueryHandlerTests
             .CountAsync(Arg.Any<ISpecification<Entry>>(), Arg.Any<CancellationToken>())
             .Returns(2);
 
-        var query = new ListEntriesQuery(SiteId: _siteId.Value, PageNumber: 1, PageSize: 10);
+        var query = new ListEntriesQuery(PageNumber: 1, PageSize: 10);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -78,7 +79,7 @@ public sealed class ListEntriesQueryHandlerTests
             .CountAsync(Arg.Any<ISpecification<Entry>>(), Arg.Any<CancellationToken>())
             .Returns(0);
 
-        var query = new ListEntriesQuery(SiteId: _siteId.Value);
+        var query = new ListEntriesQuery();
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);

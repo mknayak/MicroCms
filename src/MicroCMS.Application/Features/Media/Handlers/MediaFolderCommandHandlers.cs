@@ -22,7 +22,7 @@ public sealed class CreateMediaFolderCommandHandler(
     {
         var folder = MediaFolderFactory.Create(
             currentUser.TenantId,
-            new SiteId(request.SiteId),
+            currentUser.SiteId ?? new SiteId(Guid.Empty),
             request.Name,
             request.ParentFolderId);
 

@@ -25,8 +25,7 @@ namespace MicroCMS.Application.Features.ContentTypes.Queries;
 [HasPolicy(ContentPolicies.ContentTypeRead)]
 public sealed record ResolveEnumOptionsQuery(
     Guid ContentTypeId,
-    Guid FieldId,
-    Guid SiteId) : IQuery<IReadOnlyList<EnumOptionDto>>;
+    Guid FieldId) : IQuery<IReadOnlyList<EnumOptionDto>>;
 
 public sealed record EnumOptionDto(string Value, string Label);
 
@@ -61,7 +60,8 @@ internal sealed class ResolveEnumOptionsQueryHandler(
 
         // ── Dynamic options — query published entries of the source type ────
         var src = validation.DynamicSource;
-        var siteId = new SiteId(request.SiteId);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<EnumOptionDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token."));
 
         var allContentTypes = await ctRepo.ListAsync(
                 new ContentTypesBySiteSpec(siteId), cancellationToken);

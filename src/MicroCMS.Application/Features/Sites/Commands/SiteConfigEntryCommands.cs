@@ -7,6 +7,8 @@ using MicroCMS.Application.Common.Markers;
 using MicroCMS.Domain.Aggregates.Settings;
 using MicroCMS.Domain.Aggregates.Tenant;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications.Tenant;
+using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
 
@@ -79,6 +81,7 @@ public sealed record BulkImportSiteConfigEntriesCommand(
 
 internal sealed class UpsertSiteConfigEntryCommandHandler(
     IRepository<SiteSettings, SiteId> settingsRepo,
+    IRepository<Domain.Aggregates.Tenant.Tenant, TenantId> tenantRepo,
     ISettingsReader settingsReader)
     : IRequestHandler<UpsertSiteConfigEntryCommand, Result<ConfigEntryDto>>
 {
@@ -87,12 +90,19 @@ internal sealed class UpsertSiteConfigEntryCommandHandler(
     {
         var siteId = new SiteId(request.SiteId);
         var settings = await settingsRepo.GetByIdAsync(siteId, cancellationToken);
-        if (settings is null)
-            return Result.Failure<ConfigEntryDto>(
-                Error.NotFound("SiteSettings.NotFound", $"Site settings not found for site {request.SiteId}."));
+        bool isNew = settings is null;
+        if (isNew)
+        {
+            var tenants = await tenantRepo.ListAsync(new TenantBySiteIdSpec(siteId), cancellationToken);
+            var tenant = tenants.FirstOrDefault()
+                ?? throw new NotFoundException(nameof(Site), request.SiteId);
+            var site = tenant.Sites.First(s => s.Id == siteId);
+            settings = SiteSettings.CreateDefault(siteId, tenant.Id, site.DefaultLocale);
+            await settingsRepo.AddAsync(settings, cancellationToken);
+        }
 
-        settings.UpsertEntry(request.Key, request.Value, request.Category, request.IsSecret);
-        settingsRepo.Update(settings);
+        settings!.UpsertEntry(request.Key, request.Value, request.Category, request.IsSecret);
+        if (!isNew) settingsRepo.Update(settings);
         await settingsReader.InvalidateAsync(siteId, cancellationToken);
 
         return Result.Success(ConfigEntryMapper.ToDto(settings.GetEntry(request.Key)!));
@@ -110,7 +120,7 @@ internal sealed class DeleteSiteConfigEntryCommandHandler(
         var siteId = new SiteId(request.SiteId);
         var settings = await settingsRepo.GetByIdAsync(siteId, cancellationToken);
         if (settings is null)
-            throw new NotFoundException(nameof(SiteSettings), request.SiteId);
+            return Result.Success();
 
         settings.RemoveEntry(request.Key);
         settingsRepo.Update(settings);

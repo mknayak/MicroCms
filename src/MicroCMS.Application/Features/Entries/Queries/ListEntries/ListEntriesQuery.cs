@@ -12,7 +12,6 @@ namespace MicroCMS.Application.Features.Entries.Queries.ListEntries;
 /// </summary>
 [HasPolicy(ContentPolicies.EntryRead)]
 public sealed record ListEntriesQuery(
-    Guid SiteId,
     string? StatusFilter = null,
     Guid? ContentTypeId = null,
     string? Locale = null,

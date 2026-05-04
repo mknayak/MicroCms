@@ -46,8 +46,15 @@ internal sealed class LoginCommandHandler(
             throw new UnauthorizedException("Invalid email or password.");
         }
 
-        // 3. Issue tokens
-        var accessToken = tokenService.GenerateAccessToken(user);
+        // 3. Issue tokens — embed the user's first site so Category-1 APIs need no siteId param.
+        // TenantAdmin roles are tenant-wide (SiteId == null); site-scoped roles carry a SiteId.
+        // Fall back to the first site-scoped role if no tenant-wide default site is available.
+        var defaultSiteId = user.Roles
+            .Where(r => r.SiteId is not null)
+            .Select(r => r.SiteId)
+            .FirstOrDefault();
+
+        var accessToken = tokenService.GenerateAccessToken(user, defaultSiteId);
         var (rawRefresh, refreshHash) = tokenService.GenerateRefreshToken();
 
         var refreshExpiry = dateTime.UtcNow.Add(RefreshTokenLifetime);

@@ -14,3 +14,6 @@ public sealed record AuthUserDto(
     string Email,
     string DisplayName,
     IReadOnlyList<string> Roles);
+
+/// <summary>Request body for <c>POST /auth/switch-site</c>.</summary>
+public sealed record SwitchSiteRequest(Guid SiteId);

@@ -26,7 +26,9 @@ public sealed class CreateEntryCommandHandler(
         CreateEntryCommand request,
         CancellationToken cancellationToken)
     {
-        var siteId = new SiteId(request.SiteId);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<EntryDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var contentTypeId = new ContentTypeId(request.ContentTypeId);
         var slug = Slug.Create(request.Slug);
         var locale = Locale.Create(request.Locale);

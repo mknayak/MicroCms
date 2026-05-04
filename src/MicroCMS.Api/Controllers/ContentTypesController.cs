@@ -15,12 +15,11 @@ public sealed class ContentTypesController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(PagedList<ContentTypeListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-     [FromQuery] Guid? siteId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
      CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ListContentTypesQuery(siteId, page, pageSize), cancellationToken);
+        var result = await Sender.Send(new ListContentTypesQuery(page, pageSize), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -42,7 +41,7 @@ public sealed class ContentTypesController : ApiControllerBase
             locMode = LocalizationMode.PerLocale;
 
         var result = await Sender.Send(
-      new CreateContentTypeCommand(request.SiteId, request.Handle, request.DisplayName,
+      new CreateContentTypeCommand(request.Handle, request.DisplayName,
     request.Description, locMode, request.Kind ?? "Content"),
        cancellationToken);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
@@ -168,7 +167,7 @@ cancellationToken);
 
         var result = await Sender.Send(
             new ImportContentTypeSchemaCommand(
-           request.SiteId, request.Handle, request.DisplayName,
+           request.Handle, request.DisplayName,
            request.Description, fields),
                 cancellationToken);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
@@ -185,10 +184,9 @@ cancellationToken);
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEnumOptions(
     Guid id, Guid fieldId,
-        [FromQuery] Guid siteId,
         CancellationToken cancellationToken = default)
  {
-        var result = await Sender.Send(new ResolveEnumOptionsQuery(id, fieldId, siteId), cancellationToken);
+        var result = await Sender.Send(new ResolveEnumOptionsQuery(id, fieldId), cancellationToken);
      return OkOrProblem(result);
     }
 }
@@ -196,7 +194,6 @@ cancellationToken);
 // ── Request models ───────────────────────────────────────────────────────────
 
 public sealed record CreateContentTypeRequest(
-    Guid SiteId,
     string Handle,
     string DisplayName,
  string? Description = null,
@@ -242,7 +239,6 @@ Guid? Id,
     FieldDynamicSourceRequest? DynamicSource = null);
 
 public sealed record ImportSchemaRequest(
-    Guid SiteId,
     string Handle,
     string DisplayName,
     string? Description = null,

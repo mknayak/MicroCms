@@ -10,4 +10,5 @@ public interface IAiCurrentUser
 {
     Guid UserId { get; }
     TenantId TenantId { get; }
+    SiteId? SiteId { get; }
 }

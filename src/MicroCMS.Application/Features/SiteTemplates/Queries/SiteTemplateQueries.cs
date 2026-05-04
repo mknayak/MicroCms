@@ -9,4 +9,4 @@ namespace MicroCMS.Application.Features.SiteTemplates.Queries;
 public sealed record GetSiteTemplateQuery(Guid TemplateId) : IQuery<SiteTemplateDto>;
 
 [HasPolicy(ContentPolicies.PageTemplateRead)]
-public sealed record ListSiteTemplatesQuery(Guid SiteId) : IQuery<IReadOnlyList<SiteTemplateListItemDto>>;
+public sealed record ListSiteTemplatesQuery() : IQuery<IReadOnlyList<SiteTemplateListItemDto>>;

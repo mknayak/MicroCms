@@ -15,7 +15,6 @@ public sealed class CreateEntryCommandValidatorTests
     public async Task Validate_WithValidCommand_PassesValidation()
     {
         var command = new CreateEntryCommand(
-            SiteId: Guid.NewGuid(),
             ContentTypeId: Guid.NewGuid(),
             Slug: "valid-slug",
             Locale: "en-US",
@@ -35,7 +34,6 @@ public sealed class CreateEntryCommandValidatorTests
     public async Task Validate_WithInvalidSlug_FailsValidation(string slug)
     {
         var command = new CreateEntryCommand(
-            SiteId: Guid.NewGuid(),
             ContentTypeId: Guid.NewGuid(),
             Slug: slug,
             Locale: "en");
@@ -53,7 +51,6 @@ public sealed class CreateEntryCommandValidatorTests
     public async Task Validate_WithValidLocale_PassesValidation(string locale)
     {
         var command = new CreateEntryCommand(
-            SiteId: Guid.NewGuid(),
             ContentTypeId: Guid.NewGuid(),
             Slug: "my-article",
             Locale: locale);
@@ -67,7 +64,6 @@ public sealed class CreateEntryCommandValidatorTests
     public async Task Validate_WithInvalidJson_FailsValidation()
     {
         var command = new CreateEntryCommand(
-            SiteId: Guid.NewGuid(),
             ContentTypeId: Guid.NewGuid(),
             Slug: "my-article",
             Locale: "en",
@@ -77,20 +73,5 @@ public sealed class CreateEntryCommandValidatorTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateEntryCommand.FieldsJson));
-    }
-
-    [Fact]
-    public async Task Validate_WithEmptySiteId_FailsValidation()
-    {
-        var command = new CreateEntryCommand(
-            SiteId: Guid.Empty,
-            ContentTypeId: Guid.NewGuid(),
-            Slug: "my-article",
-            Locale: "en");
-
-        var result = await _sut.ValidateAsync(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateEntryCommand.SiteId));
     }
 }

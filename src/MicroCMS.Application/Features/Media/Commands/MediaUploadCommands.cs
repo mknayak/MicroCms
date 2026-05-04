@@ -15,7 +15,6 @@ namespace MicroCMS.Application.Features.Media.Commands;
 /// </summary>
 [HasPolicy(ContentPolicies.MediaUpload)]
 public sealed record UploadMediaAssetCommand(
-    Guid SiteId,
     string FileName,
     Stream Content,
     long ContentLength,

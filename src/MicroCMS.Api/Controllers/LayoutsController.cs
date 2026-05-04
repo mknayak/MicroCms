@@ -19,9 +19,8 @@ public sealed class LayoutsController : ApiControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<LayoutListItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-        [FromQuery] Guid siteId,
         CancellationToken ct = default) =>
-        OkOrProblem(await Sender.Send(new ListLayoutsQuery(siteId), ct));
+        OkOrProblem(await Sender.Send(new ListLayoutsQuery(), ct));
 
     /// <summary>Gets a single layout by ID.</summary>
     [HttpGet("{id:guid}")]
@@ -81,8 +80,8 @@ public sealed class LayoutsController : ApiControllerBase
     /// <summary>Sets this layout as the site default. Clears IsDefault on any previous default.</summary>
     [HttpPost("{id:guid}/set-default")]
     [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
-  public async Task<IActionResult> SetDefault(Guid id, [FromQuery] Guid siteId, CancellationToken ct = default) =>
-        OkOrProblem(await Sender.Send(new SetDefaultLayoutCommand(siteId, id), ct));
+  public async Task<IActionResult> SetDefault(Guid id, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new SetDefaultLayoutCommand(id), ct));
 
     /// <summary>Deletes a layout. Pages that reference it will fall back to the site default.</summary>
     [HttpDelete("{id:guid}")]

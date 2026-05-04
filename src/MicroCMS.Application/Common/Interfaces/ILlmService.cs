@@ -12,19 +12,21 @@ public interface ILlmService
     /// <summary>Sends a single-turn prompt and returns the full completion.</summary>
     Task<LlmResponse> CompleteAsync(
         LlmRequest request,
-      CancellationToken cancellationToken = default);
+        MicroCMS.Shared.Ids.SiteId? siteId = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Streams completion tokens for real-time UI rendering.</summary>
     IAsyncEnumerable<string> StreamAsync(
         LlmRequest request,
+        MicroCMS.Shared.Ids.SiteId? siteId = null,
         CancellationToken cancellationToken = default);
 }
 
 /// <summary>Application-level LLM request wrapper.</summary>
 public sealed record LlmRequest(
- string SystemPrompt,
+    string SystemPrompt,
     string UserMessage,
-  string? FeatureHint = null,      // e.g. "writing_assist", "translation", "quality_check"
+    string? FeatureHint = null,      // e.g. "writing_assist", "translation", "quality_check"
     float Temperature = 0.7f,
     int? MaxTokens = null,
     string? ResponseFormat = null);  // "json_object" for structured extraction

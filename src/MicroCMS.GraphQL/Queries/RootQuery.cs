@@ -43,7 +43,7 @@ public sealed class RootQuery
         [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var query = new ListEntriesQuery(siteId, statusFilter, contentTypeId, locale, PageNumber: pageNumber, PageSize: pageSize);
+        var query = new ListEntriesQuery(statusFilter, contentTypeId, locale, PageNumber: pageNumber, PageSize: pageSize);
         var result = await mediator.Send(query, cancellationToken);
         return result.IsSuccess
             ? result.Value
@@ -70,7 +70,7 @@ public sealed class RootQuery
         [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new ListContentTypesQuery(siteId, page, pageSize), cancellationToken);
+        var result = await mediator.Send(new ListContentTypesQuery(page, pageSize), cancellationToken);
       return result.IsSuccess
             ? result.Value
             : PagedList<ContentTypeListItemDto>.Create(Array.Empty<ContentTypeListItemDto>(), page, pageSize, 0);
@@ -93,7 +93,7 @@ public sealed class RootQuery
    [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new ListMediaAssetsQuery(siteId, page, pageSize), cancellationToken);
+        var result = await mediator.Send(new ListMediaAssetsQuery(page, pageSize), cancellationToken);
         return result.IsSuccess
             ? result.Value
  : PagedList<MediaAssetListItemDto>.Create(Array.Empty<MediaAssetListItemDto>(), page, pageSize, 0);
@@ -107,7 +107,7 @@ public sealed class RootQuery
       [Service] IMediator mediator,
  CancellationToken cancellationToken)
     {
- var result = await mediator.Send(new ListCategoriesQuery(siteId), cancellationToken);
+ var result = await mediator.Send(new ListCategoriesQuery(), cancellationToken);
         return result.IsSuccess ? result.Value : Array.Empty<CategoryDto>();
     }
 
@@ -117,7 +117,7 @@ public sealed class RootQuery
         [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new ListTagsQuery(siteId), cancellationToken);
+        var result = await mediator.Send(new ListTagsQuery(), cancellationToken);
         return result.IsSuccess ? result.Value : Array.Empty<TagDto>();
     }
 
@@ -136,7 +136,7 @@ public sealed class RootQuery
     CancellationToken cancellationToken)
     {
    var searchQuery = new SearchEntriesQuery(
-   query, siteId, contentTypeId, locale, status ?? "Published", page, pageSize);
+   query, contentTypeId, locale, status ?? "Published", page, pageSize);
 
         var result = await mediator.Send(searchQuery, cancellationToken);
    return result.IsSuccess

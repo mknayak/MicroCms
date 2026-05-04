@@ -36,12 +36,13 @@ public sealed class PackagesController : ApiControllerBase
     /// Reads an uploaded package ZIP and returns analysis stats without applying any changes.
     /// </summary>
   [HttpPost("analyse")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(PackageAnalysisResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [RequestSizeLimit(512 * 1024 * 1024)] // 512 MB max upload
     public async Task<IActionResult> Analyse(
-        [FromForm] IFormFile file,
+        IFormFile file,
         [FromQuery] Guid targetTenantId,
         [FromQuery] Guid targetSiteId,
         CancellationToken ct = default)
@@ -66,12 +67,13 @@ public sealed class PackagesController : ApiControllerBase
     /// Returns import progress / summary.
     /// </summary>
     [HttpPost("import")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ImportProgress), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [RequestSizeLimit(512 * 1024 * 1024)]
     public async Task<IActionResult> Import(
-        [FromForm] IFormFile file,
+        IFormFile file,
         [FromQuery] Guid targetTenantId,
    [FromQuery] Guid targetSiteId,
         [FromForm] bool importContentTypes = true,

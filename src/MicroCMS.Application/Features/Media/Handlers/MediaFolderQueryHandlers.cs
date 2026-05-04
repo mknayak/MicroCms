@@ -1,5 +1,7 @@
 using MediatR;
+using MediatR;
 using MicroCMS.Application.Common.Exceptions;
+using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Media.Dtos;
 using MicroCMS.Application.Features.Media.Mappers;
 using MicroCMS.Application.Features.Media.Queries;
@@ -12,13 +14,16 @@ using MicroCMS.Shared.Results;
 namespace MicroCMS.Application.Features.Media.Handlers;
 
 internal sealed class ListMediaFoldersQueryHandler(
-    IRepository<MediaFolder, Guid> repo) : IRequestHandler<ListMediaFoldersQuery, Result<IReadOnlyList<MediaFolderDto>>>
+    IRepository<MediaFolder, Guid> repo,
+    ICurrentUser currentUser) : IRequestHandler<ListMediaFoldersQuery, Result<IReadOnlyList<MediaFolderDto>>>
 {
     public async Task<Result<IReadOnlyList<MediaFolderDto>>> Handle(
         ListMediaFoldersQuery request,
         CancellationToken cancellationToken)
     {
-        var siteId = new SiteId(request.SiteId);
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<MediaFolderDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var folders = await repo.ListAsync(
             new MediaFoldersBySiteSpec(siteId, request.ParentFolderId), cancellationToken);
 

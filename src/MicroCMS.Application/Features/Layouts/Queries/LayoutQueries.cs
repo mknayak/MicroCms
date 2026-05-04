@@ -9,4 +9,4 @@ namespace MicroCMS.Application.Features.Layouts.Queries;
 public sealed record GetLayoutQuery(Guid LayoutId) : IQuery<LayoutDto>;
 
 [HasPolicy(ContentPolicies.ComponentRead)]
-public sealed record ListLayoutsQuery(Guid SiteId) : IQuery<IReadOnlyList<LayoutListItemDto>>;
+public sealed record ListLayoutsQuery() : IQuery<IReadOnlyList<LayoutListItemDto>>;

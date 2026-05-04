@@ -46,7 +46,7 @@ public sealed class TranslateEntryLocaleCommandHandler(
             FeatureHint: "translation",
   Temperature: 0.3f);
 
-        var response = await llm.CompleteAsync(llmRequest, cancellationToken);
+        var response = await llm.CompleteAsync(llmRequest, entry.SiteId, cancellationToken);
 
   // Create a new entry as the translated locale variant
 var targetLocale = Locale.Create(request.TargetLocale);

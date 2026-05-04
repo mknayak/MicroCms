@@ -28,10 +28,11 @@ internal sealed class CreateFolderCommandHandler(
 {
     public async Task<Result<FolderDto>> Handle(CreateFolderCommand request, CancellationToken cancellationToken)
     {
-   var folder = Folder.Create(
+        var siteId = currentUser.SiteId ?? new SiteId(Guid.Empty);
+        var folder = Folder.Create(
           currentUser.TenantId,
-       new SiteId(request.SiteId),
- request.Name,
+          siteId,
+          request.Name,
    request.ParentFolderId.HasValue ? new FolderId(request.ParentFolderId.Value) : null);
 
   await folderRepository.AddAsync(folder, cancellationToken);

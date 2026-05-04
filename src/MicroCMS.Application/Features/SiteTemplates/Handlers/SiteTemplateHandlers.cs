@@ -46,7 +46,7 @@ internal sealed class CreateSiteTemplateCommandHandler(
 
         var template = SiteTemplate.Create(
 currentUser.TenantId,
-   new SiteId(request.SiteId),
+   currentUser.SiteId ?? new SiteId(Guid.Empty),
    layoutId,
      request.Name,
    request.Description);
@@ -128,14 +128,18 @@ internal sealed class GetSiteTemplateQueryHandler(
 
 internal sealed class ListSiteTemplatesQueryHandler(
     IRepository<SiteTemplate, SiteTemplateId> repo,
-    IRepository<Layout, LayoutId> layoutRepo)
+    IRepository<Layout, LayoutId> layoutRepo,
+    ICurrentUser currentUser)
  : IRequestHandler<ListSiteTemplatesQuery, Result<IReadOnlyList<SiteTemplateListItemDto>>>
 {
     public async Task<Result<IReadOnlyList<SiteTemplateListItemDto>>> Handle(
    ListSiteTemplatesQuery request, CancellationToken cancellationToken)
     {
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<SiteTemplateListItemDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+
         var templates = await repo.ListAsync(
-            new SiteTemplatesBySiteSpec(new SiteId(request.SiteId)), cancellationToken);
+            new SiteTemplatesBySiteSpec(siteId), cancellationToken);
 
         // Resolve layout names in one pass — avoid N+1 with a local dict
         var layoutIds = templates.Select(t => t.LayoutId).Distinct().ToList();
