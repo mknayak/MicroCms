@@ -20,9 +20,7 @@
     <ProjectReference Include="..\..\src\MicroCMS.GraphQL\MicroCMS.GraphQL.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Ai.Abstractions\MicroCMS.Ai.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Ai.Core\MicroCMS.Ai.Core.csproj" />
-    <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.AzureOpenAI\MicroCMS.Ai.Providers.AzureOpenAI.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.OpenAI\MicroCMS.Ai.Providers.OpenAI.csproj" />
-    <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.Anthropic\MicroCMS.Ai.Providers.Anthropic.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Plugins.Abstractions\MicroCMS.Plugins.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Plugins.Hosting\MicroCMS.Plugins.Hosting.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Shared\MicroCMS.Shared.csproj" />

@@ -359,50 +359,7 @@ internal static class ServiceCollectionExtensions
                 sp,
                 loggerFactory.CreateLogger<MicroCMS.Ai.Core.Services.ProviderRegistry>());
 
-            // ── Azure OpenAI ──────────────────────────────────────────────────────
-            registry.RegisterCompletionProvider("azure_openai", (endpoint, apiKey, model) =>
-            {
-                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAICompletionProvider>();
-                var deploymentName = !string.IsNullOrWhiteSpace(model) ? model : (Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT") ?? "gpt-4");
-                return new MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAICompletionProvider(endpoint, apiKey, deploymentName, logger);
-            });
-
-            registry.RegisterEmbeddingProvider("azure_openai", (endpoint, apiKey, model) =>
-            {
-                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAIEmbeddingProvider>();
-                var deploymentName = !string.IsNullOrWhiteSpace(model) ? model : (Environment.GetEnvironmentVariable("AZURE_OPENAI_EMBEDDING_DEPLOYMENT") ?? "text-embedding-ada-002");
-                return new MicroCMS.Ai.Providers.AzureOpenAI.AzureOpenAIEmbeddingProvider(endpoint, apiKey, deploymentName, logger);
-            });
-
-            // ── OpenAI ───────────────────────────────────────────────────────────
-            registry.RegisterCompletionProvider("openai", (endpoint, apiKey, model) =>
-            {
-                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.OpenAI.OpenAICompletionProvider>();
-                var resolvedModel = !string.IsNullOrWhiteSpace(model) ? model : (Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini");
-                return new MicroCMS.Ai.Providers.OpenAI.OpenAICompletionProvider(resolvedModel, apiKey, logger, string.IsNullOrWhiteSpace(endpoint) ? null : endpoint);
-            });
-
-            registry.RegisterEmbeddingProvider("openai", (endpoint, apiKey, model) =>
-            {
-                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.OpenAI.OpenAIEmbeddingProvider>();
-                var resolvedModel = !string.IsNullOrWhiteSpace(model) ? model : (Environment.GetEnvironmentVariable("OPENAI_EMBEDDING_MODEL") ?? "text-embedding-3-small");
-                return new MicroCMS.Ai.Providers.OpenAI.OpenAIEmbeddingProvider(resolvedModel, apiKey, logger, string.IsNullOrWhiteSpace(endpoint) ? null : endpoint);
-            });
-
-            // ── Ollama ────────────────────────────────────────────────────────────
-            registry.RegisterCompletionProvider("ollama", (endpoint, apiKey, model) =>
-            {
-                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider>();
-                var resolvedModel = !string.IsNullOrWhiteSpace(model) ? model : (Environment.GetEnvironmentVariable("OLLAMA_MODEL") ?? "llama3");
-                return new MicroCMS.Ai.Providers.Ollama.OllamaCompletionProvider(endpoint, resolvedModel, logger, apiKey);
-            });
-
-            registry.RegisterEmbeddingProvider("ollama", (endpoint, apiKey, model) =>
-            {
-                var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider>();
-                var resolvedModel = !string.IsNullOrWhiteSpace(model) ? model : (Environment.GetEnvironmentVariable("OLLAMA_EMBEDDING_MODEL") ?? "nomic-embed-text");
-                return new MicroCMS.Ai.Providers.Ollama.OllamaEmbeddingProvider(endpoint, resolvedModel, logger, apiKey);
-            });
+            RegisterOpenAiProviders(registry, loggerFactory);
 
             return registry;
         });
@@ -410,14 +367,31 @@ internal static class ServiceCollectionExtensions
         return builder;
     }
 
+    private static void RegisterOpenAiProviders(
+        MicroCMS.Ai.Core.Services.ProviderRegistry registry,
+        ILoggerFactory loggerFactory)
+    {
+        registry.RegisterCompletionProvider("openai", (endpoint, apiKey, model) =>
+        {
+            var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.OpenAI.OpenAICompletionProvider>();
+            var resolvedModel = string.IsNullOrWhiteSpace(model) ? (Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini") : model;
+            return new MicroCMS.Ai.Providers.OpenAI.OpenAICompletionProvider(resolvedModel, apiKey, logger, string.IsNullOrWhiteSpace(endpoint) ? null : endpoint);
+        });
+
+        registry.RegisterEmbeddingProvider("openai", (endpoint, apiKey, model) =>
+        {
+            var logger = loggerFactory.CreateLogger<MicroCMS.Ai.Providers.OpenAI.OpenAIEmbeddingProvider>();
+            var resolvedModel = string.IsNullOrWhiteSpace(model) ? (Environment.GetEnvironmentVariable("OPENAI_EMBEDDING_MODEL") ?? "text-embedding-3-small") : model;
+            return new MicroCMS.Ai.Providers.OpenAI.OpenAIEmbeddingProvider(resolvedModel, apiKey, logger, string.IsNullOrWhiteSpace(endpoint) ? null : endpoint);
+        });
+    }
+
     // ── Health checks ─────────────────────────────────────────────────────
 
     internal static WebApplicationBuilder AddHealthChecks(
         this WebApplicationBuilder builder)
     {
-        builder.Services
-   .AddHealthChecks()
-            .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
+        builder.Services.AddHealthChecks().AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
 
         return builder;
     }

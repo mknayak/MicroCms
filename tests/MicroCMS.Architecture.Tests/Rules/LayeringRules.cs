@@ -69,7 +69,7 @@ public sealed class LayeringRules
     public void AiProviders_ShouldNot_DependOn_Application()
     {
         var result = Types
-            .InAssembly(typeof(MicroCMS.Ai.Providers.AzureOpenAI.AssemblyReference).Assembly)
+            .InAssembly(typeof(MicroCMS.Ai.Providers.OpenAI.OpenAICompletionProvider).Assembly)
             .ShouldNot()
             .HaveDependencyOn("MicroCMS.Application")
             .GetResult();
