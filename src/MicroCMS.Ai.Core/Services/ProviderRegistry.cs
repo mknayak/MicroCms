@@ -19,8 +19,8 @@ public sealed class ProviderRegistry
     private readonly ConcurrentDictionary<string, IAiEmbeddingProvider> _embeddingProviders = new();
 
     // Maps provider names to factory functions
-    private readonly Dictionary<string, Func<string, string, IAiCompletionProvider>> _completionFactories = new();
-    private readonly Dictionary<string, Func<string, string, IAiEmbeddingProvider>> _embeddingFactories = new();
+    private readonly Dictionary<string, Func<string, string, string, IAiCompletionProvider>> _completionFactories = new();
+    private readonly Dictionary<string, Func<string, string, string, IAiEmbeddingProvider>> _embeddingFactories = new();
 
     public ProviderRegistry(IServiceProvider serviceProvider, ILogger<ProviderRegistry> logger)
     {
@@ -33,7 +33,7 @@ public sealed class ProviderRegistry
     /// </summary>
     public void RegisterCompletionProvider(
         string providerName,
-        Func<string, string, IAiCompletionProvider> factory)
+        Func<string, string, string, IAiCompletionProvider> factory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName, nameof(providerName));
         ArgumentNullException.ThrowIfNull(factory, nameof(factory));
@@ -47,7 +47,7 @@ public sealed class ProviderRegistry
     /// </summary>
     public void RegisterEmbeddingProvider(
         string providerName,
-        Func<string, string, IAiEmbeddingProvider> factory)
+        Func<string, string, string, IAiEmbeddingProvider> factory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName, nameof(providerName));
         ArgumentNullException.ThrowIfNull(factory, nameof(factory));
@@ -64,12 +64,14 @@ public sealed class ProviderRegistry
         string providerName,
         string endpoint,
         string apiKey,
+        string? model = null,
         string? dataResidencyRegion = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName, nameof(providerName));
 
         var normalizedProviderName = providerName.ToLowerInvariant();
-        var cacheKey = BuildCacheKey(normalizedProviderName, endpoint, apiKey);
+        var resolvedModel = model ?? string.Empty;
+        var cacheKey = BuildCacheKey(normalizedProviderName, endpoint, apiKey, resolvedModel);
 
         return _completionProviders.GetOrAdd(cacheKey, _ =>
         {
@@ -91,7 +93,7 @@ public sealed class ProviderRegistry
                 ValidateDataResidency(endpoint, dataResidencyRegion);
             }
 
-            return factory(endpoint, apiKey);
+            return factory(endpoint, apiKey, resolvedModel);
         });
     }
 
@@ -101,12 +103,14 @@ public sealed class ProviderRegistry
     public IAiEmbeddingProvider GetEmbeddingProvider(
         string providerName,
         string endpoint,
-        string apiKey)
+        string apiKey,
+        string? model = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName, nameof(providerName));
 
         var normalizedProviderName = providerName.ToLowerInvariant();
-        var cacheKey = BuildCacheKey(normalizedProviderName, endpoint, apiKey);
+        var resolvedModel = model ?? string.Empty;
+        var cacheKey = BuildCacheKey(normalizedProviderName, endpoint, apiKey, resolvedModel);
 
         return _embeddingProviders.GetOrAdd(cacheKey, _ =>
         {
@@ -122,18 +126,18 @@ public sealed class ProviderRegistry
                 providerName,
                 MaskEndpoint(endpoint));
 
-            return factory(endpoint, apiKey);
+            return factory(endpoint, apiKey, resolvedModel);
         });
     }
 
-    private static string BuildCacheKey(string providerName, string endpoint, string apiKey)
+    private static string BuildCacheKey(string providerName, string endpoint, string apiKey, string model)
     {
         // Hash the API key to avoid storing it in memory as plain text
         var apiKeyHash = string.IsNullOrWhiteSpace(apiKey)
             ? "none"
             : Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(apiKey)))[..16];
 
-        return $"{providerName}::{endpoint}::{apiKeyHash}";
+        return $"{providerName}::{endpoint}::{apiKeyHash}::{model}";
     }
 
     private static string MaskEndpoint(string endpoint)

@@ -39,8 +39,8 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
         _httpClient = httpClient ?? new HttpClient();
 
         var baseAddress = string.IsNullOrWhiteSpace(endpoint)
-            ? "http://localhost:11434"
-            : endpoint;
+            ? "http://localhost:11434/"
+            : endpoint.TrimEnd('/') + '/';
 
         _httpClient.BaseAddress = new Uri(baseAddress);
         _httpClient.Timeout = TimeSpan.FromMinutes(5);
@@ -66,7 +66,7 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
             _logger.LogDebug("Sending completion request to Ollama with model '{Model}'", _model);
 
             var response = await _httpClient.PostAsJsonAsync(
-                "/api/chat", ollamaRequest, JsonOptions, cancellationToken);
+                "api/chat", ollamaRequest, JsonOptions, cancellationToken);
 
             response.EnsureSuccessStatusCode();
 
@@ -107,7 +107,7 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
         _logger.LogDebug("Starting streaming completion from Ollama with model '{Model}'", _model);
 
         var response = await _httpClient.PostAsJsonAsync(
-            "/api/chat", ollamaRequest, JsonOptions, cancellationToken);
+            "api/chat", ollamaRequest, JsonOptions, cancellationToken);
 
         response.EnsureSuccessStatusCode();
 
@@ -148,6 +148,7 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
                 Content = m.Content
             }).ToList(),
             Stream = stream,
+            Format = request.ResponseFormat == "json_object" ? "json" : null,
             Options = new OllamaOptions
             {
                 Temperature = request.Temperature,
@@ -163,6 +164,7 @@ public sealed class OllamaCompletionProvider : IAiCompletionProvider
         public required List<OllamaMessage> Messages { get; init; }
         public bool Stream { get; init; }
         public OllamaOptions? Options { get; init; }
+        public string? Format { get; init; }
     }
 
     private sealed class OllamaMessage

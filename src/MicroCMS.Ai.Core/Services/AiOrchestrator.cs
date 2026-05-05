@@ -69,6 +69,13 @@ public sealed class AiOrchestrator
             defaultValue: null,
             cancellationToken);
 
+        var model = await _settingsReader.GetAsync<string>(
+            tenantId,
+            siteId,
+            AiSettingKeys.Model,
+            defaultValue: null,
+            cancellationToken);
+
         // Validate configuration
         if (string.IsNullOrWhiteSpace(providerName))
         {
@@ -90,6 +97,7 @@ public sealed class AiOrchestrator
             providerName,
             endpoint,
             apiKey,
+            model,
             dataResidencyRegion);
 
         _logger.LogInformation(
@@ -158,6 +166,13 @@ public sealed class AiOrchestrator
             defaultValue: null,
             cancellationToken);
 
+        var model = await _settingsReader.GetAsync<string>(
+            tenantId,
+            siteId,
+            AiSettingKeys.Model,
+            defaultValue: null,
+            cancellationToken);
+
         if (string.IsNullOrWhiteSpace(providerName))
         {
             throw new InvalidOperationException("AI provider not configured.");
@@ -167,6 +182,7 @@ public sealed class AiOrchestrator
             providerName,
             endpoint,
             apiKey,
+            model,
             dataResidencyRegion);
 
         _logger.LogInformation(
@@ -216,7 +232,14 @@ public sealed class AiOrchestrator
             throw new InvalidOperationException("AI provider not fully configured for embeddings.");
         }
 
-        var provider = _providerRegistry.GetEmbeddingProvider(providerName, endpoint, apiKey);
+        var model = await _settingsReader.GetAsync<string>(
+            tenantId,
+            siteId,
+            AiSettingKeys.Model,
+            defaultValue: null,
+            cancellationToken);
+
+        var provider = _providerRegistry.GetEmbeddingProvider(providerName, endpoint, apiKey, model);
 
         _logger.LogInformation(
             "Generating embedding with provider '{Provider}' for tenant {TenantId}",

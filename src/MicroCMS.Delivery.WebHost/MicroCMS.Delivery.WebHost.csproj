@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <!-- Problem Details RFC 7807 -->
+    <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
     <!-- API versioning -->
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
@@ -35,6 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
   </ItemGroup>
 
 </Project>

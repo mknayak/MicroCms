@@ -62,7 +62,7 @@ public sealed class GenerateDraftCommandHandler : IRequestHandler<GenerateDraftC
         var fullSystemPrompt = systemPrompt + "\n\nGenerate content matching this JSON schema:\n" + schemaJson;
         var userMessage = userPromptTemplate
             .Replace("{contentType}", contentType.DisplayName, StringComparison.Ordinal)
-            .Replace("{instructions}", request.Prompt, StringComparison.Ordinal);
+            .Replace("{instructions}", request.Prompt, StringComparison.Ordinal) + "\nRespond ONLY with valid JSON. No code fences, no extra text.";
 
         var llmRequest = new LlmRequest(
             SystemPrompt: fullSystemPrompt,

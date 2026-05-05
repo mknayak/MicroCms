@@ -42,10 +42,13 @@
 
   <ItemGroup>
     <!-- Problem Details RFC 7807 (used in composition root AddApiServices) -->
+    <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
     <!-- API versioning (used in composition root AddApiServices) -->
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+    <PackageReference Include="HotChocolate.Language" Version="13.9.16" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <!-- OpenAPI / Swagger (used in composition root AddApiServices) -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
     <!-- JWT auth (used in composition root AddSecurityServices) -->
@@ -55,7 +58,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="2.*" />
     <!-- OTLP exporter -->
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <!-- Health checks -->
     <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="8.0.1" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.2" />
