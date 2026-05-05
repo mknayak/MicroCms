@@ -38,72 +38,16 @@ public sealed class AiOrchestrator
         SiteId? siteId = null,
         CancellationToken cancellationToken = default)
     {
-        var tenantId = _currentUser.TenantId;
+        var config = await _settingsReader.GetAiProviderConfigAsync(_currentUser.TenantId, siteId, cancellationToken);
 
-        // Read provider configuration from settings
-        var providerName = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Provider,
-            defaultValue: "azure_openai",
-            cancellationToken);
+        config.ValidateForCompletion();
 
-        var endpoint = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Endpoint,
-            defaultValue: string.Empty,
-            cancellationToken);
-
-        var apiKey = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.ApiKey,
-            defaultValue: string.Empty,
-            cancellationToken);
-
-        var dataResidencyRegion = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.DataResidencyRegion,
-            defaultValue: null,
-            cancellationToken);
-
-        var model = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Model,
-            defaultValue: null,
-            cancellationToken);
-
-        // Validate configuration
-        if (string.IsNullOrWhiteSpace(providerName))
-        {
-            throw new InvalidOperationException("AI provider not configured. Set 'ai:provider' in tenant/site settings.");
-        }
-
-        if (string.IsNullOrWhiteSpace(endpoint) && providerName != "ollama")
-        {
-            throw new InvalidOperationException($"AI endpoint not configured for provider '{providerName}'. Set 'ai:endpoint' in settings.");
-        }
-
-        if (string.IsNullOrWhiteSpace(apiKey) && providerName != "ollama")
-        {
-            throw new InvalidOperationException($"AI API key not configured for provider '{providerName}'. Set 'ai:api_key' in settings.");
-        }
-
-        // Get or create provider instance
         var provider = _providerRegistry.GetCompletionProvider(
-            providerName,
-            endpoint,
-            apiKey,
-            model,
-            dataResidencyRegion);
+            config.ProviderName, config.Endpoint, config.ApiKey, config.Model, config.DataResidencyRegion);
 
         _logger.LogInformation(
             "Routing completion request to provider '{Provider}' for tenant {TenantId}",
-            providerName,
-            tenantId);
+            config.ProviderName, _currentUser.TenantId);
 
         try
         {
@@ -111,19 +55,15 @@ public sealed class AiOrchestrator
 
             _logger.LogInformation(
                 "Completion succeeded: {PromptTokens} prompt tokens, {CompletionTokens} completion tokens, provider '{Provider}'",
-                response.PromptTokens,
-                response.CompletionTokens,
-                providerName);
+                response.PromptTokens, response.CompletionTokens, config.ProviderName);
 
             return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
+            _logger.LogError(ex,
                 "Completion failed for provider '{Provider}', tenant {TenantId}",
-                providerName,
-                tenantId);
+                config.ProviderName, _currentUser.TenantId);
             throw;
         }
     }
@@ -136,59 +76,15 @@ public sealed class AiOrchestrator
         SiteId? siteId = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var tenantId = _currentUser.TenantId;
+        var config = await _settingsReader.GetAiProviderConfigAsync(
+            _currentUser.TenantId, siteId, cancellationToken);
 
-        var providerName = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Provider,
-            defaultValue: "azure_openai",
-            cancellationToken);
-
-        var endpoint = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Endpoint,
-            defaultValue: string.Empty,
-            cancellationToken);
-
-        var apiKey = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.ApiKey,
-            defaultValue: string.Empty,
-            cancellationToken);
-
-        var dataResidencyRegion = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.DataResidencyRegion,
-            defaultValue: null,
-            cancellationToken);
-
-        var model = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Model,
-            defaultValue: null,
-            cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(providerName))
-        {
-            throw new InvalidOperationException("AI provider not configured.");
-        }
+        config.ValidateForCompletion();
 
         var provider = _providerRegistry.GetCompletionProvider(
-            providerName,
-            endpoint,
-            apiKey,
-            model,
-            dataResidencyRegion);
+            config.ProviderName, config.Endpoint, config.ApiKey, config.Model, config.DataResidencyRegion);
 
-        _logger.LogInformation(
-            "Streaming completion from provider '{Provider}' for tenant {TenantId}",
-            providerName,
-            tenantId);
+        _logger.LogInformation("Streaming completion from provider '{Provider}' for tenant {TenantId}", config.ProviderName, _currentUser.TenantId);
 
         await foreach (var chunk in provider.StreamAsync(request, cancellationToken))
         {
@@ -204,47 +100,15 @@ public sealed class AiOrchestrator
         SiteId? siteId = null,
         CancellationToken cancellationToken = default)
     {
-        var tenantId = _currentUser.TenantId;
+        var config = await _settingsReader.GetAiProviderConfigAsync(
+            _currentUser.TenantId, siteId, cancellationToken);
 
-        var providerName = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Provider,
-            defaultValue: "azure_openai",
-            cancellationToken);
+        config.ValidateForEmbedding();
 
-        var endpoint = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Endpoint,
-            defaultValue: string.Empty,
-            cancellationToken);
+        var provider = _providerRegistry.GetEmbeddingProvider(
+            config.ProviderName, config.Endpoint, config.ApiKey, config.Model);
 
-        var apiKey = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.ApiKey,
-            defaultValue: string.Empty,
-            cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(providerName) || string.IsNullOrWhiteSpace(endpoint))
-        {
-            throw new InvalidOperationException("AI provider not fully configured for embeddings.");
-        }
-
-        var model = await _settingsReader.GetAsync<string>(
-            tenantId,
-            siteId,
-            AiSettingKeys.Model,
-            defaultValue: null,
-            cancellationToken);
-
-        var provider = _providerRegistry.GetEmbeddingProvider(providerName, endpoint, apiKey, model);
-
-        _logger.LogInformation(
-            "Generating embedding with provider '{Provider}' for tenant {TenantId}",
-            providerName,
-            tenantId);
+        _logger.LogInformation("Generating embedding with provider '{Provider}' for tenant {TenantId}", config.ProviderName, _currentUser.TenantId);
 
         try
         {
@@ -252,11 +116,9 @@ public sealed class AiOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
+            _logger.LogError(ex,
                 "Embedding generation failed for provider '{Provider}', tenant {TenantId}",
-                providerName,
-                tenantId);
+                config.ProviderName, _currentUser.TenantId);
             throw;
         }
     }
