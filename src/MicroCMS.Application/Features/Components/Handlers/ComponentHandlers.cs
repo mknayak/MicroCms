@@ -5,6 +5,8 @@ using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Components.Commands;
 using MicroCMS.Application.Features.Components.Dtos;
 using MicroCMS.Application.Features.Components.Queries;
+using MicroCMS.Application.Features.Components.Services;
+using MicroCMS.Application.Features.Layouts.Dtos;
 using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Enums;
@@ -13,7 +15,6 @@ using MicroCMS.Domain.Specifications.Components;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Primitives;
 using MicroCMS.Shared.Results;
-using MicroCMS.Application.Features.Components.Services;
 
 namespace MicroCMS.Application.Features.Components.Handlers;
 
@@ -93,8 +94,11 @@ ComponentBackingTypeProvisioner backingTypeProvisioner)
     public async Task<Result<ComponentDto>> Handle(CreateComponentCommand request, CancellationToken cancellationToken)
     {
         var fieldTypes = ParseFieldTypes(request.Fields);
+        var siteId = currentUser.SiteId;
+        if (siteId is null)
+            return Result.Failure<ComponentDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
         var comp = Component.Create(
-  currentUser.TenantId, new SiteId(request.SiteId),
+  currentUser.TenantId, siteId.Value,
           request.Name, request.Key, request.Description,
             request.Category, request.Zones ?? []);
 

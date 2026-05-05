@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Features.Ai.DraftGeneration;
 using MicroCMS.Application.Features.Layouts.Commands;
 using MicroCMS.Application.Features.Layouts.Dtos;
 using MicroCMS.Application.Features.Layouts.Queries;
@@ -22,7 +23,7 @@ internal static class LayoutMapper
 
     internal static LayoutDto ToDto(Layout l)
     {
-      var zones = DeserializeZones(l.ZonesJson);
+        var zones = DeserializeZones(l.ZonesJson);
         var placements = DeserializePlacements(l.DefaultPlacementsJson);
         return new LayoutDto(
             l.Id.Value, l.TenantId.Value, l.SiteId.Value,
@@ -32,15 +33,15 @@ internal static class LayoutMapper
 
     internal static LayoutListItemDto ToListItemDto(Layout l)
     {
-  var zones = DeserializeZones(l.ZonesJson);
-     return new LayoutListItemDto(
-            l.Id.Value, l.Name, l.Key, l.TemplateType.ToString(),
-            l.IsDefault, zones.Count, l.UpdatedAt);
+        var zones = DeserializeZones(l.ZonesJson);
+        return new LayoutListItemDto(
+               l.Id.Value, l.Name, l.Key, l.TemplateType.ToString(),
+               l.IsDefault, zones.Count, l.UpdatedAt);
     }
 
     private static IReadOnlyList<LayoutZoneNodeDto> DeserializeZones(string json)
     {
-      try
+        try
         {
             var nodes = JsonSerializer.Deserialize<List<ZoneNodeJson>>(json, _json) ?? [];
             return nodes.Select(n => new LayoutZoneNodeDto(
@@ -56,10 +57,10 @@ internal static class LayoutMapper
         try
         {
             var items = JsonSerializer.Deserialize<List<DefaultPlacementJson>>(json, _json) ?? [];
-   return items.Select(p => new LayoutDefaultPlacementDto(
-  p.ComponentId, p.ComponentName, p.Zone, p.SortOrder, p.IsLocked
-         )).ToList().AsReadOnly();
-     }
+            return items.Select(p => new LayoutDefaultPlacementDto(
+           p.ComponentId, p.ComponentName, p.Zone, p.SortOrder, p.IsLocked
+                  )).ToList().AsReadOnly();
+        }
         catch { return []; }
     }
 
@@ -69,9 +70,9 @@ internal static class LayoutMapper
         public string Id { get; set; } = "";
         public string Type { get; set; } = "zone";
         public string Name { get; set; } = "";
-     public string Label { get; set; } = "";
+        public string Label { get; set; } = "";
         public int SortOrder { get; set; }
-    public List<ColumnJson>? Columns { get; set; }
+        public List<ColumnJson>? Columns { get; set; }
     }
     private sealed class ColumnJson { public int Span { get; set; } public string ZoneName { get; set; } = ""; }
     private sealed class DefaultPlacementJson
@@ -96,9 +97,10 @@ internal sealed class CreateLayoutCommandHandler(
     {
         if (!Enum.TryParse<LayoutTemplateType>(request.TemplateType, true, out var templateType))
             templateType = LayoutTemplateType.Handlebars;
-
-        var layout = Layout.Create(
-     currentUser.TenantId, new SiteId(request.SiteId),
+        var siteId = currentUser.SiteId;
+        if (siteId is null)
+            return Result.Failure<LayoutDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
+        var layout = Layout.Create(currentUser.TenantId, siteId.Value,
             request.Name, request.Key, templateType);
 
         // Generate shell from default zones (header/content/footer)
@@ -106,8 +108,8 @@ internal sealed class CreateLayoutCommandHandler(
         layout.SetGeneratedShell(shell);
 
         await repo.AddAsync(layout, cancellationToken);
-      return Result.Success(LayoutMapper.ToDto(layout));
-  }
+        return Result.Success(LayoutMapper.ToDto(layout));
+    }
 }
 
 internal sealed class UpdateLayoutCommandHandler(
@@ -120,9 +122,9 @@ internal sealed class UpdateLayoutCommandHandler(
             ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
 
         if (!Enum.TryParse<LayoutTemplateType>(request.TemplateType, true, out var templateType))
-         templateType = LayoutTemplateType.Handlebars;
+            templateType = LayoutTemplateType.Handlebars;
 
-      layout.Update(request.Name, templateType);
+        layout.Update(request.Name, templateType);
         repo.Update(layout);
         return Result.Success(LayoutMapper.ToDto(layout));
     }
@@ -138,7 +140,7 @@ internal sealed class UpdateLayoutZonesCommandHandler(
         var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
       ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
 
-      var zonesJson = JsonSerializer.Serialize(request.Zones);
+        var zonesJson = JsonSerializer.Serialize(request.Zones);
         layout.UpdateZones(zonesJson);
 
         var shell = shellGenerator.Generate(zonesJson, layout.TemplateType.ToString());
@@ -155,12 +157,12 @@ internal sealed class UpdateLayoutDefaultPlacementsCommandHandler(
 {
     public async Task<Result<LayoutDto>> Handle(UpdateLayoutDefaultPlacementsCommand request, CancellationToken cancellationToken)
     {
- var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
-       ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
+        var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
+              ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
 
         var json = JsonSerializer.Serialize(request.Placements);
         layout.UpdateDefaultPlacements(json);
-  repo.Update(layout);
+        repo.Update(layout);
         return Result.Success(LayoutMapper.ToDto(layout));
     }
 }
@@ -178,12 +180,12 @@ internal sealed class SetDefaultLayoutCommandHandler(
         var existing = await repo.ListAsync(new DefaultLayoutBySiteSpec(siteId), cancellationToken);
         foreach (var l in existing) { l.ClearDefault(); repo.Update(l); }
 
-    var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
-     ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
+        var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
+         ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
 
         layout.MarkAsDefault();
         repo.Update(layout);
-   return Result.Success(LayoutMapper.ToDto(layout));
+        return Result.Success(LayoutMapper.ToDto(layout));
     }
 }
 
@@ -191,12 +193,12 @@ internal sealed class DeleteLayoutCommandHandler(
     IRepository<Layout, LayoutId> repo)
     : IRequestHandler<DeleteLayoutCommand, Result>
 {
- public async Task<Result> Handle(DeleteLayoutCommand request, CancellationToken cancellationToken)
-  {
+    public async Task<Result> Handle(DeleteLayoutCommand request, CancellationToken cancellationToken)
+    {
         var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
 ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
         repo.Remove(layout);
- return Result.Success();
+        return Result.Success();
     }
 }
 
@@ -216,7 +218,7 @@ internal sealed class ListLayoutsQueryHandler(
         var items = await repo.ListAsync(new LayoutsBySiteSpec(siteId), cancellationToken);
         return Result.Success<IReadOnlyList<LayoutListItemDto>>(
    items.Select(LayoutMapper.ToListItemDto).ToList().AsReadOnly());
-  }
+    }
 }
 
 internal sealed class GetLayoutQueryHandler(IRepository<Layout, LayoutId> repo)
@@ -226,6 +228,6 @@ internal sealed class GetLayoutQueryHandler(IRepository<Layout, LayoutId> repo)
     {
         var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
        ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
-    return Result.Success(LayoutMapper.ToDto(layout));
+        return Result.Success(LayoutMapper.ToDto(layout));
     }
 }

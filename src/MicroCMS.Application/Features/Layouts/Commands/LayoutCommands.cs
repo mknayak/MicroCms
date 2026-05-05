@@ -7,7 +7,6 @@ namespace MicroCMS.Application.Features.Layouts.Commands;
 
 [HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record CreateLayoutCommand(
-    Guid SiteId,
     string Name,
     string Key,
     string TemplateType) : ICommand<LayoutDto>;
