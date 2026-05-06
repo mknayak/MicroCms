@@ -32,9 +32,11 @@ public sealed class MediaController : ApiControllerBase
     public async Task<IActionResult> List(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] Guid? folderId = null,
+        [FromQuery] string? search = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(new ListMediaAssetsQuery(page, pageSize), cancellationToken);
+        var result = await Sender.Send(new ListMediaAssetsQuery(page, pageSize, folderId, search), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -75,6 +77,21 @@ public sealed class MediaController : ApiControllerBase
         {
             if (!ContentDispositionHeaderValue.TryParse(section.ContentDisposition, out var cd))
             {
+                section = await reader.ReadNextSectionAsync(cancellationToken);
+                continue;
+            }
+
+            // Read scalar form fields (folderId may arrive as a form field, not a query param)
+            if (cd.IsFormDisposition())
+            {
+                var fieldName = cd.Name.Value ?? string.Empty;
+                var fieldValue = await section.ReadAsStringAsync(cancellationToken);
+                if (string.Equals(fieldName, "folderId", StringComparison.OrdinalIgnoreCase)
+                    && folderId is null
+                    && Guid.TryParse(fieldValue, out var parsedFolderId))
+                {
+                    folderId = parsedFolderId;
+                }
                 section = await reader.ReadNextSectionAsync(cancellationToken);
                 continue;
             }

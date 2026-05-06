@@ -8,7 +8,6 @@ namespace MicroCMS.Application.Features.Media.Commands;
 /// <summary>Creates a new folder in the media library hierarchy.</summary>
 [HasPolicy(ContentPolicies.MediaUpload)]
 public sealed record CreateMediaFolderCommand(
-    Guid SiteId,
     string Name,
     Guid? ParentFolderId = null) : ICommand<MediaFolderDto>;
 

@@ -63,14 +63,16 @@ internal sealed class DeleteMediaAssetCommandHandler(
     ICurrentUser currentUser)
     : IRequestHandler<DeleteMediaAssetCommand, Result>
 {
- public async Task<Result> Handle(DeleteMediaAssetCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(DeleteMediaAssetCommand request, CancellationToken cancellationToken)
     {
-    var asset = await repo.GetByIdAsync(new MediaAssetId(request.AssetId), cancellationToken)
-     ?? throw new NotFoundException(nameof(MediaAsset), request.AssetId);
+        var asset = await repo.GetByIdAsync(new MediaAssetId(request.AssetId), cancellationToken)
+            ?? throw new NotFoundException(nameof(MediaAsset), request.AssetId);
 
-      asset.Delete(currentUser.UserId);
-    repo.Update(asset);
-      return Result.Success();
+        if (asset.TenantId != currentUser.TenantId)
+            throw new ForbiddenException("Asset does not belong to your tenant.");
+
+        repo.Remove(asset);
+        return Result.Success();
     }
 }
 
@@ -96,8 +98,8 @@ internal sealed class ListMediaAssetsQueryHandler(
         if (currentUser.SiteId is not { } siteId)
             return Result.Failure<PagedList<MediaAssetListItemDto>>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
 
-        var items = await repo.ListAsync(new MediaAssetsBySitePagedSpec(siteId, request.Page, request.PageSize), cancellationToken);
-     var total = await repo.CountAsync(new MediaAssetsBySiteSpec(siteId), cancellationToken);
+        var items = await repo.ListAsync(new MediaAssetsBySiteFilteredSpec(siteId, request.FolderId, request.Search, request.Page, request.PageSize), cancellationToken);
+        var total = await repo.CountAsync(new MediaAssetsBySiteFilteredCountSpec(siteId, request.FolderId, request.Search), cancellationToken);
 
      return Result.Success(PagedList<MediaAssetListItemDto>.Create(
       items.Select(MediaMapper.ToListItemDto), request.Page, request.PageSize, total));

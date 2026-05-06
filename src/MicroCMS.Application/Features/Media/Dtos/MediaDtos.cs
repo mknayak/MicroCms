@@ -30,11 +30,15 @@ public sealed record MediaAssetListItemDto(
     string? AiAltText,
     string Url,
     string? ThumbnailUrl,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    Guid? FolderId = null,
+    IReadOnlyList<string>? Tags = null);
 
 public sealed record MediaFolderDto(
     Guid Id,
     Guid TenantId,
     Guid SiteId,
     string Name,
-    Guid? ParentId);
+    Guid? ParentFolderId,
+    int ChildCount = 0,
+    int AssetCount = 0);

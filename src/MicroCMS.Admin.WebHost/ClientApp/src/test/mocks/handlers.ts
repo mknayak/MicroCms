@@ -111,17 +111,17 @@ const mockMediaFolders: MediaFolder[] = [
     id: 'folder-1',
     siteId: 'site-1',
     name: 'Images',
+    childCount: 0,
     assetCount: 4,
     createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
   },
   {
     id: 'folder-2',
     siteId: 'site-1',
     name: 'Documents',
+    childCount: 0,
     assetCount: 2,
     createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
   },
 ];
 
@@ -353,9 +353,9 @@ export const handlers = [
       id: `folder-${Date.now()}`,
       siteId: body.siteId,
       name: body.name,
+      childCount: 0,
       assetCount: 0,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
     return HttpResponse.json(newFolder, { status: 201 });
   }),

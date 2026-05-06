@@ -9,6 +9,8 @@ public sealed class PagedList<T>
 {
     public IReadOnlyList<T> Items { get; }
     public int Page { get; }
+    /// <summary>Alias for <see cref="Page"/> — matches the camelCase 'pageNumber' field expected by the SPA.</summary>
+    public int PageNumber => Page;
     public int PageSize { get; }
     public int TotalCount { get; }
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);

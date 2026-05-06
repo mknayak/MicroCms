@@ -27,3 +27,6 @@ plugins/*.json
 
 ## Docker build artefacts
 build/publish/
+
+## Media cache — runtime-generated, never commit
+**/App_Data/media-cache/

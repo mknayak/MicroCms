@@ -12,4 +12,6 @@ public sealed record GetMediaAssetQuery(Guid AssetId) : IQuery<MediaAssetDto>;
 [HasPolicy(ContentPolicies.MediaRead)]
 public sealed record ListMediaAssetsQuery(
     int Page = 1,
-  int PageSize = 20) : IQuery<PagedList<MediaAssetListItemDto>>;
+    int PageSize = 20,
+    Guid? FolderId = null,
+    string? Search = null) : IQuery<PagedList<MediaAssetListItemDto>>;

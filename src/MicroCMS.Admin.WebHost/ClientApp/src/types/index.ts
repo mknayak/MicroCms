@@ -353,10 +353,10 @@ export interface MediaFolder {
   id: string;
   siteId: string;
   name: string;
-  parentFolderId?: string;
+  parentFolderId?: string | null;
+  childCount: number;
   assetCount: number;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateMediaFolderRequest {

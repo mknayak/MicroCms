@@ -36,7 +36,7 @@ public sealed class BulkMoveMediaCommandHandler(
     }
 }
 
-/// <summary>Soft-deletes each asset in the batch.</summary>
+/// <summary>Permanently removes each asset in the batch.</summary>
 public sealed class BulkDeleteMediaCommandHandler(
     IRepository<MediaAsset, MediaAssetId> repo,
     ICurrentUser currentUser) : IRequestHandler<BulkDeleteMediaCommand, Result>
@@ -51,8 +51,7 @@ public sealed class BulkDeleteMediaCommandHandler(
             if (asset.TenantId != currentUser.TenantId)
                 throw new ForbiddenException("Asset does not belong to your tenant.");
 
-            asset.Delete(currentUser.UserId);
-            repo.Update(asset);
+            repo.Remove(asset);
         }
 
         return Result.Success();

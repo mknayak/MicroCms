@@ -1,5 +1,4 @@
 using MediatR;
-using MediatR;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Media.Dtos;
@@ -27,8 +26,15 @@ internal sealed class ListMediaFoldersQueryHandler(
         var folders = await repo.ListAsync(
             new MediaFoldersBySiteSpec(siteId, request.ParentFolderId), cancellationToken);
 
-        return Result.Success<IReadOnlyList<MediaFolderDto>>(
-            folders.Select(MediaMapper.ToFolderDto).ToList().AsReadOnly());
+        // Enrich each folder with its direct child count so the UI can show expand chevrons
+        var dtos = new List<MediaFolderDto>(folders.Count);
+        foreach (var f in folders)
+        {
+            var childCount = await repo.CountAsync(new ChildMediaFoldersSpec(f.Id), cancellationToken);
+            dtos.Add(MediaMapper.ToFolderDto(f, childCount));
+        }
+
+        return Result.Success<IReadOnlyList<MediaFolderDto>>(dtos.AsReadOnly());
     }
 }
 

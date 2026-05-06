@@ -69,7 +69,6 @@ public sealed class CreateMediaFolderCommandValidator : AbstractValidator<Create
 {
     public CreateMediaFolderCommandValidator()
     {
-        RuleFor(x => x.SiteId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
     }
 }

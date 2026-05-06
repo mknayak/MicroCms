@@ -4,7 +4,6 @@ import type {
   MediaFolder,
   UpdateMediaAssetRequest,
   PagedResult,
-  MediaListParams,
 } from '@/types';
 
 export interface SignedUrlResponse {
@@ -13,8 +12,15 @@ export interface SignedUrlResponse {
   expiresAt: string;
 }
 
+export interface MediaListApiParams {
+  page?: number;
+  pageSize?: number;
+  folderId?: string;
+  search?: string;
+}
+
 export const mediaApi = {
-  list: (params?: MediaListParams): Promise<PagedResult<MediaAsset>> =>
+  list: (params?: MediaListApiParams): Promise<PagedResult<MediaAsset>> =>
     get<PagedResult<MediaAsset>>('/media', { params }),
 
   getById: (id: string): Promise<MediaAsset> =>

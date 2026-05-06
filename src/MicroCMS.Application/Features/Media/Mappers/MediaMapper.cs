@@ -5,12 +5,14 @@ namespace MicroCMS.Application.Features.Media.Mappers;
 
 public static class MediaMapper
 {
-    public static MediaFolderDto ToFolderDto(MediaFolder f) => new(
+    public static MediaFolderDto ToFolderDto(MediaFolder f, int childCount = 0, int assetCount = 0) => new(
         f.Id,
         f.TenantId.Value,
         f.SiteId.Value,
         f.Name,
-        f.ParentFolderId);
+        f.ParentFolderId,
+        childCount,
+        assetCount);
 
     public static MediaAssetDto ToDto(MediaAsset a) => new(
         a.Id.Value,
@@ -50,7 +52,9 @@ public static class MediaMapper
             a.AiAltText,
             url,
             thumbnailUrl,
-            a.CreatedAt);
+            a.CreatedAt,
+            a.FolderId,
+            a.Tags);
     }
 
     private static string MediaTypeFromMime(string mimeType) => mimeType switch

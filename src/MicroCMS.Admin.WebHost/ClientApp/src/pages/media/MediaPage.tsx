@@ -3,736 +3,389 @@ import { useDropzone } from 'react-dropzone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { mediaApi } from '@/api/media';
-import type { MediaAsset, MediaFolder } from '@/types';
-import { ApiError } from '@/api/client';
-
-// ─── Scan Status Badge ────────────────────────────────────────────────────────
-
-function ScanStatusBadge({ status }: { status: string }) {
-  const variants: Record<string, string> = {
-    Available:   'bg-emerald-100 text-emerald-700',
-    PendingScan: 'bg-amber-100  text-amber-700',
-    Uploading:   'bg-blue-100   text-blue-700',
-    Quarantined: 'bg-red-100    text-red-700',
-    Deleted:     'bg-slate-100  text-slate-500',
-  };
-  const label: Record<string, string> = {
-    Available:   'Available',
-    PendingScan: 'Scanning…',
-    Uploading:   'Uploading',
-    Quarantined: 'Quarantined',
-    Deleted:     'Deleted',
-  };
-  const cls = variants[status] ?? 'bg-slate-100 text-slate-500';
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {status === 'PendingScan' && (
-        <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-        </svg>
-      )}
-      {status === 'Quarantined' && (
-        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-        </svg>
-      )}
-      {label[status] ?? status}
-    </span>
-  );
-}
-
-// ─── Folder Sidebar ───────────────────────────────────────────────────────────
-
-function FolderSidebar({ activeFolderId, onSelect }: { activeFolderId: string | null; onSelect: (id: string | null) => void }) {
-  const qc = useQueryClient();
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-
-  const { data: folders = [], isLoading } = useQuery({
-    queryKey: ['media-folders'],
-    queryFn: () => mediaApi.listFolders(),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: () => mediaApi.createFolder(newName.trim()),
-    onSuccess: () => {
-    toast.success('Folder created.');
-      setCreating(false);
-      setNewName('');
-      void qc.invalidateQueries({ queryKey: ['media-folders'] });
-    },
-    onError: (err) =>
-      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Create failed.'),
-  });
-
-  const renameMutation = useMutation({
-    mutationFn: (id: string) => mediaApi.renameFolder(id, renameValue.trim()),
-    onSuccess: () => {
-      toast.success('Folder renamed.');
-    setRenamingId(null);
-      void qc.invalidateQueries({ queryKey: ['media-folders'] });
-    },
-    onError: (err) =>
-      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Rename failed.'),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => mediaApi.deleteFolder(id),
-    onSuccess: (_, id) => {
-      toast.success('Folder deleted.');
-      if (activeFolderId === id) onSelect(null);
-      void qc.invalidateQueries({ queryKey: ['media-folders'] });
-    },
-  onError: (err) =>
-      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
-  });
-
-  function startRename(folder: MediaFolder) {
-    setRenamingId(folder.id);
-    setRenameValue(folder.name);
-  }
-
-  function commitRename(id: string) {
-    if (renameValue.trim()) renameMutation.mutate(id);
-  else setRenamingId(null);
-  }
-
-  return (
-    <aside className="w-56 flex-shrink-0 space-y-1">
-    {/* All Assets */}
-      <button
-        onClick={() => onSelect(null)}
-        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-          activeFolderId === null
-            ? 'bg-brand-50 text-brand-700'
-         : 'text-slate-600 hover:bg-slate-100'
-        }`}
-      >
-        <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        All Assets
-      </button>
-
-      {/* Divider + heading */}
-      <div className="flex items-center justify-between px-3 pt-3 pb-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Folders</span>
-        <button
-          onClick={() => setCreating(true)}
-          className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-brand-600"
-          title="New folder"
- >
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-      </div>
-
-      {/* New folder inline input */}
-      {creating && (
-        <form
-          className="flex items-center gap-1 px-2"
-   onSubmit={(e) => { e.preventDefault(); if (newName.trim()) createMutation.mutate(); }}
-     >
-      <input
- autoFocus
-        value={newName}
- onChange={(e) => setNewName(e.target.value)}
-            placeholder="Folder name…"
-         className="form-input h-7 flex-1 py-0 text-xs"
-onKeyDown={(e) => { if (e.key === 'Escape') setCreating(false); }}
-    />
-    <button type="submit" disabled={createMutation.isPending || !newName.trim()}
-            className="rounded bg-brand-600 px-1.5 py-1 text-xs text-white hover:bg-brand-700 disabled:opacity-40">
-     ✓
-       </button>
-          <button type="button" onClick={() => setCreating(false)}
-       className="rounded px-1 py-1 text-xs text-slate-400 hover:text-slate-600">
-   ✕
-        </button>
-     </form>
-      )}
-
-      {/* Folder list */}
-      {isLoading && (
-        <div className="space-y-1 px-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-7 animate-pulse rounded bg-slate-100" />)}
-        </div>
-    )}
-
- {!isLoading && folders.length === 0 && !creating && (
- <p className="px-3 text-xs text-slate-400">No folders yet.</p>
-      )}
-
-      {folders.map((folder) => (
-        <div
-          key={folder.id}
-       className={`group flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-            activeFolderId === folder.id
-   ? 'bg-brand-50 text-brand-700'
-           : 'text-slate-600 hover:bg-slate-100'
-          }`}
-  >
-          {renamingId === folder.id ? (
-   <input
-     autoFocus
-          value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-          onBlur={() => commitRename(folder.id)}
-      onKeyDown={(e) => {
-          if (e.key === 'Enter') commitRename(folder.id);
-          if (e.key === 'Escape') setRenamingId(null);
-      }}
-           className="form-input h-6 flex-1 py-0 text-xs"
- />
-          ) : (
-            <button
-              className="flex flex-1 items-center gap-2 truncate text-left"
-              onClick={() => onSelect(folder.id)}
-     >
-      <svg className="h-4 w-4 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-       </svg>
-        <span className="truncate">{folder.name}</span>
-       {folder.assetCount > 0 && (
-      <span className="ml-auto flex-shrink-0 text-xs text-slate-400">{folder.assetCount}</span>
-  )}
-            </button>
-   )}
-
-      {/* Context actions — visible on hover */}
-    {renamingId !== folder.id && (
-       <div className="hidden gap-0.5 group-hover:flex">
-   <button
-     onClick={(e) => { e.stopPropagation(); startRename(folder); }}
-        className="rounded p-0.5 text-slate-400 hover:text-brand-600"
-     title="Rename"
-        >
-      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-   </svg>
- </button>
-        <button
-     onClick={(e) => {
-           e.stopPropagation();
-           if (confirm(`Delete folder "${folder.name}"? Assets inside will be moved to root.`))
-         deleteMutation.mutate(folder.id);
-   }}
-         className="rounded p-0.5 text-slate-400 hover:text-red-600"
-    title="Delete"
-        >
-      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-         </svg>
-       </button>
-   </div>
-          )}
-</div>
-      ))}
-    </aside>
-  );
-}
-
-// ─── Upload Progress ──────────────────────────────────────────────────────────
-
-interface UploadItem {
-  file: File;
-  progress: number;
-  status: 'uploading' | 'done' | 'error';
-}
-
-// ─── Asset Detail Panel ───────────────────────────────────────────────────────
-
-function AssetDetail({
-  asset,
-  onClose,
-  onUpdated,
-}: {
-  asset: MediaAsset;
-  onClose: () => void;
-  onUpdated: () => void;
-}) {
-  const [altText, setAltText]     = useState(asset.altText ?? '');
-  const [tags, setTags]           = useState(asset.tags.join(', '));
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const qc = useQueryClient();
-
-  const updateMutation = useMutation({
-    mutationFn: () =>
-      mediaApi.update(asset.id, {
-        altText: altText || undefined,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-      }),
-    onSuccess: () => {
-      toast.success('Asset updated.');
-      void qc.invalidateQueries({ queryKey: ['media'] });
-      onUpdated();
-    },
-    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Update failed.'),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => mediaApi.delete(asset.id),
-    onSuccess: () => {
-      toast.success('Asset deleted.');
-      void qc.invalidateQueries({ queryKey: ['media'] });
-      onClose();
-    },
-    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
-  });
-
-  const signedUrlMutation = useMutation({
-    mutationFn: () => mediaApi.getSignedUrl(asset.id),
-    onSuccess: (data) => {
-      setSignedUrl(data.url);
-      toast.success('Signed URL generated (valid 1 hr).');
-    },
-    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
-  });
-
-  const sizeKb = Math.round(asset.fileSize / 1024);
-  const isAvailable = asset.status === 'Available';
-
-  return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-80 flex-col border-l border-slate-200 bg-white shadow-xl">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-        <h3 className="truncate text-sm font-semibold text-slate-900">{asset.fileName}</h3>
-        <button onClick={onClose} className="ml-2 text-slate-400 hover:text-slate-600">✕</button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Scan status */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Status:</span>
-          <ScanStatusBadge status={asset.status ?? 'Unknown'} />
-        </div>
-
-        {/* Quarantine warning */}
-        {asset.status === 'Quarantined' && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-            This file was quarantined by the virus scanner and cannot be delivered.
-          </div>
-        )}
-
-        {/* Preview */}
-        {asset.mediaType === 'image' && isAvailable && (
-          <img
-            src={asset.thumbnailUrl ?? asset.url}
-            alt={asset.altText ?? asset.fileName}
-            className="w-full rounded-lg object-cover"
-          />
-        )}
-
-        {/* Metadata */}
-        <div className="text-xs text-slate-500 space-y-1">
-          <p><span className="font-medium">Type:</span> {asset.contentType}</p>
-          <p><span className="font-medium">Size:</span> {sizeKb} KB</p>
-          {asset.width && <p><span className="font-medium">Dimensions:</span> {asset.width}×{asset.height}</p>}
-          <p><span className="font-medium">Uploaded by:</span> {asset.uploadedByName}</p>
-        </div>
-
-        {/* Editable fields — only for available assets */}
-        {isAvailable && (
-          <div className="space-y-3">
-            <div>
-              <label className="form-label">Alt Text</label>
-              <input
-                className="form-input mt-1"
-                value={altText}
-                onChange={(e) => setAltText(e.target.value)}
-                placeholder="Describe this image…"
-              />
-            </div>
-            <div>
-              <label className="form-label">Tags (comma-separated)</label>
-              <input
-                className="form-input mt-1"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="hero, banner, product"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* URL + Signed URL */}
-        {isAvailable && (
-          <div className="space-y-2">
-            <div>
-              <label className="form-label">URL</label>
-              <div className="mt-1 flex gap-2">
-                <input className="form-input flex-1 font-mono text-xs" readOnly value={asset.url} />
-                <button
-                  onClick={() => { void navigator.clipboard.writeText(asset.url); toast.success('Copied!'); }}
-                  className="btn-secondary text-xs"
-                >Copy</button>
-              </div>
-            </div>
-            <div>
-              <label className="form-label">Signed URL</label>
-              {signedUrl ? (
-                <div className="mt-1 flex gap-2">
-                  <input className="form-input flex-1 font-mono text-xs" readOnly value={signedUrl} />
-                  <button
-                    onClick={() => { void navigator.clipboard.writeText(signedUrl); toast.success('Copied!'); }}
-                    className="btn-secondary text-xs"
-                  >Copy</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => signedUrlMutation.mutate()}
-                  disabled={signedUrlMutation.isPending}
-                  className="btn-secondary mt-1 w-full justify-center text-xs"
-                >
-                  {signedUrlMutation.isPending ? 'Generating…' : 'Generate Signed URL'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="border-t border-slate-200 p-4 flex gap-2">
-        {isAvailable && (
-          <button
-            onClick={() => updateMutation.mutate()}
-            disabled={updateMutation.isPending}
-            className="btn-primary flex-1 justify-center"
-          >Save</button>
-        )}
-        <button
-          onClick={() => { if (confirm('Delete this asset?')) deleteMutation.mutate(); }}
-          className="btn-danger"
-        >Delete</button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Bulk Action Toolbar ──────────────────────────────────────────────────────
-
-function BulkToolbar({
-  selectedIds,
-  onDelete,
-  onClear,
-  onMove,
-  moveLabel,
-}: {
-  selectedIds: Set<string>;
-  onDelete: () => void;
-  onClear: () => void;
-  onMove?: () => void;
-  moveLabel?: string;
-}) {
-  if (selectedIds.size === 0) return null;
-  return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xl">
-      <span className="text-sm font-medium text-slate-700">{selectedIds.size} selected</span>
-      {onMove && (
-        <button onClick={onMove} className="btn-secondary text-sm">{moveLabel ?? 'Move'}</button>
-   )}
-      <button onClick={onDelete} className="btn-danger text-sm">Delete</button>
-      <button onClick={onClear} className="text-xs text-slate-400 hover:text-slate-600 ml-1">✕ Clear</button>
-    </div>
-  );
-}
+import type { MediaAsset } from '@/types';
+import { FolderSidebar } from './FolderSidebar';
+import { AssetDetail } from './AssetDetail';
+import type { UploadItem } from './AssetDetail';
+import { BulkToolbar } from './BulkToolbar';
+import { ScanStatusBadge } from './ScanStatusBadge';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MediaPage() {
-  const qc = useQueryClient();
+    const qc = useQueryClient();
 
-  const [view, setView]    = useState<'grid' | 'list'>('grid');
-  const [search, setSearch]         = useState('');
-  const [page, setPage]    = useState(1);
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-  const [selected, setSelected]   = useState<MediaAsset | null>(null);
-  const [uploads, setUploads]       = useState<UploadItem[]>([]);
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+    const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+    const [breadcrumb, setBreadcrumb] = useState<{ id: string; name: string }[]>([]);
+    const [view, setView] = useState<'grid' | 'list'>('grid');
+    const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [selected, setSelected] = useState<MediaAsset | null>(null);
+    const [uploads, setUploads] = useState<UploadItem[]>([]);
+    const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['media', { search, page, folderId: activeFolderId }],
-    queryFn: () =>
-      mediaApi.list({
-        search: search || undefined,
-        pageNumber: page,
-        pageSize: 24,
-        folderId: activeFolderId ?? undefined,
-   }),
-  });
-
-  const bulkDeleteMutation = useMutation({
-mutationFn: () => mediaApi.bulkDelete([...checkedIds]),
-    onSuccess: () => {
-      toast.success(`${checkedIds.size} asset(s) deleted.`);
-      setCheckedIds(new Set());
-      void qc.invalidateQueries({ queryKey: ['media'] });
-    },
-    onError: () => toast.error('Bulk delete failed.'),
-  });
-
-  const bulkMoveMutation = useMutation({
-    mutationFn: (targetFolderId: string | null) =>
-      mediaApi.bulkMove([...checkedIds], targetFolderId),
-    onSuccess: () => {
-      toast.success(`${checkedIds.size} asset(s) moved.`);
-      setCheckedIds(new Set());
-      void qc.invalidateQueries({ queryKey: ['media'] });
-      void qc.invalidateQueries({ queryKey: ['media-folders'] });
-    },
-    onError: () => toast.error('Move failed.'),
-  });
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const items: UploadItem[] = acceptedFiles.map((f) => ({ file: f, progress: 0, status: 'uploading' }));
-      setUploads((prev) => [...prev, ...items]);
-
-      acceptedFiles.forEach((file, i) => {
-        mediaApi
-    .upload(file, { folderId: activeFolderId ?? undefined }, (pct) => {
-            setUploads((prev) =>
-          prev.map((u, idx) => (idx === uploads.length + i ? { ...u, progress: pct } : u)),
-       );
-          })
-          .then(() => {
-     setUploads((prev) =>
-  prev.map((u, idx) => (idx === uploads.length + i ? { ...u, status: 'done' } : u)),
-      );
-     void qc.invalidateQueries({ queryKey: ['media'] });
-    void qc.invalidateQueries({ queryKey: ['media-folders'] });
-            toast.success(`${file.name} uploaded — virus scan in progress…`);
-          })
-          .catch(() => {
-       setUploads((prev) =>
-              prev.map((u, idx) => (idx === uploads.length + i ? { ...u, status: 'error' } : u)),
-            );
-   toast.error(`Failed to upload ${file.name}.`);
-        });
-      });
-    },
-    [qc, uploads.length, activeFolderId],
-  );
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
- onDrop,
-    accept: { 'image/*': [], 'video/*': [], 'application/pdf': [] },
-    maxSize: 2 * 1024 * 1024 * 1024,
-  });
-
-  const toggleCheck = (id: string) =>
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
+    const { data: subFolders = [] } = useQuery({
+        queryKey: ['media-folders', activeFolderId],
+        queryFn: () => mediaApi.listFolders(activeFolderId ?? undefined),
     });
 
-  return (
-    <div className="flex gap-6 pb-24">
-      {/* Folder sidebar */}
-      <FolderSidebar
-        activeFolderId={activeFolderId}
-        onSelect={(id) => { setActiveFolderId(id); setPage(1); setCheckedIds(new Set()); }}
-      />
+    const { data, isLoading } = useQuery({
+        queryKey: ['media', { search, page, folderId: activeFolderId }],
+        queryFn: () =>
+            mediaApi.list({
+                search: search || undefined,
+                page,
+                pageSize: 30,
+                folderId: activeFolderId ?? undefined,
+            }),
+    });
 
-      {/* Main content */}
-      <div className="min-w-0 flex-1 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
- <div>
-<h1 className="text-2xl font-bold text-slate-900">Media Library</h1>
-            <p className="mt-1 text-sm text-slate-500">Upload and manage your assets.</p>
-          </div>
-          <div className="flex gap-2">
-      <button onClick={() => setView('grid')} className={view === 'grid' ? 'btn-primary' : 'btn-secondary'} aria-label="Grid view">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-   </svg>
- </button>
-  <button onClick={() => setView('list')} className={view === 'list' ? 'btn-primary' : 'btn-secondary'} aria-label="List view">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-     </svg>
-   </button>
-       </div>
-      </div>
+    function navigateToFolder(id: string | null, name?: string) {
+        if (id === null) {
+            setActiveFolderId(null);
+            setBreadcrumb([]);
+        } else {
+            setActiveFolderId(id);
+            setBreadcrumb((prev) => {
+                const idx = prev.findIndex((b) => b.id === id);
+                if (idx !== -1) return prev.slice(0, idx + 1);
+                return [...prev, { id, name: name ?? id }];
+            });
+        }
+        setPage(1);
+        setSearch('');
+        setCheckedIds(new Set());
+        setSelected(null);
+    }
 
-     {/* Drop zone */}
-        <div
- {...getRootProps()}
-      className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-            isDragActive ? 'border-brand-500 bg-brand-50' : 'border-slate-300 hover:border-brand-400 hover:bg-slate-50'
-  }`}
-   >
-   <input {...getInputProps()} />
-          <svg className="mx-auto h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <p className="mt-2 text-sm font-medium text-slate-700">
-          {isDragActive
-   ? 'Drop files here…'
-              : activeFolderId
-          ? 'Drop files to upload into this folder, or click to select'
-    : 'Drag & drop files, or click to select'}
-          </p>
-       <p className="text-xs text-slate-400">Images, videos, PDFs up to 2 GB — virus scanned automatically</p>
+    const bulkDeleteMutation = useMutation({
+        mutationFn: () => mediaApi.bulkDelete([...checkedIds]),
+        onSuccess: () => {
+            toast.success(`${checkedIds.size} asset(s) permanently deleted.`);
+            setCheckedIds(new Set());
+            void qc.invalidateQueries({ queryKey: ['media'] });
+        },
+        onError: () => toast.error('Bulk delete failed.'),
+    });
+
+    const bulkMoveMutation = useMutation({
+        mutationFn: (targetFolderId: string | null) => mediaApi.bulkMove([...checkedIds], targetFolderId),
+        onSuccess: () => {
+            toast.success(`${checkedIds.size} asset(s) moved.`);
+            setCheckedIds(new Set());
+            void qc.invalidateQueries({ queryKey: ['media'] });
+            void qc.invalidateQueries({ queryKey: ['media-folders'] });
+        },
+        onError: () => toast.error('Move failed.'),
+    });
+
+    const onDrop = useCallback(
+        (acceptedFiles: File[]) => {
+            const items: UploadItem[] = acceptedFiles.map((f) => ({ file: f, progress: 0, status: 'uploading' }));
+            setUploads((prev) => [...prev, ...items]);
+            acceptedFiles.forEach((file, i) => {
+                mediaApi
+                    .upload(file, { folderId: activeFolderId ?? undefined }, (pct) => {
+                        setUploads((prev) =>
+                            prev.map((u, idx) => (idx === uploads.length + i ? { ...u, progress: pct } : u)),
+                        );
+                    })
+                    .then(() => {
+                        setUploads((prev) =>
+                            prev.map((u, idx) => (idx === uploads.length + i ? { ...u, status: 'done' } : u)),
+                        );
+                        void qc.invalidateQueries({ queryKey: ['media'] });
+                        void qc.invalidateQueries({ queryKey: ['media-folders'] });
+                        toast.success(`${file.name} uploaded — virus scan in progress…`);
+                    })
+                    .catch(() => {
+                        setUploads((prev) =>
+                            prev.map((u, idx) => (idx === uploads.length + i ? { ...u, status: 'error' } : u)),
+                        );
+                        toast.error(`Failed to upload ${file.name}.`);
+                    });
+            });
+        },
+        [qc, uploads.length, activeFolderId],
+    );
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: { 'image/*': [], 'video/*': [], 'application/pdf': [] },
+        maxSize: 2 * 1024 * 1024 * 1024,
+        noClick: false,
+    });
+
+    const toggleCheck = (id: string) =>
+        setCheckedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+
+    return (
+        <div className="-m-6 flex h-full min-h-0">
+            {/* Left sidebar */}
+            <div className="flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto py-4">
+                <FolderSidebar
+                    activeFolderId={activeFolderId}
+                    onSelect={(id, name) => navigateToFolder(id, name)}
+                />
+            </div>
+
+            {/* Main area */}
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                {/* Topbar */}
+                <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-5 py-3">
+                    {/* Breadcrumb */}
+                    <nav className="flex min-w-0 flex-1 items-center gap-1 text-sm">
+                        <button
+                            onClick={() => navigateToFolder(null)}
+                            className="text-slate-500 hover:text-brand-600 flex-shrink-0"
+                        >All Assets</button>
+                        {breadcrumb.map((crumb) => (
+                            <span key={crumb.id} className="flex items-center gap-1 min-w-0">
+                                <span className="text-slate-300">/</span>
+                                <button
+                                    onClick={() => navigateToFolder(crumb.id, crumb.name)}
+                                    className="truncate text-slate-700 hover:text-brand-600 font-medium"
+                                >{crumb.name}</button>
+                            </span>
+                        ))}
+                    </nav>
+
+                    {/* Search */}
+                    <input
+                        type="search"
+                        placeholder={activeFolderId ? 'Search in folder…' : 'Search assets…'}
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        className="form-input w-48 text-sm"
+                    />
+
+                    {/* Upload button */}
+                    <div {...getRootProps()} className="relative">
+                        <input {...getInputProps()} />
+                        <button className="btn-primary flex items-center gap-2 text-sm">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Upload Files
+                        </button>
+                    </div>
+
+                    {/* View toggle */}
+                    <div className="flex rounded-lg border border-slate-200">
+                        <button
+                            onClick={() => setView('grid')}
+                            className={`rounded-l-lg px-2.5 py-1.5 ${view === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                            aria-label="Grid view"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() => setView('list')}
+                            className={`rounded-r-lg px-2.5 py-1.5 ${view === 'list' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                            aria-label="List view"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Upload progress bar */}
+                {uploads.some((u) => u.status === 'uploading') && (
+                    <div className="border-b border-slate-100 bg-white px-5 py-2 space-y-1.5">
+                        {uploads.filter((u) => u.status === 'uploading').map((u, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <span className="min-w-0 truncate text-xs text-slate-600">{u.file.name}</span>
+                                <div className="flex-1 h-1 rounded-full bg-slate-200">
+                                    <div className="h-1 rounded-full bg-brand-500 transition-all" style={{ width: `${u.progress}%` }} />
+                                </div>
+                                <span className="text-xs text-slate-400 w-8 text-right">{u.progress}%</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Drag overlay */}
+                {isDragActive && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-brand-50/90 border-2 border-dashed border-brand-400">
+                        <p className="text-lg font-semibold text-brand-700">Drop files to upload{activeFolderId ? ' into this folder' : ''}…</p>
+                    </div>
+                )}
+
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+                    {/* Subfolders */}
+                    {subFolders.length > 0 && !search && (
+                        <section>
+                            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Folders ({subFolders.length})
+                            </h2>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                                {subFolders.map((folder) => (
+                                    <button
+                                        key={folder.id}
+                                        onClick={() => navigateToFolder(folder.id, folder.name)}
+                                        className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                                    >
+                                        <svg className="h-8 w-8 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                                        </svg>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-medium text-slate-800">{folder.name}</p>
+                                            <p className="text-xs text-slate-400">{folder.assetCount} files</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Files */}
+                    <section>
+                        {subFolders.length > 0 && !search && (
+                            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Files ({data?.totalCount ?? 0})
+                            </h2>
+                        )}
+
+                        {isLoading ? (
+                            <div className="grid grid-cols-4 gap-3">
+                                {Array.from({ length: 12 }).map((_, i) => (
+                                    <div key={i} className="aspect-[4/3] animate-pulse rounded-lg bg-slate-200" />
+                                ))}
+                            </div>
+                        ) : !data?.items.length ? (
+                            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-16 text-slate-400">
+                                <svg className="h-10 w-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p className="text-sm font-medium">{search ? 'No results' : 'No files here yet'}</p>
+                                <p className="text-xs mt-1">Drop files above or click Upload Files to add assets</p>
+                            </div>
+                        ) : view === 'grid' ? (
+                            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                                {data.items.map((asset) => (
+                                    <div key={asset.id} className="group relative">
+                                        <input
+                                            type="checkbox"
+                                            checked={checkedIds.has(asset.id)}
+                                            onChange={() => toggleCheck(asset.id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="absolute top-1.5 left-1.5 z-10 h-3.5 w-3.5 rounded border-slate-300 text-brand-600 opacity-0 group-hover:opacity-100 checked:opacity-100"
+                                        />
+                                        <button
+                                            onClick={() => setSelected(asset)}
+                                            className={`relative w-full overflow-hidden rounded-lg border bg-slate-100 transition-colors aspect-[4/3] hover:border-brand-400 ${selected?.id === asset.id ? 'border-brand-500 ring-2 ring-brand-200' :
+                                                    checkedIds.has(asset.id) ? 'border-brand-400 ring-1 ring-brand-100' : 'border-slate-200'
+                                                }`}
+                                        >
+                                            {asset.mediaType === 'image' && asset.status === 'Available' ? (
+                                                <img
+                                                    src={asset.thumbnailUrl ?? asset.url}
+                                                    alt={asset.altText ?? asset.fileName}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full flex-col items-center justify-center">
+                                                    <span className="text-2xl">
+                                                        {asset.status === 'PendingScan' ? '🔍'
+                                                            : asset.status === 'Quarantined' ? '🚫'
+                                                                : asset.mediaType === 'video' ? '🎬'
+                                                                    : asset.mediaType === 'audio' ? '🎵' : '📄'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <span className="absolute bottom-1 right-1 rounded bg-black/50 px-1 py-0.5 text-[10px] font-semibold uppercase text-white">
+                                                {asset.mediaType}
+                                            </span>
+                                        </button>
+                                        <p className="mt-0.5 truncate px-0.5 text-xs text-slate-500">{asset.fileName}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-slate-200 overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead className="border-b border-slate-100 bg-slate-50">
+                                        <tr>
+                                            <th className="px-4 py-2.5 w-8" />
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">File</th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Size</th>
+                                            <th className="px-4 py-2.5" />
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {data.items.map((asset) => (
+                                            <tr
+                                                key={asset.id}
+                                                className={`hover:bg-slate-50 cursor-pointer ${selected?.id === asset.id ? 'bg-brand-50' : checkedIds.has(asset.id) ? 'bg-brand-50/50' : ''}`}
+                                                onClick={() => setSelected(asset)}
+                                            >
+                                                <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+                                                    <input type="checkbox" checked={checkedIds.has(asset.id)} onChange={() => toggleCheck(asset.id)} className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600" />
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center gap-2.5">
+                                                        {asset.mediaType === 'image' && asset.status === 'Available' ? (
+                                                            <img src={asset.thumbnailUrl ?? asset.url} alt="" className="h-7 w-7 flex-shrink-0 rounded object-cover" />
+                                                        ) : (
+                                                            <div className="h-7 w-7 flex-shrink-0 rounded bg-slate-100 flex items-center justify-center text-base">
+                                                                {asset.status === 'Quarantined' ? '🚫' : asset.mediaType === 'video' ? '🎬' : asset.mediaType === 'audio' ? '🎵' : '📄'}
+                                                            </div>
+                                                        )}
+                                                        <span className="max-w-xs truncate font-medium text-slate-800">{asset.fileName}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2.5"><ScanStatusBadge status={asset.status ?? 'Unknown'} /></td>
+                                                <td className="px-4 py-2.5 text-slate-500 text-xs uppercase">{asset.contentType.split('/')[1] ?? asset.contentType}</td>
+                                                <td className="px-4 py-2.5 text-slate-500 text-xs">{Math.round(asset.fileSize / 1024)} KB</td>
+                                                <td className="px-4 py-2.5 text-right">
+                                                    <button onClick={(e) => { e.stopPropagation(); setSelected(asset); }} className="text-xs text-brand-600 hover:underline">Details</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {data && data.totalPages > 1 && (
+                            <div className="flex items-center justify-end gap-2 pt-2">
+                                <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} className="btn-secondary text-sm">← Prev</button>
+                                <span className="text-xs text-slate-500">Page {page} of {data.totalPages}</span>
+                                <button onClick={() => setPage((p) => p + 1)} disabled={page === data.totalPages} className="btn-secondary text-sm">Next →</button>
+                            </div>
+                        )}
+                    </section>
+                </div>
+            </div>
+
+            {/* Asset detail panel */}
+            {selected && (
+                <AssetDetail
+                    asset={selected}
+                    onClose={() => setSelected(null)}
+                    onUpdated={() => { setSelected(null); void qc.invalidateQueries({ queryKey: ['media'] }); }}
+                />
+            )}
+
+            {/* Bulk toolbar */}
+            <BulkToolbar
+                selectedIds={checkedIds}
+                onDelete={() => { if (confirm(`Permanently delete ${checkedIds.size} asset(s)? This cannot be undone.`)) bulkDeleteMutation.mutate(); }}
+                onClear={() => setCheckedIds(new Set())}
+                onMoveTo={(folderId) => bulkMoveMutation.mutate(folderId)}
+            />
         </div>
-
-        {/* Active uploads */}
-        {uploads.some((u) => u.status === 'uploading') && (
-          <div className="space-y-2">
-       {uploads.filter((u) => u.status === 'uploading').map((u, i) => (
-       <div key={i} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
-    <div className="flex-1 min-w-0">
-        <p className="truncate text-sm font-medium text-slate-700">{u.file.name}</p>
-          <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200">
-            <div className="h-1.5 rounded-full bg-brand-600 transition-all" style={{ width: `${u.progress}%` }} />
-          </div>
-        </div>
-            <span className="text-xs text-slate-400">{u.progress}%</span>
-       </div>
-   ))}
-          </div>
-        )}
-
-     {/* Search */}
-        <div className="flex items-center gap-4">
-    <input
-  type="search"
-            placeholder="Search media…"
-       value={search}
-     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="form-input w-64"
-          />
-  {checkedIds.size > 0 && (
-     <span className="text-sm text-slate-500">{checkedIds.size} selected</span>
- )}
-      </div>
-
-        {/* Assets grid / list — unchanged from existing */}
-      {isLoading ? (
-     <div className="grid grid-cols-4 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-      <div key={i} className="aspect-square animate-pulse rounded-lg bg-slate-200" />
-     ))}
-          </div>
-        ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-  {data?.items.map((asset) => (
-           <div key={asset.id} className="relative group">
-  <input
-       type="checkbox"
-          checked={checkedIds.has(asset.id)}
-            onChange={() => toggleCheck(asset.id)}
-           onClick={(e) => e.stopPropagation()}
-                  className="absolute top-2 left-2 z-10 h-4 w-4 rounded border-slate-300 text-brand-600 opacity-0 group-hover:opacity-100 checked:opacity-100"
-         />
-      <button
-           onClick={() => setSelected(asset)}
-  className={`w-full aspect-square overflow-hidden rounded-lg border bg-slate-100 hover:border-brand-400 transition-colors ${
-       checkedIds.has(asset.id) ? 'border-brand-400 ring-2 ring-brand-200' : 'border-slate-200'
-         }`}
-       >
-   {asset.mediaType === 'image' && asset.status === 'Available' ? (
-       <img src={asset.thumbnailUrl ?? asset.url} alt={asset.altText ?? asset.fileName} className="h-full w-full object-cover" />
-          ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-1">
-     <span className="text-2xl text-slate-400">
-         {asset.status === 'PendingScan' ? '🔍'
-: asset.status === 'Quarantined' ? '🚫'
-         : asset.mediaType === 'video' ? '🎬'
-     : asset.mediaType === 'audio' ? '🎵' : '📄'}
-                    </span>
-       </div>
-      )}
-        </button>
-         {asset.status !== 'Available' && (
-        <div className="absolute bottom-6 left-1 right-1 flex justify-center">
-              <ScanStatusBadge status={asset.status ?? 'Unknown'} />
-   </div>
-    )}
-        <p className="mt-1 truncate px-0.5 text-xs text-slate-500">{asset.fileName}</p>
-         </div>
-   ))}
-          </div>
-        ) : (
-      <div className="card overflow-hidden p-0">
-            <table className="w-full text-sm">
-        <thead className="border-b border-slate-100 bg-slate-50">
-         <tr>
-       <th className="px-4 py-3 w-8" />
-     <th className="px-6 py-3 text-left font-semibold text-slate-700">File</th>
-   <th className="px-6 py-3 text-left font-semibold text-slate-700">Status</th>
-       <th className="px-6 py-3 text-left font-semibold text-slate-700">Type</th>
-     <th className="px-6 py-3 text-left font-semibold text-slate-700">Size</th>
-      <th className="px-6 py-3 text-left font-semibold text-slate-700">Uploaded by</th>
-        <th className="px-6 py-3" />
-           </tr>
-         </thead>
-     <tbody className="divide-y divide-slate-100">
-        {data?.items.map((asset) => (
-            <tr key={asset.id} className={`hover:bg-slate-50 ${checkedIds.has(asset.id) ? 'bg-brand-50' : ''}`}>
-         <td className="px-4 py-3">
-           <input
-  type="checkbox"
-          checked={checkedIds.has(asset.id)}
-      onChange={() => toggleCheck(asset.id)}
-      className="h-4 w-4 rounded border-slate-300 text-brand-600"
-          />
- </td>
-         <td className="px-6 py-3 flex items-center gap-3">
-               {asset.mediaType === 'image' && asset.status === 'Available' ? (
-           <img src={asset.thumbnailUrl ?? asset.url} alt="" className="h-8 w-8 rounded object-cover" />
-            ) : (
-        <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center text-lg">
-      {asset.status === 'Quarantined' ? '🚫' : '📄'}
-     </div>
-          )}
-     <span className="font-medium text-slate-900 truncate max-w-xs">{asset.fileName}</span>
-            </td>
-         <td className="px-6 py-3"><ScanStatusBadge status={asset.status ?? 'Unknown'} /></td>
-      <td className="px-6 py-3 text-slate-500">{asset.contentType}</td>
-   <td className="px-6 py-3 text-slate-500">{Math.round(asset.fileSize / 1024)} KB</td>
-    <td className="px-6 py-3 text-slate-500">{asset.uploadedByName}</td>
-       <td className="px-6 py-3 text-right">
-            <button onClick={() => setSelected(asset)} className="text-xs text-brand-600 hover:underline">Details</button>
-       </td>
-     </tr>
- ))}
-      </tbody>
-    </table>
-          </div>
-   )}
-
-{/* Pagination */}
-        {data && data.totalPages > 1 && (
-          <div className="flex justify-end gap-2">
-   <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} className="btn-secondary">Previous</button>
-          <button onClick={() => setPage((p) => p + 1)} disabled={page === data.totalPages} className="btn-secondary">Next</button>
-          </div>
-     )}
-
-        {/* Asset detail panel */}
-        {selected && (
-          <AssetDetail asset={selected} onClose={() => setSelected(null)} onUpdated={() => setSelected(null)} />
-        )}
-      </div>
-
-      {/* Bulk action toolbar */}
-      <BulkToolbar
-        selectedIds={checkedIds}
-    onDelete={() => { if (confirm(`Delete ${checkedIds.size} asset(s)?`)) bulkDeleteMutation.mutate(); }}
-        onClear={() => setCheckedIds(new Set())}
-        onMove={activeFolderId !== null ? () => bulkMoveMutation.mutate(null) : undefined}
-        moveLabel="Move to root"
-      />
-    </div>
-  );
+    );
 }
