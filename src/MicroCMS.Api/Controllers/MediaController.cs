@@ -141,6 +141,7 @@ public sealed class MediaController : ApiControllerBase
             return NotFound();
 
         var stream = await storageProvider.DownloadAsync(asset.StorageKey, cancellationToken);
+        SetVariantCacheHeaders();
         return File(stream, asset.Metadata.MimeType, asset.Metadata.FileName, enableRangeProcessing: true);
     }
 
@@ -240,8 +241,24 @@ public sealed class MediaController : ApiControllerBase
         [FromServices] IRepository<MediaAsset, MediaAssetId> assetRepo = null!,
         [FromServices] IStorageProvider storageProvider = null!,
         [FromServices] IImageVariantService variantService = null!,
+        [FromServices] IVariantCacheService variantCache = null!,
         CancellationToken cancellationToken = default)
     {
+        // ── 1. Check variant cache first — skip DB and ImageSharp entirely on hit ──
+        // Cache key is built lazily; we need the asset's StorageKey for a full key,
+        // but we can build a URL-only key to check the cache before any DB call.
+        // We use the asset id + parameters as the key since StorageKey is not yet known.
+        var urlCacheKey = variantCache.BuildCacheKey(
+            id.ToString(), w, h, fit.ToString(), fmt.ToString(), q);
+
+        var cached = await variantCache.TryGetAsync(urlCacheKey, cancellationToken);
+        if (cached is not null)
+        {
+            SetVariantCacheHeaders();
+            return File(cached.Value.Content, cached.Value.MimeType, enableRangeProcessing: false);
+        }
+
+        // ── 2. Cache miss — resolve asset metadata from DB ────────────────────────
         var matches = await assetRepo.ListAsync(
             new AvailableMediaAssetByIdSpec(new MediaAssetId(id)), cancellationToken);
 
@@ -254,16 +271,25 @@ public sealed class MediaController : ApiControllerBase
 
         var source = await storageProvider.DownloadAsync(asset.StorageKey, cancellationToken);
 
-        // SVG and other vector/non-raster formats cannot be processed by ImageSharp.
-        // Serve them as-is regardless of the requested transform parameters.
+        // ── 3. SVG / GIF pass-through — cache and serve as-is ────────────────────
         if (IsPassThroughFormat(asset.Metadata.MimeType))
-            return File(source, asset.Metadata.MimeType, enableRangeProcessing: false);
+        {
+            var passStream = await variantCache.SetAsync(
+                urlCacheKey, asset.Metadata.MimeType, source, cancellationToken);
+            SetVariantCacheHeaders();
+            return File(passStream, asset.Metadata.MimeType, enableRangeProcessing: false);
+        }
 
+        // ── 4. Transform and cache ────────────────────────────────────────────────
         var variantRequest = new ImageVariantRequest(w, h, fit, fmt, q);
-        var output = await variantService.TransformAsync(source, variantRequest, cancellationToken);
+        var transformed = await variantService.TransformAsync(source, variantRequest, cancellationToken);
         var mimeType = variantService.GetMimeType(fmt, asset.Metadata.MimeType);
 
-        return File(output, mimeType, enableRangeProcessing: false);
+        var outputStream = await variantCache.SetAsync(
+            urlCacheKey, mimeType, transformed, cancellationToken);
+
+        SetVariantCacheHeaders();
+        return File(outputStream, mimeType, enableRangeProcessing: false);
     }
 
     // ── Delete ────────────────────────────────────────────────────────────
@@ -271,9 +297,14 @@ public sealed class MediaController : ApiControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromServices] IVariantCacheService variantCache,
+        CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(new DeleteMediaAssetCommand(id), cancellationToken);
+        if (result.IsSuccess)
+            await variantCache.InvalidateAsync(id.ToString(), cancellationToken);
         return NoContentOrProblem(result);
     }
 
@@ -390,6 +421,14 @@ public sealed class MediaController : ApiControllerBase
 
     private static bool IsPassThroughFormat(string? mimeType) =>
         mimeType is "image/svg+xml" or "image/gif" or "image/x-icon" or "image/vnd.microsoft.icon";
+
+    /// <summary>
+    /// Sets <c>Cache-Control: public, max-age=86400</c> (24 h) so browsers and CDN
+    /// edge nodes cache variant and download responses, avoiding repeated DB or
+    /// ImageSharp work for the same URL.
+    /// </summary>
+    private void SetVariantCacheHeaders() =>
+        Response.Headers.CacheControl = "public, max-age=86400, immutable";
 
     private static string GetBoundary(string? contentType)
     {

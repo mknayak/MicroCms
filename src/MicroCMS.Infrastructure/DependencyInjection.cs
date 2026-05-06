@@ -220,6 +220,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IMimeTypeInspector, MimeTypeInspector>();
         services.AddSingleton<IImageVariantService, ImageVariantService>();
+        services.AddSingleton<IVariantCacheService, FilesystemVariantCacheService>();
 
         services.Configure<HmacSigningOptions>(
      configuration.GetSection(HmacSigningOptions.SectionName));
