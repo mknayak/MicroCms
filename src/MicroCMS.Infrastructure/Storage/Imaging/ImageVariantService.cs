@@ -19,7 +19,25 @@ public sealed class ImageVariantService : IImageVariantService
         ImageVariantRequest request,
         CancellationToken cancellationToken = default)
     {
-        using var image = await Image.LoadAsync(source, cancellationToken);
+        // ImageSharp's WithSeekableStreamAsync requires a fully in-memory, seekable stream.
+        // Storage providers may return FileStream (useAsync:true) or other non-rewindable
+        // streams that cause UnknownImageFormatException even for valid formats.
+        // Buffering here is safe: variants are only generated for image files, which are
+        // already size-constrained by the asset pipeline.
+        MemoryStream buffered;
+        if (source is MemoryStream ms && ms.CanSeek)
+        {
+            buffered = ms;
+        }
+        else
+        {
+            buffered = new MemoryStream();
+            await source.CopyToAsync(buffered, cancellationToken);
+            await source.DisposeAsync();
+        }
+        buffered.Position = 0;
+
+        using var image = await Image.LoadAsync(buffered, cancellationToken);
 
         ApplyResize(image, request);
 

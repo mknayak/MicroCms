@@ -39,18 +39,28 @@ public sealed class UploadMediaAssetCommandHandler(
                     $"File exceeds the maximum allowed size of {AssetMetadata.MaxFileSizeBytes / (1024 * 1024)} MB."));
         }
 
+        // Buffer the multipart section body into a MemoryStream so that both the MIME
+        // inspector and the storage provider read a complete, seekable copy of the bytes.
+        // MultipartReader section bodies are forward-only; without buffering, DetectAsync
+        // consumes the first 512 bytes and UploadAsync stores a truncated file.
+        using var buffered = new MemoryStream();
+        await request.Content.CopyToAsync(buffered, cancellationToken);
+        buffered.Position = 0;
+
         var trueMimeType = await mimeInspector.DetectAsync(
-            request.Content, request.FileName, cancellationToken);
+            buffered, request.FileName, cancellationToken);
+
+        buffered.Position = 0;
 
         var storageKey = await storageProvider.UploadAsync(
-            request.Content,
+            buffered,
             request.FileName,
             trueMimeType,
             currentUser.TenantId.Value.ToString(),
             cancellationToken);
 
         var metadata = AssetMetadata.Create(
-            request.FileName, trueMimeType, request.ContentLength);
+            request.FileName, trueMimeType, buffered.Length);
 
         var asset = MediaAsset.Create(
             currentUser.TenantId,

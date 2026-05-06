@@ -1,9 +1,15 @@
+using MicroCMS.Api.Middleware;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Ai.AltText;
 using MicroCMS.Application.Features.Media.Commands;
 using MicroCMS.Application.Features.Media.Dtos;
 using MicroCMS.Application.Features.Media.Queries;
+using MicroCMS.Domain.Aggregates.Media;
+using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Services;
+using MicroCMS.Domain.Specifications.Delivery;
+using MicroCMS.Domain.Specifications.Media;
+using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Primitives;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -50,7 +56,7 @@ public sealed class MediaController : ApiControllerBase
     /// </summary>
     [HttpPost("upload")]
     [DisableRequestSizeLimit]
-    [RequestFormLimits(MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024)]
+    [DisableFormValueModelBinding]
     [ProducesResponseType(typeof(MediaAssetDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
@@ -108,6 +114,34 @@ public sealed class MediaController : ApiControllerBase
     {
         var result = await Sender.Send(command, cancellationToken);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
+    }
+
+    // ── Download ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Streams the raw binary content of an asset directly from storage.
+    /// Anonymous — the browser loads this URL as an <c>&lt;img src&gt;</c> tag without a bearer token.
+    /// Only <c>Available</c> assets are served; others return 404.
+    /// </summary>
+    [HttpGet("{id:guid}/download")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Download(
+        Guid id,
+        [FromServices] IRepository<MediaAsset, MediaAssetId> assetRepo,
+        [FromServices] IStorageProvider storageProvider,
+        CancellationToken cancellationToken = default)
+    {
+        var matches = await assetRepo.ListAsync(
+            new AvailableMediaAssetByIdSpec(new MediaAssetId(id)), cancellationToken);
+
+        var asset = matches.FirstOrDefault();
+        if (asset is null)
+            return NotFound();
+
+        var stream = await storageProvider.DownloadAsync(asset.StorageKey, cancellationToken);
+        return File(stream, asset.Metadata.MimeType, asset.Metadata.FileName, enableRangeProcessing: true);
     }
 
     // ── Metadata ─────────────────────────────────────────────────────────
@@ -186,7 +220,11 @@ public sealed class MediaController : ApiControllerBase
 
     // ── Image variant (Sprint 8) ──────────────────────────────────────────
 
-    /// <summary>Returns a dynamically resized / format-converted variant of an image asset.</summary>
+    /// <summary>
+    /// Returns a dynamically resized / format-converted variant of an image asset.
+    /// Anonymous — loaded as <c>&lt;img src&gt;</c> thumbnails without a bearer token.
+    /// Only <c>Available</c> image assets are served; others return 404.
+    /// </summary>
     [HttpGet("{id:guid}/variant")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -199,15 +237,33 @@ public sealed class MediaController : ApiControllerBase
         [FromQuery] ImageFit fit = ImageFit.Contain,
         [FromQuery] ImageOutputFormat fmt = ImageOutputFormat.Original,
         [FromQuery] int q = 85,
+        [FromServices] IRepository<MediaAsset, MediaAssetId> assetRepo = null!,
+        [FromServices] IStorageProvider storageProvider = null!,
+        [FromServices] IImageVariantService variantService = null!,
         CancellationToken cancellationToken = default)
     {
-        var result = await Sender.Send(
-            new GetImageVariantQuery(id, w, h, fit, fmt, q), cancellationToken);
+        var matches = await assetRepo.ListAsync(
+            new AvailableMediaAssetByIdSpec(new MediaAssetId(id)), cancellationToken);
 
-        if (result.IsFailure)
-            return OkOrProblem(result);
+        var asset = matches.FirstOrDefault();
+        if (asset is null)
+            return NotFound();
 
-        return File(result.Value.Content, result.Value.MimeType, enableRangeProcessing: false);
+        if (!asset.Metadata.IsImage)
+            return BadRequest(new { detail = "Image variants are only supported for image assets." });
+
+        var source = await storageProvider.DownloadAsync(asset.StorageKey, cancellationToken);
+
+        // SVG and other vector/non-raster formats cannot be processed by ImageSharp.
+        // Serve them as-is regardless of the requested transform parameters.
+        if (IsPassThroughFormat(asset.Metadata.MimeType))
+            return File(source, asset.Metadata.MimeType, enableRangeProcessing: false);
+
+        var variantRequest = new ImageVariantRequest(w, h, fit, fmt, q);
+        var output = await variantService.TransformAsync(source, variantRequest, cancellationToken);
+        var mimeType = variantService.GetMimeType(fmt, asset.Metadata.MimeType);
+
+        return File(output, mimeType, enableRangeProcessing: false);
     }
 
     // ── Delete ────────────────────────────────────────────────────────────
@@ -331,6 +387,9 @@ public sealed class MediaController : ApiControllerBase
     private static bool IsMultipartContentType(string? contentType) =>
         !string.IsNullOrEmpty(contentType) &&
         contentType.IndexOf("multipart/", StringComparison.OrdinalIgnoreCase) >= 0;
+
+    private static bool IsPassThroughFormat(string? mimeType) =>
+        mimeType is "image/svg+xml" or "image/gif" or "image/x-icon" or "image/vnd.microsoft.icon";
 
     private static string GetBoundary(string? contentType)
     {

@@ -338,8 +338,8 @@ export interface MediaAsset {
   altText?: string;
   tags: string[];
   folderId?: string;
-  uploadedById: string;
-  uploadedByName: string;
+  uploadedById?: string;
+  uploadedByName?: string;
   createdAt: string;
 }
 

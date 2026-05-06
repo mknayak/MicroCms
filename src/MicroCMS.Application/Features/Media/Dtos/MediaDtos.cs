@@ -22,11 +22,14 @@ public sealed record MediaAssetDto(
 public sealed record MediaAssetListItemDto(
     Guid Id,
     string FileName,
-    string MimeType,
-    long SizeBytes,
+    string ContentType,
+    string MediaType,
+    long FileSize,
     string Status,
     string? AltText,
     string? AiAltText,
+    string Url,
+    string? ThumbnailUrl,
     DateTimeOffset CreatedAt);
 
 public sealed record MediaFolderDto(

@@ -1,0 +1,49 @@
+<svg width="1440" height="720" viewBox="0 0 1440 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="720" fill="#F8F8F8"></rect>
+
+  <!-- Left Content -->
+  <rect x="120" y="160" width="170" height="42" rx="8" stroke="#BDBDBD" stroke-width="2"></rect>
+  <text x="145" y="188" font-family="Arial" font-size="18" fill="#7A7A7A">
+    TAGLINE
+  </text>
+
+  <!-- Title -->
+  <text x="120" y="300" font-family="Arial" font-size="72" font-weight="700" fill="#1F1F1F">
+    Hero Banner
+  </text>
+
+  <text x="120" y="385" font-family="Arial" font-size="72" font-weight="700" fill="#1F1F1F">
+    Title Here
+  </text>
+
+  <!-- Description -->
+  <text x="120" y="455" font-family="Arial" font-size="28" fill="#6B6B6B">
+    Add a short description explaining your product,
+  </text>
+
+  <text x="120" y="495" font-family="Arial" font-size="28" fill="#6B6B6B">
+    service, or key value proposition.
+  </text>
+
+  <!-- CTA Button -->
+  <rect x="120" y="560" width="240" height="72" rx="14" fill="#EAEAEA" stroke="#CFCFCF" stroke-width="2"></rect>
+  
+  <text x="165" y="605" font-family="Arial" font-size="30" font-weight="600" fill="#333333">
+    Get Started
+  </text>
+
+  <text x="315" y="605" font-family="Arial" font-size="34" fill="#333333">
+    →
+  </text>
+
+  <!-- Right Image Placeholder -->
+  <rect x="820" y="130" width="500" height="460" rx="24" stroke="#C8C8C8" stroke-width="3"></rect>
+
+  <line x1="820" y1="130" x2="1320" y2="590" stroke="#D3D3D3" stroke-width="2"></line>
+  <line x1="1320" y1="130" x2="820" y2="590" stroke="#D3D3D3" stroke-width="2"></line>
+
+  <!-- Placeholder Icon -->
+  <circle cx="1070" cy="270" r="36" stroke="#C8C8C8" stroke-width="3"></circle>
+
+  <path d="M900 520L1020 390L1120 480L1230 360L1320 460" stroke="#C8C8C8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>

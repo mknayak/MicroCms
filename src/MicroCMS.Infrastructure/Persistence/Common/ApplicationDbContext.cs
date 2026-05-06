@@ -74,6 +74,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<MediaFolder> MediaFolders => Set<MediaFolder>();
+    public DbSet<Storage.Database.MediaBlobRecord> MediaBlobs => Set<Storage.Database.MediaBlobRecord>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<User> Users => Set<User>();

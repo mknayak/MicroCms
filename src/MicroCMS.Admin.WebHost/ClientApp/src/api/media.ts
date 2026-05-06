@@ -32,7 +32,7 @@ export const mediaApi = {
     if (options?.folderId) form.append('folderId', options.folderId);
 
     return apiClient
-      .post<MediaAsset>('/media', form, {
+      .post<MediaAsset>('/media/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => {
           if (onProgress && e.total) {

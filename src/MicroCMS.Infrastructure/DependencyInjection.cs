@@ -28,6 +28,7 @@ using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Search;
 using MicroCMS.Infrastructure.Settings;
+using MicroCMS.Infrastructure.Storage.Database;
 using MicroCMS.Infrastructure.Storage.AzureBlob;
 using MicroCMS.Infrastructure.Storage.Filesystem;
 using MicroCMS.Infrastructure.Storage.Imaging;
@@ -269,6 +270,12 @@ public static class DependencyInjection
                 services.Configure<AzureBlobStorageOptions>(
                     configuration.GetSection(AzureBlobStorageOptions.SectionName));
                 services.AddScoped<IStorageProvider, AzureBlobStorageProvider>();
+                break;
+
+            case "DATABASE":
+                services.Configure<DatabaseStorageOptions>(
+                    configuration.GetSection(DatabaseStorageOptions.SectionName));
+                services.AddScoped<IStorageProvider, DatabaseStorageProvider>();
                 break;
 
             case "FILESYSTEM":
