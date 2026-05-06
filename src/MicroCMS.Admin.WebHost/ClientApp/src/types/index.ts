@@ -909,21 +909,19 @@ export interface ComponentItemDto {
   componentKey: string;
   tenantId: string;
   siteId: string;
-  title: string;
+  slug: string;
   status: 'Draft' | 'Published' | 'Archived';
   fieldsJson: Record<string, unknown>;
-  usedOnPages: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateComponentItemRequest {
-  title: string;
+  slug: string;
   fieldsJson: Record<string, unknown>;
 }
 
 export interface UpdateComponentItemRequest {
-  title: string;
   fieldsJson: Record<string, unknown>;
 }
 

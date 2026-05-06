@@ -3,6 +3,7 @@ using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Application.Features.Delivery.Handlers;
 using MicroCMS.Delivery.Core.Rendering;
 using MicroCMS.Domain.Aggregates.Components;
+using MicroCMS.Domain.Aggregates.Content;
 
 namespace MicroCMS.Delivery.Core.Rendering;
 
@@ -18,15 +19,15 @@ internal sealed class ComponentRenderingService(
 {
     public Task<string> RenderComponentAsync(
         Component component,
-        ComponentItem item,
+        Entry item,
         CancellationToken cancellationToken = default)
     {
         var dto = new DeliveryComponentItemDto(
-     item.Id.Value,
-         item.ComponentId.Value,
-     component.Key,
-  item.Title,
-     System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(item.FieldsJson));
+            item.Id.Value,
+            component.Id.Value,
+            component.Key,
+            item.Slug.Value,
+            System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(item.FieldsJson));
 
         return componentRenderer.RenderAsync(component, dto, cancellationToken);
     }

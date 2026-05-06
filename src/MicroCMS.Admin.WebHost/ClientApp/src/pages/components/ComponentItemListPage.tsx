@@ -60,7 +60,7 @@ export default function ComponentItemListPage() {
   const filtered = (data?.items ?? []).filter((item) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return item.title.toLowerCase().includes(q);
+    return item.slug.toLowerCase().includes(q);
   });
 
   const toggleSelect = (itemId: string) => {
@@ -182,10 +182,9 @@ Delete Selected
     onChange={toggleAll}
      />
        </th>
-<th className="px-4 py-3 text-left">Title</th>
+<th className="px-4 py-3 text-left">Slug</th>
         <th className="px-4 py-3 text-left">Status</th>
-       <th className="px-4 py-3 text-left">Used In</th>
-   <th className="px-4 py-3 text-left">Updated</th>
+       <th className="px-4 py-3 text-left">Updated</th>
        <th className="w-20 px-4 py-3" />
             </tr>
           </thead>
@@ -193,14 +192,14 @@ Delete Selected
        {isLoading ? (
         Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-              <td colSpan={6} className="px-4 py-3">
+              <td colSpan={5} className="px-4 py-3">
           <div className="h-5 animate-pulse rounded bg-slate-100" />
          </td>
      </tr>
        ))
       ) : filtered.length === 0 ? (
           <tr>
-         <td colSpan={6} className="py-16 text-center text-sm text-slate-400">
+         <td colSpan={5} className="py-16 text-center text-sm text-slate-400">
  No items found.
      </td>
   </tr>
@@ -219,13 +218,12 @@ Delete Selected
  onChange={() => {}}
     />
        </td>
-          <td className="px-4 py-3 font-medium text-slate-900">{item.title}</td>
+          <td className="px-4 py-3 font-medium text-slate-900 font-mono text-xs">{item.slug}</td>
           <td className="px-4 py-3">
            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_PILL[item.status]}`}>
     {item.status}
    </span>
        </td>
-  <td className="px-4 py-3 text-slate-500">{item.usedOnPages} pages</td>
                   <td className="px-4 py-3 text-slate-400 text-xs">
       {new Date(item.updatedAt).toLocaleDateString()}
           </td>
@@ -248,7 +246,7 @@ Delete Selected
         title="Delete"
     onClick={(e) => {
               e.stopPropagation();
-  if (confirm(`Delete "${item.title}"?`)) deleteMutation.mutate(item.id);
+  if (confirm(`Delete "${item.slug}"?`)) deleteMutation.mutate(item.id);
             }}
                >
   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

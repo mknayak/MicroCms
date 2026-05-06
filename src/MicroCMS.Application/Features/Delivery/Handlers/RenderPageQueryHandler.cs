@@ -7,8 +7,10 @@ using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Pages;
+using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Specifications.Components;
+using MicroCMS.Domain.Specifications.Content;
 using MicroCMS.Domain.Specifications.Delivery;
 using MicroCMS.Domain.Specifications.Layouts;
 using MicroCMS.Domain.ValueObjects;
@@ -29,9 +31,8 @@ internal sealed class RenderPageBySlugQueryHandler(
     IRepository<Page, PageId> pageRepo,
     IRepository<PageTemplate, PageTemplateId> templateRepo,
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo,
-    IRepository<Layout, LayoutId> layoutRepo,
     IRepository<Entry, EntryId> entryRepo,
+    IRepository<Layout, LayoutId> layoutRepo,
     IComponentRenderingService renderer)
     : IRequestHandler<RenderPageBySlugQuery, Result<RenderedPageDto>>
 {
@@ -51,10 +52,10 @@ internal sealed class RenderPageBySlugQueryHandler(
         var template = templates.FirstOrDefault();
 
   // ── 3+4. Render placements → zone HTML ────────────────────────────
-    var zones = await RenderZonesAsync(template, compRepo, itemRepo, renderer, cancellationToken);
+  var zones = await RenderZonesAsync(template, compRepo, entryRepo, renderer, cancellationToken);
 
     // ── 5. Resolve SEO ────────────────────────────────────────────────
-        var seo = await ResolveSeoAsync(page, entryRepo, cancellationToken);
+    var seo = await ResolveSeoAsync(page, cancellationToken);
 
         // ── 6. Resolve Layout (page override → site default → none) ───────
         var layout = await ResolveLayoutAsync(page, siteId, layoutRepo, cancellationToken);
@@ -85,7 +86,6 @@ layout, zones,
     /// </summary>
     private static Task<SeoDto> ResolveSeoAsync(
         Page page,
-        IRepository<Entry, EntryId> entryRepo,
         CancellationToken ct)
     {
   var pageSeo = page.Seo;
@@ -101,32 +101,33 @@ layout, zones,
     private static async Task<IReadOnlyDictionary<string, string>> RenderZonesAsync(
         PageTemplate? template,
         IRepository<Component, ComponentId> compRepo,
-IRepository<ComponentItem, ComponentItemId> itemRepo,
- IComponentRenderingService renderer,
-      CancellationToken ct)
+        IRepository<Entry, EntryId> entryRepo,
+        IComponentRenderingService renderer,
+        CancellationToken ct)
     {
         if (template is null || template.Placements.Count == 0)
-    return new Dictionary<string, string>();
+            return new Dictionary<string, string>();
 
         var zoneHtml = new Dictionary<string, StringBuilder>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var placement in template.Placements.OrderBy(p => p.SortOrder))
         {
-         var comp = await compRepo.GetByIdAsync(placement.ComponentId, ct);
-            if (comp is null) continue;
+            var comp = await compRepo.GetByIdAsync(placement.ComponentId, ct);
+            if (comp is null || comp.BackingContentTypeId is null) continue;
 
-     var items = await itemRepo.ListAsync(
-    new ComponentItemsByComponentAndStatusSpec(comp.Id, ComponentItemStatus.Published, 1, int.MaxValue),
-              ct);
+            var contentTypeId = comp.BackingContentTypeId.Value.Value;
+            var items = await entryRepo.ListAsync(
+                new EntriesBySiteSpec(comp.SiteId, EntryStatus.Published.ToString(), contentTypeId),
+                ct);
 
-   var sb = zoneHtml.TryGetValue(placement.Zone, out var existing)
-        ? existing
-     : (zoneHtml[placement.Zone] = new StringBuilder());
+            var sb = zoneHtml.TryGetValue(placement.Zone, out var existing)
+                ? existing
+                : (zoneHtml[placement.Zone] = new StringBuilder());
 
-  foreach (var item in items)
+            foreach (var item in items)
             {
-   var fragment = await renderer.RenderComponentAsync(comp, item, ct);
-          sb.Append(fragment);
+                var fragment = await renderer.RenderComponentAsync(comp, item, ct);
+                sb.Append(fragment);
             }
     }
 

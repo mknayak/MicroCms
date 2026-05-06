@@ -11,6 +11,8 @@ using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Specifications.Components;
+using MicroCMS.Domain.Specifications.Content;
+using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Primitives;
 using MicroCMS.Shared.Results;
@@ -75,19 +77,18 @@ internal static class ComponentMapper
         c.CreatedAt,
         c.UpdatedAt);
 
-    internal static ComponentItemDto ToItemDto(ComponentItem ci, Component comp) => new(
-        ci.Id.Value,
-        ci.ComponentId.Value,
+    internal static ComponentItemDto ToItemDto(Entry entry, Component comp) => new(
+        entry.Id.Value,
+        comp.Id.Value,
         comp.Name,
         comp.Key,
-        ci.TenantId.Value,
-        ci.SiteId.Value,
-        ci.Title,
-        ci.Status.ToString(),
-        ParseJson(ci.FieldsJson),
-        ci.UsedOnPages,
-        ci.CreatedAt,
-        ci.UpdatedAt);
+        entry.TenantId.Value,
+        entry.SiteId.Value,
+        entry.Slug.Value,
+        entry.Status.ToString(),
+        ParseJson(entry.FieldsJson),
+        entry.CreatedAt,
+        entry.UpdatedAt);
 
     private static object ParseJson(string json)
     {
@@ -233,98 +234,106 @@ internal sealed class UpdateComponentThumbnailCommandHandler(
 
 internal sealed class CreateComponentItemCommandHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
+    IRepository<Entry, EntryId> entryRepo,
+    ICurrentUser currentUser)
     : IRequestHandler<CreateComponentItemCommand, Result<ComponentItemDto>>
 {
     public async Task<Result<ComponentItemDto>> Handle(CreateComponentItemCommand request, CancellationToken cancellationToken)
     {
         var comp = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
-   ?? throw new NotFoundException(nameof(Component), request.ComponentId);
+            ?? throw new NotFoundException(nameof(Component), request.ComponentId);
 
-        var item = ComponentItem.Create(
-            new ComponentId(request.ComponentId),
-comp.TenantId,
-            comp.SiteId,
-      request.Title,
-         request.FieldsJson);
+        if (comp.BackingContentTypeId is null)
+            throw new NotFoundException(nameof(ContentType), request.ComponentId);
+
+        var slug = Slug.Create(request.Slug);
+        var locale = Locale.Create("en");
+        var entry = Entry.Create(comp.TenantId, comp.SiteId, comp.BackingContentTypeId.Value,
+            slug, locale, currentUser.UserId, request.FieldsJson);
+
+        await entryRepo.AddAsync(entry, cancellationToken);
 
         comp.IncrementItemCount();
         compRepo.Update(comp);
-        await itemRepo.AddAsync(item, cancellationToken);
-        return Result.Success(ComponentMapper.ToItemDto(item, comp));
+
+        return Result.Success(ComponentMapper.ToItemDto(entry, comp));
     }
 }
 
 internal sealed class UpdateComponentItemCommandHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
+    IRepository<Entry, EntryId> entryRepo,
+    ICurrentUser currentUser)
     : IRequestHandler<UpdateComponentItemCommand, Result<ComponentItemDto>>
 {
     public async Task<Result<ComponentItemDto>> Handle(UpdateComponentItemCommand request, CancellationToken cancellationToken)
-  {
+    {
         var comp = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
-        ?? throw new NotFoundException(nameof(Component), request.ComponentId);
-        var item = await itemRepo.GetByIdAsync(new ComponentItemId(request.ItemId), cancellationToken)
-          ?? throw new NotFoundException(nameof(ComponentItem), request.ItemId);
+            ?? throw new NotFoundException(nameof(Component), request.ComponentId);
+        var entry = await entryRepo.GetByIdAsync(new EntryId(request.ItemId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Entry), request.ItemId);
 
-    item.UpdateFields(request.Title, request.FieldsJson);
-        itemRepo.Update(item);
-        return Result.Success(ComponentMapper.ToItemDto(item, comp));
+        entry.UpdateFields(request.FieldsJson, currentUser.UserId);
+        entryRepo.Update(entry);
+        return Result.Success(ComponentMapper.ToItemDto(entry, comp));
     }
 }
 
 internal sealed class PublishComponentItemCommandHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
+    IRepository<Entry, EntryId> entryRepo)
     : IRequestHandler<PublishComponentItemCommand, Result>
 {
     public async Task<Result> Handle(PublishComponentItemCommand request, CancellationToken cancellationToken)
     {
         _ = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
-  ?? throw new NotFoundException(nameof(Component), request.ComponentId);
-        var item = await itemRepo.GetByIdAsync(new ComponentItemId(request.ItemId), cancellationToken)
-            ?? throw new NotFoundException(nameof(ComponentItem), request.ItemId);
+            ?? throw new NotFoundException(nameof(Component), request.ComponentId);
+        var entry = await entryRepo.GetByIdAsync(new EntryId(request.ItemId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Entry), request.ItemId);
 
-item.Publish();
- itemRepo.Update(item);
- return Result.Success();
+        // Entries require Approved state before Publish — auto-approve for component items
+        if (entry.Status == EntryStatus.Draft || entry.Status == EntryStatus.PendingReview)
+            entry.Approve();
+        entry.Publish();
+        entryRepo.Update(entry);
+        return Result.Success();
     }
 }
 
 internal sealed class ArchiveComponentItemCommandHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
+    IRepository<Entry, EntryId> entryRepo)
     : IRequestHandler<ArchiveComponentItemCommand, Result>
 {
     public async Task<Result> Handle(ArchiveComponentItemCommand request, CancellationToken cancellationToken)
     {
         _ = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
-  ?? throw new NotFoundException(nameof(Component), request.ComponentId);
-  var item = await itemRepo.GetByIdAsync(new ComponentItemId(request.ItemId), cancellationToken)
- ?? throw new NotFoundException(nameof(ComponentItem), request.ItemId);
+            ?? throw new NotFoundException(nameof(Component), request.ComponentId);
+        var entry = await entryRepo.GetByIdAsync(new EntryId(request.ItemId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Entry), request.ItemId);
 
-        item.Archive();
-        itemRepo.Update(item);
+        entry.Archive();
+        entryRepo.Update(entry);
         return Result.Success();
     }
 }
 
 internal sealed class DeleteComponentItemCommandHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
+    IRepository<Entry, EntryId> entryRepo)
     : IRequestHandler<DeleteComponentItemCommand, Result>
 {
     public async Task<Result> Handle(DeleteComponentItemCommand request, CancellationToken cancellationToken)
     {
-   var comp = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
+        var comp = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
-        var item = await itemRepo.GetByIdAsync(new ComponentItemId(request.ItemId), cancellationToken)
-            ?? throw new NotFoundException(nameof(ComponentItem), request.ItemId);
+        var entry = await entryRepo.GetByIdAsync(new EntryId(request.ItemId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Entry), request.ItemId);
 
+        entryRepo.Remove(entry);
         comp.DecrementItemCount();
-    compRepo.Update(comp);
-        itemRepo.Remove(item);
-    return Result.Success();
+        compRepo.Update(comp);
+        return Result.Success();
     }
 }
 
@@ -385,53 +394,43 @@ internal sealed class GetComponentQueryHandler(
 
 internal sealed class ListComponentItemsQueryHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
-  : IRequestHandler<ListComponentItemsQuery, Result<PagedList<ComponentItemDto>>>
+    IRepository<Entry, EntryId> entryRepo)
+    : IRequestHandler<ListComponentItemsQuery, Result<PagedList<ComponentItemDto>>>
 {
     public async Task<Result<PagedList<ComponentItemDto>>> Handle(ListComponentItemsQuery request, CancellationToken cancellationToken)
     {
-        var compId = new ComponentId(request.ComponentId);
-        var comp = await compRepo.GetByIdAsync(compId, cancellationToken)
+        var comp = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
 
-    IReadOnlyList<ComponentItem> items;
-   int total;
+        if (comp.BackingContentTypeId is null)
+            return Result.Success(PagedList<ComponentItemDto>.Create([], request.Page, request.PageSize, 0));
 
-        if (!string.IsNullOrWhiteSpace(request.Status) &&
-      Enum.TryParse<ComponentItemStatus>(request.Status, true, out var status))
- {
-    items = await itemRepo.ListAsync(
-     new ComponentItemsByComponentAndStatusSpec(compId, status, request.Page, request.PageSize),
-   cancellationToken);
-            total = await itemRepo.CountAsync(
-      new ComponentItemsByComponentAndStatusSpec(compId, status, 1, int.MaxValue),
-     cancellationToken);
-        }
-        else
-        {
-    items = await itemRepo.ListAsync(
-       new ComponentItemsByComponentSpec(compId, request.Page, request.PageSize),
-             cancellationToken);
-       total = await itemRepo.CountAsync(new ComponentItemsCountSpec(compId), cancellationToken);
-        }
+        var contentTypeId = comp.BackingContentTypeId.Value.Value;
+
+        var items = await entryRepo.ListAsync(
+            new EntriesBySiteSpec(comp.SiteId, request.Status, contentTypeId, null, null, request.Page, request.PageSize),
+            cancellationToken);
+        var total = await entryRepo.CountAsync(
+            new EntriesBySiteSpec(comp.SiteId, request.Status, contentTypeId),
+            cancellationToken);
 
         return Result.Success(PagedList<ComponentItemDto>.Create(
- items.Select(i => ComponentMapper.ToItemDto(i, comp)),
-    request.Page, request.PageSize, total));
+            items.Select(e => ComponentMapper.ToItemDto(e, comp)),
+            request.Page, request.PageSize, total));
     }
 }
 
 internal sealed class GetComponentItemQueryHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
- : IRequestHandler<GetComponentItemQuery, Result<ComponentItemDto>>
+    IRepository<Entry, EntryId> entryRepo)
+    : IRequestHandler<GetComponentItemQuery, Result<ComponentItemDto>>
 {
     public async Task<Result<ComponentItemDto>> Handle(GetComponentItemQuery request, CancellationToken cancellationToken)
     {
         var comp = await compRepo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
-        var item = await itemRepo.GetByIdAsync(new ComponentItemId(request.ItemId), cancellationToken)
-      ?? throw new NotFoundException(nameof(ComponentItem), request.ItemId);
-   return Result.Success(ComponentMapper.ToItemDto(item, comp));
+        var entry = await entryRepo.GetByIdAsync(new EntryId(request.ItemId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Entry), request.ItemId);
+        return Result.Success(ComponentMapper.ToItemDto(entry, comp));
     }
 }

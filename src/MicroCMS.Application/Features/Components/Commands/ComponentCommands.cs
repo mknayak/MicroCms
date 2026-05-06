@@ -54,14 +54,13 @@ public sealed record UpdateComponentThumbnailCommand(
 [HasPolicy(ContentPolicies.ComponentManage)]
 public sealed record CreateComponentItemCommand(
     Guid ComponentId,
-    string Title,
+    string Slug,
     string FieldsJson) : ICommand<ComponentItemDto>;
 
 [HasPolicy(ContentPolicies.ComponentManage)]
 public sealed record UpdateComponentItemCommand(
     Guid ComponentId,
     Guid ItemId,
-    string Title,
     string FieldsJson) : ICommand<ComponentItemDto>;
 
 [HasPolicy(ContentPolicies.ComponentManage)]

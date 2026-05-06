@@ -11,6 +11,7 @@ using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Services;
+using MicroCMS.Domain.Specifications.Components;
 using MicroCMS.Domain.Specifications.Content;
 using MicroCMS.Domain.Specifications.Delivery;
 using MicroCMS.Shared.Ids;
@@ -47,12 +48,12 @@ internal static class DeliveryMapper
         p.RoutePattern,
         p.Depth);
 
-    internal static DeliveryComponentItemDto ToItemDto(ComponentItem ci, string componentKey) => new(
-        ci.Id.Value,
-        ci.ComponentId.Value,
+    internal static DeliveryComponentItemDto ToItemDto(Entry entry, Guid componentId, string componentKey) => new(
+        entry.Id.Value,
+        componentId,
         componentKey,
-     ci.Title,
-    ParseJson(ci.FieldsJson));
+        entry.Slug.Value,
+        ParseJson(entry.FieldsJson));
 
     private static object ParseJson(string json)
     {
@@ -155,58 +156,63 @@ internal sealed class ListPublishedPagesQueryHandler(
 
 internal sealed class ListPublishedComponentItemsQueryHandler(
     IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
+    IRepository<Entry, EntryId> entryRepo)
     : IRequestHandler<ListPublishedComponentItemsQuery, Result<PagedList<DeliveryComponentItemDto>>>
 {
     public async Task<Result<PagedList<DeliveryComponentItemDto>>> Handle(
         ListPublishedComponentItemsQuery request,
-   CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
         var siteId = new SiteId(request.SiteId);
         var components = await compRepo.ListAsync(
-        new MicroCMS.Domain.Specifications.Components.ComponentsBySiteSpec(siteId, 1, int.MaxValue),
-       cancellationToken);
+            new ComponentsBySiteSpec(siteId, 1, int.MaxValue), cancellationToken);
 
         var comp = components.FirstOrDefault(c =>
-c.Key.Equals(request.ComponentKey, StringComparison.OrdinalIgnoreCase))
-  ?? throw new NotFoundException("Component", request.ComponentKey);
+            c.Key.Equals(request.ComponentKey, StringComparison.OrdinalIgnoreCase))
+            ?? throw new NotFoundException("Component", request.ComponentKey);
 
-        var spec = new MicroCMS.Domain.Specifications.Components.ComponentItemsByComponentAndStatusSpec(
-       comp.Id, ComponentItemStatus.Published, request.Page, request.PageSize);
-        var countSpec = new MicroCMS.Domain.Specifications.Components.ComponentItemsByComponentAndStatusSpec(
- comp.Id, ComponentItemStatus.Published, 1, int.MaxValue);
+        if (comp.BackingContentTypeId is null)
+            return Result.Success(PagedList<DeliveryComponentItemDto>.Create([], request.Page, request.PageSize, 0));
 
-        var items = await itemRepo.ListAsync(spec, cancellationToken);
-        var total = await itemRepo.CountAsync(countSpec, cancellationToken);
+        var contentTypeId = comp.BackingContentTypeId.Value.Value;
+        var spec = new EntriesBySiteSpec(siteId, EntryStatus.Published.ToString(), contentTypeId, null, null, request.Page, request.PageSize);
+        var countSpec = new EntriesBySiteSpec(siteId, EntryStatus.Published.ToString(), contentTypeId);
+
+        var items = await entryRepo.ListAsync(spec, cancellationToken);
+        var total = await entryRepo.CountAsync(countSpec, cancellationToken);
 
         return Result.Success(PagedList<DeliveryComponentItemDto>.Create(
-            items.Select(i => DeliveryMapper.ToItemDto(i, comp.Key)),
-     request.Page, request.PageSize, total));
+            items.Select(e => DeliveryMapper.ToItemDto(e, comp.Id.Value, comp.Key)),
+            request.Page, request.PageSize, total));
     }
 }
 
 internal sealed class GetPublishedComponentItemQueryHandler(
-IRepository<Component, ComponentId> compRepo,
-    IRepository<ComponentItem, ComponentItemId> itemRepo)
- : IRequestHandler<GetPublishedComponentItemQuery, Result<DeliveryComponentItemDto>>
+    IRepository<Component, ComponentId> compRepo,
+    IRepository<Entry, EntryId> entryRepo)
+    : IRequestHandler<GetPublishedComponentItemQuery, Result<DeliveryComponentItemDto>>
 {
     public async Task<Result<DeliveryComponentItemDto>> Handle(
         GetPublishedComponentItemQuery request,
-CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
-        var item = await itemRepo.GetByIdAsync(new ComponentItemId(request.ItemId), cancellationToken)
-            ?? throw new NotFoundException("ComponentItem", request.ItemId);
+        var entry = await entryRepo.GetByIdAsync(new EntryId(request.ItemId), cancellationToken)
+            ?? throw new NotFoundException("Entry", request.ItemId);
 
-        if (item.Status != ComponentItemStatus.Published)
-            throw new NotFoundException("ComponentItem", request.ItemId);
+        if (entry.Status != EntryStatus.Published)
+            throw new NotFoundException("Entry", request.ItemId);
 
-        if (item.SiteId != new SiteId(request.SiteId))
-            throw new NotFoundException("ComponentItem", request.ItemId);
+        if (entry.SiteId != new SiteId(request.SiteId))
+            throw new NotFoundException("Entry", request.ItemId);
 
-        var comp = await compRepo.GetByIdAsync(item.ComponentId, cancellationToken)
-  ?? throw new NotFoundException("Component", item.ComponentId.Value);
+        var siteId = new SiteId(request.SiteId);
+        var allComponents = await compRepo.ListAsync(
+            new ComponentsBySiteSpec(siteId, 1, int.MaxValue), cancellationToken);
+        var comp = allComponents.FirstOrDefault(c =>
+            c.BackingContentTypeId.HasValue && c.BackingContentTypeId.Value == entry.ContentTypeId)
+            ?? throw new NotFoundException("Component", request.ItemId);
 
-        return Result.Success(DeliveryMapper.ToItemDto(item, comp.Key));
+        return Result.Success(DeliveryMapper.ToItemDto(entry, comp.Id.Value, comp.Key));
     }
 }
 

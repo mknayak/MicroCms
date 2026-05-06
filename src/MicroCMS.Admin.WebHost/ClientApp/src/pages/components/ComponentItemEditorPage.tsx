@@ -14,7 +14,10 @@ import { formatDistanceToNow } from 'date-fns';
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  title: z.string().min(1, 'Internal title is required'),
+  slug: z.string()
+    .min(1, 'Slug is required')
+    .max(200, 'Slug must be 200 characters or fewer')
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug may only contain lowercase letters, numbers, and hyphens'),
   fieldsJson: z.record(z.unknown()),
 });
 
@@ -257,18 +260,18 @@ export default function ComponentItemEditorPage() {
     formState: { errors, isDirty, isSubmitting },
   } = useForm<ItemForm>({
     resolver: zodResolver(schema),
-    defaultValues: { title: '', fieldsJson: {} },
+    defaultValues: { slug: '', fieldsJson: {} },
   });
 
   useEffect(() => {
     if (item) {
-      reset({ title: item.title, fieldsJson: item.fieldsJson });
+      reset({ slug: item.slug, fieldsJson: item.fieldsJson });
     }
   }, [item, reset]);
 
   const createMutation = useMutation({
     mutationFn: (data: ItemForm) =>
-      componentsApi.createItem(componentId!, { title: data.title, fieldsJson: data.fieldsJson }),
+      componentsApi.createItem(componentId!, { slug: data.slug, fieldsJson: data.fieldsJson }),
     onSuccess: (created) => {
       toast.success('Item created.');
       void qc.invalidateQueries({ queryKey: ['component-items', componentId] });
@@ -280,7 +283,7 @@ export default function ComponentItemEditorPage() {
 
   const updateMutation = useMutation({
     mutationFn: (data: ItemForm) =>
-      componentsApi.updateItem(componentId!, itemId!, { title: data.title, fieldsJson: data.fieldsJson }),
+      componentsApi.updateItem(componentId!, itemId!, { fieldsJson: data.fieldsJson }),
     onSuccess: () => {
       toast.success('Item saved.');
       void qc.invalidateQueries({ queryKey: ['component-item', componentId, itemId] });
@@ -314,7 +317,7 @@ export default function ComponentItemEditorPage() {
     else updateMutation.mutate(data);
   };
 
-  const titleValue = watch('title');
+  const slugValue = watch('slug');
   const currentStatus = (item?.status ?? 'Draft') as ComponentItemDto['status'];
 
   if (!isNew && itemLoading) {
@@ -343,11 +346,11 @@ export default function ComponentItemEditorPage() {
             >
               {comp?.name ?? '…'}
             </button>
-            {(titleValue || item?.title) && (
+            {(slugValue || item?.slug) && (
               <>
                 <span>/</span>
-                <span className="max-w-[200px] truncate font-medium text-slate-900">
-                  {titleValue || item?.title}
+                <span className="max-w-[200px] truncate font-mono text-xs font-medium text-slate-900">
+                  {slugValue || item?.slug}
                 </span>
               </>
             )}
@@ -389,21 +392,22 @@ export default function ComponentItemEditorPage() {
       >
         {/* ── Main content ──────────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-          {/* Internal title */}
+          {/* Slug */}
           <div className="card space-y-2">
             <div className="flex items-center justify-between">
               <label className="form-label mb-0">
-                Internal Title <span className="text-red-500">*</span>
+                Slug <span className="text-red-500">*</span>
               </label>
-              {errors.title && <p className="form-error text-xs">{errors.title.message}</p>}
+              {errors.slug && <p className="form-error text-xs">{errors.slug.message}</p>}
             </div>
             <p className="text-xs text-slate-400">
-              Used for identification only — not displayed on site.
+              URL-friendly identifier — lowercase letters, numbers, and hyphens only.
             </p>
             <input
-              className="form-input"
-              {...register('title')}
-              placeholder="e.g. Summer Campaign Hero"
+              className="form-input font-mono"
+              {...register('slug')}
+              placeholder="e.g. summer-campaign-hero"
+              disabled={!isNew}
             />
           </div>
 
@@ -477,8 +481,6 @@ export default function ComponentItemEditorPage() {
             </div>
             {!isNew && item && (
               <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
-                <span className="text-slate-400">Used on pages</span>
-                <span className="font-semibold text-slate-700">{item.usedOnPages}</span>
                 <span className="text-slate-400">Updated</span>
                 <span className="text-slate-500">
                   {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}

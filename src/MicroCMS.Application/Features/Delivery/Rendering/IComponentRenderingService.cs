@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Aggregates.Components;
+using MicroCMS.Domain.Aggregates.Content;
 
 namespace MicroCMS.Application.Features.Delivery.Rendering;
 
@@ -13,9 +14,9 @@ public interface IComponentRenderingService
 {
     /// <summary>Renders a single component item to an HTML fragment.</summary>
     Task<string> RenderComponentAsync(
-     Component component,
-        ComponentItem item,
-      CancellationToken cancellationToken = default);
+        Component component,
+        Entry item,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Injects zone HTML into a layout shell and returns a full HTML document.</summary>
     Task<string> RenderLayoutAsync(

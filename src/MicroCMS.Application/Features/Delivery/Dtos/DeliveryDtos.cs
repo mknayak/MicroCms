@@ -38,7 +38,7 @@ public sealed record DeliveryComponentItemDto(
     Guid Id,
     Guid ComponentId,
     string ComponentKey,
-    string Title,
+    string Slug,
     object Fields);
 
 /// <summary>A media asset returned by the Delivery API, including a resolved URL.</summary>

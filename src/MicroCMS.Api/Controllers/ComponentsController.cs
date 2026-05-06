@@ -131,7 +131,7 @@ public sealed class ComponentsController : ApiControllerBase
    CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(
- new CreateComponentItemCommand(id, request.Title, request.FieldsJson.GetRawText()),
+            new CreateComponentItemCommand(id, request.Slug, request.FieldsJson.GetRawText()),
    cancellationToken);
         return CreatedOrProblem(result, nameof(GetItem),
  new { id, itemId = result.IsSuccess ? result.Value.Id : Guid.Empty });
@@ -147,7 +147,7 @@ public sealed class ComponentsController : ApiControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await Sender.Send(
-            new UpdateComponentItemCommand(id, itemId, request.Title, request.FieldsJson.GetRawText()),
+            new UpdateComponentItemCommand(id, itemId, request.FieldsJson.GetRawText()),
         cancellationToken);
         return OkOrProblem(result);
     }
@@ -198,6 +198,6 @@ public sealed record UpdateComponentTemplateRequest(
 
 public sealed record UpdateComponentThumbnailRequest(string? ThumbnailDataUri);
 
-public sealed record CreateComponentItemRequest(string Title, JsonElement FieldsJson);
+public sealed record CreateComponentItemRequest(string Slug, JsonElement FieldsJson);
 
-public sealed record UpdateComponentItemRequest(string Title, JsonElement FieldsJson);
+public sealed record UpdateComponentItemRequest(JsonElement FieldsJson);

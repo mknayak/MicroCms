@@ -51,9 +51,8 @@ public sealed record ComponentItemDto(
     string ComponentKey,
     Guid TenantId,
     Guid SiteId,
-    string Title,
+    string Slug,
     string Status,
     object FieldsJson,
-    int UsedOnPages,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);

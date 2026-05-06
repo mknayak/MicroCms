@@ -47,37 +47,3 @@ internal sealed class ComponentConfiguration : IEntityTypeConfiguration<Componen
             builder.Ignore(c => c.DomainEvents);
         }
     }
-
-internal sealed class ComponentItemConfiguration : IEntityTypeConfiguration<ComponentItem>
-{
-    public void Configure(EntityTypeBuilder<ComponentItem> builder)
-    {
-        builder.ToTable("ComponentItems");
-
-        builder.HasKey(ci => ci.Id);
-        builder.Property(ci => ci.Id)
-            .HasConversion(id => id.Value, value => new ComponentItemId(value))
- .ValueGeneratedNever();
-
-        builder.Property(ci => ci.ComponentId)
-    .HasConversion(id => id.Value, value => new ComponentId(value))
-     .IsRequired();
-
-        builder.Property(ci => ci.TenantId)
-   .HasConversion(id => id.Value, value => new TenantId(value))
-            .IsRequired();
-
-   builder.Property(ci => ci.SiteId)
-        .HasConversion(id => id.Value, value => new SiteId(value))
-        .IsRequired();
-
-     builder.Property(ci => ci.Title).HasMaxLength(ComponentItem.MaxTitleLength).IsRequired();
-        builder.Property(ci => ci.FieldsJson).HasColumnType("TEXT").IsRequired();
-        builder.Property(ci => ci.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
-        builder.Property(ci => ci.UsedOnPages).IsRequired();
-        builder.Property(ci => ci.CreatedAt).IsRequired();
-     builder.Property(ci => ci.UpdatedAt).IsRequired();
-
-     builder.HasIndex(ci => new { ci.ComponentId, ci.Status });
-    }
-}
