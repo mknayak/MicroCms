@@ -1,4 +1,5 @@
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Features.Components.Commands;
 using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Enums;
@@ -20,31 +21,51 @@ public sealed class ComponentBackingTypeProvisioner(
     IRepository<Component, ComponentId> componentRepo,
     IUnitOfWork unitOfWork)
 {
-    public async Task ProvisionAsync(Component component, CancellationToken ct = default)
+    public async Task<ContentType> ProvisionAsync(
+        Component component,
+        IReadOnlyList<ComponentFieldInput>? initialFields = null,
+        CancellationToken ct = default)
     {
         if (component.BackingContentTypeId is not null)
-  return; // already provisioned
+        {
+            // Already provisioned — just load and return it
+            return await contentTypeRepo.GetByIdAsync(component.BackingContentTypeId.Value, ct)
+                ?? throw new InvalidOperationException($"Backing ContentType '{component.BackingContentTypeId}' not found.");
+        }
 
-    // Derive a unique handle from the component key
+        // Derive a unique handle from the component key
         var handle = $"__comp_{component.Key.Replace("-", "_")}";
 
         var contentType = ContentType.Create(
-      component.TenantId,
-  component.SiteId,
-          handle,
-    $"{component.Name} (Component Data)",
+            component.TenantId,
+            component.SiteId,
+            handle,
+            $"{component.Name} (Component Data)",
             $"Auto-created backing type for component '{component.Key}'.",
-     LocalizationMode.Shared,
+            LocalizationMode.Shared,
             ContentTypeKind.Component);
 
-    await contentTypeRepo.AddAsync(contentType, ct);
+        // Seed fields from the create request onto the backing ContentType
+        if (initialFields is { Count: > 0 })
+        {
+            for (int i = 0; i < initialFields.Count; i++)
+            {
+                var f = initialFields[i];
+                if (!Enum.TryParse<FieldType>(f.FieldType, true, out var ft))
+                    ft = FieldType.ShortText;
+                contentType.AddField(f.Handle, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsUnique, f.Description, null, f.IsIndexed, f.IsList);
+            }
+        }
 
-      component.SetBackingContentType(contentType.Id);
-  // Do NOT call componentRepo.Update here — the component is already tracked
-      // by EF (state: Added or Modified). Calling Update() would forcibly set the
-      // state to Modified, which causes a DbUpdateConcurrencyException when EF
-      // tries to UPDATE a row that has not been inserted yet.
+        await contentTypeRepo.AddAsync(contentType, ct);
+
+        component.SetBackingContentType(contentType.Id);
+        // Do NOT call componentRepo.Update here — the component is already tracked
+        // by EF (state: Added or Modified). Calling Update() would forcibly set the
+        // state to Modified, which causes a DbUpdateConcurrencyException when EF
+        // tries to UPDATE a row that has not been inserted yet.
 
         await unitOfWork.SaveChangesAsync(ct);
+        return contentType;
     }
 }

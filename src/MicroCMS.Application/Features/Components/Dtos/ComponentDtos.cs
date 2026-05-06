@@ -6,8 +6,10 @@ public sealed record ComponentFieldDto(
     string Label,
     string FieldType,
     bool IsRequired,
-bool IsLocalized,
+    bool IsLocalized,
+    bool IsUnique,
     bool IsIndexed,
+    bool IsList,
     int SortOrder,
     string? Description);
 

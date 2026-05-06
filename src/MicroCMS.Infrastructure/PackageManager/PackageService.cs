@@ -255,6 +255,11 @@ public sealed class PackageService(
    IEnumerable<Component> components,
         IEnumerable<User> users)
     {
+        // Build a lookup of backing ContentType by its Id so MapComponent can resolve fields.
+        var backingTypeById = contentTypes
+            .Where(ct => ct.Kind == ContentTypeKind.Component)
+            .ToDictionary(ct => ct.Id);
+
         using var ms = new MemoryStream();
         using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
         {
@@ -264,7 +269,7 @@ public sealed class PackageService(
             WriteZipEntry(archive, "pages.json", pages.Select(MapPage).ToList());
             WriteZipEntry(archive, "layouts.json", layouts.Select(MapLayout).ToList());
             WriteZipEntry(archive, "media.json", media.Select(MapMedia).ToList());
-            WriteZipEntry(archive, "components.json", components.Select(MapComponent).ToList());
+            WriteZipEntry(archive, "components.json", components.Select(c => MapComponent(c, backingTypeById)).ToList());
             WriteZipEntry(archive, "users.json", users.Select(MapUser).ToList());
         }
         return ms.ToArray();
@@ -640,16 +645,26 @@ public sealed class PackageService(
         AltText: m.AltText, Tags: m.Tags?.ToList() ?? [],
         CreatedAt: m.CreatedAt);
 
-    private static ComponentPackageData MapComponent(Component c) => new(
-    Id: c.Id.Value, Name: c.Name, Key: c.Key, Description: c.Description,
-        Category: c.Category,
-        TemplateType: c.TemplateType.ToString(), TemplateContent: c.TemplateContent,
-        Fields: c.Fields.Select(f => new ComponentFieldPackageData(
-            Id: f.Id, Handle: f.Handle, Label: f.Label,
-     FieldType: f.FieldType.ToString(), IsRequired: f.IsRequired,
-       IsLocalized: f.IsLocalized, IsIndexed: f.IsIndexed,
-            SortOrder: f.SortOrder, Description: f.Description)).ToList(),
-        CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt);
+    private static ComponentPackageData MapComponent(
+        Component c,
+        Dictionary<ContentTypeId, ContentTypeAlias> backingTypeById)
+    {
+        var fields = c.BackingContentTypeId is not null
+            && backingTypeById.TryGetValue(c.BackingContentTypeId.Value, out var bt)
+            ? bt.Fields
+            : (IReadOnlyList<MicroCMS.Domain.Aggregates.Content.FieldDefinition>)[];
+
+        return new ComponentPackageData(
+            Id: c.Id.Value, Name: c.Name, Key: c.Key, Description: c.Description,
+            Category: c.Category,
+            TemplateType: c.TemplateType.ToString(), TemplateContent: c.TemplateContent,
+            Fields: fields.Select(f => new ComponentFieldPackageData(
+                Id: f.Id, Handle: f.Handle, Label: f.Label,
+                FieldType: f.FieldType.ToString(), IsRequired: f.IsRequired,
+                IsLocalized: f.IsLocalized, IsIndexed: f.IsIndexed,
+                SortOrder: f.SortOrder, Description: f.Description)).ToList(),
+            CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt);
+    }
 
     private static UserPackageData MapUser(User u) => new(
     Id: u.Id.Value, Email: u.Email.Value, DisplayName: u.DisplayName.Value,

@@ -1,6 +1,5 @@
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Entities;
-using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Shared.Ids;
 
@@ -55,8 +54,6 @@ public sealed class Component : AggregateRoot<ComponentId>
     public const int MaxDescriptionLength = 500;
     public const int MaxCategoryLength = 50;
 
-private readonly List<FieldDefinition> _fields = [];
-
     private Component() : base() { } // EF Core
 
     private Component(
@@ -108,7 +105,6 @@ SiteId = siteId;
 
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
-    public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
 
     // ── Factory ────────────────────────────────────────────────────────────
 
@@ -159,31 +155,6 @@ SiteId = siteId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void ReplaceFields(IEnumerable<FieldDefinition> fields)
-    {
-        _fields.Clear();
-        _fields.AddRange(fields);
-        UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
-    /// <summary>
-    /// Replaces the component field schema from raw input data.
-    /// Callers outside Domain use this overload to avoid depending on the internal <see cref="FieldDefinition.Create"/> factory.
-    /// </summary>
-    public void ReplaceFieldsFromData(
-  IEnumerable<(string Handle, string Label, FieldType FieldType, bool IsRequired, bool IsLocalized, bool IsUnique, int SortOrder, string? Description)> fields)
-    {
-        _fields.Clear();
-        foreach (var f in fields)
-     {
-         var field = FieldDefinition.Create(
-    ContentTypeId.Empty, f.Handle, f.Label, f.FieldType,
- f.IsRequired, f.IsLocalized, f.IsUnique, f.SortOrder, f.Description);
-        _fields.Add(field);
-        }
-        UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
     /// <summary>
     /// Called once by <c>ComponentBackingTypeProvisioner</c> after the backing ContentType is created.
     /// </summary>
@@ -195,25 +166,6 @@ SiteId = siteId;
           "Backing ContentType has already been assigned to this component.");
         BackingContentTypeId = contentTypeId;
         UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
-    // ── Fields ────────────────────────────────────────────────────────────
-
-    public FieldDefinition AddField(
-        string handle, string label, FieldType fieldType,
-        bool isRequired = false, string? description = null)
-    {
-        if (_fields.Exists(f => f.Handle.Equals(handle, StringComparison.OrdinalIgnoreCase)))
-        throw new BusinessRuleViolationException(
-  "Component.DuplicateFieldHandle",
-                $"A field with handle '{handle}' already exists on component '{Name}'.");
-
-        var field = FieldDefinition.Create(
-            ContentTypeId.Empty, handle, label, fieldType,
-   isRequired, false, false, _fields.Count, description);
-        _fields.Add(field);
-        UpdatedAt = DateTimeOffset.UtcNow;
-        return field;
     }
 
     public void IncrementUsage() { UsageCount++; UpdatedAt = DateTimeOffset.UtcNow; }

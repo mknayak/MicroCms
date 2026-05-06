@@ -7,16 +7,11 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { componentsApi } from '@/api/components';
 import { ApiError } from '@/api/client';
-import type { ComponentCategory, FieldType, RenderingTemplateType } from '@/types';
+import type { ComponentCategory, RenderingTemplateType } from '@/types';
+import { fieldRowSchema, toCamelCase } from '@/components/fields/fieldConstants';
+import ContentTypeFieldEditor from '@/components/fields/ContentTypeFieldEditor';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const FIELD_TYPES: FieldType[] = [
-  'ShortText', 'LongText', 'RichText', 'Markdown',
-  'Integer', 'Decimal', 'Boolean', 'DateTime',
-  'Enum', 'Reference', 'AssetReference', 'Json',
-  'Component', 'Location', 'Color',
-];
 
 const CATEGORIES: ComponentCategory[] = [
   'Layout', 'Content', 'Media', 'Navigation', 'Interactive', 'Commerce',
@@ -29,24 +24,12 @@ const TEMPLATE_TYPES: { value: RenderingTemplateType; label: string; ext: string
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-const fieldSchema = z.object({
-  id: z.string().optional(),
-  handle: z.string().min(1, 'Handle required').regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, 'camelCase only'),
-  label: z.string().min(1, 'Label required'),
-  fieldType: z.enum(FIELD_TYPES as [FieldType, ...FieldType[]]),
-  isRequired: z.boolean(),
-  isLocalized: z.boolean(),
-  isIndexed: z.boolean(),
-  sortOrder: z.number(),
-  description: z.string().optional(),
-});
-
 const formSchema = z.object({
   name: z.string().min(1, 'Name required').max(200),
   key: z.string().min(1, 'Key required').regex(/^[a-z0-9-]+$/),
   description: z.string().optional(),
   category: z.enum(CATEGORIES as [ComponentCategory, ...ComponentCategory[]]),
-  fields: z.array(fieldSchema),
+  fields: z.array(fieldRowSchema),
 });
 
 type EditorForm = z.infer<typeof formSchema>;
@@ -59,6 +42,7 @@ export default function ComponentEditorPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<ActiveTab>('fields');
+  const [activeFieldIdx, setActiveFieldIdx] = useState<number | null>(null);
 
   // Template state — managed separately from the schema form
   const [templateType, setTemplateType] = useState<RenderingTemplateType>('RazorPartial');
@@ -74,7 +58,7 @@ export default function ComponentEditorPage() {
   });
 
   const {
-    register, control, handleSubmit, reset,
+    register, control, handleSubmit, reset, watch,
     formState: { errors, isDirty },
   } = useForm<EditorForm>({
     resolver: zodResolver(formSchema),
@@ -90,15 +74,15 @@ export default function ComponentEditorPage() {
         category: comp.category,
         fields: comp.fields.map((f) => ({
           id: f.id,
-     handle: f.handle,
-   label: f.label,
+          name: f.label,
           fieldType: f.fieldType,
           isRequired: f.isRequired,
           isLocalized: f.isLocalized,
-isIndexed: f.isIndexed,
-          sortOrder: f.sortOrder,
+          isIndexed: f.isIndexed,
+          isUnique: f.isUnique ?? false,
+          isList: f.isList ?? false,
           description: f.description ?? '',
-     })),
+        })),
       });
     setTemplateType(comp.templateType);
       setTemplateContent(comp.templateContent ?? '');
@@ -106,7 +90,7 @@ isIndexed: f.isIndexed,
     }
   }, [comp, reset]);
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'fields' });
+  const { fields, append, remove, move } = useFieldArray({ control, name: 'fields' });
 
   // ── Schema save ────────────────────────────────────────────────────────────
   const updateMutation = useMutation({
@@ -117,14 +101,16 @@ isIndexed: f.isIndexed,
     category: data.category,
       fields: data.fields.map((f, i) => ({
           id: f.id ?? crypto.randomUUID(),
-          handle: f.handle,
-  label: f.label,
-       fieldType: f.fieldType,
-isRequired: f.isRequired,
+          handle: toCamelCase(f.name) || `field${i}`,
+          label: f.name,
+          fieldType: f.fieldType,
+          isRequired: f.isRequired,
           isLocalized: f.isLocalized,
           isIndexed: f.isIndexed,
-        sortOrder: i,
-   description: f.description,
+          isUnique: f.isUnique,
+          isList: f.isList,
+          sortOrder: i,
+          description: f.description,
         })),
       }),
     onSuccess: () => {
@@ -242,58 +228,30 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
 
           {/* ── Fields ── */}
           {activeTab === 'fields' && (
-            <div className="card overflow-hidden">
-              <div className="grid grid-cols-[1fr_140px_70px_70px_70px_36px] gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-     <span>Field Handle</span><span>Type</span>
-                <span className="text-center">Required</span>
-    <span className="text-center">Localised</span>
-       <span className="text-center">Indexed</span>
-      <span />
-       </div>
-          {fields.length === 0 && (
-         <p className="px-4 py-6 text-center text-sm text-slate-400">No fields yet.</p>
-       )}
-     {fields.map((field, index) => (
-            <div key={field.id}
- className="grid grid-cols-[1fr_140px_70px_70px_70px_36px] items-center gap-2 border-b border-slate-100 px-3 py-2.5 last:border-0 hover:bg-slate-50">
-    <input {...register(`fields.${index}.handle`)}
-    className="w-full rounded border border-transparent bg-transparent px-2 py-1 font-mono text-sm font-semibold text-slate-800 hover:border-slate-200 focus:border-brand-500 focus:outline-none"
-            placeholder="fieldName" />
-   <select {...register(`fields.${index}.fieldType`)}
-     className="rounded border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:border-brand-500">
-       {FIELD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-         <div className="flex justify-center">
-       <input type="checkbox" {...register(`fields.${index}.isRequired`)} className="accent-brand-600" />
-     </div>
-      <div className="flex justify-center">
-  <input type="checkbox" {...register(`fields.${index}.isLocalized`)} className="accent-brand-600" />
+            <div className="card space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-slate-900">Fields</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    append({ name: '', fieldType: 'ShortText', isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, description: '' });
+                    setActiveFieldIdx(fields.length);
+                  }}
+                  className="btn-secondary text-xs"
+                >
+                  + Add Field
+                </button>
+              </div>
+              <ContentTypeFieldEditor
+                fieldArray={{ fields, append, remove, move }}
+                register={register}
+                errors={errors}
+                watch={watch}
+                activeFieldIdx={activeFieldIdx}
+                onActiveFieldChange={setActiveFieldIdx}
+              />
             </div>
-      <div className="flex justify-center">
-       <input type="checkbox" {...register(`fields.${index}.isIndexed`)} className="accent-brand-600" />
- </div>
-<button type="button" onClick={() => remove(index)}
-   className="flex h-7 w-7 items-center justify-center rounded text-slate-300 hover:bg-red-50 hover:text-red-500">
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-          </div>
-  ))}
-           <div className="border-t border-dashed border-slate-200 bg-slate-50 px-3 py-2">
-   <p className="mb-2 text-xs font-semibold text-slate-400">Add field</p>
-            <div className="flex flex-wrap gap-1.5">
-      {FIELD_TYPES.map((ft) => (
-   <button key={ft} type="button"
-            onClick={() => append({ handle: '', label: '', fieldType: ft, isRequired: false, isLocalized: false, isIndexed: false, sortOrder: fields.length })}
-        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-brand-400 hover:text-brand-600">
-            {ft}
-       </button>
-      ))}
-      </div>
-         </div>
-    </div>
-      )}
+          )}
 
           {/* ── Template ── */}
       {activeTab === 'template' && (
@@ -325,7 +283,7 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
 value={templateContent}
   onChange={(e) => setTemplateContent(e.target.value)}
  spellCheck={false}
-      placeholder={getTemplatePlaceholder(templateType, comp.key, fields.map((f) => f.handle).filter(Boolean))}
+      placeholder={getTemplatePlaceholder(templateType, comp.key, fields.map((f) => toCamelCase(f.name)).filter(Boolean))}
   className="block min-h-[420px] w-full resize-y bg-[#1e1e2e] p-4 font-mono text-sm leading-relaxed text-[#cdd6f4] placeholder-[#585b70] focus:outline-none"
               />
 
@@ -336,14 +294,14 @@ value={templateContent}
         Available bindings
         </p>
   <div className="flex flex-wrap gap-2">
- {fields.map((f) => f.handle && (
+ {fields.map((f) => { const h = toCamelCase(f.name); return h ? (
     <span key={f.id}
                 className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 font-mono text-xs text-brand-600"
       title={f.fieldType}>
-     {getBindingExpression(templateType, f.handle)}
+     {getBindingExpression(templateType, h)}
      <span className="text-[10px] text-slate-400">({f.fieldType})</span>
         </span>
-     ))}
+     ) : null; })}
    </div>
  </div>
         )}
@@ -359,7 +317,7 @@ value={templateContent}
                   </span>
                 </div>
                 <pre className="overflow-auto bg-[#1e1e2e] p-4 font-mono text-xs leading-relaxed text-[#585b70]">
-                  {getTemplatePlaceholder(templateType, comp.key, fields.map((f) => f.handle).filter(Boolean))}
+                  {getTemplatePlaceholder(templateType, comp.key, fields.map((f) => toCamelCase(f.name)).filter(Boolean))}
                 </pre>
               </div>
             </div>

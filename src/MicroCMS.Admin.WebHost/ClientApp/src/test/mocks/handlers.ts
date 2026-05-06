@@ -176,12 +176,12 @@ const mockComponentDetail: ComponentDto = {
   templateType: 'RazorPartial',
   templateContent: '@* HeroBanner Component *@\n@model MicroCms.Components.HeroBannerModel\n\n<section class="hero-banner"\n  style="background-image:url(@Model.BackgroundImage)">\n  <h1>@Model.Heading</h1>\n  <p>@Model.Subheading</p>\n  <a href="@Model.CtaUrl" class="btn">@Model.CtaLabel</a>\n</section>',
   fields: [
-    { id: 'f-1', handle: 'heading',          label: 'Heading',           fieldType: 'ShortText', isRequired: true,  isLocalized: true,  isIndexed: false, sortOrder: 0 },
-    { id: 'f-2', handle: 'subheading',        label: 'Subheading',      fieldType: 'ShortText', isRequired: false, isLocalized: true,  isIndexed: false, sortOrder: 1 },
-    { id: 'f-3', handle: 'backgroundImage',   label: 'Background Image',  fieldType: 'AssetReference', isRequired: false, isLocalized: false, isIndexed: false, sortOrder: 2 },
-    { id: 'f-4', handle: 'ctaLabel',  label: 'CTA Label',         fieldType: 'ShortText',      isRequired: true,  isLocalized: true,  isIndexed: false, sortOrder: 3 },
-    { id: 'f-5', handle: 'ctaUrl',            label: 'CTA URL',  fieldType: 'ShortText',      isRequired: true,  isLocalized: false, isIndexed: false, sortOrder: 4 },
-    { id: 'f-6', handle: 'overlayOpacity',    label: 'Overlay Opacity',   fieldType: 'Decimal',        isRequired: false, isLocalized: false, isIndexed: false, sortOrder: 5 },
+    { id: 'f-1', handle: 'heading',          label: 'Heading',           fieldType: 'ShortText',      isRequired: true,  isLocalized: true,  isIndexed: false, isUnique: false, isList: false, sortOrder: 0 },
+    { id: 'f-2', handle: 'subheading',        label: 'Subheading',        fieldType: 'ShortText',      isRequired: false, isLocalized: true,  isIndexed: false, isUnique: false, isList: false, sortOrder: 1 },
+    { id: 'f-3', handle: 'backgroundImage',   label: 'Background Image',  fieldType: 'AssetReference', isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, sortOrder: 2 },
+    { id: 'f-4', handle: 'ctaLabel',          label: 'CTA Label',         fieldType: 'ShortText',      isRequired: true,  isLocalized: true,  isIndexed: false, isUnique: false, isList: false, sortOrder: 3 },
+    { id: 'f-5', handle: 'ctaUrl',            label: 'CTA URL',           fieldType: 'ShortText',      isRequired: true,  isLocalized: false, isIndexed: false, isUnique: false, isList: false, sortOrder: 4 },
+    { id: 'f-6', handle: 'overlayOpacity',    label: 'Overlay Opacity',   fieldType: 'Decimal',        isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, sortOrder: 5 },
   ],
 };
 

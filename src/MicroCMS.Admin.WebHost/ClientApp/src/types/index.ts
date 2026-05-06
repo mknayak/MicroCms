@@ -843,6 +843,8 @@ export interface ComponentFieldDefinition {
   isRequired: boolean;
   isLocalized: boolean;
   isIndexed: boolean;
+  isUnique: boolean;
+  isList: boolean;
   sortOrder: number;
   description?: string;
 }

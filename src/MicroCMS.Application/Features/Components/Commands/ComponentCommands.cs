@@ -13,6 +13,8 @@ public sealed record ComponentFieldInput(
     bool IsRequired,
     bool IsLocalized,
     bool IsIndexed,
+    bool IsUnique,
+    bool IsList,
     int SortOrder,
     string? Description);
 

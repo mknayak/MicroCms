@@ -189,7 +189,7 @@ public sealed record UpdateComponentRequest(
     string Name,
     string? Description,
     string Category,
-    IReadOnlyList<string> Zones,
+    IReadOnlyList<string>? Zones,
     IReadOnlyList<Application.Features.Components.Commands.ComponentFieldInput> Fields);
 
 public sealed record UpdateComponentTemplateRequest(

@@ -7,49 +7,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { contentTypesApi } from '@/api/contentTypes';
 import { layoutsApi } from '@/api/layouts';
-import type { FieldType } from '@/types';
 import { ApiError } from '@/api/client';
+import { fieldRowSchema, toCamelCase } from '@/components/fields/fieldConstants';
+import ContentTypeFieldEditor from '@/components/fields/ContentTypeFieldEditor';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-const FIELD_TYPES: { value: FieldType; label: string }[] = [
-  { value: 'ShortText', label: 'Short Text' },
-  { value: 'LongText', label: 'Long Text' },
-  { value: 'RichText', label: 'Rich Text' },
-  { value: 'Markdown', label: 'Markdown' },
-  { value: 'Integer', label: 'Integer' },
-  { value: 'Decimal', label: 'Decimal' },
-  { value: 'Boolean', label: 'Boolean' },
-  { value: 'DateTime', label: 'Date & Time' },
-  { value: 'Enum', label: 'Select / Enum' },
-  { value: 'Reference', label: 'Reference' },
-  { value: 'AssetReference', label: 'Asset' },
-  { value: 'Json', label: 'JSON' },
-  { value: 'Component', label: 'Component' },
-  { value: 'Location', label: 'Location' },
-  { value: 'Color', label: 'Color' },
-];
-
-const FIELD_TYPE_VALUES = FIELD_TYPES.map((ft) => ft.value) as [FieldType, ...FieldType[]];
 const API_KEY_REGEX = /^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$/;
-
-function toCamelCase(str: string): string {
-  return str.trim()
-    .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr: string) => chr.toUpperCase())
-    .replace(/^[A-Z]/, (c) => c.toLowerCase())
-    .replace(/[^a-zA-Z0-9]/g, '');
-}
-
-const fieldSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, 'Name is required'),
-  type: z.enum(FIELD_TYPE_VALUES),
-  required: z.boolean(),
-  localized: z.boolean(),
-  isIndexed: z.boolean(),
-  isUnique: z.boolean(),
-  isList: z.boolean(),
-});
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
@@ -58,7 +22,7 @@ const formSchema = z.object({
   localizationMode: z.enum(['PerLocale', 'Shared']),
   kind: z.enum(['Content', 'Page'] as const),
   layoutId: z.string().optional(),
-  fields: z.array(fieldSchema),
+  fields: z.array(fieldRowSchema),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -109,10 +73,11 @@ const { data: layouts } = useQuery({
 setValue('layoutId', existing.layoutId ?? '');
       setValue('fields', existing.fields.map((f) => ({
         id: f.id, name: f.label,
-        type: f.fieldType as FormValues['fields'][number]['type'],
-        required: f.isRequired, localized: f.isLocalized,
+        fieldType: f.fieldType as FormValues['fields'][number]['fieldType'],
+        isRequired: f.isRequired, isLocalized: f.isLocalized,
         isIndexed: f.isIndexed, isUnique: f.isUnique,
         isList: f.isList,
+        description: f.description ?? '',
       })));
 }
   }, [existing, setValue]);
@@ -140,8 +105,8 @@ setValue('layoutId', existing.layoutId ?? '');
           localizationMode: values.localizationMode, kind: values.kind,
           fields: values.fields.map((f, idx) => ({
             handle: toCamelCase(f.name) || `field${idx}`,
-            label: f.name, fieldType: f.type, isRequired: f.required,
-            isLocalized: f.localized, isUnique: f.isUnique,
+            label: f.name, fieldType: f.fieldType, isRequired: f.isRequired,
+            isLocalized: f.isLocalized, isUnique: f.isUnique,
             isIndexed: f.isIndexed, isList: f.isList, sortOrder: idx,
           })),
         });
@@ -149,12 +114,12 @@ setValue('layoutId', existing.layoutId ?? '');
       return contentTypesApi.update(id!, {
         displayName: values.name, description: values.description,
         localizationMode: values.localizationMode,
-  kind: values.kind,
+        kind: values.kind,
         layoutId: values.layoutId || undefined,
- fields: values.fields.map((f, idx) => ({
-   id: f.id, handle: toCamelCase(f.name) || `field${idx}`,
-     label: f.name, fieldType: f.type, isRequired: f.required,
-          isLocalized: f.localized, isUnique: f.isUnique,
+        fields: values.fields.map((f, idx) => ({
+          id: f.id, handle: toCamelCase(f.name) || `field${idx}`,
+          label: f.name, fieldType: f.fieldType, isRequired: f.isRequired,
+          isLocalized: f.isLocalized, isUnique: f.isUnique,
           isIndexed: f.isIndexed, isList: f.isList, sortOrder: idx,
         })),
       });
@@ -170,7 +135,7 @@ setValue('layoutId', existing.layoutId ?? '');
   });
 
   const addField = () => {
-    append({ name: '', type: 'ShortText', required: false, localized: false, isIndexed: false, isUnique: false, isList: false });
+    append({ name: '', fieldType: 'ShortText', isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, description: '' });
     setActiveFieldIdx(fields.length);
   };
 
@@ -254,55 +219,15 @@ setValue('layoutId', existing.layoutId ?? '');
         <h2 className="text-base font-semibold text-slate-900">Fields</h2>
                 <button type="button" onClick={addField} className="btn-secondary text-xs">+ Add Field</button>
  </div>
-        {fields.length === 0 && <p className="text-sm text-slate-400">No fields yet. Click "Add Field" to start.</p>}
-    <div className="space-y-3">
-  {fields.map((field, idx) => (
-         <div key={field.id} className={`rounded-lg border p-4 ${activeFieldIdx === idx ? 'border-brand-300 bg-brand-50/40' : 'border-slate-200'}`}>
-    <div className="flex cursor-pointer items-center justify-between" onClick={() => setActiveFieldIdx(activeFieldIdx === idx ? null : idx)}>
-                      <div className="flex items-center gap-2">
-<span className="text-sm font-medium text-slate-800">
-        {watch(`fields.${idx}.name`) || <span className="text-slate-400">Unnamed field</span>}
-     </span>
-       <span className="badge-slate text-xs">{watch(`fields.${idx}.type`)}</span>
-        {watch(`fields.${idx}.required`) && <span className="badge-red text-xs">Required</span>}
-        {watch(`fields.${idx}.localized`) && <span className="badge-brand text-xs">Localized</span>}
-    {watch(`fields.${idx}.isIndexed`) && <span className="badge-amber text-xs">Indexed</span>}
-           </div>
-     <div className="flex items-center gap-2">
-      <button type="button" onClick={(e) => { e.stopPropagation(); if (idx > 0) move(idx, idx - 1); }} className="text-slate-400 hover:text-slate-600 disabled:opacity-30" disabled={idx === 0} aria-label="Move up">↑</button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); if (idx < fields.length - 1) move(idx, idx + 1); }} className="text-slate-400 hover:text-slate-600 disabled:opacity-30" disabled={idx === fields.length - 1} aria-label="Move down">↓</button>
-             <button type="button" onClick={(e) => { e.stopPropagation(); remove(idx); }} className="text-red-400 hover:text-red-600" aria-label="Remove field">✕</button>
+        <ContentTypeFieldEditor
+          fieldArray={{ fields, append, remove, move }}
+          register={register}
+          errors={errors}
+          watch={watch}
+          activeFieldIdx={activeFieldIdx}
+          onActiveFieldChange={setActiveFieldIdx}
+        />
       </div>
-       </div>
-       {activeFieldIdx === idx && (
-       <div className="mt-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-   <div>
-       <label className="form-label">Name</label>
-      <input className="form-input mt-1" {...register(`fields.${idx}.name`)} />
-           {errors.fields?.[idx]?.name && <p className="form-error">{errors.fields[idx]?.name?.message}</p>}
-          </div>
-   <div>
-  <label className="form-label">Type</label>
-    <select className="form-input mt-1" {...register(`fields.${idx}.type`)}>
-            {FIELD_TYPES.map((ft) => <option key={ft.value} value={ft.value}>{ft.label}</option>)}
-     </select>
-             </div>
-         <div className="col-span-2 flex flex-wrap items-end gap-4 pb-1">
- {([['required', 'Required'], ['localized', 'Localized'], ['isIndexed', 'Indexed'], ['isUnique', 'Unique'], ['isList', 'List (multi-value)']] as const).map(([key, label]) => (
-       <label key={key} className="flex items-center gap-2 text-sm text-slate-700">
-     <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register(`fields.${idx}.${key}`)} />
-    {label}
-          </label>
- ))}
-     </div>
-   </div>
-   </div>
-      )}
-  </div>
-   ))}
-   </div>
-       </div>
           </>
         )}
 

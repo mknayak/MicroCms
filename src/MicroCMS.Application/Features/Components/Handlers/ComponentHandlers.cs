@@ -17,43 +17,63 @@ using MicroCMS.Shared.Results;
 
 namespace MicroCMS.Application.Features.Components.Handlers;
 
+// ── Shared helper ─────────────────────────────────────────────────────────────
+
+file static class ComponentHandlerHelpers
+{
+    internal static async Task<ContentType> LoadBackingTypeAsync(
+        IRepository<ContentType, ContentTypeId> contentTypeRepo,
+        Component comp,
+        CancellationToken ct)
+    {
+        if (comp.BackingContentTypeId is null)
+            throw new NotFoundException(nameof(ContentType), comp.Id.Value);
+
+        return await contentTypeRepo.GetByIdAsync(comp.BackingContentTypeId.Value, ct)
+            ?? throw new NotFoundException(nameof(ContentType), comp.BackingContentTypeId.Value.Value);
+    }
+}
+
 // ── Mapper ────────────────────────────────────────────────────────────────────
 
 internal static class ComponentMapper
 {
-    internal static ComponentDto ToDto(Component c) => new(
-      c.Id.Value,
-  c.TenantId.Value,
-      c.SiteId.Value,
-      c.Name,
-      c.Key,
-      c.Description,
-      c.Category,
-      c.UsageCount,
-  c.ItemCount,
-  c.TemplateType.ToString(),
-      c.TemplateContent,
-      c.ThumbnailDataUri,
-      c.Fields.Select(f => new ComponentFieldDto(
-   f.Id, f.Handle, f.Label, f.FieldType.ToString(),
-        f.IsRequired, f.IsLocalized, f.IsUnique, f.SortOrder, f.Description
-   )).ToList(),
-  c.CreatedAt,
-      c.UpdatedAt);
-
-    internal static ComponentListItemDto ToListItemDto(Component c) => new(
-   c.Id.Value,
+    /// <summary>
+    /// Maps a Component + its backing ContentType (single source of truth for fields) to a DTO.
+    /// </summary>
+    internal static ComponentDto ToDto(Component c, ContentType backingType) => new(
+        c.Id.Value,
+        c.TenantId.Value,
+        c.SiteId.Value,
         c.Name,
-     c.Key,
+        c.Key,
         c.Description,
         c.Category,
         c.UsageCount,
         c.ItemCount,
-        c.Fields.Count,
+        c.TemplateType.ToString(),
+        c.TemplateContent,
+        c.ThumbnailDataUri,
+        backingType.Fields.OrderBy(f => f.SortOrder).Select(f => new ComponentFieldDto(
+            f.Id, f.Handle, f.Label, f.FieldType.ToString(),
+            f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.IsList, f.SortOrder, f.Description
+        )).ToList(),
+        c.CreatedAt,
+        c.UpdatedAt);
+
+    internal static ComponentListItemDto ToListItemDto(Component c, int fieldCount) => new(
+        c.Id.Value,
+        c.Name,
+        c.Key,
+        c.Description,
+        c.Category,
+        c.UsageCount,
+        c.ItemCount,
+        fieldCount,
         c.TemplateType.ToString(),
         c.ThumbnailDataUri,
-      c.CreatedAt,
-c.UpdatedAt);
+        c.CreatedAt,
+        c.UpdatedAt);
 
     internal static ComponentItemDto ToItemDto(ComponentItem ci, Component comp) => new(
         ci.Id.Value,
@@ -81,60 +101,79 @@ c.UpdatedAt);
 internal sealed class CreateComponentCommandHandler(
     IRepository<Component, ComponentId> repo,
     ICurrentUser currentUser,
-ComponentBackingTypeProvisioner backingTypeProvisioner)
+    ComponentBackingTypeProvisioner backingTypeProvisioner)
     : IRequestHandler<CreateComponentCommand, Result<ComponentDto>>
 {
     public async Task<Result<ComponentDto>> Handle(CreateComponentCommand request, CancellationToken cancellationToken)
     {
-        var fieldTypes = ParseFieldTypes(request.Fields);
         var siteId = currentUser.SiteId;
         if (siteId is null)
             return Result.Failure<ComponentDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
-        var comp = Component.Create(
-  currentUser.TenantId, siteId.Value,
-          request.Name, request.Key, request.Description,
-            request.Category);
 
-        if (request.Fields is { Count: > 0 })
-        {
- foreach (var (f, ft) in request.Fields.Zip(fieldTypes))
-   comp.AddField(f.Handle, f.Label, ft, f.IsRequired, f.Description);
-  }
+        var comp = Component.Create(
+            currentUser.TenantId, siteId.Value,
+            request.Name, request.Key, request.Description,
+            request.Category);
 
         await repo.AddAsync(comp, cancellationToken);
 
-// Auto-create backing ContentType for this component
-     await backingTypeProvisioner.ProvisionAsync(comp, cancellationToken);
+        // Auto-create backing ContentType and seed initial fields from the request
+        var backingType = await backingTypeProvisioner.ProvisionAsync(comp, request.Fields, cancellationToken);
 
-        return Result.Success(ComponentMapper.ToDto(comp));
+        return Result.Success(ComponentMapper.ToDto(comp, backingType));
     }
-
-    private static IEnumerable<FieldType> ParseFieldTypes(IReadOnlyList<ComponentFieldInput>? fields)
-    {
-  if (fields is null) return [];
-return fields.Select(f =>
-    Enum.TryParse<FieldType>(f.FieldType, true, out var ft) ? ft : FieldType.ShortText);
- }
 }
 
 internal sealed class UpdateComponentCommandHandler(
-    IRepository<Component, ComponentId> repo)
+    IRepository<Component, ComponentId> repo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo)
     : IRequestHandler<UpdateComponentCommand, Result<ComponentDto>>
 {
     public async Task<Result<ComponentDto>> Handle(UpdateComponentCommand request, CancellationToken cancellationToken)
     {
-  var comp = await repo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
+        var comp = await repo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
 
-  comp.Update(request.Name, request.Description, request.Category);
+        comp.Update(request.Name, request.Description, request.Category);
+        repo.Update(comp);
 
-        comp.ReplaceFieldsFromData(request.Fields.Select((f, i) => (
-      f.Handle, f.Label,
-            Enum.TryParse<FieldType>(f.FieldType, true, out var ft) ? ft : FieldType.ShortText,
-            f.IsRequired, f.IsLocalized, f.IsIndexed, i, f.Description)));
+        if (comp.BackingContentTypeId is null)
+            throw new NotFoundException(nameof(ContentType), request.ComponentId);
 
-     repo.Update(comp);
-        return Result.Success(ComponentMapper.ToDto(comp));
+        var backingType = await contentTypeRepo.GetByIdAsync(comp.BackingContentTypeId.Value, cancellationToken)
+            ?? throw new NotFoundException(nameof(ContentType), comp.BackingContentTypeId.Value.Value);
+
+        ReplaceContentTypeFields(backingType, request.Fields);
+        contentTypeRepo.Update(backingType);
+
+        return Result.Success(ComponentMapper.ToDto(comp, backingType));
+    }
+
+    private static void ReplaceContentTypeFields(ContentType contentType, IReadOnlyList<ComponentFieldInput> fields)
+    {
+        // Remove fields no longer in the list
+        var incoming = fields.Select(f => f.Handle).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var existing in contentType.Fields.ToList())
+        {
+            if (!incoming.Contains(existing.Handle))
+                contentType.RemoveField(existing.Id);
+        }
+
+        // Add or update
+        for (int i = 0; i < fields.Count; i++)
+        {
+            var f = fields[i];
+            if (!Enum.TryParse<FieldType>(f.FieldType, true, out var ft))
+                ft = FieldType.ShortText;
+
+            var existing = contentType.Fields.FirstOrDefault(x =>
+                x.Handle.Equals(f.Handle, StringComparison.OrdinalIgnoreCase));
+
+            if (existing is null)
+                contentType.AddField(f.Handle, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsUnique, f.Description, null, f.IsIndexed, f.IsList);
+            else
+                contentType.UpdateField(existing.Id, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsIndexed, f.IsList, i, f.Description);
+        }
     }
 }
 
@@ -152,7 +191,8 @@ internal sealed class DeleteComponentCommandHandler(
 }
 
 internal sealed class UpdateComponentTemplateCommandHandler(
-    IRepository<Component, ComponentId> repo)
+    IRepository<Component, ComponentId> repo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo)
     : IRequestHandler<UpdateComponentTemplateCommand, Result<ComponentDto>>
 {
     public async Task<Result<ComponentDto>> Handle(UpdateComponentTemplateCommand request, CancellationToken cancellationToken)
@@ -160,19 +200,22 @@ internal sealed class UpdateComponentTemplateCommandHandler(
         var comp = await repo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
 
-    if (!Enum.TryParse<RenderingTemplateType>(request.TemplateType, ignoreCase: true, out var templateType))
+        if (!Enum.TryParse<RenderingTemplateType>(request.TemplateType, ignoreCase: true, out var templateType))
             throw new MicroCMS.Application.Common.Exceptions.ValidationException(
-     [new FluentValidation.Results.ValidationFailure(
-       "TemplateType", $"'{request.TemplateType}' is not a valid TemplateType.")]);
+                [new FluentValidation.Results.ValidationFailure(
+                    "TemplateType", $"'{request.TemplateType}' is not a valid TemplateType.")]);
 
-    comp.UpdateTemplate(templateType, request.TemplateContent);
+        comp.UpdateTemplate(templateType, request.TemplateContent);
         repo.Update(comp);
-        return Result.Success(ComponentMapper.ToDto(comp));
+
+        var backingType = await ComponentHandlerHelpers.LoadBackingTypeAsync(contentTypeRepo, comp, cancellationToken);
+        return Result.Success(ComponentMapper.ToDto(comp, backingType));
     }
 }
 
 internal sealed class UpdateComponentThumbnailCommandHandler(
-    IRepository<Component, ComponentId> repo)
+    IRepository<Component, ComponentId> repo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo)
     : IRequestHandler<UpdateComponentThumbnailCommand, Result<ComponentDto>>
 {
     public async Task<Result<ComponentDto>> Handle(UpdateComponentThumbnailCommand request, CancellationToken cancellationToken)
@@ -182,7 +225,9 @@ internal sealed class UpdateComponentThumbnailCommandHandler(
 
         comp.UpdateThumbnail(request.ThumbnailDataUri);
         repo.Update(comp);
-        return Result.Success(ComponentMapper.ToDto(comp));
+
+        var backingType = await ComponentHandlerHelpers.LoadBackingTypeAsync(contentTypeRepo, comp, cancellationToken);
+        return Result.Success(ComponentMapper.ToDto(comp, backingType));
     }
 }
 
@@ -286,8 +331,9 @@ internal sealed class DeleteComponentItemCommandHandler(
 // ── Query handlers ────────────────────────────────────────────────────────────
 
 internal sealed class ListComponentsQueryHandler(
-  IRepository<Component, ComponentId> repo,
-  ICurrentUser currentUser)
+    IRepository<Component, ComponentId> repo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo,
+    ICurrentUser currentUser)
     : IRequestHandler<ListComponentsQuery, Result<PagedList<ComponentListItemDto>>>
 {
     public async Task<Result<PagedList<ComponentListItemDto>>> Handle(ListComponentsQuery request, CancellationToken cancellationToken)
@@ -297,21 +343,43 @@ internal sealed class ListComponentsQueryHandler(
 
         var items = await repo.ListAsync(new ComponentsBySiteSpec(siteId, request.Page, request.PageSize), cancellationToken);
         var total = await repo.CountAsync(new ComponentsBySiteCountSpec(siteId), cancellationToken);
+
+        // Load backing content types to get accurate field counts
+        var backingTypeIds = items
+            .Where(c => c.BackingContentTypeId is not null)
+            .Select(c => c.BackingContentTypeId!.Value)
+            .Distinct()
+            .ToList();
+
+        var backingTypes = new Dictionary<ContentTypeId, ContentType>();
+        foreach (var id in backingTypeIds)
+        {
+            var ct = await contentTypeRepo.GetByIdAsync(id, cancellationToken);
+            if (ct is not null) backingTypes[id] = ct;
+        }
+
         return Result.Success(PagedList<ComponentListItemDto>.Create(
-            items.Select(ComponentMapper.ToListItemDto),
- request.Page, request.PageSize, total));
+            items.Select(c =>
+            {
+                var count = c.BackingContentTypeId is not null && backingTypes.TryGetValue(c.BackingContentTypeId.Value, out var bt)
+                    ? bt.Fields.Count : 0;
+                return ComponentMapper.ToListItemDto(c, count);
+            }),
+            request.Page, request.PageSize, total));
     }
 }
 
 internal sealed class GetComponentQueryHandler(
-    IRepository<Component, ComponentId> repo)
+    IRepository<Component, ComponentId> repo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo)
     : IRequestHandler<GetComponentQuery, Result<ComponentDto>>
 {
     public async Task<Result<ComponentDto>> Handle(GetComponentQuery request, CancellationToken cancellationToken)
     {
         var comp = await repo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
-        return Result.Success(ComponentMapper.ToDto(comp));
+        var backingType = await ComponentHandlerHelpers.LoadBackingTypeAsync(contentTypeRepo, comp, cancellationToken);
+        return Result.Success(ComponentMapper.ToDto(comp, backingType));
     }
 }
 

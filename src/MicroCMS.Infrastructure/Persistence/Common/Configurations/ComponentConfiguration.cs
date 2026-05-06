@@ -1,6 +1,5 @@
 using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
-using MicroCMS.Domain.Enums;
 using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -42,37 +41,12 @@ internal sealed class ComponentConfiguration : IEntityTypeConfiguration<Componen
   id => id.HasValue ? id.Value.Value : (Guid?)null,
   v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null);
 
-    builder.Property(c => c.CreatedAt).IsRequired();
-    builder.Property(c => c.UpdatedAt).IsRequired();
+            builder.Property(c => c.CreatedAt).IsRequired();
+            builder.Property(c => c.UpdatedAt).IsRequired();
 
-        // FieldDefinitions owned collection
-    builder.OwnsMany(c => c.Fields, fieldBuilder =>
-        {
-  fieldBuilder.ToTable("ComponentFields");
-            fieldBuilder.WithOwner().HasForeignKey("ComponentId");
-         fieldBuilder.HasKey(f => f.Id);
-            fieldBuilder.Property(f => f.Id).ValueGeneratedNever();
-
-   fieldBuilder.Property(f => f.ContentTypeId)
- .HasConversion(id => id.Value, value => new ContentTypeId(value))
-     .IsRequired();
-
- fieldBuilder.Property(f => f.Handle).HasMaxLength(FieldDefinition.MaxHandleLength).IsRequired();
-            fieldBuilder.Property(f => f.Label).HasMaxLength(FieldDefinition.MaxLabelLength).IsRequired();
-  fieldBuilder.Property(f => f.FieldType).HasConversion<string>().HasMaxLength(32).IsRequired();
-   fieldBuilder.Property(f => f.IsRequired).IsRequired();
-  fieldBuilder.Property(f => f.IsLocalized).IsRequired();
-         fieldBuilder.Property(f => f.IsUnique).IsRequired();
-fieldBuilder.Property(f => f.IsIndexed).IsRequired();
- fieldBuilder.Property(f => f.IsList).IsRequired().HasDefaultValue(false);
-         fieldBuilder.Property(f => f.SortOrder).IsRequired();
-         fieldBuilder.Property(f => f.Description).HasMaxLength(FieldDefinition.MaxDescriptionLength);
-            fieldBuilder.Property(f => f.ValidationJson);
-        });
-
-        builder.Ignore(c => c.DomainEvents);
+            builder.Ignore(c => c.DomainEvents);
+        }
     }
-}
 
 internal sealed class ComponentItemConfiguration : IEntityTypeConfiguration<ComponentItem>
 {
