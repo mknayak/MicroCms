@@ -530,19 +530,18 @@ public sealed class PackageService(
             try
             {
                 var category = data.Category ?? "Content";
-                var zones = data.Zones?.ToList() ?? [];
 
                 if (existingByKey.TryGetValue(data.Key, out var existingComponent))
                 {
                     if (resolution == ConflictResolution.Skip) { skipped++; continue; }
-                    existingComponent.Update(data.Name, data.Description, category, zones);
+                    existingComponent.Update(data.Name, data.Description, category);
                     componentRepo.Update(existingComponent);
                     overwritten++;
                 }
                 else
                 {
                     var component = Component.Create(tenantId, siteId, data.Name, data.Key,
-                   data.Description, category, zones);
+                   data.Description, category);
                     await componentRepo.AddAsync(component, ct);
                     imported++;
                 }
@@ -643,8 +642,7 @@ public sealed class PackageService(
 
     private static ComponentPackageData MapComponent(Component c) => new(
     Id: c.Id.Value, Name: c.Name, Key: c.Key, Description: c.Description,
-        Category: c.Category, Zones: c.ZonesJson is not null
-       ? JsonSerializer.Deserialize<List<string>>(c.ZonesJson) ?? [] : [],
+        Category: c.Category,
         TemplateType: c.TemplateType.ToString(), TemplateContent: c.TemplateContent,
         Fields: c.Fields.Select(f => new ComponentFieldPackageData(
             Id: f.Id, Handle: f.Handle, Label: f.Label,

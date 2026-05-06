@@ -31,6 +31,9 @@ export const componentsApi = {
   updateTemplate: (id: string, data: UpdateComponentTemplateRequest): Promise<ComponentDto> =>
     put<ComponentDto>(`/components/${id}/template`, data),
 
+  updateThumbnail: (id: string, thumbnailDataUri: string | null): Promise<ComponentDto> =>
+    put<ComponentDto>(`/components/${id}/thumbnail`, { thumbnailDataUri }),
+
   delete: (id: string): Promise<void> =>
     del(`/components/${id}`),
 

@@ -11,17 +11,6 @@ import type { ComponentCategory, ComponentListItem } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ZONE_OPTIONS = [
-  'hero-zone',
-  'features-zone',
-  'content-zone',
-  'media-zone',
-  'testimonials-zone',
-  'cta-zone',
-  'header-zone',
-  'footer-zone',
-];
-
 const CATEGORIES: ComponentCategory[] = [
   'Layout',
   'Content',
@@ -57,7 +46,6 @@ const createSchema = z.object({
     'Interactive',
     'Commerce',
   ] as const),
-  zones: z.array(z.string()).min(1, 'Select at least one zone'),
 });
 
 type CreateForm = z.infer<typeof createSchema>;
@@ -87,21 +75,29 @@ function ComponentCard({
         {comp.category}
       </span>
 
-  {/* Preview placeholder */}
-  <div className="mb-3 flex h-20 items-center justify-center rounded-lg bg-gradient-to-br from-slate-50 to-brand-50">
-        <svg
-      className="h-8 w-8 text-brand-300"
-          fill="none"
-    viewBox="0 0 24 24"
-      stroke="currentColor"
-        >
-          <path
-     strokeLinecap="round"
-         strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+  {/* Thumbnail / Preview placeholder */}
+  <div className="mb-3 flex h-20 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-brand-50">
+        {comp.thumbnailDataUri ? (
+          <img
+            src={comp.thumbnailDataUri}
+            alt={`${comp.name} wireframe`}
+            className="h-full w-full object-cover"
           />
-        </svg>
+        ) : (
+          <svg
+            className="h-8 w-8 text-brand-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
+          </svg>
+        )}
       </div>
 
       <div className="mb-1 pr-16 text-sm font-bold text-slate-900">{comp.name}</div>
@@ -114,15 +110,6 @@ function ComponentCard({
         <span>{comp.fieldCount} fields</span>
         <span>·</span>
         <span>Used on {comp.usageCount} pages</span>
-      </div>
-
-      {/* Zones */}
-      <div className="mb-3 flex flex-wrap gap-1">
-      {comp.zones.map((z) => (
-  <span key={z} className="rounded px-1.5 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
- {z}
-          </span>
-   ))}
       </div>
 
       {/* Footer */}
@@ -216,24 +203,13 @@ navigate(`/components/${comp.id}/edit`);
   const {
     register,
  handleSubmit,
- watch,
     setValue,
     reset,
     formState: { errors },
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
-    defaultValues: { category: 'Layout', zones: [] },
+    defaultValues: { category: 'Layout' },
   });
-
-  const selectedZones = watch('zones') ?? [];
-
-  const toggleZone = (zone: string) => {
-    const current = selectedZones;
-    setValue(
-      'zones',
-      current.includes(zone) ? current.filter((z) => z !== zone) : [...current, zone],
-    );
-  };
 
   const filtered = (data?.items ?? []).filter((c) => {
 const matchSearch =
@@ -445,32 +421,9 @@ const matchSearch =
              ))}
       </select>
           </div>
-
-    <div>
-     <label className="form-label">
-         Allowed Zones <span className="text-red-500">*</span>
- </label>
-    <div className="mt-2 flex flex-wrap gap-2">
-        {ZONE_OPTIONS.map((zone) => (
-  <label
-  key={zone}
-     className="flex cursor-pointer items-center gap-1.5 text-xs"
-  >
-            <input
-         type="checkbox"
-      className="accent-brand-600"
-           checked={selectedZones.includes(zone)}
-  onChange={() => toggleZone(zone)}
-         />
-   {zone}
-       </label>
-    ))}
-     </div>
- {errors.zones && <p className="form-error">{errors.zones.message}</p>}
-       </div>
    </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+    <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
      <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>
      Cancel
           </button>

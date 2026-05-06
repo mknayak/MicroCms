@@ -66,9 +66,6 @@ export default function ContentTypeDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => setTab('schema')} className="btn-secondary text-sm flex items-center gap-1.5">
-            ⚙ Edit Schema
-          </button>
           <button onClick={() => navigate(`/entries/new?contentTypeId=${id}`)} className="btn-primary text-sm">
             + New Entry
           </button>

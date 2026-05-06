@@ -828,19 +828,6 @@ export type ComponentCategory =
   | 'Interactive'
   | 'Commerce';
 
-export type ComponentFieldType =
-  | 'ShortText'
-  | 'LongText'
-  | 'RichText'
-  | 'Number'
-  | 'Boolean'
-  | 'DateTime'
-  | 'URL'
-  | 'AssetRef'
-  | 'EntryRef'
-  | 'JSON'
-  | 'ComponentRef';
-
 export type RenderingTemplateType =
   | 'RazorPartial'
   | 'Handlebars'
@@ -851,7 +838,8 @@ export interface ComponentFieldDefinition {
   id: string;
   handle: string;
   label: string;
-  fieldType: ComponentFieldType;
+  /** Uses the same FieldType enum as content-type fields. */
+  fieldType: FieldType;
   isRequired: boolean;
   isLocalized: boolean;
   isIndexed: boolean;
@@ -867,11 +855,11 @@ export interface ComponentDto {
   key: string;
   description?: string;
   category: ComponentCategory;
-  zones: string[];
   usageCount: number;
   itemCount: number;
   templateType: RenderingTemplateType;
   templateContent?: string;
+  thumbnailDataUri?: string;
   fields: ComponentFieldDefinition[];
   createdAt: string;
   updatedAt: string;
@@ -883,11 +871,11 @@ export interface ComponentListItem {
   key: string;
   description?: string;
   category: ComponentCategory;
-  zones: string[];
   usageCount: number;
   itemCount: number;
   fieldCount: number;
   templateType: RenderingTemplateType;
+  thumbnailDataUri?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -897,7 +885,6 @@ export interface CreateComponentRequest {
   key: string;
   description?: string;
   category: ComponentCategory;
-  zones: string[];
   fields?: Omit<ComponentFieldDefinition, 'id'>[];
 }
 
@@ -905,7 +892,6 @@ export interface UpdateComponentRequest {
   name: string;
   description?: string;
   category: ComponentCategory;
-  zones: string[];
   fields: ComponentFieldDefinition[];
 }
 

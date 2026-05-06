@@ -90,7 +90,6 @@ public sealed record ComponentPackageData(
     string Key,
     string? Description,
     string Category,
-    IReadOnlyList<string> Zones,
     string TemplateType,
     string? TemplateContent,
     IReadOnlyList<ComponentFieldPackageData> Fields,

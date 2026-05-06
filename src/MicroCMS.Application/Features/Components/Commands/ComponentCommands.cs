@@ -23,7 +23,6 @@ public sealed record CreateComponentCommand(
     string Key,
     string? Description,
     string Category,
-    IReadOnlyList<string> Zones,
     IReadOnlyList<ComponentFieldInput>? Fields = null) : ICommand<ComponentDto>;
 
 [HasPolicy(ContentPolicies.ComponentManage)]
@@ -32,7 +31,6 @@ public sealed record UpdateComponentCommand(
     string Name,
     string? Description,
     string Category,
-    IReadOnlyList<string> Zones,
     IReadOnlyList<ComponentFieldInput> Fields) : ICommand<ComponentDto>;
 
 [HasPolicy(ContentPolicies.ComponentManage)]
@@ -44,6 +42,12 @@ public sealed record UpdateComponentTemplateCommand(
     Guid ComponentId,
     string TemplateType,
     string? TemplateContent) : ICommand<ComponentDto>;
+
+/// <summary>Sets or clears the wireframe thumbnail (data-URI) for a component.</summary>
+[HasPolicy(ContentPolicies.ComponentManage)]
+public sealed record UpdateComponentThumbnailCommand(
+    Guid ComponentId,
+    string? ThumbnailDataUri) : ICommand<ComponentDto>;
 
 [HasPolicy(ContentPolicies.ComponentManage)]
 public sealed record CreateComponentItemCommand(

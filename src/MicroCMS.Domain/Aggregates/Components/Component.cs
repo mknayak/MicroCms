@@ -45,14 +45,13 @@ WebComponent = 2,
 
 /// <summary>
 /// Defines a reusable UI component schema (GAP-22).
-/// A Component is the template (schema + zone assignment + rendering template).
+/// A Component is the template (schema + rendering template).
 /// ComponentItems are the concrete data instances of that component.
 /// </summary>
 public sealed class Component : AggregateRoot<ComponentId>
 {
     public const int MaxNameLength = 200;
     public const int MaxKeyLength = 100;
-    public const int MaxZoneLength = 100;
     public const int MaxDescriptionLength = 500;
     public const int MaxCategoryLength = 50;
 
@@ -67,8 +66,7 @@ private readonly List<FieldDefinition> _fields = [];
         string name,
       string key,
         string? description,
-  string category,
- string zonesJson)
+  string category)
   : base(id)
     {
     TenantId = tenantId;
@@ -77,7 +75,6 @@ SiteId = siteId;
         Key = key;
         Description = description;
         Category = category;
-        ZonesJson = zonesJson;
         TemplateType = RenderingTemplateType.Handlebars;
       CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -89,11 +86,18 @@ SiteId = siteId;
     public string Key { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string Category { get; private set; } = "Content";
-    public string ZonesJson { get; private set; } = "[]";
+    // ZonesJson kept as a DB column for backward compat; no longer part of the public API.
+    private string ZonesJson { get; set; } = "[]";
     public int UsageCount { get; private set; }
     public int ItemCount { get; private set; }
     public RenderingTemplateType TemplateType { get; private set; } = RenderingTemplateType.Handlebars;
     public string? TemplateContent { get; private set; }
+
+    /// <summary>
+    /// Optional wireframe / thumbnail image stored as a data-URI (SVG or raster).
+    /// Displayed in the component library browser and page-designer palette.
+    /// </summary>
+    public string? ThumbnailDataUri { get; private set; }
 
     /// <summary>
     /// The auto-created <see cref="ContentType"/> that stores field data for items of this component.
@@ -114,8 +118,7 @@ SiteId = siteId;
       string name,
         string key,
         string? description,
-        string category,
-        IEnumerable<string> zones)
+        string category)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
@@ -124,16 +127,13 @@ SiteId = siteId;
         if (key.Length > MaxKeyLength)
             throw new DomainException($"Component key must not exceed {MaxKeyLength} characters.");
 
-        var zoneList = zones?.ToList() ?? [];
-      var zonesJson = System.Text.Json.JsonSerializer.Serialize(zoneList);
-
  return new Component(ComponentId.New(), tenantId, siteId, name.Trim(), key.Trim(),
-            description?.Trim(), category.Trim(), zonesJson);
+            description?.Trim(), category.Trim());
     }
 
     // ── Mutations ──────────────────────────────────────────────────────────
 
-    public void Update(string name, string? description, string category, IEnumerable<string> zones)
+    public void Update(string name, string? description, string category)
     {
     ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         if (name.Length > MaxNameLength)
@@ -141,7 +141,6 @@ SiteId = siteId;
         Name = name.Trim();
  Description = description?.Trim();
         Category = category.Trim();
-        ZonesJson = System.Text.Json.JsonSerializer.Serialize(zones?.ToList() ?? []);
      UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -150,6 +149,13 @@ SiteId = siteId;
     {
     TemplateType = templateType;
         TemplateContent = templateContent?.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Saves or clears the wireframe thumbnail for this component.</summary>
+    public void UpdateThumbnail(string? thumbnailDataUri)
+    {
+        ThumbnailDataUri = string.IsNullOrWhiteSpace(thumbnailDataUri) ? null : thumbnailDataUri.Trim();
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

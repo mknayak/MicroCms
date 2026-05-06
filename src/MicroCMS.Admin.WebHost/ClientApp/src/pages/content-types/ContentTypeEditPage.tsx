@@ -127,12 +127,23 @@ setValue('layoutId', existing.layoutId ?? '');
   }, [nameValue, isNew, setValue]);
 
   const mutation = useMutation({
-    mutationFn: (values: FormValues) => {
+    mutationFn: async (values: FormValues) => {
       if (isNew) {
-   return contentTypesApi.create({
+        const created = await contentTypesApi.create({
           handle: values.apiKey,
-    displayName: values.name, description: values.description,
+          displayName: values.name, description: values.description,
           localizationMode: values.localizationMode, kind: values.kind,
+        });
+        if (values.fields.length === 0) return created;
+        return contentTypesApi.update(created.id, {
+          displayName: values.name, description: values.description,
+          localizationMode: values.localizationMode, kind: values.kind,
+          fields: values.fields.map((f, idx) => ({
+            handle: toCamelCase(f.name) || `field${idx}`,
+            label: f.name, fieldType: f.type, isRequired: f.required,
+            isLocalized: f.localized, isUnique: f.isUnique,
+            isIndexed: f.isIndexed, isList: f.isList, sortOrder: idx,
+          })),
         });
       }
       return contentTypesApi.update(id!, {

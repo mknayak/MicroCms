@@ -55,7 +55,7 @@ public sealed class ComponentsController : ApiControllerBase
     {
         var result = await Sender.Send(
  new UpdateComponentCommand(id, request.Name, request.Description,
-      request.Category, request.Zones, request.Fields),
+      request.Category, request.Fields),
             cancellationToken);
         return OkOrProblem(result);
     }
@@ -81,6 +81,20 @@ public sealed class ComponentsController : ApiControllerBase
         var result = await Sender.Send(
    new UpdateComponentTemplateCommand(id, request.TemplateType, request.TemplateContent),
           cancellationToken);
+        return OkOrProblem(result);
+    }
+
+    [HttpPut("{id:guid}/thumbnail")]
+    [ProducesResponseType(typeof(ComponentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateThumbnail(
+        Guid id,
+        [FromBody] UpdateComponentThumbnailRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(
+            new UpdateComponentThumbnailCommand(id, request.ThumbnailDataUri),
+            cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -181,6 +195,8 @@ public sealed record UpdateComponentRequest(
 public sealed record UpdateComponentTemplateRequest(
     string TemplateType,
     string? TemplateContent);
+
+public sealed record UpdateComponentThumbnailRequest(string? ThumbnailDataUri);
 
 public sealed record CreateComponentItemRequest(string Title, JsonElement FieldsJson);
 

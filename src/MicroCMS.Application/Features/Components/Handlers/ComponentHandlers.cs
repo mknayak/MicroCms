@@ -6,7 +6,6 @@ using MicroCMS.Application.Features.Components.Commands;
 using MicroCMS.Application.Features.Components.Dtos;
 using MicroCMS.Application.Features.Components.Queries;
 using MicroCMS.Application.Features.Components.Services;
-using MicroCMS.Application.Features.Layouts.Dtos;
 using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Enums;
@@ -22,12 +21,6 @@ namespace MicroCMS.Application.Features.Components.Handlers;
 
 internal static class ComponentMapper
 {
-    private static IReadOnlyList<string> ParseZones(string zonesJson)
-    {
-        try { return JsonSerializer.Deserialize<List<string>>(zonesJson) ?? []; }
-   catch { return []; }
-    }
-
     internal static ComponentDto ToDto(Component c) => new(
       c.Id.Value,
   c.TenantId.Value,
@@ -36,11 +29,11 @@ internal static class ComponentMapper
       c.Key,
       c.Description,
       c.Category,
-     ParseZones(c.ZonesJson),
       c.UsageCount,
   c.ItemCount,
   c.TemplateType.ToString(),
       c.TemplateContent,
+      c.ThumbnailDataUri,
       c.Fields.Select(f => new ComponentFieldDto(
    f.Id, f.Handle, f.Label, f.FieldType.ToString(),
         f.IsRequired, f.IsLocalized, f.IsUnique, f.SortOrder, f.Description
@@ -54,11 +47,11 @@ internal static class ComponentMapper
      c.Key,
         c.Description,
         c.Category,
-        ParseZones(c.ZonesJson),
         c.UsageCount,
         c.ItemCount,
         c.Fields.Count,
         c.TemplateType.ToString(),
+        c.ThumbnailDataUri,
       c.CreatedAt,
 c.UpdatedAt);
 
@@ -100,7 +93,7 @@ ComponentBackingTypeProvisioner backingTypeProvisioner)
         var comp = Component.Create(
   currentUser.TenantId, siteId.Value,
           request.Name, request.Key, request.Description,
-            request.Category, request.Zones ?? []);
+            request.Category);
 
         if (request.Fields is { Count: > 0 })
         {
@@ -133,7 +126,7 @@ internal sealed class UpdateComponentCommandHandler(
   var comp = await repo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
             ?? throw new NotFoundException(nameof(Component), request.ComponentId);
 
-  comp.Update(request.Name, request.Description, request.Category, request.Zones);
+  comp.Update(request.Name, request.Description, request.Category);
 
         comp.ReplaceFieldsFromData(request.Fields.Select((f, i) => (
       f.Handle, f.Label,
@@ -173,6 +166,21 @@ internal sealed class UpdateComponentTemplateCommandHandler(
        "TemplateType", $"'{request.TemplateType}' is not a valid TemplateType.")]);
 
     comp.UpdateTemplate(templateType, request.TemplateContent);
+        repo.Update(comp);
+        return Result.Success(ComponentMapper.ToDto(comp));
+    }
+}
+
+internal sealed class UpdateComponentThumbnailCommandHandler(
+    IRepository<Component, ComponentId> repo)
+    : IRequestHandler<UpdateComponentThumbnailCommand, Result<ComponentDto>>
+{
+    public async Task<Result<ComponentDto>> Handle(UpdateComponentThumbnailCommand request, CancellationToken cancellationToken)
+    {
+        var comp = await repo.GetByIdAsync(new ComponentId(request.ComponentId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Component), request.ComponentId);
+
+        comp.UpdateThumbnail(request.ThumbnailDataUri);
         repo.Update(comp);
         return Result.Success(ComponentMapper.ToDto(comp));
     }

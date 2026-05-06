@@ -1,12 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { componentsApi } from '@/api/components';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import type { ComponentFieldDefinition, ComponentItemDto } from '@/types';
 import { ApiError } from '@/api/client';
+import { formatDistanceToNow } from 'date-fns';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -17,6 +20,213 @@ const schema = z.object({
 
 type ItemForm = z.infer<typeof schema>;
 
+// ─── Char Counter ─────────────────────────────────────────────────────────────
+
+function CharCounter({ value, max }: { value: string; max: number }) {
+  const len = typeof value === 'string' ? value.length : 0;
+  return (
+    <span className={`text-xs tabular-nums ${len > max ? 'text-red-500 font-semibold' : len > max * 0.85 ? 'text-amber-500' : 'text-slate-400'}`}>
+      {len} / {max} chars
+    </span>
+  );
+}
+
+// ─── Field Renderer ───────────────────────────────────────────────────────────
+
+function FieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: ComponentFieldDefinition;
+  value: unknown;
+  onChange: (val: unknown) => void;
+}) {
+  switch (field.fieldType) {
+    case 'RichText':
+      return (
+        <RichTextEditor
+          value={typeof value === 'string' ? value : ''}
+          onChange={onChange}
+          placeholder={`Write ${field.label}\u2026`}
+        />
+      );
+    case 'LongText':
+    case 'Markdown':
+      return (
+        <textarea
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          rows={6}
+          className="form-input resize-y"
+          placeholder={`Enter ${field.label}\u2026`}
+        />
+      );
+    case 'Json':
+      return (
+        <textarea
+          value={typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2)}
+          onChange={(e) => onChange(e.target.value)}
+          rows={8}
+          className="form-input resize-y font-mono text-xs"
+          placeholder="{}"
+          spellCheck={false}
+        />
+      );
+    case 'Boolean':
+      return (
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(e) => onChange(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600"
+          />
+          <span className="text-sm text-slate-700">{field.label}</span>
+        </label>
+      );
+    case 'Integer':
+      return (
+        <input
+          type="number"
+          step="1"
+          value={typeof value === 'number' ? value : ''}
+          onChange={(e) => onChange(e.target.valueAsNumber)}
+          className="form-input"
+          placeholder="0"
+        />
+      );
+    case 'Decimal':
+      return (
+        <input
+          type="number"
+          step="any"
+          value={typeof value === 'number' ? value : ''}
+          onChange={(e) => onChange(e.target.valueAsNumber)}
+          className="form-input"
+          placeholder="0.00"
+        />
+      );
+    case 'DateTime':
+      return (
+        <input
+          type="datetime-local"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="form-input"
+        />
+      );
+    case 'Color':
+      return (
+        <div className="flex items-center gap-3">
+          <input
+            type="color"
+            value={typeof value === 'string' && value ? value : '#000000'}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9 w-16 cursor-pointer rounded border border-slate-300 p-0.5"
+          />
+          <input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="form-input font-mono"
+            placeholder="#000000"
+          />
+        </div>
+      );
+    case 'Enum':
+      return (
+        <input
+          type="text"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="form-input"
+          placeholder="Enter value\u2026"
+        />
+      );
+    case 'AssetReference':
+      return (
+        <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-slate-400">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <p className="text-xs text-slate-500">Select from media library</p>
+          <button type="button" className="btn-secondary text-xs">Browse</button>
+          {typeof value === 'string' && value && (
+            <p className="mt-1 font-mono text-xs text-slate-400 break-all">{value}</p>
+          )}
+        </div>
+      );
+    case 'Reference':
+      return (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="form-input flex-1 font-mono"
+            placeholder="Entry ID\u2026"
+          />
+          <span className="text-xs text-slate-400">(entry picker \u2014 phase 2)</span>
+        </div>
+      );
+    case 'Component':
+      return (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="form-input flex-1 font-mono"
+            placeholder="Component item ID\u2026"
+          />
+          <span className="text-xs text-slate-400">(picker \u2014 phase 2)</span>
+        </div>
+      );
+    case 'Location':
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            step="any"
+            value={typeof value === 'object' && value !== null && 'lat' in value ? (value as { lat: number }).lat : ''}
+            onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lat: e.target.valueAsNumber })}
+            className="form-input"
+            placeholder="Latitude"
+          />
+          <input
+            type="number"
+            step="any"
+            value={typeof value === 'object' && value !== null && 'lng' in value ? (value as { lng: number }).lng : ''}
+            onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lng: e.target.valueAsNumber })}
+            className="form-input"
+            placeholder="Longitude"
+          />
+        </div>
+      );
+    default:
+      return (
+        <input
+          type="text"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="form-input"
+          placeholder={`Enter ${field.label}\u2026`}
+        />
+      );
+  }
+}
+
+// ─── Status badge map ─────────────────────────────────────────────────────────
+
+const STATUS_BADGE: Record<string, string> = {
+  Draft: 'badge-slate',
+  Published: 'badge-green',
+  Archived: 'badge-red',
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ComponentItemEditorPage() {
@@ -24,6 +234,7 @@ export default function ComponentItemEditorPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isNew = itemId === 'new';
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: comp } = useQuery({
     queryKey: ['component', componentId],
@@ -42,8 +253,8 @@ export default function ComponentItemEditorPage() {
     handleSubmit,
     reset,
     watch,
-    setValue,
-    formState: { errors, isDirty },
+    control,
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<ItemForm>({
     resolver: zodResolver(schema),
     defaultValues: { title: '', fieldsJson: {} },
@@ -51,20 +262,17 @@ export default function ComponentItemEditorPage() {
 
   useEffect(() => {
     if (item) {
-   reset({ title: item.title, fieldsJson: item.fieldsJson });
+      reset({ title: item.title, fieldsJson: item.fieldsJson });
     }
   }, [item, reset]);
 
   const createMutation = useMutation({
     mutationFn: (data: ItemForm) =>
-  componentsApi.createItem(componentId!, {
-     title: data.title,
- fieldsJson: data.fieldsJson,
-      }),
+      componentsApi.createItem(componentId!, { title: data.title, fieldsJson: data.fieldsJson }),
     onSuccess: (created) => {
       toast.success('Item created.');
       void qc.invalidateQueries({ queryKey: ['component-items', componentId] });
- navigate(`/components/${componentId}/items/${created.id}`, { replace: true });
+      navigate(`/components/${componentId}/items/${created.id}`, { replace: true });
     },
     onError: (err) =>
       toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Create failed.'),
@@ -72,16 +280,13 @@ export default function ComponentItemEditorPage() {
 
   const updateMutation = useMutation({
     mutationFn: (data: ItemForm) =>
- componentsApi.updateItem(componentId!, itemId!, {
- title: data.title,
-   fieldsJson: data.fieldsJson,
-      }),
+      componentsApi.updateItem(componentId!, itemId!, { title: data.title, fieldsJson: data.fieldsJson }),
     onSuccess: () => {
       toast.success('Item saved.');
       void qc.invalidateQueries({ queryKey: ['component-item', componentId, itemId] });
     },
     onError: (err) =>
-  toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
   });
 
   const publishMutation = useMutation({
@@ -91,7 +296,7 @@ export default function ComponentItemEditorPage() {
       void qc.invalidateQueries({ queryKey: ['component-item', componentId, itemId] });
     },
     onError: (err) =>
-  toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Publish failed.'),
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Publish failed.'),
   });
 
   const deleteMutation = useMutation({
@@ -101,7 +306,7 @@ export default function ComponentItemEditorPage() {
       navigate(`/components/${componentId}/items`, { replace: true });
     },
     onError: (err) =>
-   toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Delete failed.'),
   });
 
   const onSubmit = (data: ItemForm) => {
@@ -109,224 +314,272 @@ export default function ComponentItemEditorPage() {
     else updateMutation.mutate(data);
   };
 
+  const titleValue = watch('title');
+  const currentStatus = (item?.status ?? 'Draft') as ComponentItemDto['status'];
+
   if (!isNew && itemLoading) {
     return (
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-    <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+          <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
         ))}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-     <div className="flex items-center gap-2">
-    <button
-     type="button"
-       onClick={() => navigate(`/components/${componentId}/items`)}
-           className="text-sm text-slate-500 hover:text-slate-700"
-        >
-     ← {comp?.name ?? 'Component'}
-  </button>
-          <span className="text-slate-300">/</span>
- <h1 className="text-xl font-bold text-slate-900">
-       {isNew ? 'New Item' : (item?.title ?? 'Edit Item')}
-  </h1>
-       </div>
-  <div className="flex gap-3">
- <button
-      type="button"
-     className="btn-secondary text-sm"
-    onClick={() => navigate(`/components/${componentId}/items`)}
-          >
-       Cancel
-          </button>
-        <button
- type="submit"
-    className="btn-secondary"
-       disabled={(!isDirty && !isNew) || createMutation.isPending || updateMutation.isPending}
-          >
-        {createMutation.isPending || updateMutation.isPending ? 'Saving…' : 'Save Draft'}
-          </button>
-          {!isNew && (
-<button
-         type="button"
-              className="btn-primary"
-   onClick={() => publishMutation.mutate()}
-        disabled={publishMutation.isPending}
-     >
-      {publishMutation.isPending ? 'Publishing…' : 'Publish'}
-          </button>
-     )}
-       </div>
-  </div>
-
- <div className="grid grid-cols-3 gap-6">
- {/* Main: field values */}
-  <div className="col-span-2 space-y-4">
-          {/* Internal title */}
-          <div className="card space-y-4">
-          <div>
-  <label className="form-label">
-          Internal Title <span className="text-red-500">*</span>
-            </label>
-     <p className="mb-1 text-xs text-slate-400">Used for identification only — not displayed on site.</p>
-      <input
-         className="form-input mt-1"
-     {...register('title')}
-    placeholder="e.g. Summer Campaign Hero"
-       />
-{errors.title && <p className="form-error">{errors.title.message}</p>}
-   </div>
-          </div>
-
-         {/* Dynamic fields */}
-    <div className="card space-y-5">
-      <h3 className="text-sm font-semibold text-slate-800">Field Values</h3>
-    {(comp?.fields ?? []).map((field) => {
-         const currentJson = watch('fieldsJson') ?? {};
-   const fieldValue = currentJson[field.handle] as string | undefined;
-
-    return (
-                <div key={field.id}>
- <label className="form-label flex items-center gap-2">
-      {field.label}
-       <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-400">
-       {field.handle}
- </span>
-  {field.isRequired && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
-  </label>
-
-          {field.fieldType === 'RichText' ? (
-         <textarea
-       className="form-input mt-1"
-      rows={4}
-        value={fieldValue ?? ''}
-            onChange={(e) =>
-         setValue('fieldsJson', { ...currentJson, [field.handle]: e.target.value }, { shouldDirty: true })
-     }
-           />
-     ) : field.fieldType === 'Boolean' ? (
-       <label className="mt-1 flex items-center gap-2 text-sm cursor-pointer">
-          <input
-  type="checkbox"
-  className="accent-brand-600"
-       checked={!!currentJson[field.handle]}
-          onChange={(e) =>
-      setValue('fieldsJson', { ...currentJson, [field.handle]: e.target.checked }, { shouldDirty: true })
-        }
-         />
-      {field.label}
-     </label>
-      ) : field.fieldType === 'Number' ? (
-        <input
-         type="number"
-      className="form-input mt-1"
-                   value={fieldValue ?? ''}
-       onChange={(e) =>
-       setValue('fieldsJson', { ...currentJson, [field.handle]: Number(e.target.value) }, { shouldDirty: true })
-      }
-    />
-      ) : (
-              <input
-          type={field.fieldType === 'URL' ? 'url' : 'text'}
- className="form-input mt-1"
-        value={fieldValue ?? ''}
-    onChange={(e) =>
-             setValue('fieldsJson', { ...currentJson, [field.handle]: e.target.value }, { shouldDirty: true })
-   }
-           placeholder={`Enter ${field.label}…`}
-          />
-  )}
-    </div>
-              );
-    })}
-
-        {(comp?.fields.length ?? 0) === 0 && (
-  <p className="text-sm text-slate-400">
-          This component has no fields defined. <button type="button" onClick={() => navigate(`/components/${componentId}/edit`)} className="text-brand-600 underline">Edit schema →</button>
-      </p>
+    <div className="flex min-h-0 flex-col">
+      {/* ── Top bar ────────────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between px-6 py-3">
+          <nav className="flex items-center gap-1.5 text-sm text-slate-500">
+            <button onClick={() => navigate('/components')} className="hover:text-slate-700">
+              Components
+            </button>
+            <span>/</span>
+            <button
+              onClick={() => navigate(`/components/${componentId}/items`)}
+              className="hover:text-slate-700"
+            >
+              {comp?.name ?? '…'}
+            </button>
+            {(titleValue || item?.title) && (
+              <>
+                <span>/</span>
+                <span className="max-w-[200px] truncate font-medium text-slate-900">
+                  {titleValue || item?.title}
+                </span>
+              </>
+            )}
+          </nav>
+          <div className="flex items-center gap-2">
+            {!isNew && (
+              <span className={`${STATUS_BADGE[currentStatus] ?? 'badge-slate'} text-xs`}>
+                {currentStatus}
+              </span>
+            )}
+            <button
+              form="item-form"
+              type="submit"
+              disabled={isSubmitting || (!isDirty && !isNew)}
+              className="btn-primary text-xs"
+            >
+              {isSubmitting ? 'Saving…' : isNew ? 'Create Item' : 'Save Draft'}
+            </button>
+            {!isNew && currentStatus !== 'Published' && (
+              <button
+                type="button"
+                onClick={() => publishMutation.mutate()}
+                disabled={publishMutation.isPending || isDirty}
+                className="btn-secondary text-xs"
+                title={isDirty ? 'Save changes before publishing' : undefined}
+              >
+                {publishMutation.isPending ? 'Publishing…' : 'Publish'}
+              </button>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
-          {/* Status */}
-{!isNew && item && (
+      {/* ── Body ─────────────────────────────────────────────────────────── */}
+      <form
+        id="item-form"
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-1 gap-0 overflow-hidden"
+      >
+        {/* ── Main content ──────────────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+          {/* Internal title */}
+          <div className="card space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="form-label mb-0">
+                Internal Title <span className="text-red-500">*</span>
+              </label>
+              {errors.title && <p className="form-error text-xs">{errors.title.message}</p>}
+            </div>
+            <p className="text-xs text-slate-400">
+              Used for identification only — not displayed on site.
+            </p>
+            <input
+              className="form-input"
+              {...register('title')}
+              placeholder="e.g. Summer Campaign Hero"
+            />
+          </div>
+
+          {/* Dynamic fields — one card per field */}
+          {(comp?.fields ?? []).map((field) => (
+            <div key={field.id} className="card space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <label className="form-label mb-0">
+                    {field.label}
+                    {field.isRequired && <span className="ml-1 text-red-500">*</span>}
+                  </label>
+                  {field.isIndexed && <span className="badge-amber text-xs">Indexed</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  {(field.fieldType === 'ShortText' || field.fieldType === 'LongText') && (
+                    <Controller
+                      control={control}
+                      name={`fieldsJson.${field.handle}`}
+                      render={({ field: f }) => (
+                        <CharCounter
+                          value={typeof f.value === 'string' ? f.value : ''}
+                          max={field.fieldType === 'ShortText' ? 100 : 500}
+                        />
+                      )}
+                    />
+                  )}
+                  <span className="text-xs text-slate-400">{field.fieldType}</span>
+                </div>
+              </div>
+              {field.description && (
+                <p className="text-xs text-slate-400">{field.description}</p>
+              )}
+              <Controller
+                control={control}
+                name={`fieldsJson.${field.handle}`}
+                render={({ field: f }) => (
+                  <FieldInput field={field} value={f.value} onChange={f.onChange} />
+                )}
+              />
+            </div>
+          ))}
+
+          {(comp?.fields.length ?? 0) === 0 && (
             <div className="card">
-         <h3 className="mb-3 text-sm font-semibold text-slate-800">Status</h3>
-   <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-            item.status === 'Published' ? 'bg-green-100 text-green-700' :
-         item.status === 'Draft' ? 'bg-amber-100 text-amber-700' :
-     'bg-slate-100 text-slate-500'
-}`}>
-      {item.status}
-  </span>
-   <div className="mt-3 space-y-1 text-xs text-slate-500">
-         <div className="flex justify-between">
-   <span>Used on pages</span>
-    <strong>{item.usedOnPages}</strong>
-     </div>
-    <div className="flex justify-between">
-          <span>Updated</span>
-       <strong>{new Date(item.updatedAt).toLocaleDateString()}</strong>
-       </div>
-         </div>
+              <p className="text-sm text-slate-400">
+                This component has no fields defined.{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/components/${componentId}/edit`)}
+                  className="text-brand-600 underline"
+                >
+                  Edit schema →
+                </button>
+              </p>
             </div>
           )}
+
+
+        </div>
+
+        {/* ── Right sidebar ──────────────────────────────────────────────── */}
+        <div className="w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-slate-50 px-4 py-5 space-y-4">
+          {/* Status + actions */}
+          <div className="card space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Status</h3>
+              <span className={`${STATUS_BADGE[currentStatus] ?? 'badge-slate'} text-xs`}>
+                {currentStatus}
+              </span>
+            </div>
+            {!isNew && item && (
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
+                <span className="text-slate-400">Used on pages</span>
+                <span className="font-semibold text-slate-700">{item.usedOnPages}</span>
+                <span className="text-slate-400">Updated</span>
+                <span className="text-slate-500">
+                  {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
+                </span>
+                <span className="text-slate-400">Created</span>
+                <span className="text-slate-500">{new Date(item.createdAt).toLocaleDateString()}</span>
+              </div>
+            )}
+            <div className="border-t border-slate-100 pt-3 space-y-2">
+              <button
+                form="item-form"
+                type="submit"
+                disabled={isSubmitting || (!isDirty && !isNew)}
+                className="btn-secondary w-full justify-center text-sm"
+              >
+                {isSubmitting ? 'Saving…' : isNew ? 'Create Item' : 'Save Draft'}
+              </button>
+              {!isNew && currentStatus !== 'Published' && (
+                <button
+                  type="button"
+                  onClick={() => publishMutation.mutate()}
+                  disabled={publishMutation.isPending || isDirty}
+                  className="w-full rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                  title={isDirty ? 'Save changes before publishing' : undefined}
+                >
+                  {publishMutation.isPending ? 'Publishing…' : 'Publish Now'}
+                </button>
+              )}
+              {!isNew && currentStatus === 'Published' && (
+                <button
+                  type="button"
+                  onClick={() => publishMutation.mutate()}
+                  disabled={publishMutation.isPending}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Unpublish
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* Component info */}
- {comp && (
-<div className="card">
-       <h3 className="mb-3 text-sm font-semibold text-slate-800">Component</h3>
-              <div className="space-y-1 text-xs text-slate-500">
-          <div className="flex justify-between">
-       <span>Type</span>
-         <span className="font-semibold text-slate-700">{comp.name}</span>
-      </div>
-      <div className="flex justify-between">
-          <span>Category</span>
-  <span>{comp.category}</span>
- </div>
-        <div className="flex justify-between">
-                  <span>Fields</span>
-           <span>{comp.fields.length}</span>
-      </div>
-      </div>
-           <button
-            type="button"
-        onClick={() => navigate(`/components/${componentId}/edit`)}
-          className="mt-3 text-xs text-brand-600 hover:underline"
+          {comp && (
+            <div className="card space-y-3">
+              <h3 className="text-sm font-semibold text-slate-900">Component</h3>
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
+                <span className="text-slate-400">Type</span>
+                <span className="font-semibold text-slate-700">{comp.name}</span>
+                <span className="text-slate-400">Category</span>
+                <span className="text-slate-500">{comp.category}</span>
+                <span className="text-slate-400">Fields</span>
+                <span className="text-slate-500">{comp.fields.length}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/components/${componentId}/edit`)}
+                className="text-xs text-brand-600 hover:underline"
               >
-        Edit schema →
-     </button>
-    </div>
-          )}
-
-       {/* Danger zone */}
-          {!isNew && (
-            <div className="rounded-lg border border-red-200 bg-white p-4">
-  <h3 className="mb-2 text-xs font-semibold text-red-600">Danger Zone</h3>
-       <button
-      type="button"
-                className="w-full rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
-     onClick={() => {
-       if (confirm(`Delete "${item?.title}"? This cannot be undone.`)) {
-      deleteMutation.mutate();
-   }
-         }}
-       disabled={deleteMutation.isPending}
-  >
-          Delete this Item
+                Edit schema →
               </button>
             </div>
- )}
-     </div>
-      </div>
-    </form>
+          )}
+
+          {/* Danger zone */}
+          {!isNew && (
+            <div className="rounded-lg border border-red-200 bg-white p-4 space-y-2">
+              <h3 className="text-xs font-semibold text-red-600">Danger Zone</h3>
+              {!confirmDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="w-full rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                >
+                  Delete this Item
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-red-600">Are you sure? This cannot be undone.</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="flex-1 rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteMutation.mutate()}
+                      disabled={deleteMutation.isPending}
+                      className="flex-1 rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

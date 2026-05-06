@@ -7,24 +7,15 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { componentsApi } from '@/api/components';
 import { ApiError } from '@/api/client';
-import type { ComponentCategory, ComponentFieldType, RenderingTemplateType } from '@/types';
+import type { ComponentCategory, FieldType, RenderingTemplateType } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ZONE_OPTIONS = [
-{ key: 'hero-zone', desc: 'Primary above-fold area' },
-  { key: 'features-zone', desc: 'Feature / benefit blocks' },
-  { key: 'content-zone', desc: 'Main body content area' },
-  { key: 'media-zone', desc: 'Visual / gallery section' },
-  { key: 'testimonials-zone', desc: 'Social proof section' },
-  { key: 'cta-zone', desc: 'Call-to-action section' },
-  { key: 'header-zone', desc: 'Page header' },
-  { key: 'footer-zone', desc: 'Page footer' },
-];
-
-const FIELD_TYPES: ComponentFieldType[] = [
-  'ShortText', 'LongText', 'RichText', 'Number', 'Boolean',
-  'DateTime', 'URL', 'AssetRef', 'EntryRef', 'JSON', 'ComponentRef',
+const FIELD_TYPES: FieldType[] = [
+  'ShortText', 'LongText', 'RichText', 'Markdown',
+  'Integer', 'Decimal', 'Boolean', 'DateTime',
+  'Enum', 'Reference', 'AssetReference', 'Json',
+  'Component', 'Location', 'Color',
 ];
 
 const CATEGORIES: ComponentCategory[] = [
@@ -42,7 +33,7 @@ const fieldSchema = z.object({
   id: z.string().optional(),
   handle: z.string().min(1, 'Handle required').regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, 'camelCase only'),
   label: z.string().min(1, 'Label required'),
-  fieldType: z.enum(FIELD_TYPES as [ComponentFieldType, ...ComponentFieldType[]]),
+  fieldType: z.enum(FIELD_TYPES as [FieldType, ...FieldType[]]),
   isRequired: z.boolean(),
   isLocalized: z.boolean(),
   isIndexed: z.boolean(),
@@ -55,12 +46,11 @@ const formSchema = z.object({
   key: z.string().min(1, 'Key required').regex(/^[a-z0-9-]+$/),
   description: z.string().optional(),
   category: z.enum(CATEGORIES as [ComponentCategory, ...ComponentCategory[]]),
-  zones: z.array(z.string()).min(1, 'At least one zone required'),
   fields: z.array(fieldSchema),
 });
 
 type EditorForm = z.infer<typeof formSchema>;
-type ActiveTab = 'fields' | 'zones' | 'template' | 'preview' | 'meta';
+type ActiveTab = 'fields' | 'template' | 'thumbnail' | 'meta';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -74,6 +64,9 @@ export default function ComponentEditorPage() {
   const [templateType, setTemplateType] = useState<RenderingTemplateType>('RazorPartial');
   const [templateContent, setTemplateContent] = useState('');
 
+  // Thumbnail state
+  const [thumbnailDataUri, setThumbnailDataUri] = useState<string | null>(null);
+
   const { data: comp, isLoading } = useQuery({
  queryKey: ['component', id],
     queryFn: () => componentsApi.getById(id!),
@@ -81,11 +74,11 @@ export default function ComponentEditorPage() {
   });
 
   const {
-    register, control, handleSubmit, watch, setValue, reset,
+    register, control, handleSubmit, reset,
     formState: { errors, isDirty },
   } = useForm<EditorForm>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', key: '', description: '', category: 'Layout', zones: [], fields: [] },
+    defaultValues: { name: '', key: '', description: '', category: 'Layout', fields: [] },
   });
 
   useEffect(() => {
@@ -95,7 +88,6 @@ export default function ComponentEditorPage() {
         key: comp.key,
         description: comp.description ?? '',
         category: comp.category,
-        zones: comp.zones,
         fields: comp.fields.map((f) => ({
           id: f.id,
      handle: f.handle,
@@ -110,21 +102,11 @@ isIndexed: f.isIndexed,
       });
     setTemplateType(comp.templateType);
       setTemplateContent(comp.templateContent ?? '');
+      setThumbnailDataUri(comp.thumbnailDataUri ?? null);
     }
   }, [comp, reset]);
 
   const { fields, append, remove } = useFieldArray({ control, name: 'fields' });
-  const selectedZones = watch('zones') ?? [];
-
-  const toggleZone = (zone: string) => {
-    setValue(
-      'zones',
-   selectedZones.includes(zone)
-        ? selectedZones.filter((z) => z !== zone)
-        : [...selectedZones, zone],
-      { shouldDirty: true },
-    );
-  };
 
   // ── Schema save ────────────────────────────────────────────────────────────
   const updateMutation = useMutation({
@@ -133,7 +115,6 @@ isIndexed: f.isIndexed,
         name: data.name,
         description: data.description,
     category: data.category,
-        zones: data.zones,
       fields: data.fields.map((f, i) => ({
           id: f.id ?? crypto.randomUUID(),
           handle: f.handle,
@@ -148,6 +129,18 @@ isRequired: f.isRequired,
       }),
     onSuccess: () => {
       toast.success('Component definition saved.');
+      void qc.invalidateQueries({ queryKey: ['component', id] });
+      void qc.invalidateQueries({ queryKey: ['components'] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
+  });
+
+  // ── Thumbnail save ─────────────────────────────────────────────────────────
+  const thumbnailMutation = useMutation({
+    mutationFn: () => componentsApi.updateThumbnail(id!, thumbnailDataUri),
+    onSuccess: () => {
+      toast.success('Thumbnail saved.');
       void qc.invalidateQueries({ queryKey: ['component', id] });
       void qc.invalidateQueries({ queryKey: ['components'] });
     },
@@ -181,11 +174,10 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
 
   const currentExt = TEMPLATE_TYPES.find((t) => t.value === templateType)?.ext ?? '';
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'fields',   label: `Fields (${fields.length})` },
-    { key: 'zones',    label: 'Zones' },
-    { key: 'template', label: 'Template' },
-    { key: 'preview',  label: 'Preview' },
-    { key: 'meta',     label: 'Meta' },
+    { key: 'fields',    label: `Fields (${fields.length})` },
+    { key: 'template',  label: 'Template' },
+    { key: 'thumbnail', label: 'Thumbnail' },
+    { key: 'meta',      label: 'Meta' },
   ];
 
   return (
@@ -213,6 +205,12 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
           disabled={templateMutation.isPending}
      onClick={() => templateMutation.mutate()}>
  {templateMutation.isPending ? 'Saving…' : 'Save Template'}
+            </button>
+          ) : activeTab === 'thumbnail' ? (
+            <button type="button" className="btn-primary"
+              disabled={thumbnailMutation.isPending}
+              onClick={() => thumbnailMutation.mutate()}>
+              {thumbnailMutation.isPending ? 'Saving…' : 'Save Thumbnail'}
             </button>
           ) : (
     <button type="button" className="btn-primary"
@@ -287,7 +285,7 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
             <div className="flex flex-wrap gap-1.5">
       {FIELD_TYPES.map((ft) => (
    <button key={ft} type="button"
-            onClick={() => append({ handle: '', label: ft, fieldType: ft, isRequired: false, isLocalized: false, isIndexed: false, sortOrder: fields.length })}
+            onClick={() => append({ handle: '', label: '', fieldType: ft, isRequired: false, isLocalized: false, isIndexed: false, sortOrder: fields.length })}
         className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:border-brand-400 hover:text-brand-600">
             {ft}
        </button>
@@ -296,29 +294,6 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
          </div>
     </div>
       )}
-
-          {/* ── Zones ── */}
-          {activeTab === 'zones' && (
-            <div className="card space-y-2">
-          <h3 className="mb-3 text-sm font-semibold text-slate-800">Allowed Zones</h3>
-  {ZONE_OPTIONS.map(({ key: zone, desc }) => (
-    <label key={zone}
-      className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3 transition-colors ${
-        selectedZones.includes(zone)
-                 ? 'border-brand-500 bg-brand-50'
-          : 'border-slate-200 bg-white hover:border-slate-300'
-      }`}>
-         <input type="checkbox" className="accent-brand-600"
-            checked={selectedZones.includes(zone)} onChange={() => toggleZone(zone)} />
-<div>
-   <span className="text-sm font-semibold text-slate-700">{zone}</span>
-          <span className="ml-2 text-xs text-slate-400">{desc}</span>
-      </div>
-   </label>
-   ))}
-              {errors.zones && <p className="form-error mt-2">{errors.zones.message}</p>}
-   </div>
-    )}
 
           {/* ── Template ── */}
       {activeTab === 'template' && (
@@ -372,39 +347,32 @@ value={templateContent}
    </div>
  </div>
         )}
+
+              {/* Example / placeholder */}
+              <div className="border-t border-slate-200">
+                <div className="flex items-center justify-between bg-slate-50 px-4 py-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Example
+                  </p>
+                  <span className="text-[10px] text-slate-400">
+                    Starter template — paste into the editor above to get started
+                  </span>
+                </div>
+                <pre className="overflow-auto bg-[#1e1e2e] p-4 font-mono text-xs leading-relaxed text-[#585b70]">
+                  {getTemplatePlaceholder(templateType, comp.key, fields.map((f) => f.handle).filter(Boolean))}
+                </pre>
+              </div>
             </div>
           )}
 
-      {/* ── Preview ── */}
-   {activeTab === 'preview' && (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-             <span className="flex-1 text-xs font-semibold text-slate-500">
-     Live Preview — rendered from template + sample item data
-    </span>
-         <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-           {templateType}
-         </span>
-        </div>
-        <div className="p-6">
-        {templateContent.trim() ? (
-    <TemplatePreview
-        templateType={templateType}
-      templateContent={templateContent}
-      fields={fields.map((f) => ({ handle: f.handle, fieldType: f.fieldType, label: f.label }))}
-       />
-     ) : (
-       <div className="flex flex-col items-center py-12 text-slate-400">
-           <svg className="mb-3 h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-   d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-  </svg>
-             <p className="text-sm">No template yet. Add your template in the Template tab.</p>
-      </div>
-          )}
-              </div>
-         </div>
-  )}
+      {/* ── Thumbnail ── */}
+      {activeTab === 'thumbnail' && (
+        <ThumbnailEditor
+          value={thumbnailDataUri}
+          onChange={setThumbnailDataUri}
+          componentName={comp.name}
+        />
+      )}
 
   {/* ── Meta ── */}
       {activeTab === 'meta' && (
@@ -497,6 +465,102 @@ value={templateContent}
   );
 }
 
+// ─── Thumbnail Editor ─────────────────────────────────────────────────────────
+
+function ThumbnailEditor({
+  value,
+  onChange,
+  componentName,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+  componentName: string;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+
+  function readFile(file: File) {
+    if (!file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+      toast.error('Please upload an image or SVG file.');
+      return;
+    }
+    if (file.size > 512 * 1024) {
+      toast.error('File must be under 512 KB. Use a small wireframe SVG for best results.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onChange(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) readFile(file);
+  }
+
+  return (
+    <div className="card space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-900">Wireframe / Thumbnail</h3>
+        <p className="mt-1 text-xs text-slate-500">
+          Upload a small wireframe or screenshot (SVG recommended, max 512 KB). This image is shown
+          in the component library browser and the page-designer palette — it is <em>not</em> the rendered output.
+        </p>
+      </div>
+
+      <label
+        className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors ${
+          dragOver ? 'border-brand-400 bg-brand-50' : 'border-slate-200 bg-slate-50 hover:border-brand-300'
+        }`}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+      >
+        <input
+          type="file"
+          accept="image/*,.svg"
+          className="sr-only"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) readFile(f); }}
+        />
+        {value ? (
+          <img
+            src={value}
+            alt={`${componentName} thumbnail`}
+            className="h-full w-full rounded object-cover"
+          />
+        ) : (
+          <>
+            <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <div className="text-center">
+              <p className="text-sm font-medium text-slate-600">Drop an image or SVG here</p>
+              <p className="text-xs text-slate-400">or click to browse · max 512 KB</p>
+            </div>
+          </>
+        )}
+      </label>
+
+      {value && (
+        <div className="flex items-center gap-2">
+          <span className="flex-1 truncate font-mono text-xs text-slate-400">
+            {value.substring(0, 60)}…
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+          >
+            Remove
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getBindingExpression(templateType: RenderingTemplateType, handle: string): string {
@@ -546,72 +610,21 @@ function getTemplatePlaceholder(
     case 'WebComponent':
       return [
         `<!-- ${pascal} Web Component -->`,
-        `<template id="${key}-template">`,
-`  <div class="${key}">`,
-        ...handles.map((h) => `    <p id="${h}"></p>`),
-      '  </div>',
-      '</template>',
-   '<script>',
+        `<style>`,
+        `  .${key} { font-family: sans-serif; padding: 1rem; }`,
+        `</style>`,
+        `<script>`,
         `  class ${pascal} extends HTMLElement {`,
-        '    connectedCallback() {',
-        ...handles.map((h) => `      this.querySelector('#${h}').textContent = this.getAttribute('${h}') ?? '';`),
-     '    }',
-        '  }',
+        `    connectedCallback() {`,
+        `      this.innerHTML = \``,
+        `        <div class="${key}">`,
+        ...handles.map((h) => `          <p>\${this.getAttribute('${h}') ?? ''}</p>`),
+        `        </div>`,
+        `      \`;`,
+        `    }`,
+        `  }`,
         `  customElements.define('${key}', ${pascal});`,
-        '</script>',
+        `</script>`,
       ].join('\n');
-  }
-}
-
-// ─── Template Preview ─────────────────────────────────────────────────────────
-
-function TemplatePreview({
-  templateType,
-  templateContent,
-  fields,
-}: {
-  templateType: RenderingTemplateType;
-  templateContent: string;
-  fields: { handle: string; fieldType: string; label: string }[];
-}) {
-  if (templateType === 'Handlebars') {
-    // Client-side preview: replace {{handle}} with sample values
-    const sample = Object.fromEntries(
-      fields.map((f) => [f.handle, getSampleValue(f.fieldType, f.label)]),
-    );
-    let preview = templateContent;
-    for (const [k, v] of Object.entries(sample)) {
-      preview = preview.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
-    }
-    return (
-      <div
-    className="prose prose-sm max-w-none"
-dangerouslySetInnerHTML={{ __html: preview }}
-      />
-    );
-  }
-
-  // For Razor / React / Web Component — show source with bindings highlighted
-  return (
-    <div className="space-y-3">
- <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-  Server-side rendering preview is not available in the editor.
-    The template will be rendered by the {templateType} engine at runtime.
-      </div>
-      <pre className="overflow-auto rounded-lg bg-slate-900 p-4 text-xs leading-relaxed text-slate-300">
-        {templateContent}
-      </pre>
-    </div>
-  );
-}
-
-function getSampleValue(fieldType: string, label: string): string | number | boolean {
-  switch (fieldType) {
-    case 'Number':   return 0.5;
-    case 'Boolean':  return true;
-    case 'DateTime': return new Date().toLocaleDateString();
-    case 'URL':    return 'https://example.com';
-    case 'AssetRef': return '/sample-image.jpg';
-    default:         return `Sample ${label}`;
   }
 }

@@ -692,7 +692,6 @@ onClick={() => remove(idx)}
              </p>
                 </div>
              <div className="flex items-center gap-2 shrink-0">
-          <button className="btn-secondary text-sm">Export JSON Schema</button>
           <button onClick={() => setEditing(true)} className="btn-primary text-sm">
        ✏ Edit Schema
      </button>
