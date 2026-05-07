@@ -218,7 +218,7 @@ export interface EnumOptionDto {
 
 /** Matches MultiListOptionDto — candidate entries for the left pane of a MultiList picker. */
 export interface MultiListOptionDto {
-    id: string;
+    entryId: string;
     label: string;
     slug: string;
 }

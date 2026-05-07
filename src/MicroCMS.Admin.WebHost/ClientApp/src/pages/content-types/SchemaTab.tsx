@@ -430,7 +430,7 @@ function MultiListSourceEditor({
     errors?: any;
 }) {
     const [testing, setTesting] = useState(false);
-    const [previewOptions, setPreviewOptions] = useState<Array<{ id: string; label: string; slug: string }> | null>(null);
+    const [previewOptions, setPreviewOptions] = useState<Array<{ entryId: string; label: string; slug: string }> | null>(null);
 
     const testQuery = async () => {
         if (!fieldId) { toast.error('Save the field first to test the source.'); return; }
@@ -509,7 +509,7 @@ function MultiListSourceEditor({
             {previewOptions !== null && previewOptions.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-1">
                     {previewOptions.slice(0, 20).map((o) => (
-                        <span key={o.id} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700" title={`slug: ${o.slug}`}>
+                        <span key={o.entryId} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700" title={`slug: ${o.slug}`}>
                             {o.label}
                             <span className="font-mono text-slate-400">({o.slug})</span>
                         </span>

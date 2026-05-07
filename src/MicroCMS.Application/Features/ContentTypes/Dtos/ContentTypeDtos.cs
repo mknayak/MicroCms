@@ -39,7 +39,12 @@ public sealed record FieldDefinitionDto(
     /// When set, the entry editor must query published entries of the referenced
     /// content type to build the option list at render time.
     /// </summary>
-    FieldDynamicSource? DynamicSource = null);
+    FieldDynamicSource? DynamicSource = null,
+    /// <summary>
+    /// Source config for MultiList fields — defines which content type's entries
+    /// populate the available (left-pane) dual-pane picker.
+    /// </summary>
+    FieldDynamicSource? MultiListSource = null);
 
 public sealed record ContentTypeListItemDto(
     Guid Id,

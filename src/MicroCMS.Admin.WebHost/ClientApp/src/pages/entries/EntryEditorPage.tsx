@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { entriesApi } from '@/api/entries';
 import { contentTypesApi } from '@/api/contentTypes';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
-import type { EntryVersion, EntryStatus, FieldDefinitionDto } from '@/types';
+import type { EntryVersion, EntryStatus, FieldDefinitionDto, MultiListOptionDto } from '@/types';
 import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useSite } from '@/contexts/SiteContext';
@@ -64,10 +64,12 @@ function ListFieldInput({
   field,
   value,
   onChange,
+  contentTypeId,
 }: {
   field: FieldDefinitionDto;
   value: unknown;
   onChange: (val: unknown) => void;
+  contentTypeId?: string;
 }) {
   const items: unknown[] = Array.isArray(value) ? value : [];
 
@@ -113,7 +115,7 @@ function ListFieldInput({
       {items.map((item, idx) => (
         <div key={idx} className="flex items-start gap-2">
           <div className="flex-1">
-            <ScalarFieldInput field={scalarField} value={item} onChange={(v) => updateItem(idx, v)} />
+            <ScalarFieldInput field={scalarField} value={item} onChange={(v) => updateItem(idx, v)} contentTypeId={contentTypeId} />
           </div>
           <button
      type="button"
@@ -139,10 +141,128 @@ function ListFieldInput({
   );
 }
 
+// ─── MultiList Picker Field ───────────────────────────────────────────────────
+
+function MultiListPickerField({
+  field,
+  contentTypeId,
+  value,
+  onChange,
+}: {
+  field: FieldDefinitionDto;
+  contentTypeId: string;
+  value: unknown;
+  onChange: (val: unknown) => void;
+}) {
+  const selectedIds: string[] = Array.isArray(value) ? value.map(String) : [];
+  const [availableSearch, setAvailableSearch] = useState('');
+  const [selectedSearch, setSelectedSearch] = useState('');
+
+  const { data: options = [], isLoading } = useQuery<MultiListOptionDto[]>({
+    queryKey: ['multilist-options', contentTypeId, field.id],
+    queryFn: () => contentTypesApi.getMultiListOptions(contentTypeId, field.id),
+    enabled: Boolean(contentTypeId) && Boolean(field.id),
+    staleTime: 30_000,
+  });
+
+  const available = options.filter((o) => !selectedIds.includes(o.entryId));
+  const selected = options.filter((o) => selectedIds.includes(o.entryId));
+
+  const filteredAvailable = availableSearch.trim()
+    ? available.filter((o) => o.label.toLowerCase().includes(availableSearch.toLowerCase()))
+    : available;
+
+  const filteredSelected = selectedSearch.trim()
+    ? selected.filter((o) => o.label.toLowerCase().includes(selectedSearch.toLowerCase()))
+    : selected;
+
+  const addItem = (id: string) => onChange([...selectedIds, id]);
+  const removeItem = (id: string) => onChange(selectedIds.filter((s) => s !== id));
+
+  if (isLoading) {
+    return <div className="h-24 animate-pulse rounded-lg bg-slate-100" />;
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {/* Available (left pane) */}
+      <div className="rounded-lg border border-slate-200 flex flex-col min-h-[120px] max-h-[320px]">
+        <div className="border-b border-slate-100 px-3 py-2 shrink-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-slate-500">Available ({available.length})</span>
+          </div>
+          <input
+            type="text"
+            value={availableSearch}
+            onChange={(e) => setAvailableSearch(e.target.value)}
+            placeholder="Search…"
+            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 placeholder:text-slate-300 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400"
+          />
+        </div>
+        <ul className="overflow-y-auto divide-y divide-slate-50 flex-1">
+          {filteredAvailable.length === 0 && (
+            <li className="px-3 py-3 text-xs text-slate-400 italic">
+              {availableSearch.trim() ? 'No matches' : 'No items available'}
+            </li>
+          )}
+          {filteredAvailable.map((o) => (
+            <li key={o.entryId} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50">
+              <span className="truncate text-sm text-slate-700">{o.label}</span>
+              <button
+                type="button"
+                onClick={() => addItem(o.entryId)}
+                className="ml-2 shrink-0 rounded text-brand-600 hover:text-brand-800 text-xs font-bold"
+                aria-label={`Add ${o.label}`}
+              >
+                →
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {/* Selected (right pane) */}
+      <div className="rounded-lg border border-brand-200 bg-brand-50/30 flex flex-col min-h-[120px] max-h-[320px]">
+        <div className="border-b border-brand-100 px-3 py-2 shrink-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-brand-700">Selected ({selected.length})</span>
+          </div>
+          <input
+            type="text"
+            value={selectedSearch}
+            onChange={(e) => setSelectedSearch(e.target.value)}
+            placeholder="Search…"
+            className="w-full rounded border border-brand-200 bg-white px-2 py-1 text-xs text-slate-700 placeholder:text-slate-300 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400"
+          />
+        </div>
+        <ul className="overflow-y-auto divide-y divide-brand-50 flex-1">
+          {filteredSelected.length === 0 && (
+            <li className="px-3 py-3 text-xs text-slate-400 italic">
+              {selectedSearch.trim() ? 'No matches' : 'None selected'}
+            </li>
+          )}
+          {filteredSelected.map((o) => (
+            <li key={o.entryId} className="flex items-center justify-between px-3 py-2 hover:bg-brand-50">
+              <button
+                type="button"
+                onClick={() => removeItem(o.entryId)}
+                className="mr-2 shrink-0 rounded text-slate-400 hover:text-red-500 text-xs font-bold"
+                aria-label={`Remove ${o.label}`}
+              >
+                ←
+              </button>
+              <span className="truncate text-sm text-slate-700 flex-1">{o.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 // ─── Scalar Field Renderer ────────────────────────────────────────────────────
 // (renamed from FieldInput — handles single-value rendering)
 
-function ScalarFieldInput({ field, value, onChange }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void }) {
+function ScalarFieldInput({ field, value, onChange, contentTypeId }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void; contentTypeId?: string }) {
   switch (field.fieldType) {
     case 'RichText':
       return (
@@ -199,6 +319,8 @@ function ScalarFieldInput({ field, value, onChange }: { field: FieldDefinitionDt
      <input type="number" step="any" value={typeof value === 'object' && value !== null && 'lng' in value ? (value as { lng: number }).lng : ''} onChange={(e) => onChange({ ...(typeof value === 'object' && value !== null ? value : {}), lng: e.target.valueAsNumber })} className="form-input" placeholder="Longitude" />
     </div>
       );
+    case 'MultiList':
+      return <MultiListPickerField field={field} contentTypeId={contentTypeId ?? ''} value={value} onChange={onChange} />;
     default:
     return <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" placeholder={`Enter ${field.label}…`} />;
   }
@@ -207,11 +329,11 @@ function ScalarFieldInput({ field, value, onChange }: { field: FieldDefinitionDt
 // ─── Field Renderer ───────────────────────────────────────────────────────────
 // Routes to list or scalar renderer based on field.isList
 
-function FieldInput({ field, value, onChange }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void }) {
+function FieldInput({ field, value, onChange, contentTypeId }: { field: FieldDefinitionDto; value: unknown; onChange: (val: unknown) => void; contentTypeId?: string }) {
   if (field.isList) {
-    return <ListFieldInput field={field} value={value} onChange={onChange} />;
+    return <ListFieldInput field={field} value={value} onChange={onChange} contentTypeId={contentTypeId} />;
   }
-  return <ScalarFieldInput field={field} value={value} onChange={onChange} />;
+  return <ScalarFieldInput field={field} value={value} onChange={onChange} contentTypeId={contentTypeId} />;
 }
 
 // ─── Publishing Panel ─────────────────────────────────────────────────────────
@@ -704,7 +826,7 @@ key={loc}
               <Controller
       control={control}
      name={`fields.${field.handle}`}
-   render={({ field: f }) => <FieldInput field={field} value={f.value} onChange={f.onChange} />}
+   render={({ field: f }) => <FieldInput field={field} value={f.value} onChange={f.onChange} contentTypeId={selectedContentTypeId} />}
 />
             </div>
           ))}

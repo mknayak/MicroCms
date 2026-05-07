@@ -50,21 +50,31 @@ internal sealed class ResolveMultiListOptionsQueryHandler(
         var field = ct.Fields.FirstOrDefault(f => f.Id == request.FieldId)
             ?? throw new NotFoundException("Field", request.FieldId);
 
-        var src = field.Validation?.MultiListSource
-            ?? throw new NotFoundException("MultiListSource config", request.FieldId);
+        // When the field has no MultiListSource config (e.g. the Groups picker), fall back to
+        // loading entries of the owning content type directly.
+        var src = field.Validation?.MultiListSource;
+        ContentType sourceCt;
 
-        // Resolve source content type by handle
-        var allContentTypes = await ctRepo.ListAsync(
-            new ContentTypesBySiteSpec(siteId), cancellationToken);
+        if (src is not null)
+        {
+            // Resolve explicitly-configured source content type by handle
+            var allContentTypes = await ctRepo.ListAsync(
+                new ContentTypesBySiteSpec(siteId), cancellationToken);
 
-        var sourceCt = allContentTypes.FirstOrDefault(c =>
-            c.Handle.Equals(src.ContentTypeHandle, StringComparison.OrdinalIgnoreCase))
-            ?? throw new NotFoundException("Source ContentType", src.ContentTypeHandle);
+            sourceCt = allContentTypes.FirstOrDefault(c =>
+                c.Handle.Equals(src.ContentTypeHandle, StringComparison.OrdinalIgnoreCase))
+                ?? throw new NotFoundException("Source ContentType", src.ContentTypeHandle);
+        }
+        else
+        {
+            // No source config: use the owning content type as the implicit source
+            sourceCt = ct;
+        }
 
         // Fetch entries (up to 1000 for dual-pane picker)
         var entriesSpec = new EntriesBySiteSpec(
             siteId,
-            statusFilter: src.StatusFilter,
+            statusFilter: src?.StatusFilter,
             contentTypeId: sourceCt.Id.Value,
             locale: null,
             folderId: null,
@@ -75,7 +85,7 @@ internal sealed class ResolveMultiListOptionsQueryHandler(
 
         // ── Group filter ────────────────────────────────────────────────────
         IEnumerable<Entry> filtered = entries;
-        if (!string.IsNullOrWhiteSpace(src.GroupHandle))
+        if (!string.IsNullOrWhiteSpace(src?.GroupHandle))
         {
             var groupSpec = new EntryGroupByHandleSpec(siteId, sourceCt.Id, src.GroupHandle);
             var groups = await groupRepo.ListAsync(groupSpec, cancellationToken);
@@ -87,8 +97,9 @@ internal sealed class ResolveMultiListOptionsQueryHandler(
             filtered = entries.Where(e => memberIds.Contains(e.Id));
         }
 
+        var labelField = src?.LabelField ?? string.Empty;
         var options = filtered
-            .Select(e => BuildOption(e, src.LabelField))
+            .Select(e => BuildOption(e, labelField))
             .Where(o => o is not null)
             .Select(o => o!)
             .ToList();
