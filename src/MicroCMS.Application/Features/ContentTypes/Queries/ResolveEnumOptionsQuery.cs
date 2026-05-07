@@ -32,6 +32,7 @@ public sealed record EnumOptionDto(string Value, string Label);
 internal sealed class ResolveEnumOptionsQueryHandler(
     IRepository<ContentType, ContentTypeId> ctRepo,
     IRepository<Entry, EntryId> entryRepo,
+    IRepository<EntryGroup, EntryGroupId> groupRepo,
     ICurrentUser currentUser)
     : IRequestHandler<ResolveEnumOptionsQuery, Result<IReadOnlyList<EnumOptionDto>>>
 {
@@ -82,7 +83,21 @@ internal sealed class ResolveEnumOptionsQueryHandler(
 
         var entries = await entryRepo.ListAsync(entriesSpec, cancellationToken);
 
-        var options = entries
+        // ── Group filter ────────────────────────────────────────────────────
+        IEnumerable<Entry> filtered = entries;
+        if (!string.IsNullOrWhiteSpace(src.GroupHandle))
+        {
+            var groupSpec = new EntryGroupByHandleSpec(siteId, sourceCt.Id, src.GroupHandle);
+            var groups = await groupRepo.ListAsync(groupSpec, cancellationToken);
+            var memberIds = groups
+                .SelectMany(g => g.Members)
+                .Select(m => m.EntryId)
+                .ToHashSet();
+
+            filtered = entries.Where(e => memberIds.Contains(e.Id));
+        }
+
+        var options = filtered
  .Select(e => BuildOption(e.FieldsJson, src.LabelField, src.ValueField))
          .Where(o => o is not null)
             .Select(o => o!)

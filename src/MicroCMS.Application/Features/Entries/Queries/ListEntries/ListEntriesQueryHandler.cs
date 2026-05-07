@@ -15,6 +15,7 @@ namespace MicroCMS.Application.Features.Entries.Queries.ListEntries;
 /// <summary>Handles <see cref="ListEntriesQuery"/> with a cache-aside read pattern.</summary>
 public sealed class ListEntriesQueryHandler(
     IRepository<Entry, EntryId> entryRepository,
+    IRepository<ContentType, ContentTypeId> contentTypeRepository,
     ICacheService cacheService,
     ICurrentUser currentUser)
     : IRequestHandler<ListEntriesQuery, Result<PagedList<EntryListItemDto>>>
@@ -47,7 +48,24 @@ public sealed class ListEntriesQueryHandler(
         var entries = await entryRepository.ListAsync(listSpec, cancellationToken);
         var totalCount = await entryRepository.CountAsync(countSpec, cancellationToken);
 
-        var dtos = EntryMapper.ToListItemDtos(entries);
+        // Build a lookup of ContentTypeId → DisplayName to populate ContentTypeName on each DTO
+        var contentTypeIds = entries.Select(e => e.ContentTypeId).Distinct().ToList();
+        var contentTypeNames = new Dictionary<ContentTypeId, string>();
+        foreach (var ctId in contentTypeIds)
+        {
+            var ct = await contentTypeRepository.GetByIdAsync(ctId, cancellationToken);
+            if (ct is not null)
+                contentTypeNames[ctId] = ct.DisplayName;
+        }
+
+        var dtos = entries
+            .Select(e => EntryMapper.ToListItemDtoWithContext(
+                e,
+                contentTypeNames.TryGetValue(e.ContentTypeId, out var name) ? name : null,
+                authorName: null))
+            .ToList()
+            .AsReadOnly();
+
         var paged = PagedList<EntryListItemDto>.Create(dtos, request.PageNumber, request.PageSize, totalCount);
 
         await cacheService.SetWithTagAsync(

@@ -54,4 +54,8 @@ public static class ContentPolicies
     // ── Package Manager policies ───────────────────────────────────────────
     public const string PackageExport = "Package.Export";
     public const string PackageImport = "Package.Import";
+
+    // ── Entry Group policies ───────────────────────────────────────────────
+    public const string EntryGroupRead   = "EntryGroup.Read";
+    public const string EntryGroupManage = "EntryGroup.Manage";
 }

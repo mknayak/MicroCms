@@ -20,5 +20,10 @@ public enum FieldType
     Json = 11,
     Component = 12,
     Location = 13,
-    Color = 14
+    Color = 14,
+    /// <summary>
+    /// Dual-pane multilist picker. Stores a JSON array of entry IDs (GUIDs).
+    /// Source content type is configured via <see cref="FieldValidationConfig.MultiListSource"/>.
+    /// </summary>
+    MultiList = 15
 }

@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Aggregates.Content;
+using MicroCMS.Domain.Enums;
 using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Domain.Specifications.Content;
@@ -19,11 +20,7 @@ public sealed class EntriesBySiteSpec : BaseSpecification<Entry>
         Guid? folderId,
         int pageNumber,
         int pageSize)
-        : base(e => e.SiteId == siteId
-                 && (statusFilter == null || e.Status.ToString() == statusFilter)
-                 && (contentTypeId == null || e.ContentTypeId == new ContentTypeId(contentTypeId.Value))
-                 && (locale == null || e.Locale.Value == locale)
-                 && (folderId == null || (e.FolderId != null && e.FolderId.Value.Value == folderId.Value)))
+        : base(BuildCriteria(siteId, statusFilter, contentTypeId, locale, folderId))
     {
         ApplyOrderByDescending(e => e.UpdatedAt);
         ApplyPaging((pageNumber - 1) * pageSize, pageSize);
@@ -36,11 +33,28 @@ public sealed class EntriesBySiteSpec : BaseSpecification<Entry>
         Guid? contentTypeId = null,
         string? locale = null,
         Guid? folderId = null)
-        : base(e => e.SiteId == siteId
-                 && (statusFilter == null || e.Status.ToString() == statusFilter)
+        : base(BuildCriteria(siteId, statusFilter, contentTypeId, locale, folderId))
+    {
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1541", Justification = "All conditions are required for filtering; extracting further would harm EF Core translateability.")]
+    private static System.Linq.Expressions.Expression<System.Func<Entry, bool>> BuildCriteria(
+        SiteId siteId,
+        string? statusFilter,
+        Guid? contentTypeId,
+        string? locale,
+        Guid? folderId)
+    {
+        // Parse the status string once outside the expression tree so EF Core
+        // receives a plain enum value it can translate to an integer comparison.
+        EntryStatus? status = Enum.TryParse<EntryStatus>(statusFilter, ignoreCase: true, out var parsed)
+            ? parsed
+            : null;
+
+        return e => e.SiteId == siteId
+                 && (status == null || e.Status == status.Value)
                  && (contentTypeId == null || e.ContentTypeId == new ContentTypeId(contentTypeId.Value))
                  && (locale == null || e.Locale.Value == locale)
-                 && (folderId == null || (e.FolderId != null && e.FolderId.Value.Value == folderId.Value)))
-    {
+                 && (folderId == null || (e.FolderId != null && e.FolderId.Value.Value == folderId.Value));
     }
 }

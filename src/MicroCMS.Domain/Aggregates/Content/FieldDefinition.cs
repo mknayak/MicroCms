@@ -27,6 +27,13 @@ public sealed record FieldValidationConfig
     [JsonPropertyName("dynamicSource")]
     public FieldDynamicSource? DynamicSource { get; init; }
 
+    /// <summary>
+    /// Source config for <see cref="FieldType.MultiList"/> fields.
+    /// Defines which content type's entries populate the available (left-pane) list.
+    /// </summary>
+    [JsonPropertyName("multiListSource")]
+    public FieldDynamicSource? MultiListSource { get; init; }
+
     /// <summary>Min length for ShortText / LongText fields.</summary>
     [JsonPropertyName("minLength")]
     public int? MinLength { get; init; }
@@ -76,6 +83,13 @@ public sealed record FieldDynamicSource
     /// <summary>Optional status filter (defaults to "Published").</summary>
     [JsonPropertyName("statusFilter")]
   public string StatusFilter { get; init; } = "Published";
+
+    /// <summary>
+    /// Optional — when set, only entries that are members of this group handle
+    /// are surfaced in the picker (used by both <c>Reference</c> and <c>MultiList</c> fields).
+    /// </summary>
+    [JsonPropertyName("groupHandle")]
+    public string? GroupHandle { get; init; }
 }
 
 // ── FieldDefinition ──────────────────────────────────────────────────────────

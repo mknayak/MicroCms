@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Entry, FieldDefinitionDto } from '@/types';
 import { MediaPickerField } from './MediaPickerField';
+import { EntryPickerField } from './EntryPickerField';
 
 export function EntryFieldEditor({
   entry, fields, onSave, saving,
@@ -114,15 +115,19 @@ return (
          />
        )}
 
-       {(ft === 'reference' || ft === 'json') && (
+       {ft === 'reference' && (
+         <EntryPickerField
+           value={val}
+           onChange={(v) => set(f.handle, v)}
+           source={f.dynamicSource}
+         />
+       )}
+
+       {ft === 'json' && (
          <div className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-[11px] text-slate-400">
-           {ft === 'json' ? (
-             <textarea className="w-full resize-none bg-transparent font-mono text-[10px] focus:outline-none" rows={2}
-               value={typeof val === 'string' ? val : JSON.stringify(val ?? '', null, 2)}
-               onChange={(e) => { try { set(f.handle, JSON.parse(e.target.value)); } catch { set(f.handle, e.target.value); } }} />
-           ) : (
-             <span>Edit in full editor → {f.fieldType}</span>
-           )}
+           <textarea className="w-full resize-none bg-transparent font-mono text-[10px] focus:outline-none" rows={2}
+             value={typeof val === 'string' ? val : JSON.stringify(val ?? '', null, 2)}
+             onChange={(e) => { try { set(f.handle, JSON.parse(e.target.value)); } catch { set(f.handle, e.target.value); } }} />
          </div>
        )}
     </div>

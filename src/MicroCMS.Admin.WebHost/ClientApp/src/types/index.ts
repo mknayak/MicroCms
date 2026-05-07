@@ -1,88 +1,88 @@
 // ─── Pagination ──────────────────────────────────────────────────────────────
 
 export interface PagedResult<T> {
-  items: T[];
-  totalCount: number;
-  pageNumber: number;
-  pageSize: number;
-  totalPages: number;
+    items: T[];
+    totalCount: number;
+    pageNumber: number;
+    pageSize: number;
+    totalPages: number;
 }
 
 export interface PaginationParams {
-  pageNumber?: number;
-  pageSize?: number;
+    pageNumber?: number;
+    pageSize?: number;
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 /** Matches MicroCMS.Application.Features.Auth.Dtos.AuthTokenResponse */
 export interface AuthTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  accessTokenExpiry: string;   // ISO 8601
-  refreshTokenExpiry: string;  // ISO 8601
-  user: AuthUserDto;
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiry: string;   // ISO 8601
+    refreshTokenExpiry: string;  // ISO 8601
+    user: AuthUserDto;
 }
 
 /** Matches MicroCMS.Application.Features.Auth.Dtos.AuthUserDto */
 export interface AuthUserDto {
-  userId: string;
-  email: string;
-  displayName: string;
-  roles: string[];
+    userId: string;
+    email: string;
+    displayName: string;
+    roles: string[];
 }
 
 /** Alias kept for backwards compatibility within the SPA */
 export type LoginResponse = AuthTokenResponse;
 
 export interface CurrentUser {
-  id: string;
-  email: string;
-  displayName: string;
-  roles: string[];
-  tenantId: string;
-  siteId?: string;
-  avatarUrl?: string;
+    id: string;
+    email: string;
+    displayName: string;
+    roles: string[];
+    tenantId: string;
+    siteId?: string;
+    avatarUrl?: string;
 }
 
 export interface SwitchSiteRequest {
-  siteId: string;
+    siteId: string;
 }
 
 export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
+    currentPassword: string;
+    newPassword: string;
 }
 
 // ─── Tenant ───────────────────────────────────────────────────────────────────
 
 export interface Tenant {
-  id: string;
-  slug: string;
-  /** matches TenantDto.DisplayName */
-  displayName: string;
-  defaultLocale: string;
-  /** matches TenantDto.TimeZoneId */
-  timeZoneId: string;
-  aiEnabled: boolean;
-  logoUrl?: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  sites: Site[];
+    id: string;
+    slug: string;
+    /** matches TenantDto.DisplayName */
+    displayName: string;
+    defaultLocale: string;
+    /** matches TenantDto.TimeZoneId */
+    timeZoneId: string;
+    aiEnabled: boolean;
+    logoUrl?: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    sites: Site[];
 }
 
 export interface UpdateTenantRequest {
-  displayName: string;
-  defaultLocale: string;
-  timeZoneId: string;
-  aiEnabled: boolean;
-  logoUrl?: string;
+    displayName: string;
+    defaultLocale: string;
+    timeZoneId: string;
+    aiEnabled: boolean;
+    logoUrl?: string;
 }
 
 // ─── Content Types ────────────────────────────────────────────────────────────
@@ -99,32 +99,33 @@ export type ContentTypeKind = 'Content' | 'Page' | 'Component';
  * Matches the backend FieldType enum exactly (case-sensitive).
  */
 export type FieldType =
-  | 'ShortText'
-  | 'LongText'
-  | 'RichText'
-  | 'Markdown'
-  | 'Integer'
-  | 'Decimal'
-  | 'Boolean'
-  | 'DateTime'
-  | 'Enum'
-  | 'Reference'
-  | 'AssetReference'
-  | 'Json'
-  | 'Component'
-  | 'Location'
-  | 'Color';
+    | 'ShortText'
+    | 'LongText'
+    | 'RichText'
+    | 'Markdown'
+    | 'Integer'
+    | 'Decimal'
+    | 'Boolean'
+    | 'DateTime'
+    | 'Enum'
+    | 'Reference'
+    | 'AssetReference'
+    | 'Json'
+    | 'Component'
+    | 'Location'
+    | 'Color'
+    | 'MultiList';
 
 export interface FieldDefinition {
-  id: string;
-  name: string;
-  apiKey: string;
-  type: FieldType;
-  required: boolean;
-  localized: boolean;
-  validations?: Record<string, unknown>;
-  defaultValue?: unknown;
-  options?: string[];
+    id: string;
+    name: string;
+    apiKey: string;
+    type: FieldType;
+    required: boolean;
+    localized: boolean;
+    validations?: Record<string, unknown>;
+    defaultValue?: unknown;
+    options?: string[];
 }
 
 /**
@@ -132,25 +133,25 @@ export interface FieldDefinition {
  * Uses fieldCount (number) instead of a full fields array to keep payloads small.
  */
 export interface ContentTypeListItem {
-  id: string;
-  /** Machine-readable handle, e.g. "blog_post" */
-  handle: string;
-  /** Human-readable display name */
-  displayName: string;
-  status: string;
-  localizationMode: string;
-  /**
-   * Discriminates what this content type represents.
-   * Component-kind types are auto-created backing types and should be hidden in the UI.
-   */
-  kind: ContentTypeKind;
-  /** Count of non-archived entries for this content type. */
-  entryCount: number;
-  /** Count of distinct locales used by entries of this type. */
-  localeCount: number;
-  /** Number of fields defined on this content type */
-  fieldCount: number;
-  updatedAt: string;
+    id: string;
+    /** Machine-readable handle, e.g. "blog_post" */
+    handle: string;
+    /** Human-readable display name */
+    displayName: string;
+    status: string;
+    localizationMode: string;
+    /**
+     * Discriminates what this content type represents.
+     * Component-kind types are auto-created backing types and should be hidden in the UI.
+     */
+    kind: ContentTypeKind;
+    /** Count of non-archived entries for this content type. */
+    entryCount: number;
+    /** Count of distinct locales used by entries of this type. */
+    localeCount: number;
+    /** Number of fields defined on this content type */
+    fieldCount: number;
+    updatedAt: string;
 }
 
 /**
@@ -158,163 +159,196 @@ export interface ContentTypeListItem {
  * Includes the full fields array.
  */
 export interface ContentType {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  handle: string;
-  displayName: string;
-  description?: string;
-  localizationMode: string;
-  status: string;
-  /** Discriminates what this content type represents. */
-  kind: ContentTypeKind;
-  /** Only set when kind === 'Page'. The layout applied to pages of this type. */
-  layoutId?: string;
-  fields: FieldDefinitionDto[];
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    tenantId: string;
+    siteId: string;
+    handle: string;
+    displayName: string;
+    description?: string;
+    localizationMode: string;
+    status: string;
+    /** Discriminates what this content type represents. */
+    kind: ContentTypeKind;
+    /** Only set when kind === 'Page'. The layout applied to pages of this type. */
+    layoutId?: string;
+    fields: FieldDefinitionDto[];
+    createdAt: string;
+    updatedAt: string;
 }
 
 /**
  * Matches FieldDefinitionDto from the backend.
  */
 export interface FieldDefinitionDto {
-  id: string;
-  handle: string;
-  label: string;
-  fieldType: string;
-  isRequired: boolean;
-  isLocalized: boolean;
-  isUnique: boolean;
-  isIndexed: boolean;
-  /** When true the field stores a JSON array; the element type is fieldType. */
-  isList: boolean;
-  sortOrder: number;
-  description?: string;
-  /** Static option list for Enum fields. Null when field uses a dynamic source. */
-  options?: string[];
-  /** Dynamic source config for Enum fields. When set, options are resolved at runtime. */
-  dynamicSource?: FieldDynamicSource;
+    id: string;
+    handle: string;
+    label: string;
+    fieldType: string;
+    isRequired: boolean;
+    isLocalized: boolean;
+    isUnique: boolean;
+    isIndexed: boolean;
+    /** When true the field stores a JSON array; the element type is fieldType. */
+    isList: boolean;
+    sortOrder: number;
+    description?: string;
+    /** Static option list for Enum fields. Null when field uses a dynamic source. */
+    options?: string[];
+    /** Dynamic source config for Enum fields. When set, options are resolved at runtime. */
+    dynamicSource?: FieldDynamicSource;
+    /** Dynamic source config for MultiList fields. */
+    multiListSource?: FieldDynamicSource;
 }
 
 /** Describes how to resolve Enum options dynamically from published entries. */
 export interface FieldDynamicSource {
-  contentTypeHandle: string;
-  labelField: string;
-  valueField: string;
-  statusFilter: string;
+    contentTypeHandle: string;
+    labelField: string;
+    valueField: string;
+    statusFilter: string;
+    /** When set, restricts the available options to entries belonging to this group handle. */
+    groupHandle?: string;
 }
 
 /** Matches EnumOptionDto returned by GET /content-types/{id}/fields/{fieldId}/enum-options */
 export interface EnumOptionDto {
-  value: string;
-  label: string;
+    value: string;
+    label: string;
+}
+
+/** Matches MultiListOptionDto — candidate entries for the left pane of a MultiList picker. */
+export interface MultiListOptionDto {
+    id: string;
+    label: string;
+    slug: string;
+}
+
+/** Matches EntryGroupListItemDto */
+export interface EntryGroupListItem {
+    id: string;
+    handle: string;
+    title: string;
+    description?: string;
+    memberCount: number;
+    updatedAt: string;
+}
+
+/** Matches EntryGroupDto — full group with member IDs. */
+export interface EntryGroupDto {
+    id: string;
+    contentTypeId: string;
+    handle: string;
+    title: string;
+    description?: string;
+    imageAssetId?: string;
+    memberEntryIds: string[];
+    updatedAt: string;
 }
 
 export interface CreateContentTypeRequest {
-  name: string;
-  apiKey: string;
-  description?: string;
-  isCollection: boolean;
-  fields: Omit<FieldDefinition, 'id'>[];
+    name: string;
+    apiKey: string;
+    description?: string;
+    isCollection: boolean;
+    fields: Omit<FieldDefinition, 'id'>[];
 }
 
 export interface UpdateContentTypeRequest extends CreateContentTypeRequest {
-  fields: FieldDefinition[];
+    fields: FieldDefinition[];
 }
 
 // ─── Entries ──────────────────────────────────────────────────────────────────
 
 /** Matches the backend EntryStatus enum exactly (case-sensitive). */
 export type EntryStatus =
-  | 'Draft'
-  | 'PendingReview'
-  | 'Approved'
-  | 'Published'
-  | 'Unpublished'
-  | 'Archived'
-  | 'Scheduled';
+    | 'Draft'
+    | 'PendingReview'
+    | 'Approved'
+    | 'Published'
+    | 'Unpublished'
+    | 'Archived'
+    | 'Scheduled';
 
 /** Matches EntryListItemDto — returned by GET /entries (paginated list). */
 export interface EntryListItem {
-  id: string;
-  siteId: string;
-  contentTypeId: string;
-  /** Populated when the backend performs a join; may be null on simple list paths. */
-  contentTypeName?: string;
-  slug: string;
-  /** Extracted from the "title" field in FieldsJson; null when absent. */
-  title?: string;
-  locale: string;
-  authorId: string;
-  /** Populated when the backend performs a join; may be null on simple list paths. */
-  authorName?: string;
-  status: EntryStatus;
-  currentVersionNumber: number;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-  scheduledPublishAt?: string;
+    id: string;
+    siteId: string;
+    contentTypeId: string;
+    /** Populated when the backend performs a join; may be null on simple list paths. */
+    contentTypeName?: string;
+    slug: string;
+    /** Extracted from the "title" field in FieldsJson; null when absent. */
+    title?: string;
+    locale: string;
+    authorId: string;
+    /** Populated when the backend performs a join; may be null on simple list paths. */
+    authorName?: string;
+    status: EntryStatus;
+    currentVersionNumber: number;
+    createdAt: string;
+    updatedAt: string;
+    publishedAt?: string;
+    scheduledPublishAt?: string;
 }
 
 /** Matches EntryDto — returned by GET /entries/{id} (single entry). */
 export interface Entry {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  contentTypeId: string;
-  slug: string;
-  locale: string;
-  authorId: string;
-  status: EntryStatus;
-  currentVersionNumber: number;
-  fields: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-  scheduledPublishAt?: string;
-  scheduledUnpublishAt?: string;
-  folderId?: string;
-  /** All locale codes for which a variant of this entry exists. */
-  localeVariants?: string[];
+    id: string;
+    tenantId: string;
+    siteId: string;
+    contentTypeId: string;
+    slug: string;
+    locale: string;
+    authorId: string;
+    status: EntryStatus;
+    currentVersionNumber: number;
+    fields: Record<string, unknown>;
+    createdAt: string;
+    updatedAt: string;
+    publishedAt?: string;
+    scheduledPublishAt?: string;
+    scheduledUnpublishAt?: string;
+    folderId?: string;
+    /** All locale codes for which a variant of this entry exists. */
+    localeVariants?: string[];
 }
 
 export interface CreateEntryRequest {
-  siteId: string;
-  contentTypeId: string;
-  slug: string;
-  locale: string;
-  fields?: Record<string, unknown>;
+    siteId: string;
+    contentTypeId: string;
+    slug: string;
+    locale: string;
+    fields?: Record<string, unknown>;
 }
 
 export interface UpdateEntryRequest {
-  fields?: Record<string, unknown>;
-  newSlug?: string;
-  changeNote?: string;
+    fields?: Record<string, unknown>;
+    newSlug?: string;
+    changeNote?: string;
 }
 
 export interface PublishEntryRequest {
-  scheduledAt?: string;
+    scheduledAt?: string;
 }
 
 /** Matches EntryVersionDto — returned by GET /entries/{id}/versions. */
 export interface EntryVersion {
-  id: string;
-  entryId: string;
-  versionNumber: number;
-  fields: Record<string, unknown>;
-  authorId: string;
-  changeNote?: string;
-  createdAt: string;
+    id: string;
+    entryId: string;
+    versionNumber: number;
+    fields: Record<string, unknown>;
+    authorId: string;
+    changeNote?: string;
+    createdAt: string;
 }
 
 export interface EntryListParams extends PaginationParams {
-  siteId?: string;
-  contentTypeId?: string;
-  status?: EntryStatus;
-  locale?: string;
-  search?: string;
-  folderId?: string;
+    siteId?: string;
+    contentTypeId?: string;
+    status?: EntryStatus;
+    locale?: string;
+    search?: string;
+    folderId?: string;
 }
 
 // ─── Media ────────────────────────────────────────────────────────────────────
@@ -324,85 +358,85 @@ export type MediaType = 'image' | 'video' | 'audio' | 'document' | 'other';
 export type MediaAssetStatus = 'Uploading' | 'PendingScan' | 'Available' | 'Quarantined' | 'Deleted';
 
 export interface MediaAsset {
-  id: string;
-  fileName: string;
-  contentType: string;
-  mediaType: MediaType;
-  status?: MediaAssetStatus;
-  url: string;
-  signedUrl?: string;
-  thumbnailUrl?: string;
-  fileSize: number;
-  width?: number;
-  height?: number;
-  altText?: string;
-  tags: string[];
-  folderId?: string;
-  uploadedById?: string;
-  uploadedByName?: string;
-  createdAt: string;
+    id: string;
+    fileName: string;
+    contentType: string;
+    mediaType: MediaType;
+    status?: MediaAssetStatus;
+    url: string;
+    signedUrl?: string;
+    thumbnailUrl?: string;
+    fileSize: number;
+    width?: number;
+    height?: number;
+    altText?: string;
+    tags: string[];
+    folderId?: string;
+    uploadedById?: string;
+    uploadedByName?: string;
+    createdAt: string;
 }
 
 export interface UpdateMediaAssetRequest {
-  altText?: string;
-  tags?: string[];
-  folderId?: string;
+    altText?: string;
+    tags?: string[];
+    folderId?: string;
 }
 
 export interface MediaFolder {
-  id: string;
-  siteId: string;
-  name: string;
-  parentFolderId?: string | null;
-  childCount: number;
-  assetCount: number;
-  createdAt: string;
+    id: string;
+    siteId: string;
+    name: string;
+    parentFolderId?: string | null;
+    childCount: number;
+    assetCount: number;
+    createdAt: string;
 }
 
 export interface CreateMediaFolderRequest {
-  siteId: string;
-  name: string;
-  parentFolderId?: string;
+    siteId: string;
+    name: string;
+    parentFolderId?: string;
 }
 
 export interface RenameMediaFolderRequest {
-  newName: string;
+    newName: string;
 }
 
 export interface MediaListParams extends PaginationParams {
-  search?: string;
-  mediaType?: MediaType;
-  folderId?: string;
-  siteId?: string;
+    search?: string;
+    mediaType?: MediaType;
+    folderId?: string;
+    siteId?: string;
 }
 
 // ─── Taxonomy ─────────────────────────────────────────────────────────────────
 
 export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  parentId?: string;
-  children?: Category[];
-  entryCount: number;
+    id: string;
+    name: string;
+    slug: string;
+    parentId?: string;
+    children?: Category[];
+    entryCount: number;
 }
 
 export interface Tag {
-  id: string;
-  name: string;
-  slug: string;
-  entryCount: number;
+    id: string;
+    name: string;
+    slug: string;
+    entryCount: number;
 }
 
 export interface CreateCategoryRequest {
-  name: string;
-  slug: string;
-  parentId?: string;
+    name: string;
+    slug: string;
+    parentId?: string;
 }
 
 export interface CreateTagRequest {
-  name: string;
-  slug: string;
+    name: string;
+    slug: string;
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -410,83 +444,83 @@ export interface CreateTagRequest {
 export type UserRole = 'SystemAdmin' | 'TenantAdmin' | 'Editor' | 'Author' | 'Viewer';
 
 export interface User {
-  id: string;
-  email: string;
-  displayName: string;
-  /** Matches UserListItemDto.Roles — array of role name strings e.g. "TenantAdmin" */
-  roles: string[];
-  isActive: boolean;
-  avatarUrl?: string;
-  lastLoginAt?: string;
-  createdAt: string;
+    id: string;
+    email: string;
+    displayName: string;
+    /** Matches UserListItemDto.Roles — array of role name strings e.g. "TenantAdmin" */
+    roles: string[];
+    isActive: boolean;
+    avatarUrl?: string;
+    lastLoginAt?: string;
+    createdAt: string;
 }
 
 export interface InviteUserRequest {
-  email: string;
-  displayName: string;
+    email: string;
+    displayName: string;
 }
 
 export interface UpdateUserRolesRequest {
-  roles: string[];
+    roles: string[];
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export interface DashboardStats {
-  totalEntries: number;
-  publishedEntries: number;
-  draftEntries: number;
-  totalAssets: number;
-  totalUsers: number;
-  contentTypes: number;
+    totalEntries: number;
+    publishedEntries: number;
+    draftEntries: number;
+    totalAssets: number;
+    totalUsers: number;
+    contentTypes: number;
 }
 
 export interface ActivityItem {
-  id: string;
-  type: string;
-  description: string;
-  actorName: string;
-  actorAvatarUrl?: string;
-  entityId: string;
-  entityType: string;
-  entityTitle: string;
-  createdAt: string;
+    id: string;
+    type: string;
+    description: string;
+    actorName: string;
+    actorAvatarUrl?: string;
+    entityId: string;
+    entityType: string;
+    entityTitle: string;
+    createdAt: string;
 }
 
 // ─── Problem Details ─────────────────────────────────────────────────────────
 
 export interface ProblemDetails {
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-  errors?: Record<string, string[]>;
+    type?: string;
+    title?: string;
+    status?: number;
+    detail?: string;
+    errors?: Record<string, string[]>;
 }
 
 // ─── Install ──────────────────────────────────────────────────────────────────
 
 export interface InstallStatusResponse {
-  isInstalled: boolean;
-  message: string;
+    isInstalled: boolean;
+    message: string;
 }
 
 export interface InstallRequest {
-  tenantSlug: string;
-  tenantDisplayName: string;
-  defaultLocale: string;
-  timeZoneId: string;
-  defaultSiteName: string;
-  adminEmail: string;
-  adminDisplayName: string;
-  adminPassword: string;
+    tenantSlug: string;
+    tenantDisplayName: string;
+    defaultLocale: string;
+    timeZoneId: string;
+    defaultSiteName: string;
+    adminEmail: string;
+    adminDisplayName: string;
+    adminPassword: string;
 }
 
 export interface InstallResult {
-  tenantId: string;
-  siteId: string;
-  adminUserId: string;
-  adminEmail: string;
-  message: string;
+    tenantId: string;
+    siteId: string;
+    adminUserId: string;
+    adminEmail: string;
+    message: string;
 }
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
@@ -494,114 +528,114 @@ export interface InstallResult {
 export type PageType = 'Static' | 'Collection';
 
 export interface PageTreeNode {
-  id: string;
-  title: string;
-  slug: string;
-  pageType: PageType;
-  parentId?: string;
-  depth: number;
-  layoutId?: string;
-  children: PageTreeNode[];
+    id: string;
+    title: string;
+    slug: string;
+    pageType: PageType;
+    parentId?: string;
+    depth: number;
+    layoutId?: string;
+    children: PageTreeNode[];
 }
 
 export interface PageSeoDto {
-  metaTitle?: string;
-  metaDescription?: string;
-  canonicalUrl?: string;
-  ogImage?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    canonicalUrl?: string;
+    ogImage?: string;
 }
 
 export interface PageDto {
-  id: string;
-  siteId: string;
-  title: string;
-  slug: string;
-  pageType: PageType;
-  parentId?: string;
-  linkedEntryId?: string;
-  collectionContentTypeId?: string;
-  routePattern?: string;
-  depth: number;
-  layoutId?: string;
-  /** ID of the SiteTemplate this page inherits shared placements from. */
-  siteTemplateId?: string;
-  /** Page-level SEO metadata; null/undefined when none have been set. */
-  seo?: PageSeoDto;
+    id: string;
+    siteId: string;
+    title: string;
+    slug: string;
+    pageType: PageType;
+    parentId?: string;
+    linkedEntryId?: string;
+    collectionContentTypeId?: string;
+    routePattern?: string;
+    depth: number;
+    layoutId?: string;
+    /** ID of the SiteTemplate this page inherits shared placements from. */
+    siteTemplateId?: string;
+    /** Page-level SEO metadata; null/undefined when none have been set. */
+    seo?: PageSeoDto;
 }
 
 /** Nested placement node — either a component leaf or a grid-row branch. */
 export interface SavePlacementNode {
-  type: 'component' | 'grid-row';
-  zone: string;
-  sortOrder: number;
-  // component-only:
-  componentId?: string;
-  boundItemId?: string;
-  isLayoutDefault?: boolean;
-  // grid-row-only:
-  columns?: Array<{
-    span: number;
-    zoneName: string;
-    placements: SavePlacementNode[];
-  }>;
+    type: 'component' | 'grid-row';
+    zone: string;
+    sortOrder: number;
+    // component-only:
+    componentId?: string;
+    boundItemId?: string;
+    isLayoutDefault?: boolean;
+    // grid-row-only:
+    columns?: Array<{
+        span: number;
+        zoneName: string;
+        placements: SavePlacementNode[];
+    }>;
 }
 
 export interface SavePageTemplateRequest {
-  placements: SavePlacementNode[];
+    placements: SavePlacementNode[];
 }
 
 export interface MovePageRequest {
-  newParentId?: string;
+    newParentId?: string;
 }
 
 export interface SetPageLayoutRequest {
-  layoutId: string | null;
+    layoutId: string | null;
 }
 
 export interface PageTemplatePlacementDto {
-  id: string;
-  componentId: string;
-  zone: string;
-  sortOrder: number;
+    id: string;
+    componentId: string;
+    zone: string;
+    sortOrder: number;
 }
 
 export interface PageTemplateDto {
-  id: string;
-  pageId: string;
-  placements: PageTemplatePlacementDto[];
-  updatedAt: string;
+    id: string;
+    pageId: string;
+    placements: PageTemplatePlacementDto[];
+    updatedAt: string;
 }
 
 export interface PageTemplatePlacementInput {
-  componentId: string;
-  zone: string;
-  sortOrder: number;
+    componentId: string;
+    zone: string;
+    sortOrder: number;
 }
 
 export interface SetPageSeoRequest {
-  metaTitle: string | null;
-  metaDescription: string | null;
-  canonicalUrl: string | null;
-  ogImage: string | null;
+    metaTitle: string | null;
+    metaDescription: string | null;
+    canonicalUrl: string | null;
+    ogImage: string | null;
 }
 
 export interface SetPageLinkedEntryRequest {
-  entryId: string | null;
+    entryId: string | null;
 }
 
 export interface CreateStaticPageRequest {
-  title: string;
-  slug: string;
-  parentId?: string;
-  layoutId?: string;
+    title: string;
+    slug: string;
+    parentId?: string;
+    layoutId?: string;
 }
 
 export interface CreateCollectionPageRequest {
-  title: string;
-  slug: string;
-  parentId?: string;
-  layoutId?: string;
-  collectionContentTypeId?: string;
+    title: string;
+    slug: string;
+    parentId?: string;
+    layoutId?: string;
+    collectionContentTypeId?: string;
 }
 
 // ─── Layouts ──────────────────────────────────────────────────────────────────
@@ -609,330 +643,330 @@ export interface CreateCollectionPageRequest {
 export type LayoutTemplateType = 'Handlebars' | 'Html';
 
 export interface LayoutListItem {
-  id: string;
-  siteId: string;
-  name: string;
-  key: string;
-  templateType: LayoutTemplateType;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    siteId: string;
+    name: string;
+    key: string;
+    templateType: LayoutTemplateType;
+    isDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface LayoutColumnDef {
-  span: number;      // 1–12; all columns must sum to 12
-  zoneName: string;
+    span: number;      // 1–12; all columns must sum to 12
+    zoneName: string;
 }
 
 /** A node in the layout's zone tree — either a simple zone or a grid row of column-zones. */
 export interface LayoutZoneNode {
-  id: string;
-  type: 'zone' | 'grid-row';
-  name: string; // machine name, used as token in shell template
-  label: string;       // display label in layout designer
-sortOrder: number;
-  columns?: LayoutColumnDef[];
+    id: string;
+    type: 'zone' | 'grid-row';
+    name: string; // machine name, used as token in shell template
+    label: string;       // display label in layout designer
+    sortOrder: number;
+    columns?: LayoutColumnDef[];
 }
 
 /** A default component placement defined on the layout, inherited by all pages. */
 export interface LayoutDefaultPlacement {
-  componentId: string;
-  componentName: string;
-  zone: string;
-  sortOrder: number;
-  isLocked: boolean;
+    componentId: string;
+    componentName: string;
+    zone: string;
+    sortOrder: number;
+    isLocked: boolean;
 }
 
 export interface LayoutDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  name: string;
-  key: string;
-  templateType: LayoutTemplateType;
-  /** Auto-generated from zones[]. Not editable directly via UI. */
-  shellTemplate?: string;
-  isDefault: boolean;
-  zones: LayoutZoneNode[];
-  defaultPlacements: LayoutDefaultPlacement[];
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    tenantId: string;
+    siteId: string;
+    name: string;
+    key: string;
+    templateType: LayoutTemplateType;
+    /** Auto-generated from zones[]. Not editable directly via UI. */
+    shellTemplate?: string;
+    isDefault: boolean;
+    zones: LayoutZoneNode[];
+    defaultPlacements: LayoutDefaultPlacement[];
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CreateLayoutRequest {
-  name: string;
-  key: string;
-  templateType: LayoutTemplateType;
+    name: string;
+    key: string;
+    templateType: LayoutTemplateType;
 }
 
 export interface UpdateLayoutRequest {
-  name: string;
-  templateType: LayoutTemplateType;
+    name: string;
+    templateType: LayoutTemplateType;
 }
 
 export interface UpdateLayoutZonesRequest {
-  zones: LayoutZoneNode[];
+    zones: LayoutZoneNode[];
 }
 
 export interface UpdateLayoutDefaultPlacementsRequest {
-  placements: LayoutDefaultPlacement[];
+    placements: LayoutDefaultPlacement[];
 }
 
 // ─── Sites ────────────────────────────────────────────────────────────────────
 
 export interface Site {
-  id: string;
-  name: string;
-  handle: string;
-  defaultLocale: string;
-  isActive: boolean;
-  customDomain?: string;
+    id: string;
+    name: string;
+    handle: string;
+    defaultLocale: string;
+    isActive: boolean;
+    customDomain?: string;
 }
 
 export interface SiteEnvironment {
-  type: string;      // 'Production' | 'Staging' | 'Development'
-  url: string;
-  sslStatus: string;
-  isLive: boolean;
+    type: string;      // 'Production' | 'Staging' | 'Development'
+    url: string;
+    sslStatus: string;
+    isLive: boolean;
 }
 
 export interface SiteDetail extends Site {
-  tenantId: string;
-  createdAt: string;
-  environments: SiteEnvironment[];
+    tenantId: string;
+    createdAt: string;
+    environments: SiteEnvironment[];
 }
 
 export interface SiteSettingsDto {
-  siteId: string;
-  previewUrlTemplate?: string;
-  versioningEnabled: boolean;
-  workflowEnabled: boolean;
-  schedulingEnabled: boolean;
-  previewEnabled: boolean;
-  aiEnabled: boolean;
-  corsOrigins: string[];
-  locales: string[];
+    siteId: string;
+    previewUrlTemplate?: string;
+    versioningEnabled: boolean;
+    workflowEnabled: boolean;
+    schedulingEnabled: boolean;
+    previewEnabled: boolean;
+    aiEnabled: boolean;
+    corsOrigins: string[];
+    locales: string[];
 }
 
 export interface UpdateSiteRequest {
-  name: string;
-  defaultLocale: string;
-  customDomain?: string;
+    name: string;
+    defaultLocale: string;
+    customDomain?: string;
 }
 
 export interface UpdateSiteSettingsRequest {
-  previewUrlTemplate?: string;
-  versioningEnabled: boolean;
-  workflowEnabled: boolean;
-  schedulingEnabled: boolean;
-  previewEnabled: boolean;
-  aiEnabled: boolean;
-  corsOrigins: string[];
-  locales: string[];
+    previewUrlTemplate?: string;
+    versioningEnabled: boolean;
+    workflowEnabled: boolean;
+    schedulingEnabled: boolean;
+    previewEnabled: boolean;
+    aiEnabled: boolean;
+    corsOrigins: string[];
+    locales: string[];
 }
 
 export interface CreateSiteRequest {
-  name: string;
-  handle: string;
-  defaultLocale: string;
+    name: string;
+    handle: string;
+    defaultLocale: string;
 }
 
 // ─── Tenant Admin (system-level) ──────────────────────────────────────────────
 
 export interface TenantListItem {
-  id: string;
-  slug: string;
-  displayName: string;
-  status: string;
-  createdAt: string;
+    id: string;
+    slug: string;
+    displayName: string;
+    status: string;
+    createdAt: string;
 }
 
 export interface TenantDetail {
-  id: string;
-  slug: string;
-  displayName: string;
-  defaultLocale: string;
-  timeZoneId: string;
-  aiEnabled: boolean;
-  logoUrl?: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  sites: Site[];
+    id: string;
+    slug: string;
+    displayName: string;
+    defaultLocale: string;
+    timeZoneId: string;
+    aiEnabled: boolean;
+    logoUrl?: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    sites: Site[];
 }
 
 export interface OnboardTenantRequest {
-  slug: string;
-displayName: string;
-  defaultLocale: string;
-  timeZoneId: string;
-  adminEmail: string;
-  adminDisplayName: string;
-  defaultSiteName?: string;
+    slug: string;
+    displayName: string;
+    defaultLocale: string;
+    timeZoneId: string;
+    adminEmail: string;
+    adminDisplayName: string;
+    defaultSiteName?: string;
 }
 
 export interface TenantOnboardingResult {
-  tenantId: string;
-  siteId: string;
-  adminUserId: string;
-  adminEmail: string;
-  message: string;
+    tenantId: string;
+    siteId: string;
+    adminUserId: string;
+    adminEmail: string;
+    message: string;
 }
 
 export interface UpdateTenantSettingsRequest {
-  displayName: string;
-  defaultLocale: string;
-  timeZoneId: string;
-  aiEnabled: boolean;
-  logoUrl?: string;
+    displayName: string;
+    defaultLocale: string;
+    timeZoneId: string;
+    aiEnabled: boolean;
+    logoUrl?: string;
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 export interface SearchHit {
-  entryId: string;
-  siteId: string;
-  contentTypeId: string;
-  slug: string;
-  locale: string;
-  status: string;
-  title?: string;
-  excerpt?: string;
-  score: number;
-  publishedAt?: string;
+    entryId: string;
+    siteId: string;
+    contentTypeId: string;
+    slug: string;
+    locale: string;
+    status: string;
+    title?: string;
+    excerpt?: string;
+    score: number;
+    publishedAt?: string;
 }
 
 export interface SearchResults {
-  hits: SearchHit[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
+    hits: SearchHit[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
 }
 
 export interface SearchParams {
-  query: string;
-  contentTypeId?: string;
-  locale?: string;
-  status?: string;
-  page?: number;
-  pageSize?: number;
+    query: string;
+    contentTypeId?: string;
+    locale?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
 }
 
 // ─── Component System ─────────────────────────────────────────────────────────
 
 export type ComponentCategory =
-  | 'Layout'
-  | 'Content'
-  | 'Media'
-  | 'Navigation'
-  | 'Interactive'
-  | 'Commerce';
+    | 'Layout'
+    | 'Content'
+    | 'Media'
+    | 'Navigation'
+    | 'Interactive'
+    | 'Commerce';
 
 export type RenderingTemplateType =
-  | 'RazorPartial'
-  | 'Handlebars'
-  | 'React'
-  | 'WebComponent';
+    | 'RazorPartial'
+    | 'Handlebars'
+    | 'React'
+    | 'WebComponent';
 
 export interface ComponentFieldDefinition {
-  id: string;
-  handle: string;
-  label: string;
-  /** Uses the same FieldType enum as content-type fields. */
-  fieldType: FieldType;
-  isRequired: boolean;
-  isLocalized: boolean;
-  isIndexed: boolean;
-  isUnique: boolean;
-  isList: boolean;
-  sortOrder: number;
-  description?: string;
+    id: string;
+    handle: string;
+    label: string;
+    /** Uses the same FieldType enum as content-type fields. */
+    fieldType: FieldType;
+    isRequired: boolean;
+    isLocalized: boolean;
+    isIndexed: boolean;
+    isUnique: boolean;
+    isList: boolean;
+    sortOrder: number;
+    description?: string;
 }
 
 export interface ComponentDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  name: string;
-  key: string;
-  description?: string;
-  category: ComponentCategory;
-  usageCount: number;
-  itemCount: number;
-  templateType: RenderingTemplateType;
-  templateContent?: string;
-  thumbnailDataUri?: string;
-  fields: ComponentFieldDefinition[];
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    tenantId: string;
+    siteId: string;
+    name: string;
+    key: string;
+    description?: string;
+    category: ComponentCategory;
+    usageCount: number;
+    itemCount: number;
+    templateType: RenderingTemplateType;
+    templateContent?: string;
+    thumbnailDataUri?: string;
+    fields: ComponentFieldDefinition[];
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface ComponentListItem {
-  id: string;
-  name: string;
-  key: string;
-  description?: string;
-  category: ComponentCategory;
-  usageCount: number;
-  itemCount: number;
-  fieldCount: number;
-  templateType: RenderingTemplateType;
-  thumbnailDataUri?: string;
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    name: string;
+    key: string;
+    description?: string;
+    category: ComponentCategory;
+    usageCount: number;
+    itemCount: number;
+    fieldCount: number;
+    templateType: RenderingTemplateType;
+    thumbnailDataUri?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CreateComponentRequest {
-  name: string;
-  key: string;
-  description?: string;
-  category: ComponentCategory;
-  fields?: Omit<ComponentFieldDefinition, 'id'>[];
+    name: string;
+    key: string;
+    description?: string;
+    category: ComponentCategory;
+    fields?: Omit<ComponentFieldDefinition, 'id'>[];
 }
 
 export interface UpdateComponentRequest {
-  name: string;
-  description?: string;
-  category: ComponentCategory;
-  fields: ComponentFieldDefinition[];
+    name: string;
+    description?: string;
+    category: ComponentCategory;
+    fields: ComponentFieldDefinition[];
 }
 
 export interface UpdateComponentTemplateRequest {
-  templateType: RenderingTemplateType;
-  templateContent?: string;
+    templateType: RenderingTemplateType;
+    templateContent?: string;
 }
 
 export interface ComponentItemDto {
-  id: string;
-  componentId: string;
-  componentName: string;
-  componentKey: string;
-  tenantId: string;
-  siteId: string;
-  slug: string;
-  status: 'Draft' | 'Published' | 'Archived';
-  fieldsJson: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    componentId: string;
+    componentName: string;
+    componentKey: string;
+    tenantId: string;
+    siteId: string;
+    slug: string;
+    status: 'Draft' | 'Published' | 'Archived';
+    fieldsJson: Record<string, unknown>;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CreateComponentItemRequest {
-  slug: string;
-  fieldsJson: Record<string, unknown>;
+    slug: string;
+    fieldsJson: Record<string, unknown>;
 }
 
 export interface UpdateComponentItemRequest {
-  fieldsJson: Record<string, unknown>;
+    fieldsJson: Record<string, unknown>;
 }
 
 export interface ComponentListParams extends PaginationParams {
-  category?: ComponentCategory;
-  search?: string;
+    category?: ComponentCategory;
+    search?: string;
 }
 
 export interface ComponentItemListParams extends PaginationParams {
-  status?: 'Draft' | 'Published' | 'Archived';
-  search?: string;
+    status?: 'Draft' | 'Published' | 'Archived';
+    search?: string;
 }
 
 // ─── API Clients ──────────────────────────────────────────────────────────────
@@ -940,27 +974,27 @@ export interface ComponentItemListParams extends PaginationParams {
 export type ApiKeyType = 'Delivery' | 'Management' | 'Preview';
 
 export interface ApiClientDto {
-  id: string;
-  siteId: string;
-  name: string;
-  keyType: ApiKeyType;
-  isActive: boolean;
-  scopes: string[];
-  expiresAt?: string;
-  createdAt: string;
+    id: string;
+    siteId: string;
+    name: string;
+    keyType: ApiKeyType;
+    isActive: boolean;
+    scopes: string[];
+    expiresAt?: string;
+    createdAt: string;
 }
 
 export interface ApiClientCreatedDto {
-  client: ApiClientDto;
-  /** Raw key shown exactly once — store it immediately. */
-  rawKey: string;
+    client: ApiClientDto;
+    /** Raw key shown exactly once — store it immediately. */
+    rawKey: string;
 }
 
 export interface CreateApiClientRequest {
-  name: string;
-  keyType: ApiKeyType;
-  scopes?: string[];
-  expiresAt?: string;
+    name: string;
+    keyType: ApiKeyType;
+    scopes?: string[];
+    expiresAt?: string;
 }
 
 /** Entity type being edited, for locking. */
@@ -968,162 +1002,162 @@ export type LockEntityType = 'entry' | 'page-template' | 'layout';
 
 /** Edit lock held by a user on an entity. */
 export interface EditLock {
-  entityId: string;
-  entityType: LockEntityType;
-  lockedByUserId: string;
-  lockedByDisplayName: string;
-  lockedAt: string;
-  expiresAt: string;
+    entityId: string;
+    entityType: LockEntityType;
+    lockedByUserId: string;
+    lockedByDisplayName: string;
+    lockedAt: string;
+    expiresAt: string;
 }
 
 /** Acquire an edit lock on an entity. */
 export interface AcquireLockRequest {
-  entityId: string;
-  entityType: LockEntityType;
+    entityId: string;
+    entityType: LockEntityType;
 }
 
 // ─── Item Picker ──────────────────────────────────────────────────────────────
 
 export interface ItemPickerResult {
-  id: string;
-  title: string;
-  status: 'Draft' | 'Published' | 'Archived';
-  updatedAt: string;
-  contentTypeId: string;
+    id: string;
+    title: string;
+    status: 'Draft' | 'Published' | 'Archived';
+    updatedAt: string;
+    contentTypeId: string;
 }
 
 export interface ItemPickerParams {
-  contentTypeId: string;
-  search?: string;
-  status?: 'Draft' | 'Published' | 'Archived';
-  page?: number;
-  pageSize?: number;
+    contentTypeId: string;
+    search?: string;
+    status?: 'Draft' | 'Published' | 'Archived';
+    page?: number;
+    pageSize?: number;
 }
 
 // ─── Site Templates ───────────────────────────────────────────────────────────
 
 /** A reusable template: defines common component placements for a layout. */
 export interface SiteTemplateListItem {
-  id: string;
-  name: string;
-  description?: string;
-  layoutId: string;
-  layoutName: string;
-  pageCount: number;
-  updatedAt: string;
+    id: string;
+    name: string;
+    description?: string;
+    layoutId: string;
+    layoutName: string;
+    pageCount: number;
+    updatedAt: string;
 }
 
 export interface SiteTemplateDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  layoutId: string;
-  layoutName?: string;
-  name: string;
-  description?: string;
-  placementsJson: string;
-  updatedAt: string;
+    id: string;
+    tenantId: string;
+    siteId: string;
+    layoutId: string;
+    layoutName?: string;
+    name: string;
+    description?: string;
+    placementsJson: string;
+    updatedAt: string;
 }
 
 export interface CreateSiteTemplateRequest {
-  layoutId: string;
-  name: string;
-  description?: string;
+    layoutId: string;
+    name: string;
+    description?: string;
 }
 
 export interface UpdateSiteTemplateRequest {
-  layoutId: string;
-  name: string;
-  description?: string;
+    layoutId: string;
+    name: string;
+    description?: string;
 }
 
 export interface SaveSiteTemplateRequest {
-  placements: SavePlacementNode[];
+    placements: SavePlacementNode[];
 }
 
 export interface SetPageSiteTemplateRequest {
-  siteTemplateId: string | null;
+    siteTemplateId: string | null;
 }
 
 // ─── Package Manager ──────────────────────────────────────────────────────────
 
 export interface PackageContents {
-  contentTypeCount: number;
-  entryCount: number;
-  pageCount: number;
-  layoutCount: number;
-  mediaMetadataCount: number;
-  componentCount: number;
-  userCount: number;
-  siteCount: number;
+    contentTypeCount: number;
+    entryCount: number;
+    pageCount: number;
+    layoutCount: number;
+    mediaMetadataCount: number;
+    componentCount: number;
+    userCount: number;
+    siteCount: number;
 }
 
 export interface PackageManifest {
-  packageVersion: string;
-  createdAt: string;
-  tenantId: string;
-  siteId: string;
-  tenantSlug: string;
-  siteName: string;
-  contents: PackageContents;
+    packageVersion: string;
+    createdAt: string;
+    tenantId: string;
+    siteId: string;
+    tenantSlug: string;
+    siteName: string;
+    contents: PackageContents;
 }
 
 export interface PackageItemStat {
-  category: string;
-  totalInPackage: number;
-  newItems: number;
-  existingItems: number;
+    category: string;
+    totalInPackage: number;
+    newItems: number;
+    existingItems: number;
 }
 
 export interface PackageAnalysisResult {
-  manifest: PackageManifest;
-  items: PackageItemStat[];
-  warnings: string[];
+    manifest: PackageManifest;
+    items: PackageItemStat[];
+    warnings: string[];
 }
 
 export type ConflictResolution = 'Skip' | 'Overwrite';
 
 export interface ImportOptions {
-  importContentTypes: boolean;
-  importEntries: boolean;
-  importPages: boolean;
-  importLayouts: boolean;
-  importMediaMetadata: boolean;
-  importComponents: boolean;
-importUsers: boolean;
-  importSiteSettings: boolean;
-  conflictResolution: ConflictResolution;
+    importContentTypes: boolean;
+    importEntries: boolean;
+    importPages: boolean;
+    importLayouts: boolean;
+    importMediaMetadata: boolean;
+    importComponents: boolean;
+    importUsers: boolean;
+    importSiteSettings: boolean;
+    conflictResolution: ConflictResolution;
 }
 
 export interface ImportStepResult {
-  category: string;
-  imported: number;
-  skipped: number;
-  overwritten: number;
-  failed: number;
-  errors: string[];
+    category: string;
+    imported: number;
+    skipped: number;
+    overwritten: number;
+    failed: number;
+    errors: string[];
 }
 
 export type ImportStatus = 'Running' | 'Completed' | 'CompletedWithErrors' | 'Failed';
 
 export interface ImportProgress {
-  status: ImportStatus;
-  currentStep: string;
-  totalSteps: number;
-  completedSteps: number;
-  stepResults: ImportStepResult[];
-  errorMessage?: string;
+    status: ImportStatus;
+    currentStep: string;
+    totalSteps: number;
+    completedSteps: number;
+    stepResults: ImportStepResult[];
+    errorMessage?: string;
 }
 
 export interface ExportOptions {
-  tenantId: string;
-  siteId?: string;
-  includeContentTypes: boolean;
-  includeEntries: boolean;
-  includePages: boolean;
-  includeLayouts: boolean;
-  includeMediaMetadata: boolean;
-  includeComponents: boolean;
-  includeUsers: boolean;
-  includeSiteSettings: boolean;
+    tenantId: string;
+    siteId?: string;
+    includeContentTypes: boolean;
+    includeEntries: boolean;
+    includePages: boolean;
+    includeLayouts: boolean;
+    includeMediaMetadata: boolean;
+    includeComponents: boolean;
+    includeUsers: boolean;
+    includeSiteSettings: boolean;
 }

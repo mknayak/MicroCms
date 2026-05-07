@@ -4,6 +4,7 @@ using MicroCMS.Application.Features.ContentTypes.Queries;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Shared.Primitives;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MicroCMS.Api.Controllers;
@@ -65,7 +66,14 @@ public sealed class ContentTypesController : ApiControllerBase
       request.DynamicSource.ContentTypeHandle,
   request.DynamicSource.LabelField,
          request.DynamicSource.ValueField,
-     request.DynamicSource.StatusFilter)),
+     request.DynamicSource.StatusFilter,
+     request.DynamicSource.GroupHandle),
+  request.MultiListSource is null ? null : new FieldDynamicSourceInput(
+      request.MultiListSource.ContentTypeHandle,
+      request.MultiListSource.LabelField,
+      request.MultiListSource.ValueField,
+      request.MultiListSource.StatusFilter,
+      request.MultiListSource.GroupHandle)),
 cancellationToken);
         return OkOrProblem(result);
     }
@@ -116,7 +124,14 @@ cancellationToken);
             f.DynamicSource.ContentTypeHandle,
             f.DynamicSource.LabelField,
     f.DynamicSource.ValueField,
-            f.DynamicSource.StatusFilter)))
+            f.DynamicSource.StatusFilter,
+            f.DynamicSource.GroupHandle),
+        f.MultiListSource is null ? null : new FieldDynamicSourceInput(
+            f.MultiListSource.ContentTypeHandle,
+            f.MultiListSource.LabelField,
+            f.MultiListSource.ValueField,
+            f.MultiListSource.StatusFilter,
+            f.MultiListSource.GroupHandle)))
      .ToList();
 
         var result = await Sender.Send(
@@ -189,6 +204,22 @@ cancellationToken);
         var result = await Sender.Send(new ResolveEnumOptionsQuery(id, fieldId), cancellationToken);
      return OkOrProblem(result);
     }
+
+    /// <summary>
+    /// Resolves the available (left-pane) entry list for a MultiList field.
+    /// Optionally scoped to a group when the field's MultiListSource.GroupHandle is set.
+    /// Used by the dual-pane MultiList picker in the entry editor.
+    /// </summary>
+    [HttpGet("{id:guid}/fields/{fieldId:guid}/multilist-options")]
+    [ProducesResponseType(typeof(IReadOnlyList<MultiListOptionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMultiListOptions(
+        Guid id, Guid fieldId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new ResolveMultiListOptionsQuery(id, fieldId), cancellationToken);
+        return OkOrProblem(result);
+    }
 }
 
 // ── Request models ───────────────────────────────────────────────────────────
@@ -212,8 +243,10 @@ public sealed record AddFieldRequest(
     string? Description = null,
     /// <summary>Static option list for Enum fields.</summary>
     IReadOnlyList<string>? Options = null,
-    /// <summary>Dynamic source config for Enum fields.</summary>
-  FieldDynamicSourceRequest? DynamicSource = null);
+    /// <summary>Dynamic source config for Enum/Reference fields.</summary>
+  FieldDynamicSourceRequest? DynamicSource = null,
+    /// <summary>Source config for MultiList fields — defines the content type to pick entries from.</summary>
+    FieldDynamicSourceRequest? MultiListSource = null);
 
 public sealed record UpdateContentTypeRequest(
     string DisplayName,
@@ -236,7 +269,9 @@ Guid? Id,
  int SortOrder = 0,
     string? Description = null,
     IReadOnlyList<string>? Options = null,
-    FieldDynamicSourceRequest? DynamicSource = null);
+    FieldDynamicSourceRequest? DynamicSource = null,
+    /// <summary>Source config for MultiList fields.</summary>
+    FieldDynamicSourceRequest? MultiListSource = null);
 
 public sealed record ImportSchemaRequest(
     string Handle,
@@ -253,9 +288,11 @@ public sealed record ImportSchemaFieldRequest(
 
 public sealed record SetContentTypeLayoutRequest(Guid? LayoutId);
 
-/// <summary>API request model for dynamic Enum source configuration.</summary>
+/// <summary>API request model for dynamic Enum/Reference/MultiList source configuration.</summary>
 public sealed record FieldDynamicSourceRequest(
     string ContentTypeHandle,
     string LabelField = "title",
     string ValueField = "slug",
-    string StatusFilter = "Published");
+    string StatusFilter = "Published",
+    /// <summary>When set, restricts available entries to members of this group handle.</summary>
+    string? GroupHandle = null);

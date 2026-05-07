@@ -71,6 +71,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<ContentType> ContentTypes => Set<ContentType>();
     public DbSet<Entry> Entries => Set<Entry>();
     public DbSet<Folder> Folders => Set<Folder>();
+    public DbSet<EntryGroup> EntryGroups => Set<EntryGroup>();
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<MediaFolder> MediaFolders => Set<MediaFolder>();
@@ -133,6 +134,7 @@ public sealed class ApplicationDbContext : DbContext
     {
         modelBuilder.Entity<ContentType>().HasQueryFilter(ct => _tenantFilter == null || ct.TenantId == _tenantFilter);
         modelBuilder.Entity<Entry>().HasQueryFilter(e => _tenantFilter == null || e.TenantId == _tenantFilter);
+        modelBuilder.Entity<EntryGroup>().HasQueryFilter(g => _tenantFilter == null || g.TenantId == _tenantFilter);
         modelBuilder.Entity<Folder>().HasQueryFilter(f => _tenantFilter == null || f.TenantId == _tenantFilter);
         modelBuilder.Entity<Page>().HasQueryFilter(p => _tenantFilter == null || p.TenantId == _tenantFilter);
         modelBuilder.Entity<Component>().HasQueryFilter(c => _tenantFilter == null || c.TenantId == _tenantFilter);

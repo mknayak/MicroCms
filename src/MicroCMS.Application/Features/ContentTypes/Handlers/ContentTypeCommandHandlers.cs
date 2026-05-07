@@ -25,9 +25,10 @@ internal static class ValidationJsonHelper
     /// </summary>
     internal static string? Build(
         IReadOnlyList<string>? options,
-        FieldDynamicSourceInput? dynamicSource)
+        FieldDynamicSourceInput? dynamicSource,
+        FieldDynamicSourceInput? multiListSource = null)
     {
-      if (options is null && dynamicSource is null)
+      if (options is null && dynamicSource is null && multiListSource is null)
    return null;
 
   var config = new FieldValidationConfig
@@ -39,6 +40,15 @@ internal static class ValidationJsonHelper
               LabelField = dynamicSource.LabelField,
             ValueField = dynamicSource.ValueField,
         StatusFilter = dynamicSource.StatusFilter,
+                GroupHandle = dynamicSource.GroupHandle,
+            },
+            MultiListSource = multiListSource is null ? null : new FieldDynamicSource
+            {
+                ContentTypeHandle = multiListSource.ContentTypeHandle,
+                LabelField = multiListSource.LabelField,
+                ValueField = multiListSource.ValueField,
+                StatusFilter = multiListSource.StatusFilter,
+                GroupHandle = multiListSource.GroupHandle,
             },
         };
         return config.ToJson();
@@ -84,7 +94,7 @@ internal sealed class AddFieldCommandHandler(
         if (!Enum.TryParse<FieldType>(request.FieldType, ignoreCase: true, out var fieldType))
         throw new ValidationException([new ValidationFailure("FieldType", $"'{request.FieldType}' is not a valid FieldType.")]);
 
-        var validationJson = ValidationJsonHelper.Build(request.Options, request.DynamicSource);
+        var validationJson = ValidationJsonHelper.Build(request.Options, request.DynamicSource, request.MultiListSource);
 
         ct.AddField(request.Handle, request.Label, fieldType,
        request.IsRequired, request.IsLocalized, request.IsUnique,
@@ -213,7 +223,7 @@ ICacheService cacheService)
         if (!Enum.TryParse<FieldType>(f.FieldType, ignoreCase: true, out var fieldType))
           throw new ValidationException([new ValidationFailure("FieldType", $"'{f.FieldType}' is not a valid FieldType.")]);
 
-        var validationJson = ValidationJsonHelper.Build(f.Options, f.DynamicSource);
+        var validationJson = ValidationJsonHelper.Build(f.Options, f.DynamicSource, f.MultiListSource);
 
         if (f.Id.HasValue)
         ct.UpdateField(f.Id.Value, f.Label, fieldType,

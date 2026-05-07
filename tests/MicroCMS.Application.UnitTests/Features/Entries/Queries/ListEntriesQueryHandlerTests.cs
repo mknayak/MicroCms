@@ -17,9 +17,10 @@ namespace MicroCMS.Application.UnitTests.Features.Entries.Queries;
 public sealed class ListEntriesQueryHandlerTests
 {
     private readonly IRepository<Entry, EntryId> _repository;
+    private readonly IRepository<ContentType, ContentTypeId> _contentTypeRepository;
     private readonly ICacheService _cache;
     private readonly ICurrentUser _currentUser;
-  private readonly ListEntriesQueryHandler _sut;
+    private readonly ListEntriesQueryHandler _sut;
 
     private readonly TenantId _tenantId = TenantId.New();
     private readonly SiteId _siteId = SiteId.New();
@@ -27,16 +28,17 @@ public sealed class ListEntriesQueryHandlerTests
     public ListEntriesQueryHandlerTests()
     {
         _repository = Substitute.For<IRepository<Entry, EntryId>>();
+        _contentTypeRepository = Substitute.For<IRepository<ContentType, ContentTypeId>>();
         _cache = Substitute.For<ICacheService>();
         _currentUser = Substitute.For<ICurrentUser>();
         _currentUser.TenantId.Returns(_tenantId);
         _currentUser.SiteId.Returns(_siteId);
 
-    // Cache always misses in unit tests.
+        // Cache always misses in unit tests.
         _cache.GetAsync<object>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-.Returns((object?)null);
+            .Returns((object?)null);
 
-        _sut = new ListEntriesQueryHandler(_repository, _cache, _currentUser);
+        _sut = new ListEntriesQueryHandler(_repository, _contentTypeRepository, _cache, _currentUser);
     }
 
     [Fact]

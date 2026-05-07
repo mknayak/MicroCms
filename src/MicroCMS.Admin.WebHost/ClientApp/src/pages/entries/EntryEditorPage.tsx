@@ -13,6 +13,7 @@ import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useSite } from '@/contexts/SiteContext';
 import { MediaPickerField } from '@/pages/pages/MediaPickerField';
+import { EntryPickerField } from '@/pages/pages/EntryPickerField';
 
 // ─── Form schema ──────────────────────────────────────────────────────────────
 
@@ -190,12 +191,7 @@ function ScalarFieldInput({ field, value, onChange }: { field: FieldDefinitionDt
     case 'AssetReference':
       return <MediaPickerField value={value} onChange={onChange} />;
     case 'Reference':
-return (
-      <div className="flex items-center gap-2">
-          <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input flex-1 font-mono" placeholder="Entry ID…" />
-    <span className="text-xs text-slate-400">(entry picker — phase 2)</span>
-        </div>
-      );
+      return <EntryPickerField value={value} onChange={(v) => onChange(v)} source={field.dynamicSource} />;
  case 'Location':
       return (
         <div className="grid grid-cols-2 gap-2">

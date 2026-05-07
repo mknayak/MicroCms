@@ -3,10 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { contentTypesApi } from '@/api/contentTypes';
 import { EntriesTab } from './EntriesTab';
 import { SchemaTab } from './SchemaTab';
+import { GroupsTab } from './GroupsTab';
 import { LocalizationTab } from './LocalizationTab';
 import { ApiPreviewTab } from './ApiPreviewTab';
 
-type Tab = 'entries' | 'schema' | 'localization' | 'api-preview';
+type Tab = 'entries' | 'schema' | 'groups' | 'localization' | 'api-preview';
 
 export default function ContentTypeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +45,7 @@ export default function ContentTypeDetailPage() {
   const tabs: { key: Tab; label: string }[] = [
     { key: 'entries', label: 'Entries' },
     { key: 'schema', label: 'Schema' },
+    { key: 'groups', label: 'Groups' },
     { key: 'localization', label: 'Localization' },
     { key: 'api-preview', label: 'API Preview' },
   ];
@@ -100,6 +102,7 @@ export default function ContentTypeDetailPage() {
       <div>
         {activeTab === 'entries' && <EntriesTab contentTypeId={contentType.id} />}
         {activeTab === 'schema' && <SchemaTab contentType={contentType} />}
+        {activeTab === 'groups' && <GroupsTab contentType={contentType} />}
         {activeTab === 'localization' && <LocalizationTab contentType={contentType} />}
         {activeTab === 'api-preview' && <ApiPreviewTab contentType={contentType} />}
       </div>

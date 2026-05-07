@@ -22,6 +22,7 @@ public static class RolePermissions
             ContentPolicies.LayoutRead, ContentPolicies.LayoutManage,
             ContentPolicies.PageTemplateRead, ContentPolicies.PageTemplateManage,
             ContentPolicies.PackageExport, ContentPolicies.PackageImport,
+            ContentPolicies.EntryGroupRead, ContentPolicies.EntryGroupManage,
         },
 
         [Roles.SiteAdmin] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -37,6 +38,7 @@ public static class RolePermissions
             ContentPolicies.LayoutRead, ContentPolicies.LayoutManage,
             ContentPolicies.PageTemplateRead, ContentPolicies.PageTemplateManage,
             ContentPolicies.PackageExport, ContentPolicies.PackageImport,
+            ContentPolicies.EntryGroupRead, ContentPolicies.EntryGroupManage,
    },
 
         [Roles.ContentAdmin] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -50,6 +52,7 @@ public static class RolePermissions
             ContentPolicies.ComponentRead, ContentPolicies.ComponentManage,
             ContentPolicies.LayoutRead,
             ContentPolicies.PageTemplateRead,
+            ContentPolicies.EntryGroupRead, ContentPolicies.EntryGroupManage,
         },
 
         [Roles.Designer] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -59,6 +62,7 @@ public static class RolePermissions
             ContentPolicies.ComponentRead, ContentPolicies.ComponentManage,
             ContentPolicies.LayoutRead, ContentPolicies.LayoutManage,
             ContentPolicies.PageTemplateRead, ContentPolicies.PageTemplateManage,
+            ContentPolicies.EntryGroupRead,
         },
 
         [Roles.ContentApprover] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -67,6 +71,7 @@ public static class RolePermissions
             ContentPolicies.ContentTypeRead, ContentPolicies.MediaRead,
             ContentPolicies.TaxonomyRead, ContentPolicies.ComponentRead, ContentPolicies.LayoutRead,
             ContentPolicies.PageTemplateRead,
+            ContentPolicies.EntryGroupRead,
         },
 
         [Roles.ContentAuthor] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -75,9 +80,10 @@ public static class RolePermissions
             ContentPolicies.ContentTypeRead, ContentPolicies.MediaRead, ContentPolicies.MediaUpload,
             ContentPolicies.TaxonomyRead, ContentPolicies.ComponentRead, ContentPolicies.LayoutRead,
             ContentPolicies.PageTemplateRead,
+            ContentPolicies.EntryGroupRead,
         },
 
-        // Legacy role aliases — kept for backwards compat
+        // Legacy role aliases
         [Roles.TenantAdmin] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             ContentPolicies.EntryRead, ContentPolicies.EntryCreate, ContentPolicies.EntryUpdate,
@@ -91,6 +97,7 @@ public static class RolePermissions
             ContentPolicies.LayoutRead, ContentPolicies.LayoutManage,
             ContentPolicies.PageTemplateRead, ContentPolicies.PageTemplateManage,
             ContentPolicies.PackageExport, ContentPolicies.PackageImport,
+            ContentPolicies.EntryGroupRead, ContentPolicies.EntryGroupManage,
         },
         [Roles.Editor] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -101,6 +108,7 @@ public static class RolePermissions
             ContentPolicies.TaxonomyRead, ContentPolicies.ComponentRead, ContentPolicies.ComponentManage,
             ContentPolicies.LayoutRead, ContentPolicies.LayoutManage,
             ContentPolicies.PageTemplateRead, ContentPolicies.PageTemplateManage,
+            ContentPolicies.EntryGroupRead, ContentPolicies.EntryGroupManage,
         },
         [Roles.Approver] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -108,6 +116,7 @@ public static class RolePermissions
             ContentPolicies.ContentTypeRead, ContentPolicies.MediaRead,
             ContentPolicies.TaxonomyRead, ContentPolicies.ComponentRead, ContentPolicies.LayoutRead,
             ContentPolicies.PageTemplateRead,
+            ContentPolicies.EntryGroupRead,
         },
         [Roles.Author] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -115,6 +124,7 @@ public static class RolePermissions
             ContentPolicies.ContentTypeRead, ContentPolicies.MediaRead, ContentPolicies.MediaUpload,
             ContentPolicies.TaxonomyRead, ContentPolicies.ComponentRead, ContentPolicies.LayoutRead,
             ContentPolicies.PageTemplateRead,
+            ContentPolicies.EntryGroupRead,
         },
         [Roles.Viewer] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -122,6 +132,7 @@ public static class RolePermissions
             ContentPolicies.MediaRead, ContentPolicies.TaxonomyRead,
             ContentPolicies.ComponentRead, ContentPolicies.LayoutRead,
             ContentPolicies.PageTemplateRead,
+            ContentPolicies.EntryGroupRead,
      },
     };
 

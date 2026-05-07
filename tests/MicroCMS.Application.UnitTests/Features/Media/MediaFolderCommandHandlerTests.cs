@@ -28,7 +28,7 @@ public sealed class MediaFolderCommandHandlerTests
     [Fact]
     public async Task CreateMediaFolder_ShouldReturnDto_WithCorrectName()
     {
-        var command = new CreateMediaFolderCommand(_siteId, "My Uploads");
+        var command = new CreateMediaFolderCommand("My Uploads");
         var sut = new CreateMediaFolderCommandHandler(_folderRepo, _currentUser);
 
         var result = await sut.Handle(command, CancellationToken.None);

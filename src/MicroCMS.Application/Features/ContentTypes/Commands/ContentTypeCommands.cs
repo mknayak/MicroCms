@@ -29,8 +29,10 @@ public sealed record AddFieldCommand(
     string? Description = null,
     /// <summary>Static options for Enum fields. Ignored when DynamicSource is set.</summary>
     IReadOnlyList<string>? Options = null,
-    /// <summary>Dynamic source config for Enum fields.</summary>
-    FieldDynamicSourceInput? DynamicSource = null) : ICommand<ContentTypeDto>;
+    /// <summary>Dynamic source config for Enum/Reference fields.</summary>
+    FieldDynamicSourceInput? DynamicSource = null,
+    /// <summary>Source config for MultiList fields.</summary>
+    FieldDynamicSourceInput? MultiListSource = null) : ICommand<ContentTypeDto>;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record RemoveFieldCommand(
@@ -75,8 +77,10 @@ public sealed record UpdateFieldInput(
     string? Description = null,
     /// <summary>Static options for Enum fields.</summary>
     IReadOnlyList<string>? Options = null,
-    /// <summary>Dynamic source config for Enum fields.</summary>
-    FieldDynamicSourceInput? DynamicSource = null);
+    /// <summary>Dynamic source config for Enum/Reference fields.</summary>
+    FieldDynamicSourceInput? DynamicSource = null,
+    /// <summary>Source config for MultiList fields.</summary>
+    FieldDynamicSourceInput? MultiListSource = null);
 
 /// <summary>
 /// DTO for specifying a dynamic entry source for Enum fields in commands.
@@ -86,7 +90,9 @@ public sealed record FieldDynamicSourceInput(
     string ContentTypeHandle,
     string LabelField = "title",
     string ValueField = "slug",
-    string StatusFilter = "Published");
+    string StatusFilter = "Published",
+    /// <summary>When set, restricts available entries to members of this group handle.</summary>
+    string? GroupHandle = null);
 
 /// <summary>Imports a ContentType schema from a JSON Schema document (BE-07c).</summary>
 [HasPolicy(ContentPolicies.ContentTypeManage)]

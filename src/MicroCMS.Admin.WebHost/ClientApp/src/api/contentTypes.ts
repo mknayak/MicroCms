@@ -3,6 +3,9 @@ import type {
   ContentType,
   ContentTypeListItem,
   EnumOptionDto,
+  MultiListOptionDto,
+  EntryGroupListItem,
+  EntryGroupDto,
   PagedResult,
   PaginationParams,
 } from '@/types';
@@ -12,6 +15,7 @@ export interface FieldDynamicSourceRequest {
   labelField?: string;
   valueField?: string;
   statusFilter?: string;
+  groupHandle?: string;
 }
 
 export interface CreateContentTypeRequest {
@@ -38,6 +42,8 @@ export interface UpdateFieldRequest {
   options?: string[];
   /** Dynamic source for Enum fields — mutually exclusive with options. */
   dynamicSource?: FieldDynamicSourceRequest;
+  /** Dynamic source for MultiList fields. */
+  multiListSource?: FieldDynamicSourceRequest;
 }
 
 export interface UpdateContentTypeRequest {
@@ -88,4 +94,43 @@ export const contentTypesApi = {
    */
   getEnumOptions: (contentTypeId: string, fieldId: string): Promise<EnumOptionDto[]> =>
     get<EnumOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/enum-options`),
+
+  /** Returns the candidate entry list (left pane) for a MultiList field picker. */
+  getMultiListOptions: (contentTypeId: string, fieldId: string): Promise<MultiListOptionDto[]> =>
+    get<MultiListOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/multilist-options`),
+};
+
+// ─── Entry Groups API ─────────────────────────────────────────────────────────
+
+export interface CreateEntryGroupRequest {
+  handle: string;
+  title: string;
+  description?: string;
+  memberEntryIds: string[];
+}
+
+export interface UpdateEntryGroupRequest {
+  title: string;
+  description?: string;
+  memberEntryIds: string[];
+}
+
+export const entryGroupsApi = {
+  list: (contentTypeId: string): Promise<EntryGroupListItem[]> =>
+    get<EntryGroupListItem[]>(`/content-types/${contentTypeId}/groups`),
+
+  getById: (contentTypeId: string, groupId: string): Promise<EntryGroupDto> =>
+    get<EntryGroupDto>(`/content-types/${contentTypeId}/groups/${groupId}`),
+
+  create: (contentTypeId: string, data: CreateEntryGroupRequest): Promise<EntryGroupDto> =>
+    post<EntryGroupDto>(`/content-types/${contentTypeId}/groups`, data),
+
+  update: (contentTypeId: string, groupId: string, data: UpdateEntryGroupRequest): Promise<EntryGroupDto> =>
+    put<EntryGroupDto>(`/content-types/${contentTypeId}/groups/${groupId}`, data),
+
+  delete: (contentTypeId: string, groupId: string): Promise<void> =>
+    del(`/content-types/${contentTypeId}/groups/${groupId}`),
+
+  getMultiListOptions: (contentTypeId: string, fieldId: string): Promise<MultiListOptionDto[]> =>
+    get<MultiListOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/multilist-options`),
 };

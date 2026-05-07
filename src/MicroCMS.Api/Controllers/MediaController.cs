@@ -62,6 +62,7 @@ public sealed class MediaController : ApiControllerBase
     [ProducesResponseType(typeof(MediaAssetDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1541", Justification = "Upload method complexity is inherent to multipart form parsing; refactoring would reduce readability.")]
     public async Task<IActionResult> Upload(
         [FromQuery] Guid? folderId,
         CancellationToken cancellationToken = default)

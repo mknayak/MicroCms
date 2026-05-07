@@ -134,6 +134,7 @@ public static class DependencyInjection
         services.AddScoped<IRepository<ContentType, ContentTypeId>, EfRepository<ContentType, ContentTypeId>>();
         services.AddScoped<IRepository<Entry, EntryId>, EfRepository<Entry, EntryId>>();
         services.AddScoped<IRepository<Folder, FolderId>, EfRepository<Folder, FolderId>>();
+        services.AddScoped<IRepository<EntryGroup, EntryGroupId>, EfRepository<EntryGroup, EntryGroupId>>();
 
         // Pages
         services.AddScoped<IRepository<Page, PageId>, EfRepository<Page, PageId>>();
