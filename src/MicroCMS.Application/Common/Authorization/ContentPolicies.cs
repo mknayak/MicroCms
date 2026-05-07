@@ -17,6 +17,7 @@ public static class ContentPolicies
     public const string EntrySchedule  = "Entry.Schedule";
     public const string EntryReview    = "Entry.Review";
     public const string EntryExport    = "Entry.Export";
+    public const string EntryImport    = "Entry.Import";
 
     // ── Folder policies ────────────────────────────────────────────────────
     public const string FolderManage   = "Folder.Manage";

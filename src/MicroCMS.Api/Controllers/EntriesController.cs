@@ -3,6 +3,7 @@ using MicroCMS.Application.Features.Entries.Commands.Bulk;
 using MicroCMS.Application.Features.Entries.Commands.CancelScheduledPublish;
 using MicroCMS.Application.Features.Entries.Commands.CreateEntry;
 using MicroCMS.Application.Features.Entries.Commands.DeleteEntry;
+using MicroCMS.Application.Features.Entries.Commands.ImportEntries;
 using MicroCMS.Application.Features.Entries.Commands.PublishEntry;
 using MicroCMS.Application.Features.Entries.Commands.RollbackEntryVersion;
 using MicroCMS.Application.Features.Entries.Commands.SchedulePublish;
@@ -37,11 +38,14 @@ public sealed class EntriesController : ApiControllerBase
         [FromQuery] Guid? contentTypeId,
         [FromQuery] string? locale,
         [FromQuery] Guid? folderId,
+        [FromQuery] string? search = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] bool sortDesc = true,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default) =>
         OkOrProblem(await Sender.Send(
-            new ListEntriesQuery(status, contentTypeId, locale, folderId, pageNumber, pageSize),
+            new ListEntriesQuery(status, contentTypeId, locale, folderId, search, sortBy, sortDesc, pageNumber, pageSize),
             cancellationToken));
 
     [HttpGet("{id:guid}")]
@@ -81,6 +85,27 @@ public sealed class EntriesController : ApiControllerBase
         var result = await Sender.Send(new ExportEntriesQuery(contentTypeId, format), cancellationToken);
         if (result.IsFailure) return ToProblemResult(result.Error);
         return File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
+    }
+
+    [HttpPost("import")]
+    [ProducesResponseType(typeof(ImportEntriesResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Import(
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { detail = "No file uploaded." });
+
+        if (!file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { detail = "Only .zip files are accepted." });
+
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, cancellationToken);
+        var zipBytes = ms.ToArray();
+
+        var result = await Sender.Send(new ImportEntriesCommand(zipBytes), cancellationToken);
+        return OkOrProblem(result);
     }
 
     // ── Commands ──────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { get, post, put, del } from './client';
+import { get, post, put, del, apiClient } from './client';
 import type {
   Entry,
   EntryListItem,
@@ -8,6 +8,12 @@ import type {
   PagedResult,
   EntryListParams,
 } from '@/types';
+
+export interface ImportEntriesResult {
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
 
 export const entriesApi = {
   list: (params?: EntryListParams): Promise<PagedResult<EntryListItem>> =>
@@ -55,4 +61,39 @@ export const entriesApi = {
 
   getPreviewToken: (id: string): Promise<{ token: string; expiresAt: string }> =>
     get(`/entries/${id}/preview-token`),
+
+  /**
+   * Downloads all entries as a ZIP file (containing entries.json).
+   * Uses axios so the Bearer token is included, then triggers a browser save dialog.
+   */
+  exportZip: async (params?: { contentTypeId?: string }) => {
+    const queryParams: Record<string, string> = { format: 'Json' };
+    if (params?.contentTypeId) queryParams['contentTypeId'] = params.contentTypeId;
+
+    const response = await apiClient.get<Blob>('/entries/export', {
+      params: queryParams,
+      responseType: 'blob',
+    });
+
+    const url = URL.createObjectURL(response.data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'entries.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  /** Upload a ZIP file (containing entries.json) to import entries. */
+  importZip: async (file: File): Promise<ImportEntriesResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<ImportEntriesResult>('/entries/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };
+
+

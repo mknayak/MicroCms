@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -8,6 +8,7 @@ import type { EntryListItem, EntryStatus } from '@/types';
 import { ApiError } from '@/api/client';
 import { useSite } from '@/contexts/SiteContext';
 import { STATUS_STYLES } from './contentTypeDetail.shared';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -124,21 +125,64 @@ export function EntriesTab({ contentTypeId }: { contentTypeId: string }) {
   const { selectedSiteId } = useSite();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState('');
   const [localeFilter, setLocaleFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState('updatedAt');
+  const [sortDesc, setSortDesc] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await entriesApi.exportZip({ contentTypeId });
+      toast.success('Export downloaded.');
+    } catch {
+      toast.error('Export failed.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportClick = () => importFileRef.current?.click();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImporting(true);
+    try {
+      const result = await entriesApi.importZip(file);
+      toast.success(`Imported ${result.imported} entr${result.imported !== 1 ? 'ies' : 'y'}, skipped ${result.skipped}.`);
+      if (result.errors.length > 0) {
+        console.warn('[Import] errors:', result.errors);
+        toast.error(`${result.errors.length} error(s) during import. See console for details.`);
+      }
+      void qc.invalidateQueries({ queryKey: ['entries'] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Import failed.');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['entries', { contentTypeId, siteId: selectedSiteId, status: statusFilter || undefined, locale: localeFilter || undefined, search: search || undefined, pageNumber: page }],
+    queryKey: ['entries', { contentTypeId, siteId: selectedSiteId, status: statusFilter || undefined, locale: localeFilter || undefined, search: debouncedSearch || undefined, pageNumber: page, pageSize, sortBy, sortDesc }],
     queryFn: () => entriesApi.list({
       siteId: selectedSiteId ?? undefined,
       contentTypeId,
     status: (statusFilter as EntryStatus) || undefined,
       locale: localeFilter || undefined,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
+      sortBy,
+      sortDesc,
       pageNumber: page,
-      pageSize: 10,
+      pageSize,
     }),
     enabled: !!selectedSiteId,
   });
@@ -203,7 +247,19 @@ const handleBulkPublish = () => { selected.forEach((id) => publishMutation.mutat
    {LOCALES.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
         <div className="ml-auto flex items-center gap-2">
-  <button className="btn-secondary text-sm">↓ Export</button>
+  <button onClick={handleExport} disabled={exporting} className="btn-secondary text-sm disabled:opacity-50">
+    {exporting ? 'Exporting…' : '↓ Export'}
+  </button>
+  <button onClick={handleImportClick} disabled={importing} className="btn-secondary text-sm disabled:opacity-50">
+    {importing ? 'Importing…' : '↑ Import'}
+  </button>
+  <input
+    ref={importFileRef}
+    type="file"
+    accept=".zip"
+    className="hidden"
+    onChange={handleImportFile}
+  />
           <button
             onClick={() => navigate(`/entries/new?contentTypeId=${contentTypeId}&siteId=${selectedSiteId ?? ''}`)}
   className="btn-primary text-sm"
@@ -221,7 +277,9 @@ const handleBulkPublish = () => { selected.forEach((id) => publishMutation.mutat
           <span className="text-brand-600">Choose a bulk action:</span>
           <button onClick={handleBulkPublish} className="font-medium text-brand-700 hover:underline">Publish</button>
           <button onClick={handleBulkUnpublish} className="font-medium text-slate-600 hover:underline">Unpublish</button>
-      <button className="font-medium text-slate-600 hover:underline">Export</button>
+      <button onClick={handleExport} disabled={exporting} className="font-medium text-slate-600 hover:underline disabled:opacity-50">
+        {exporting ? 'Exporting…' : 'Export'}
+      </button>
           <button onClick={handleBulkDelete} className="font-medium text-red-600 hover:underline">Delete</button>
           <button onClick={() => setSelected(new Set())} className="ml-auto text-slate-400 hover:text-slate-600">✕ Clear</button>
         </div>
@@ -235,12 +293,27 @@ const handleBulkPublish = () => { selected.forEach((id) => publishMutation.mutat
               <th className="w-10 px-4 py-3 text-center">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-slate-300 text-brand-600" />
      </th>
-      <th className="px-6 py-3 text-left font-semibold text-slate-700 text-sm">Title / Slug</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-700 text-sm">Status</th>
-   <th className="px-4 py-3 text-left font-semibold text-slate-700 text-sm">Locale</th>
-        <th className="px-4 py-3 text-left font-semibold text-slate-700 text-sm">Author</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-700 text-sm">Ver.</th>
-   <th className="px-4 py-3 text-left font-semibold text-slate-700 text-sm">Updated</th>
+              {([
+                { label: 'Title / Slug', key: 'slug' },
+                { label: 'Status', key: 'status' },
+                { label: 'Locale', key: 'locale' },
+                { label: 'Author', key: null },
+                { label: 'Ver.', key: null },
+                { label: 'Updated', key: 'updatedAt' },
+              ] as { label: string; key: string | null }[]).map(({ label, key }) => (
+                <th
+                  key={label}
+                  className={`px-4 py-3 text-left font-semibold text-slate-700 text-sm ${key ? 'cursor-pointer select-none hover:text-brand-600' : ''}`}
+                  onClick={() => {
+                    if (!key) return;
+                    if (sortBy === key) setSortDesc((d) => !d);
+                    else { setSortBy(key); setSortDesc(true); }
+                    setPage(1);
+                  }}
+                >
+                  {label}{key && sortBy === key ? (sortDesc ? ' ↓' : ' ↑') : ''}
+                </th>
+              ))}
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -286,25 +359,28 @@ onClick={() => navigate(`/entries/new?contentTypeId=${contentTypeId}`)}
       {/* Pagination */}
       {data && data.totalPages > 1 && (
       <div className="flex items-center justify-between text-sm text-slate-500">
-          <span>Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, data.totalCount)} of {data.totalCount} entries</span>
+          <span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.totalCount)} of {data.totalCount} entries</span>
           <div className="flex items-center gap-1">
        <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} className="btn-secondary text-xs disabled:opacity-40">← Prev</button>
-    {Array.from({ length: Math.min(data.totalPages, 5) }).map((_, i) => {
-    const p = i + 1;
-         return (
+    {(() => {
+              const total = data.totalPages;
+              const delta = 2;
+              const start = Math.max(1, page - delta);
+              const end = Math.min(total, page + delta);
+              return Array.from({ length: end - start + 1 }, (_, i) => start + i).map((p) => (
                 <button key={p} onClick={() => setPage(p)} className={`rounded px-3 py-1 text-xs font-medium ${page === p ? 'bg-brand-600 text-white' : 'hover:bg-slate-100 text-slate-600'}`}>{p}</button>
-         );
-            })}
-            {data.totalPages > 5 && <span className="px-1">…</span>}
-        {data.totalPages > 5 && (
+              ));
+            })()}
+            {data.totalPages > page + 2 && <span className="px-1">…</span>}
+        {data.totalPages > page + 2 && (
            <button onClick={() => setPage(data.totalPages)} className="rounded px-3 py-1 text-xs font-medium hover:bg-slate-100 text-slate-600">{data.totalPages}</button>
             )}
      <button onClick={() => setPage((p) => p + 1)} disabled={page === data.totalPages} className="btn-secondary text-xs disabled:opacity-40">Next →</button>
           </div>
         <div className="flex items-center gap-2">
        <span>Per page:</span>
-            <select className="form-input text-xs py-1">
-         <option>10</option><option>25</option><option>50</option>
+            <select className="form-input text-xs py-1" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+         <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
             </select>
        </div>
         </div>

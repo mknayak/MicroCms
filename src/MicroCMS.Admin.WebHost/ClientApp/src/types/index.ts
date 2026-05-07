@@ -349,6 +349,8 @@ export interface EntryListParams extends PaginationParams {
     locale?: string;
     search?: string;
     folderId?: string;
+    sortBy?: string;
+    sortDesc?: boolean;
 }
 
 // ─── Media ────────────────────────────────────────────────────────────────────

@@ -50,52 +50,10 @@ internal sealed class ResolveMultiListOptionsQueryHandler(
         var field = ct.Fields.FirstOrDefault(f => f.Id == request.FieldId)
             ?? throw new NotFoundException("Field", request.FieldId);
 
-        // When the field has no MultiListSource config (e.g. the Groups picker), fall back to
-        // loading entries of the owning content type directly.
         var src = field.Validation?.MultiListSource;
-        ContentType sourceCt;
-
-        if (src is not null)
-        {
-            // Resolve explicitly-configured source content type by handle
-            var allContentTypes = await ctRepo.ListAsync(
-                new ContentTypesBySiteSpec(siteId), cancellationToken);
-
-            sourceCt = allContentTypes.FirstOrDefault(c =>
-                c.Handle.Equals(src.ContentTypeHandle, StringComparison.OrdinalIgnoreCase))
-                ?? throw new NotFoundException("Source ContentType", src.ContentTypeHandle);
-        }
-        else
-        {
-            // No source config: use the owning content type as the implicit source
-            sourceCt = ct;
-        }
-
-        // Fetch entries (up to 1000 for dual-pane picker)
-        var entriesSpec = new EntriesBySiteSpec(
-            siteId,
-            statusFilter: src?.StatusFilter,
-            contentTypeId: sourceCt.Id.Value,
-            locale: null,
-            folderId: null,
-            pageNumber: 1,
-            pageSize: 1000);
-
-        var entries = await entryRepo.ListAsync(entriesSpec, cancellationToken);
-
-        // ── Group filter ────────────────────────────────────────────────────
-        IEnumerable<Entry> filtered = entries;
-        if (!string.IsNullOrWhiteSpace(src?.GroupHandle))
-        {
-            var groupSpec = new EntryGroupByHandleSpec(siteId, sourceCt.Id, src.GroupHandle);
-            var groups = await groupRepo.ListAsync(groupSpec, cancellationToken);
-            var memberIds = groups
-                .SelectMany(g => g.Members)
-                .Select(m => m.EntryId)
-                .ToHashSet();
-
-            filtered = entries.Where(e => memberIds.Contains(e.Id));
-        }
+        var sourceCt = await ResolveSourceContentTypeAsync(ct, src, siteId, cancellationToken);
+        var entries = await FetchEntriesAsync(sourceCt, src, siteId, cancellationToken);
+        var filtered = await ApplyGroupFilterAsync(entries, src, sourceCt, siteId, cancellationToken);
 
         var labelField = src?.LabelField ?? string.Empty;
         var options = filtered
@@ -105,6 +63,61 @@ internal sealed class ResolveMultiListOptionsQueryHandler(
             .ToList();
 
         return Result.Success<IReadOnlyList<MultiListOptionDto>>(options);
+    }
+
+    private async Task<ContentType> ResolveSourceContentTypeAsync(
+        ContentType owningCt,
+        FieldDynamicSource? src,
+        SiteId siteId,
+        CancellationToken cancellationToken)
+    {
+        if (src is null)
+            return owningCt;
+
+        var allContentTypes = await ctRepo.ListAsync(
+            new ContentTypesBySiteSpec(siteId), cancellationToken);
+
+        return allContentTypes.FirstOrDefault(c =>
+            c.Handle.Equals(src.ContentTypeHandle, StringComparison.OrdinalIgnoreCase))
+            ?? throw new NotFoundException("Source ContentType", src.ContentTypeHandle);
+    }
+
+    private async Task<IReadOnlyList<Entry>> FetchEntriesAsync(
+        ContentType sourceCt,
+        FieldDynamicSource? src,
+        SiteId siteId,
+        CancellationToken cancellationToken)
+    {
+        var spec = new EntriesBySiteSpec(
+            siteId,
+            statusFilter: src?.StatusFilter,
+            contentTypeId: sourceCt.Id.Value,
+            locale: null,
+            folderId: null,
+            pageNumber: 1,
+            pageSize: 1000);
+
+        return await entryRepo.ListAsync(spec, cancellationToken);
+    }
+
+    private async Task<IEnumerable<Entry>> ApplyGroupFilterAsync(
+        IReadOnlyList<Entry> entries,
+        FieldDynamicSource? src,
+        ContentType sourceCt,
+        SiteId siteId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(src?.GroupHandle))
+            return entries;
+
+        var groupSpec = new EntryGroupByHandleSpec(siteId, sourceCt.Id, src.GroupHandle);
+        var groups = await groupRepo.ListAsync(groupSpec, cancellationToken);
+        var memberIds = groups
+            .SelectMany(g => g.Members)
+            .Select(m => m.EntryId)
+            .ToHashSet();
+
+        return entries.Where(e => memberIds.Contains(e.Id));
     }
 
     private static MultiListOptionDto? BuildOption(Entry entry, string labelField)

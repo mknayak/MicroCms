@@ -25,11 +25,15 @@ internal sealed class EntrySearchIndexerEventHandler(
     ISearchService searchService,
     ICacheService cacheService,
     ILogger<EntrySearchIndexerEventHandler> logger)
-    : INotificationHandler<DomainEventNotification<EntryPublishedEvent>>,
+    : INotificationHandler<DomainEventNotification<EntryCreatedEvent>>,
+      INotificationHandler<DomainEventNotification<EntryPublishedEvent>>,
       INotificationHandler<DomainEventNotification<EntryUnpublishedEvent>>,
       INotificationHandler<DomainEventNotification<EntryUpdatedEvent>>,
       INotificationHandler<DomainEventNotification<EntryArchivedEvent>>
 {
+    public Task Handle(DomainEventNotification<EntryCreatedEvent> notification, CancellationToken cancellationToken)
+        => InvalidateCacheOnlyAsync(notification.DomainEvent.EntryId, notification.DomainEvent.TenantId, cancellationToken);
+
     public Task Handle(DomainEventNotification<EntryPublishedEvent> notification, CancellationToken cancellationToken)
         => IndexAsync(notification.DomainEvent.EntryId, notification.DomainEvent.TenantId, cancellationToken);
 
@@ -85,6 +89,18 @@ internal sealed class EntrySearchIndexerEventHandler(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to remove entry {EntryId} from search.", entryId);
+        }
+    }
+
+    private async Task InvalidateCacheOnlyAsync(EntryId entryId, TenantId tenantId, CancellationToken ct)
+    {
+        try
+        {
+            await InvalidateCacheAsync(tenantId, entryId, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to invalidate cache for entry {EntryId}.", entryId);
         }
     }
 
@@ -144,8 +160,8 @@ public static class CacheKeys
     public static string EntryList(
         TenantId tenantId, Guid siteId, string? status,
         Guid? contentTypeId, string? locale, Guid? folderId,
-        int pageNumber, int pageSize)
-        => $"cms:{tenantId.Value}:entries:{siteId}:{status ?? "all"}:{contentTypeId?.ToString() ?? "any"}:{locale ?? "any"}:{folderId?.ToString() ?? "any"}:{pageNumber}:{pageSize}";
+        string? search, string? sortBy, bool sortDesc, int pageNumber, int pageSize)
+        => $"cms:{tenantId.Value}:entries:{siteId}:{status ?? "all"}:{contentTypeId?.ToString() ?? "any"}:{locale ?? "any"}:{folderId?.ToString() ?? "any"}:{search ?? "any"}:{sortBy ?? "updatedat"}:{(sortDesc ? "desc" : "asc")}:{pageNumber}:{pageSize}";
 
     public static string ContentType(TenantId tenantId, Guid contentTypeId)
       => $"cms:{tenantId.Value}:contenttype:{contentTypeId}";

@@ -31,6 +31,7 @@ public sealed class ListEntriesQueryHandler(
         var cacheKey = CacheKeys.EntryList(
             tenantId, siteId.Value, request.StatusFilter,
             request.ContentTypeId, request.Locale, request.FolderId,
+            request.Search, request.SortBy, request.SortDesc,
             request.PageNumber, request.PageSize);
 
         var cached = await cacheService.GetAsync<PagedList<EntryListItemDto>>(cacheKey, cancellationToken);
@@ -39,11 +40,12 @@ public sealed class ListEntriesQueryHandler(
 
         var listSpec = new EntriesBySiteSpec(
             siteId, request.StatusFilter, request.ContentTypeId,
-            request.Locale, request.FolderId, request.PageNumber, request.PageSize);
+            request.Locale, request.FolderId, request.PageNumber, request.PageSize,
+            request.Search, request.SortBy, request.SortDesc);
 
         var countSpec = new EntriesBySiteSpec(
             siteId, request.StatusFilter, request.ContentTypeId,
-            request.Locale, request.FolderId);
+            request.Locale, request.FolderId, request.Search);
 
         var entries = await entryRepository.ListAsync(listSpec, cancellationToken);
         var totalCount = await entryRepository.CountAsync(countSpec, cancellationToken);

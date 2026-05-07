@@ -348,18 +348,27 @@ public static class DependencyInjection
         }
     }
 
-    /// <summary>Registers the MediaScan Quartz job to run every 30 seconds.</summary>
+    /// <summary>Registers the MediaScan and OutboxDispatcher Quartz jobs.</summary>
     private static void RegisterBackgroundJobs(IServiceCollection services)
     {
         services.AddQuartz(q =>
         {
-            var jobKey = new JobKey("MediaScanJob");
-            q.AddJob<MediaScanJob>(opts => opts.WithIdentity(jobKey));
+            var mediaScanKey = new JobKey("MediaScanJob");
+            q.AddJob<MediaScanJob>(opts => opts.WithIdentity(mediaScanKey));
             q.AddTrigger(opts => opts
-                .ForJob(jobKey)
+                .ForJob(mediaScanKey)
                 .WithIdentity("MediaScanTrigger")
                 .WithSimpleSchedule(s => s
                     .WithIntervalInSeconds(30)
+                    .RepeatForever()));
+
+            var outboxKey = new JobKey("OutboxDispatcherJob");
+            q.AddJob<OutboxDispatcherJob>(opts => opts.WithIdentity(outboxKey));
+            q.AddTrigger(opts => opts
+                .ForJob(outboxKey)
+                .WithIdentity("OutboxDispatcherTrigger")
+                .WithSimpleSchedule(s => s
+                    .WithIntervalInSeconds(5)
                     .RepeatForever()));
         });
 

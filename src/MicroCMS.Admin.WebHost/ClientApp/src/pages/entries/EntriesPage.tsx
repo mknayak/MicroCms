@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { entriesApi } from '@/api/entries';
@@ -8,6 +8,7 @@ import type { EntryListItem, EntryStatus } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import { ApiError } from '@/api/client';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -76,12 +77,18 @@ export default function EntriesPage() {
     const siteId = selectedSiteId ?? '';
 
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebounce(search, 500);
     const [status, setStatus] = useState<EntryStatus | ''>('');
     const [contentTypeId, setContentTypeId] = useState('');
     const [locale, setLocale] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
+    const [sortBy, setSortBy] = useState('updatedAt');
+    const [sortDesc, setSortDesc] = useState(true);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [exporting, setExporting] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const importFileRef = useRef<HTMLInputElement>(null);
 
     const { data: contentTypes } = useQuery({
         queryKey: ['content-types'],
@@ -89,14 +96,16 @@ export default function EntriesPage() {
     });
 
     const { data, isLoading } = useQuery({
-        queryKey: ['entries', { siteId, search, status, contentTypeId, locale, page, pageSize }],
+        queryKey: ['entries', { siteId, search: debouncedSearch, status, contentTypeId, locale, page, pageSize, sortBy, sortDesc }],
         queryFn: () =>
             entriesApi.list({
                 siteId: siteId || undefined,
-                search: search || undefined,
+                search: debouncedSearch || undefined,
                 status: status || undefined,
                 contentTypeId: contentTypeId || undefined,
                 locale: locale || undefined,
+                sortBy,
+                sortDesc,
                 pageNumber: page,
                 pageSize,
             }),
@@ -162,9 +171,40 @@ export default function EntriesPage() {
         void qc.invalidateQueries({ queryKey: ['entries'] });
     }
 
-    function handleExport() {
-        const url = `/api/v1/entries/export?siteId=${siteId}&format=Json`;
-        window.open(url, '_blank');
+    async function handleExport() {
+        setExporting(true);
+        try {
+            await entriesApi.exportZip(contentTypeId ? { contentTypeId } : undefined);
+            toast.success('Export downloaded.');
+        } catch {
+            toast.error('Export failed.');
+        } finally {
+            setExporting(false);
+        }
+    }
+
+    function handleImportClick() {
+        importFileRef.current?.click();
+    }
+
+    async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        setImporting(true);
+        try {
+            const result = await entriesApi.importZip(file);
+            toast.success(`Imported ${result.imported} entr${result.imported !== 1 ? 'ies' : 'y'}, skipped ${result.skipped}.`);
+            if (result.errors.length > 0) {
+                console.warn('[Import] errors:', result.errors);
+                toast.error(`${result.errors.length} error(s) during import. See console for details.`);
+            }
+            void qc.invalidateQueries({ queryKey: ['entries'] });
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Import failed.');
+        } finally {
+            setImporting(false);
+        }
     }
 
     if (siteLoading || isSwitching) {
@@ -196,7 +236,19 @@ export default function EntriesPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={handleExport} className="btn-secondary">Export</button>
+                    <button onClick={handleExport} disabled={exporting} className="btn-secondary disabled:opacity-50">
+                        {exporting ? 'Exporting…' : 'Export'}
+                    </button>
+                    <button onClick={handleImportClick} disabled={importing} className="btn-secondary disabled:opacity-50">
+                        {importing ? 'Importing…' : 'Import'}
+                    </button>
+                    <input
+                        ref={importFileRef}
+                        type="file"
+                        accept=".zip"
+                        className="hidden"
+                        onChange={handleImportFile}
+                    />
                     <Link to="/entries/new" className="btn-primary">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -267,13 +319,28 @@ export default function EntriesPage() {
                                 <th className="w-10 px-4 py-3">
                                     <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-slate-300 text-brand-600" />
                                 </th>
-                                <th className="px-6 py-3 text-left font-semibold text-slate-700">Title / Slug</th>
-                                <th className="px-6 py-3 text-left font-semibold text-slate-700">Content Type</th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-700">Locale</th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-700">Ver.</th>
-                                <th className="px-6 py-3 text-left font-semibold text-slate-700">Status</th>
-                                <th className="px-6 py-3 text-left font-semibold text-slate-700">Author</th>
-                                <th className="px-6 py-3 text-left font-semibold text-slate-700">Updated</th>
+                                {([
+                                    { label: 'Title / Slug', key: 'slug' },
+                                    { label: 'Content Type', key: null },
+                                    { label: 'Locale', key: 'locale' },
+                                    { label: 'Ver.', key: null },
+                                    { label: 'Status', key: 'status' },
+                                    { label: 'Author', key: null },
+                                    { label: 'Updated', key: 'updatedAt' },
+                                ] as { label: string; key: string | null }[]).map(({ label, key }) => (
+                                    <th
+                                        key={label}
+                                        className={`px-6 py-3 text-left font-semibold text-slate-700 ${key ? 'cursor-pointer select-none hover:text-brand-600' : ''}`}
+                                        onClick={() => {
+                                            if (!key) return;
+                                            if (sortBy === key) setSortDesc((d) => !d);
+                                            else { setSortBy(key); setSortDesc(true); }
+                                            setPage(1);
+                                        }}
+                                    >
+                                        {label}{key && sortBy === key ? (sortDesc ? ' ↓' : ' ↑') : ''}
+                                    </th>
+                                ))}
                                 <th className="px-6 py-3" />
                             </tr>
                         </thead>

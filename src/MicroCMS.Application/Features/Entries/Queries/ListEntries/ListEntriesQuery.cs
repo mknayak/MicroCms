@@ -8,7 +8,7 @@ namespace MicroCMS.Application.Features.Entries.Queries.ListEntries;
 
 /// <summary>
 /// Returns a paginated list of entries for a site, with optional filters
-/// for status, content type, locale, and folder.
+/// for status, content type, locale, folder, free-text search, and sorting.
 /// </summary>
 [HasPolicy(ContentPolicies.EntryRead)]
 public sealed record ListEntriesQuery(
@@ -16,5 +16,8 @@ public sealed record ListEntriesQuery(
     Guid? ContentTypeId = null,
     string? Locale = null,
     Guid? FolderId = null,
+    string? Search = null,
+    string? SortBy = null,
+    bool SortDesc = true,
     int PageNumber = 1,
     int PageSize = 20) : IQuery<PagedList<EntryListItemDto>>;

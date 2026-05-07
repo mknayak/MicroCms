@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using MediatR;
@@ -17,8 +18,8 @@ public sealed class ExportEntriesQueryHandler(
     : IRequestHandler<ExportEntriesQuery, Result<ExportResult>>
 {
     public async Task<Result<ExportResult>> Handle(
- ExportEntriesQuery request,
-     CancellationToken cancellationToken)
+        ExportEntriesQuery request,
+        CancellationToken cancellationToken)
     {
         if (currentUser.SiteId is not { } siteId)
             return Result.Failure<ExportResult>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
@@ -33,13 +34,13 @@ public sealed class ExportEntriesQueryHandler(
         }
 
         var result = request.Format == ExportFormat.Csv
-     ? BuildCsv(entries)
-        : BuildJson(entries);
+            ? BuildCsvZip(entries)
+            : BuildJsonZip(entries);
 
         return Result.Success(result);
     }
 
-    private static ExportResult BuildJson(IEnumerable<Entry> entries)
+    private static ExportResult BuildJsonZip(IEnumerable<Entry> entries)
     {
         var records = entries.Select(e => new
         {
@@ -54,11 +55,13 @@ public sealed class ExportEntriesQueryHandler(
         });
 
         var json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
-        var bytes = Encoding.UTF8.GetBytes(json);
-        return new ExportResult(bytes, "application/json", "entries.json");
+        var jsonBytes = Encoding.UTF8.GetBytes(json);
+
+        var zipBytes = CreateZip("entries.json", jsonBytes);
+        return new ExportResult(zipBytes, "application/zip", "entries.zip");
     }
 
-    private static ExportResult BuildCsv(IEnumerable<Entry> entries)
+    private static ExportResult BuildCsvZip(IEnumerable<Entry> entries)
     {
         var sb = new StringBuilder();
         sb.AppendLine("id,siteId,contentTypeId,slug,locale,status,publishedAt");
@@ -67,18 +70,33 @@ public sealed class ExportEntriesQueryHandler(
         {
             sb.Append(e.Id.Value).Append(',')
               .Append(e.SiteId.Value).Append(',')
-          .Append(e.ContentTypeId.Value).Append(',')
+              .Append(e.ContentTypeId.Value).Append(',')
               .Append(EscapeCsv(e.Slug.Value)).Append(',')
               .Append(EscapeCsv(e.Locale.Value)).Append(',')
-          .Append(e.Status).Append(',')
-           .AppendLine(e.PublishedAt?.ToString("O") ?? string.Empty);
+              .Append(e.Status).Append(',')
+              .AppendLine(e.PublishedAt?.ToString("O") ?? string.Empty);
         }
 
-        return new ExportResult(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "entries.csv");
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        var zipBytes = CreateZip("entries.csv", csvBytes);
+        return new ExportResult(zipBytes, "application/zip", "entries.zip");
+    }
+
+    private static byte[] CreateZip(string entryFileName, byte[] fileBytes)
+    {
+        using var ms = new MemoryStream();
+        using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var zipEntry = archive.CreateEntry(entryFileName, CompressionLevel.Optimal);
+            using var entryStream = zipEntry.Open();
+            entryStream.Write(fileBytes, 0, fileBytes.Length);
+        }
+        return ms.ToArray();
     }
 
     private static string EscapeCsv(string value) =>
         value.Contains(',') || value.Contains('"') || value.Contains('\n')
             ? $"\"{value.Replace("\"", "\"\"")}\""
-          : value;
+            : value;
 }
+

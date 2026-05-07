@@ -13,7 +13,7 @@ public static class RolePermissions
       {
             ContentPolicies.EntryRead, ContentPolicies.EntryCreate, ContentPolicies.EntryUpdate,
             ContentPolicies.EntryDelete, ContentPolicies.EntryPublish, ContentPolicies.EntrySchedule,
-            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.FolderManage,
+            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.EntryImport, ContentPolicies.FolderManage,
             ContentPolicies.ContentTypeRead, ContentPolicies.ContentTypeManage,
             ContentPolicies.MediaRead, ContentPolicies.MediaUpload, ContentPolicies.MediaDelete,
             ContentPolicies.TaxonomyRead, ContentPolicies.TaxonomyManage,
@@ -29,7 +29,7 @@ public static class RolePermissions
         {
             ContentPolicies.EntryRead, ContentPolicies.EntryCreate, ContentPolicies.EntryUpdate,
             ContentPolicies.EntryDelete, ContentPolicies.EntryPublish, ContentPolicies.EntrySchedule,
-            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.FolderManage,
+            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.EntryImport, ContentPolicies.FolderManage,
             ContentPolicies.ContentTypeRead, ContentPolicies.ContentTypeManage,
             ContentPolicies.MediaRead, ContentPolicies.MediaUpload, ContentPolicies.MediaDelete,
             ContentPolicies.TaxonomyRead, ContentPolicies.TaxonomyManage,
@@ -45,7 +45,7 @@ public static class RolePermissions
         {
             ContentPolicies.EntryRead, ContentPolicies.EntryCreate, ContentPolicies.EntryUpdate,
             ContentPolicies.EntryDelete, ContentPolicies.EntryPublish, ContentPolicies.EntrySchedule,
-            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.FolderManage,
+            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.EntryImport, ContentPolicies.FolderManage,
             ContentPolicies.ContentTypeRead, ContentPolicies.ContentTypeManage,
             ContentPolicies.MediaRead, ContentPolicies.MediaUpload, ContentPolicies.MediaDelete,
             ContentPolicies.TaxonomyRead, ContentPolicies.TaxonomyManage,
@@ -88,7 +88,7 @@ public static class RolePermissions
         {
             ContentPolicies.EntryRead, ContentPolicies.EntryCreate, ContentPolicies.EntryUpdate,
             ContentPolicies.EntryDelete, ContentPolicies.EntryPublish, ContentPolicies.EntrySchedule,
-            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.FolderManage,
+            ContentPolicies.EntryReview, ContentPolicies.EntryExport, ContentPolicies.EntryImport, ContentPolicies.FolderManage,
             ContentPolicies.ContentTypeRead, ContentPolicies.ContentTypeManage,
             ContentPolicies.MediaRead, ContentPolicies.MediaUpload, ContentPolicies.MediaDelete,
             ContentPolicies.TaxonomyRead, ContentPolicies.TaxonomyManage,
@@ -102,7 +102,7 @@ public static class RolePermissions
         [Roles.Editor] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             ContentPolicies.EntryRead, ContentPolicies.EntryCreate, ContentPolicies.EntryUpdate,
-            ContentPolicies.EntryPublish, ContentPolicies.EntrySchedule, ContentPolicies.EntryExport,
+            ContentPolicies.EntryPublish, ContentPolicies.EntrySchedule, ContentPolicies.EntryExport, ContentPolicies.EntryImport,
             ContentPolicies.FolderManage, ContentPolicies.ContentTypeRead,
             ContentPolicies.MediaRead, ContentPolicies.MediaUpload,
             ContentPolicies.TaxonomyRead, ContentPolicies.ComponentRead, ContentPolicies.ComponentManage,
