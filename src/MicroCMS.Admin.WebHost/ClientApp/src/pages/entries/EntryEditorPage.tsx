@@ -12,6 +12,7 @@ import type { EntryVersion, EntryStatus, FieldDefinitionDto } from '@/types';
 import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useSite } from '@/contexts/SiteContext';
+import { MediaPickerField } from '@/pages/pages/MediaPickerField';
 
 // ─── Form schema ──────────────────────────────────────────────────────────────
 
@@ -187,16 +188,7 @@ function ScalarFieldInput({ field, value, onChange }: { field: FieldDefinitionDt
       }
       return <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" placeholder="Enter value…" />;
     case 'AssetReference':
-    return (
-        <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-slate-400">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          </div>
-          <p className="text-xs text-slate-500">Select from media library</p>
-      <button type="button" className="btn-secondary text-xs">Browse</button>
-          {typeof value === 'string' && value && <p className="mt-1 font-mono text-xs text-slate-400 break-all">{value}</p>}
-      </div>
-  );
+      return <MediaPickerField value={value} onChange={onChange} />;
     case 'Reference':
 return (
       <div className="flex items-center gap-2">

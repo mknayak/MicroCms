@@ -87,6 +87,12 @@ public sealed class Entry : AggregateRoot<EntryId>
         ArgumentException.ThrowIfNullOrWhiteSpace(fieldsJson, nameof(fieldsJson));
         EnsureEditable();
 
+        // Only create a new version when the content has actually changed.
+        if (string.Equals(FieldsJson, fieldsJson, StringComparison.Ordinal))
+        {
+            return;
+        }
+
         FieldsJson = fieldsJson;
         UpdatedAt = DateTimeOffset.UtcNow;
         SnapshotVersion(editorId, changeNote);

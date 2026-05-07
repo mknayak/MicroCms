@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Entry, FieldDefinitionDto } from '@/types';
+import { MediaPickerField } from './MediaPickerField';
 
 export function EntryFieldEditor({
   entry, fields, onSave, saving,
@@ -29,7 +30,7 @@ return (
   <p className="text-xs font-semibold text-slate-700">{(entry.fields.title as string) ?? entry.slug}</p>
        <p className="font-mono text-[10px] text-slate-400">{entry.status} · v{entry.currentVersionNumber}</p>
      </div>
-          <Link to={`/entries/${entry.id}`}
+          <Link to={`/entries/${entry.id}/edit`}
         className="flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:underline">
     Full editor
        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,17 +107,24 @@ return (
                 </select>
           )}
 
-       {(ft === 'assetreference' || ft === 'reference' || ft === 'json') && (
-  <div className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-[11px] text-slate-400">
-       {ft === 'json' ? (
-          <textarea className="w-full resize-none bg-transparent font-mono text-[10px] focus:outline-none" rows={2}
-        value={typeof val === 'string' ? val : JSON.stringify(val ?? '', null, 2)}
-     onChange={(e) => { try { set(f.handle, JSON.parse(e.target.value)); } catch { set(f.handle, e.target.value); } }} />
-   ) : (
-  <span>Edit in full editor → {f.fieldType}</span>
-              )}
-             </div>
-  )}
+       {ft === 'assetreference' && (
+         <MediaPickerField
+           value={val}
+           onChange={(v) => set(f.handle, v)}
+         />
+       )}
+
+       {(ft === 'reference' || ft === 'json') && (
+         <div className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-[11px] text-slate-400">
+           {ft === 'json' ? (
+             <textarea className="w-full resize-none bg-transparent font-mono text-[10px] focus:outline-none" rows={2}
+               value={typeof val === 'string' ? val : JSON.stringify(val ?? '', null, 2)}
+               onChange={(e) => { try { set(f.handle, JSON.parse(e.target.value)); } catch { set(f.handle, e.target.value); } }} />
+           ) : (
+             <span>Edit in full editor → {f.fieldType}</span>
+           )}
+         </div>
+       )}
     </div>
           );
         })}
