@@ -1,4 +1,6 @@
 using HandlebarsDotNet;
+using MicroCMS.Application.Features.Delivery.Rendering;
+using MicroCMS.Application.Features.Delivery.Rendering.Resolvers;
 using MicroCMS.Domain.Aggregates.Components;
 using Microsoft.Extensions.Logging;
 
@@ -17,43 +19,52 @@ namespace MicroCMS.Delivery.Core.Rendering;
 public interface ILayoutRenderer
 {
     /// <summary>
-    /// Renders the layout shell with the supplied zone HTML and SEO values.
+    /// Renders the layout shell with the supplied zone HTML, SEO values, and resolved tokens.
     /// </summary>
     /// <param name="layout">The layout containing the shell template.</param>
     /// <param name="zones">Dictionary of zone-name → rendered HTML fragment.</param>
+    /// <param name="renderContext">Per-request render data used by the token resolution pipeline.</param>
     /// <param name="seoTitle">Optional page title injected into <c>{{seo:title}}</c>.</param>
     /// <param name="seoDescription">Optional meta description.</param>
     /// <param name="seoOgImage">Optional OpenGraph image URL.</param>
-Task<string> RenderAsync(
+    Task<string> RenderAsync(
         Layout layout,
         IReadOnlyDictionary<string, string> zones,
-        string? seoTitle= null,
-string? seoDescription   = null,
-        string? seoOgImage       = null,
+        RenderContext renderContext,
+        string? seoTitle = null,
+        string? seoDescription = null,
+        string? seoOgImage = null,
         CancellationToken cancellationToken = default);
 }
 
-internal sealed class LayoutRenderer(ILogger<LayoutRenderer> logger) : ILayoutRenderer
+internal sealed class LayoutRenderer(
+    TokenResolutionPipeline tokenPipeline,
+    ILogger<LayoutRenderer> logger) : ILayoutRenderer
 {
-    public Task<string> RenderAsync(
+    public async Task<string> RenderAsync(
         Layout layout,
-  IReadOnlyDictionary<string, string> zones,
+        IReadOnlyDictionary<string, string> zones,
+        RenderContext renderContext,
         string? seoTitle       = null,
- string? seoDescription = null,
+        string? seoDescription = null,
         string? seoOgImage     = null,
-     CancellationToken cancellationToken = default)
-  {
+        CancellationToken cancellationToken = default)
+    {
         if (string.IsNullOrWhiteSpace(layout.ShellTemplate))
-          return Task.FromResult(FallbackZoneComment(zones));
+            return FallbackZoneComment(zones);
 
-        var html = layout.TemplateType switch
+        // ── 1. Inject zone HTML into the shell ────────────────────────────
+        var zoneResolved = layout.TemplateType switch
         {
-      LayoutTemplateType.Handlebars => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
-  LayoutTemplateType.Html       => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
-            _   => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
+            LayoutTemplateType.Handlebars => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
+            LayoutTemplateType.Html       => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
+            _                             => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
         };
 
-        return Task.FromResult(html);
+        // ── 2. Resolve remaining {{namespace:key}} tokens ─────────────────
+        var html = await tokenPipeline.ResolveAsync(zoneResolved, renderContext, cancellationToken);
+
+        return html;
     }
 
     // ── Handlebars ────────────────────────────────────────────────────────

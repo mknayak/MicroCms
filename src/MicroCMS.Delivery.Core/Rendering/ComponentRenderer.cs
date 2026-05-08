@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using HandlebarsDotNet;
 using MicroCMS.Application.Features.Delivery.Dtos;
 using MicroCMS.Domain.Aggregates.Components;
@@ -28,6 +29,11 @@ public interface IComponentRenderer
 
 internal sealed class ComponentRenderer(ILogger<ComponentRenderer> logger) : IComponentRenderer
 {
+    // Matches {{namespace:key}} tokens that belong to the layout token pipeline,
+    // distinguished from plain Handlebars field bindings by the colon separator.
+    private static readonly Regex NamespaceTokenPattern = new(
+        @"\{\{([a-zA-Z][a-zA-Z0-9_-]*(?::[a-zA-Z0-9_\-\.]+)+)\}\}",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public Task<string> RenderAsync(
 Component component,
         DeliveryComponentItemDto item,
@@ -51,7 +57,11 @@ Component component,
     {
         try
         {
-            var template = Handlebars.Compile(component.TemplateContent!);
+            // Escape {{namespace:key}} tokens before Handlebars compilation so they are
+            // emitted literally into the output HTML rather than being silently erased.
+            // They will be resolved by the layout TokenResolutionPipeline after zone injection.
+            var escaped = EscapeNamespaceTokens(component.TemplateContent!);
+            var template = Handlebars.Compile(escaped);
             return template(BuildDataDictionary(item));
         }
         catch (Exception ex)
@@ -60,6 +70,13 @@ Component component,
             return $"<!-- render-error component:{component.Key} -->";
         }
     }
+
+    /// <summary>
+    /// Replaces <c>{{ns:key}}</c> with <c>\{{ns:key}}</c> so Handlebars outputs
+    /// them as literal text instead of attempting (and silently failing) a field lookup.
+    /// </summary>
+    private static string EscapeNamespaceTokens(string template) =>
+        NamespaceTokenPattern.Replace(template, @"\{{$1}}");
 
     // ── Fallback ──────────────────────────────────────────────────────────
 

@@ -23,15 +23,15 @@ public sealed record LayoutDefaultPlacementDto(
 
 /// <summary>
 /// A single asset entry in the layout configuration.
-/// Token values (e.g. <c>{{page:slug}}</c>) inside <see cref="Content"/> or
-/// <see cref="Href"/>/<see cref="Src"/> are stored verbatim and resolved at render time.
+/// Token values (e.g. <c>{{page:slug}}</c>) inside <see cref="Content"/> are stored verbatim
+/// and resolved at render time.
 /// </summary>
 public sealed record LayoutAssetDto(
     /// <summary>Stable client-generated identifier for the asset entry.</summary>
     string Id,
     /// <summary>Sort key. Gaps of 10 recommended to allow insert without full reorder.</summary>
     int Order,
-    /// <summary>Asset kind: <c>inline-css</c> | <c>inline-js</c> | <c>raw-html</c></summary>
+    /// <summary>Asset kind: <c>inline-css</c> | <c>inline-js</c> | <c>raw-html</c>. Use <c>raw-html</c> to inject fully-attributed tags such as <c>&lt;link&gt;</c> or <c>&lt;script src="..."&gt;</c>.</summary>
     string Type,
     /// <summary>Injection position: <c>head</c> | <c>body-start</c> | <c>body-end</c></summary>
     string Position,

@@ -633,15 +633,11 @@ Files: `src/MicroCMS.Application/Features/Layouts/Dtos/LayoutDtos.cs`, `LayoutCo
 public sealed record LayoutAssetDto(
     string Id,           // stable client-generated ID
     int Order,           // sort key (gaps of 10 recommended)
-    string Type,         // "css-link" | "js-script" | "inline-css" | "inline-js" | "raw-html"
+    string Type,         // "inline-css" | "inline-js" | "raw-html"
     string Position,     // "head" | "body-start" | "body-end"
-    string? Href,
-    string? Src,
     string? Content,
-    bool Defer,
-    bool Async,
     bool Nonce,          // reserved for CSP nonce injection (Sprint 19)
-    IReadOnlyDictionary<string, string> Attributes); // integrity, crossorigin, etc.
+    IReadOnlyDictionary<string, string> Attributes);
 
 public sealed record LayoutBodyAttributeDto(
     string Attribute,    // e.g. "id", "data-template", "class"
@@ -666,17 +662,15 @@ Files: `src/MicroCMS.Application/Features/Layouts/Services/LayoutShellGeneratorS
 <head>
   <!-- SEO tokens (existing) -->
   <!-- HEAD assets ordered by .Order:
-       css-link → <link rel="stylesheet" href="..." {extra attrs}>
        inline-css → <style>...</style>
        inline-js@head → <script [nonce]>...</script>
-       js-script@head → <script src="..." [defer] [async] [nonce] {extra attrs}></script>
        raw-html@head → verbatim content -->
 </head>
 <body {bodyAttributes e.g. id="{{page:slug}}" data-template="{{template:key}}"} >
   <!-- BODY-START assets: raw-html@body-start -->
   ... zones (existing) ...
   <!-- BODY-END assets ordered by .Order:
-       js-script@body-end, inline-js@body-end, raw-html@body-end -->
+       inline-js@body-end, raw-html@body-end -->
 </body>
 ```
 
@@ -701,7 +695,7 @@ Files: `src/MicroCMS.Api/Controllers/LayoutsController.cs`
 Files: `src/MicroCMS.Admin.WebHost/ClientApp/src/types/index.ts`, `src/api/layouts.ts`
 
 ```typescript
-export type LayoutAssetType = 'css-link' | 'js-script' | 'inline-css' | 'inline-js' | 'raw-html';
+export type LayoutAssetType = 'inline-css' | 'inline-js' | 'raw-html';
 export type LayoutAssetPosition = 'head' | 'body-start' | 'body-end';
 
 export interface LayoutAsset {
@@ -709,11 +703,7 @@ export interface LayoutAsset {
   order: number;
   type: LayoutAssetType;
   position: LayoutAssetPosition;
-  href?: string;
-  src?: string;
   content?: string;
-  defer: boolean;
-  async: boolean;
   nonce: boolean;
   attributes: Record<string, string>;
 }
@@ -734,8 +724,8 @@ Files: `src/MicroCMS.Admin.WebHost/ClientApp/src/pages/layouts/LayoutDesignerPag
 - Button label: `Save Layout` (replaces current `Save Zones`)
 
 **Layout Configuration tab — Assets section:**
-- Ordered list (sorted by `order`); each row shows: order badge | type chip | position chip | href/src/content preview (truncated 40 chars) | defer/async/nonce toggles | Edit (pencil) | Delete (trash)
-- "Add Asset" → inline expand form: type selector → conditional href/src/content textarea → position selector → defer/async/nonce checkboxes → optional extra attributes (key/value pairs, add/remove rows)
+- Ordered list (sorted by `order`); each row shows: order badge | type chip | position chip | content preview (truncated 40 chars) | nonce toggle | Edit (pencil) | Delete (trash)
+- "Add Asset" → inline expand form: type selector → content textarea → position selector → nonce checkbox → optional extra attributes (key/value pairs, add/remove rows)
 - Up/Down reorder buttons (same UI pattern as zone reorder); swaps `order` values
 - Token hint text beneath content/value inputs: *Available tokens: `{{page:slug}}`, `{{page:title}}`, `{{template:key}}`, `{{site:name}}`, `{{site:settings:YOUR_KEY}}`*
 
@@ -777,7 +767,7 @@ Token syntax is **unified**: `{{namespace:key}}` for both Handlebars and HTML te
 
 **Acceptance Criteria:**
 1. `PUT /layouts/{id}/config` persists assets and body attributes; `GET /layouts/{id}` returns `config` field populated.
-2. Saving a layout with a `css-link` asset produces a `shellTemplate` containing a `<link>` tag in `<head>`.
+2. Saving a layout with an `inline-css` asset produces a `shellTemplate` containing a `<style>` block in `<head>`.
 3. Saving a layout with `bodyAttributes` produces a `shellTemplate` `<body>` tag with those attributes.
 4. Asset `content` containing `{{page:slug}}` is stored verbatim in `shellTemplate` (not resolved).
 5. Layout Configuration tab visible in Admin UI; assets and body attributes can be added, reordered, edited, and deleted.

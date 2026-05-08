@@ -86,11 +86,11 @@ public sealed class LayoutsController : ApiControllerBase
     /// Replaces the layout configuration (assets and body attributes).
     /// The shell template is auto-regenerated from the updated configuration.
     ///
-    /// <b>Asset types:</b> <c>css-link</c>, <c>js-script</c>, <c>inline-css</c>, <c>inline-js</c>, <c>raw-html</c>
+    /// <b>Asset types:</b> <c>inline-css</c>, <c>inline-js</c>, <c>raw-html</c>
     ///
     /// <b>Asset positions:</b> <c>head</c>, <c>body-start</c>, <c>body-end</c>
     ///
-    /// <b>Token placeholders</b> may appear in asset <c>content</c>, <c>href</c>, <c>src</c>,
+    /// <b>Token placeholders</b> may appear in asset <c>content</c>
     /// and body attribute <c>value</c> fields. They are stored verbatim and resolved at render time:
     /// <ul>
     ///   <li><c>{{page:slug}}</c>, <c>{{page:title}}</c> — page-specific fields</li>

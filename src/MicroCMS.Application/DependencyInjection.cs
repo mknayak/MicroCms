@@ -5,6 +5,8 @@ using MicroCMS.Application.Common.Authorization;
 using MicroCMS.Application.Common.Behaviors;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Components.Services;
+using MicroCMS.Application.Features.Delivery.Rendering;
+using MicroCMS.Application.Features.Delivery.Rendering.Resolvers;
 using MicroCMS.Application.Features.Layouts.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -39,6 +41,15 @@ public static class DependencyInjection
         services.AddScoped<IApplicationAuthorizationService, DefaultApplicationAuthorizationService>();
         services.AddScoped<LayoutShellGeneratorService>();
         services.AddScoped<ComponentBackingTypeProvisioner>();
+
+        // Token resolution pipeline — resolvers ordered by execution priority.
+        // SiteTokenResolver depends on ISettingsReader (Infrastructure), registered after AddInfrastructure().
+        services.AddScoped<ITokenResolver, PageTokenResolver>();
+        services.AddScoped<ITokenResolver, TemplateTokenResolver>();
+        services.AddScoped<ITokenResolver, SeoTokenResolver>();
+        services.AddScoped<ITokenResolver, SiteTokenResolver>();
+        services.AddScoped<ITokenResolver, UserTokenResolver>();
+        services.AddScoped<TokenResolutionPipeline>();
 
         return services;
     }

@@ -33,11 +33,12 @@ internal sealed class ComponentRenderingService(
     }
 
     public Task<string> RenderLayoutAsync(
-   Layout layout,
-      IReadOnlyDictionary<string, string> zones,
-   string? seoTitle       = null,
+        Layout layout,
+        IReadOnlyDictionary<string, string> zones,
+        RenderContext renderContext,
+        string? seoTitle       = null,
         string? seoDescription = null,
         string? seoOgImage     = null,
-   CancellationToken cancellationToken = default) =>
- layoutRenderer.RenderAsync(layout, zones, seoTitle, seoDescription, seoOgImage, cancellationToken);
+        CancellationToken cancellationToken = default) =>
+        layoutRenderer.RenderAsync(layout, zones, renderContext, seoTitle, seoDescription, seoOgImage, cancellationToken);
 }

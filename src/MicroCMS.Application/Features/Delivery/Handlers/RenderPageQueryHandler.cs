@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using MediatR;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Features.Delivery.Dtos;
@@ -60,15 +61,28 @@ internal sealed class RenderPageBySlugQueryHandler(
         // ── 6. Resolve Layout (page override → site default → none) ───────
         var layout = await ResolveLayoutAsync(page, siteId, layoutRepo, cancellationToken);
 
-        // ── 7. Compose final output ───────────────────────────────────────
+        // ── 7. Build RenderContext for token resolution ───────────────────
+        var renderContext = new RenderContext
+        {
+            SiteId    = siteId,
+            TenantId  = page.TenantId,
+            PageSlug  = page.Slug.Value,
+            PageTitle = page.Title,
+            PagePublishedAt = null, // Page aggregate does not carry PublishedAt; supply if added in future
+            TemplateKey  = layout?.Key,
+            TemplateName = layout?.Name,
+        };
+
+        // ── 8. Compose final output ───────────────────────────────────────
         string? html = null;
-  if (layout is not null)
-   html = await renderer.RenderLayoutAsync(
-layout, zones,
-  seoTitle: seo.Title,
-       seoDescription: seo.Description,
-             seoOgImage: seo.OgImage,
-          cancellationToken: cancellationToken);
+        if (layout is not null)
+            html = await renderer.RenderLayoutAsync(
+                layout, zones,
+                renderContext,
+                seoTitle:       seo.Title,
+                seoDescription: seo.Description,
+                seoOgImage:     seo.OgImage,
+                cancellationToken: cancellationToken);
 
         return Result.Success(new RenderedPageDto(
             page.Id.Value,
@@ -96,7 +110,58 @@ layout, zones,
         return Task.FromResult(new SeoDto(title, description, ogImage, canonical));
     }
 
-    // ── Zone rendering ────────────────────────────────────────────────────
+    // ── Page field resolution ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Loads the page's linked entry (if any) and flattens its JSON fields to
+    /// a string dictionary so they can be exposed as <c>page:{fieldName}</c> tokens.
+    /// </summary>
+    private static async Task<IReadOnlyDictionary<string, string>> ResolvePageFieldsAsync(
+        Page page,
+        IRepository<Entry, EntryId> entryRepo,
+        CancellationToken ct)
+    {
+        if (page.LinkedEntryId is null)
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var entry = await entryRepo.GetByIdAsync(page.LinkedEntryId.Value, ct);
+        if (entry is null)
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        return FlattenFieldsJson(entry.FieldsJson);
+    }
+
+    /// <summary>
+    /// Flattens a top-level JSON object to <c>string → string</c>.
+    /// Numbers are rendered with <see cref="JsonElement.ToString"/>,
+    /// booleans as <c>true</c>/<c>false</c>, nulls as empty string.
+    /// </summary>
+    private static IReadOnlyDictionary<string, string> FlattenFieldsJson(string fieldsJson)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            using var doc = JsonDocument.Parse(fieldsJson);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                return result;
+
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                result[prop.Name] = prop.Value.ValueKind switch
+                {
+                    JsonValueKind.String => prop.Value.GetString() ?? string.Empty,
+                    JsonValueKind.Null   => string.Empty,
+                    JsonValueKind.True   => "true",
+                    JsonValueKind.False  => "false",
+                    _                    => prop.Value.ToString(),
+                };
+            }
+        }
+        catch (JsonException) { /* malformed JSON — return whatever was collected */ }
+        return result;
+    }
+
+    // ── Zone rendering
 
     private static async Task<IReadOnlyDictionary<string, string>> RenderZonesAsync(
         PageTemplate? template,

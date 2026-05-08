@@ -18,12 +18,16 @@ public interface IComponentRenderingService
         Entry item,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Injects zone HTML into a layout shell and returns a full HTML document.</summary>
+    /// <summary>
+    /// Injects zone HTML into a layout shell, resolves all <c>{{namespace:key}}</c> tokens
+    /// via the registered <see cref="TokenResolutionPipeline"/>, and returns a full HTML document.
+    /// </summary>
     Task<string> RenderLayoutAsync(
-   Layout layout,
-   IReadOnlyDictionary<string, string> zones,
- string? seoTitle       = null,
+        Layout layout,
+        IReadOnlyDictionary<string, string> zones,
+        RenderContext renderContext,
+        string? seoTitle       = null,
         string? seoDescription = null,
-     string? seoOgImage     = null,
+        string? seoOgImage     = null,
         CancellationToken cancellationToken = default);
 }
