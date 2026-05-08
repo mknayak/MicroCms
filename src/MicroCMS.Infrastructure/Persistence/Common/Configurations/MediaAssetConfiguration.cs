@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Aggregates.Media;
+using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,12 @@ internal sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAs
             .IsRequired();
 
         builder.Property(a => a.AltText).HasMaxLength(500);
+        builder.Property(a => a.AiAltText).HasMaxLength(500);
+        builder.Property(a => a.Visibility)
+            .HasConversion<string>()
+            .HasMaxLength(32)
+            .IsRequired()
+            .HasDefaultValue(AssetVisibility.Public);
         builder.Property(a => a.CreatedAt).IsRequired();
         builder.Property(a => a.UpdatedAt).IsRequired();
 

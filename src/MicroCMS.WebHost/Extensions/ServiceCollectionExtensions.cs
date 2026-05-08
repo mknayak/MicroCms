@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
+using Serilog.Events;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -63,6 +65,33 @@ internal static class ServiceCollectionExtensions
     internal static WebApplicationBuilder AddLoggingAndTelemetry(
         this WebApplicationBuilder builder)
     {
+        var logDir = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "logs");
+        Directory.CreateDirectory(logDir);
+        var logFile = Path.Combine(logDir, "microcms-.log");
+
+        var minimumLevel = builder.Configuration["Logging:LogLevel:Default"] is string lvl
+            && Enum.TryParse<LogEventLevel>(lvl, ignoreCase: true, out var parsed)
+            ? parsed
+            : LogEventLevel.Information;
+
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(builder.Configuration)
+            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", "MicroCMS.WebHost")
+            .WriteTo.Console(outputTemplate:
+                "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                path: logFile,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 31,
+                outputTemplate:
+                    "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
+
+        builder.Host.UseSerilog();
+
         return builder;
     }
 
