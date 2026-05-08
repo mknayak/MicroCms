@@ -52,7 +52,7 @@ public sealed record UpdateContentTypeCommand(
     string? Description = null,
     LocalizationMode? Localization = null,
     string? Kind = null,
-    Guid? LayoutId = null,
+    Guid? SiteTemplateId = null,
     IReadOnlyList<UpdateFieldInput>? Fields = null) : ICommand<ContentTypeDto>;
 
 /// <summary>
@@ -111,9 +111,3 @@ public sealed record ImportFieldInput(
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record DeleteContentTypeCommand(Guid ContentTypeId) : ICommand;
-
-/// <summary>Sets or clears the layout associated with a Page-kind content type.</summary>
-[HasPolicy(ContentPolicies.ContentTypeManage)]
-public sealed record SetContentTypeLayoutCommand(
-    Guid ContentTypeId,
-    Guid? LayoutId) : ICommand<ContentTypeDto>;

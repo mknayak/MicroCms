@@ -15,7 +15,7 @@ public static class ContentTypeMapper
         ct.LocalizationMode.ToString(),
         ct.Status.ToString(),
         ct.Kind.ToString(),
-        ct.LayoutId?.Value,
+        ct.SiteTemplateId?.Value,
         ct.CreatedAt,
         ct.UpdatedAt,
         ct.Fields.OrderBy(f => f.SortOrder).Select(ToFieldDto).ToList().AsReadOnly());

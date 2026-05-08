@@ -610,7 +610,7 @@ public sealed class PackageService(
         Id: ct.Id.Value, Handle: ct.Handle, DisplayName: ct.DisplayName,
         Description: ct.Description, LocalizationMode: ct.LocalizationMode.ToString(),
      Status: ct.Status.ToString(), Kind: ct.Kind.ToString(),
-        LayoutId: ct.LayoutId?.Value, CreatedAt: ct.CreatedAt, UpdatedAt: ct.UpdatedAt,
+        CreatedAt: ct.CreatedAt, UpdatedAt: ct.UpdatedAt,
         Fields: ct.Fields.Select(f => new FieldPackageData(
     Id: f.Id, Handle: f.Handle, Label: f.Label,
    FieldType: f.FieldType.ToString(), IsRequired: f.IsRequired,

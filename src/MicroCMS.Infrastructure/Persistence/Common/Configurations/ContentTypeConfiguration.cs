@@ -58,10 +58,11 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
             .IsRequired()
             .HasDefaultValue(ContentTypeKind.Content);
 
-        builder.Property(ct => ct.LayoutId)
+        builder.Property(ct => ct.SiteTemplateId)
             .HasConversion(
                 id => id.HasValue ? id.Value.Value : (Guid?)null,
-                v => v.HasValue ? new LayoutId(v.Value) : (LayoutId?)null);
+                v => v.HasValue ? new SiteTemplateId(v.Value) : (SiteTemplateId?)null)
+            .HasColumnName("SiteTemplateId");
 
         builder.Property(ct => ct.CreatedAt).IsRequired();
         builder.Property(ct => ct.UpdatedAt).IsRequired();

@@ -169,8 +169,8 @@ export interface ContentType {
     status: string;
     /** Discriminates what this content type represents. */
     kind: ContentTypeKind;
-    /** Only set when kind === 'Page'. The layout applied to pages of this type. */
-    layoutId?: string;
+    /** Only set when kind === 'Page'. The template applied to pages of this type. */
+    siteTemplateId?: string;
     fields: FieldDefinitionDto[];
     createdAt: string;
     updatedAt: string;

@@ -13,7 +13,6 @@ public sealed record ContentTypePackageData(
     string LocalizationMode,
     string Status,
     string Kind,
-    Guid? LayoutId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<FieldPackageData> Fields);

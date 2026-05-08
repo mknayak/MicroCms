@@ -51,7 +51,7 @@ export interface UpdateContentTypeRequest {
   description?: string;
   localizationMode?: string;
   kind?: string;
-  layoutId?: string;
+  siteTemplateId?: string;
   fields?: UpdateFieldRequest[];
 }
 

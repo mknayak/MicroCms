@@ -175,7 +175,7 @@ cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
 
 internal sealed class UpdateContentTypeCommandHandler(
     IRepository<ContentType, ContentTypeId> repo,
-    IRepository<Layout, LayoutId> layoutRepo,
+    IRepository<SiteTemplate, SiteTemplateId> siteTemplateRepo,
 ICacheService cacheService)
     : IRequestHandler<UpdateContentTypeCommand, Result<ContentTypeDto>>
 {
@@ -185,7 +185,7 @@ ICacheService cacheService)
  ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
 
       ct.Update(request.DisplayName, request.Description, request.Localization);
-    await ApplyKindAndLayout(ct, request, layoutRepo, cancellationToken);
+    await ApplyKindAndLayout(ct, request, siteTemplateRepo, cancellationToken);
         if (request.Fields is not null) ApplyFieldUpdates(ct, request.Fields);
 
  repo.Update(ct);
@@ -195,17 +195,23 @@ ICacheService cacheService)
 
     private static async Task ApplyKindAndLayout(
         ContentType ct, UpdateContentTypeCommand request,
-        IRepository<Layout, LayoutId> layoutRepo, CancellationToken cancellationToken)
+        IRepository<SiteTemplate, SiteTemplateId> siteTemplateRepo,
+        CancellationToken cancellationToken)
     {
         if (request.Kind is not null &&
             Enum.TryParse<ContentTypeKind>(request.Kind, ignoreCase: true, out var kind))
             ct.SetKind(kind);
 
-        if (request.LayoutId.HasValue)
+        if (request.SiteTemplateId.HasValue)
         {
- var layout = await layoutRepo.GetByIdAsync(new LayoutId(request.LayoutId.Value), cancellationToken)
-      ?? throw new NotFoundException(nameof(Layout), request.LayoutId.Value);
-     ct.SetLayout(layout.Id);
+            var template = await siteTemplateRepo.GetByIdAsync(new SiteTemplateId(request.SiteTemplateId.Value), cancellationToken)
+                ?? throw new NotFoundException(nameof(SiteTemplate), request.SiteTemplateId.Value);
+            ct.SetSiteTemplate(template.Id);
+        }
+        else if (request.SiteTemplateId == null && ct.Kind == ContentTypeKind.Page)
+        {
+            // Explicit null clears the template
+            ct.SetSiteTemplate(null);
         }
     }
 
@@ -241,32 +247,4 @@ ICacheService cacheService)
     private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
 cacheService.RemoveAsync(CacheKeys.ContentType(tenantId, id), ct),
         cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(tenantId), ct));
-}
-
-internal sealed class SetContentTypeLayoutCommandHandler(
-    IRepository<ContentType, ContentTypeId> repo,
-    IRepository<Layout, LayoutId> layoutRepo,
-    ICacheService cacheService)
-    : IRequestHandler<SetContentTypeLayoutCommand, Result<ContentTypeDto>>
-{
-    public async Task<Result<ContentTypeDto>> Handle(SetContentTypeLayoutCommand request, CancellationToken cancellationToken)
-    {
-        var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
-            ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
-
-        LayoutId? layoutId = null;
-      if (request.LayoutId.HasValue)
-{
-            var layout = await layoutRepo.GetByIdAsync(new LayoutId(request.LayoutId.Value), cancellationToken)
-       ?? throw new NotFoundException(nameof(Layout), request.LayoutId.Value);
-    layoutId = layout.Id;
-      }
-
-        ct.SetLayout(layoutId);
-    repo.Update(ct);
-        await Task.WhenAll(
-            cacheService.RemoveAsync(CacheKeys.ContentType(ct.TenantId, ct.Id.Value), cancellationToken),
-            cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(ct.TenantId), cancellationToken));
-   return Result.Success(ContentTypeMapper.ToDto(ct));
-    }
 }

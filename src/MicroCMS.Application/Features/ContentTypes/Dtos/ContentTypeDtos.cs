@@ -12,7 +12,7 @@ public sealed record ContentTypeDto(
     string LocalizationMode,
     string Status,
     string Kind,
-    Guid? LayoutId,
+    Guid? SiteTemplateId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<FieldDefinitionDto> Fields);

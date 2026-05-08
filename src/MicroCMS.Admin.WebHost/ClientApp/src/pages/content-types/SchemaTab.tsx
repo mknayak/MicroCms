@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import { contentTypesApi } from '@/api/contentTypes';
+import { siteTemplatesApi } from '@/api/siteTemplates';
 import type { ContentType, FieldDefinitionDto, FieldType } from '@/types';import { ApiError } from '@/api/client';
 import { FIELD_TYPE_COLORS, FIELD_TYPE_LABELS } from './contentTypeDetail.shared';
 
@@ -77,6 +78,7 @@ const schemaFormSchema = z.object({
     description: z.string().max(500).optional(),
     localizationMode: z.enum(['PerLocale', 'Shared']),
     kind: z.enum(['Content', 'Page']),
+    siteTemplateId: z.string().optional(),
     fields: z.array(fieldSchema),
 });
 
@@ -585,6 +587,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
             description: contentType.description ?? '',
             localizationMode: contentType.localizationMode === 'Shared' ? 'Shared' : 'PerLocale',
             kind: (contentType.kind === 'Page' ? 'Page' : 'Content') as 'Content' | 'Page',
+            siteTemplateId: contentType.siteTemplateId ?? '',
             fields: toFormFields(contentType),
         },
     });
@@ -596,12 +599,18 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
             description: contentType.description ?? '',
             localizationMode: contentType.localizationMode === 'Shared' ? 'Shared' : 'PerLocale',
             kind: (contentType.kind === 'Page' ? 'Page' : 'Content') as 'Content' | 'Page',
+            siteTemplateId: contentType.siteTemplateId ?? '',
             fields: toFormFields(contentType),
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [contentType.id, contentType.updatedAt]);
 
     const { fields, append, remove, move } = useFieldArray({ control, name: 'fields' });
+
+    const { data: siteTemplates } = useQuery({
+        queryKey: ['site-templates'],
+        queryFn: () => siteTemplatesApi.list(),
+    });
 
     const saveMutation = useMutation({
         mutationFn: (values: SchemaFormValues) =>
@@ -610,6 +619,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                 description: values.description,
                 localizationMode: values.localizationMode,
                 kind: values.kind,
+                siteTemplateId: values.kind === 'Page' && values.siteTemplateId ? values.siteTemplateId : undefined,
                 fields: values.fields.map((f, idx) => ({
                     id: f.id,
                     handle: toCamelCase(f.name) || `field${idx}`,
@@ -755,6 +765,18 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                             </select>
                             <p className="mt-1 text-xs text-slate-400">Page-kind entries trigger the page creation wizard on new entry.</p>
                         </div>
+                        {watch('kind') === 'Page' && (
+                            <div className="col-span-2">
+                                <label className="form-label">Default Template</label>
+                                <select className="form-input mt-1" {...register('siteTemplateId')}>
+                                    <option value="">— No default template —</option>
+                                    {(siteTemplates ?? []).map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                </select>
+                                <p className="mt-1 text-xs text-slate-400">Pages of this type inherit this template. Individual pages can override it.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -985,6 +1007,16 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                                 : 'Per-locale fields'}
                         </p>
                     </div>
+                    {contentType.kind === 'Page' && (
+                        <div>
+                            <p className="text-xs font-medium text-slate-500 uppercase mb-1">Default Template</p>
+                            <p className="text-slate-700">
+                                {contentType.siteTemplateId
+                                    ? (siteTemplates?.find((t) => t.id === contentType.siteTemplateId)?.name ?? contentType.siteTemplateId)
+                                    : <span className="text-slate-400">None</span>}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 

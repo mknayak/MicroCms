@@ -62,10 +62,10 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     public ContentTypeKind Kind { get; private set; } = ContentTypeKind.Content;
 
     /// <summary>
-    /// The layout applied to pages of this type.
+    /// The default SiteTemplate applied to pages created from this content type.
     /// Only relevant when <see cref="Kind"/> == <see cref="ContentTypeKind.Page"/>.
     /// </summary>
-    public LayoutId? LayoutId { get; private set; }
+    public SiteTemplateId? SiteTemplateId { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
@@ -215,14 +215,14 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    /// <summary>Sets or clears the layout associated with a Page-kind content type.</summary>
-    public void SetLayout(LayoutId? layoutId)
+    /// <summary>Sets or clears the default SiteTemplate for a Page-kind content type.</summary>
+    public void SetSiteTemplate(SiteTemplateId? siteTemplateId)
     {
         if (Kind != ContentTypeKind.Page)
             throw new BusinessRuleViolationException(
-          "ContentType.NotPageKind",
-         "Layout can only be set on Page-kind content types.");
-        LayoutId = layoutId;
+                "ContentType.NotPageKind",
+                "SiteTemplate can only be set on Page-kind content types.");
+        SiteTemplateId = siteTemplateId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -234,7 +234,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
                 "ContentType.ComponentKindImmutable",
            "Component-kind content types cannot change their kind.");
         Kind = kind;
-        if (kind != ContentTypeKind.Page) LayoutId = null;
+        if (kind != ContentTypeKind.Page) { SiteTemplateId = null; }
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

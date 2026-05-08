@@ -136,18 +136,8 @@ cancellationToken);
 
         var result = await Sender.Send(
        new UpdateContentTypeCommand(id, request.DisplayName, request.Description, locMode,
-           request.Kind, request.LayoutId, fields),
+           request.Kind, request.SiteTemplateId, fields),
        cancellationToken);
-        return OkOrProblem(result);
-    }
-
-    /// <summary>Sets the layout for a Page-kind content type.</summary>
-    [HttpPut("{id:guid}/layout")]
-    [ProducesResponseType(typeof(ContentTypeDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SetLayout(
-        Guid id, [FromBody] SetContentTypeLayoutRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await Sender.Send(new SetContentTypeLayoutCommand(id, request.LayoutId), cancellationToken);
         return OkOrProblem(result);
     }
 
@@ -253,7 +243,7 @@ public sealed record UpdateContentTypeRequest(
     string? Description = null,
     string? LocalizationMode = null,
     string? Kind = null,
-    Guid? LayoutId = null,
+    Guid? SiteTemplateId = null,
     IReadOnlyList<UpdateFieldRequest>? Fields = null);
 
 public sealed record UpdateFieldRequest(
@@ -285,8 +275,6 @@ public sealed record ImportSchemaFieldRequest(
     string FieldType,
     bool IsRequired = false,
     bool IsLocalized = false);
-
-public sealed record SetContentTypeLayoutRequest(Guid? LayoutId);
 
 /// <summary>API request model for dynamic Enum/Reference/MultiList source configuration.</summary>
 public sealed record FieldDynamicSourceRequest(
