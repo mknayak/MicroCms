@@ -16,7 +16,6 @@ const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const ContentTypesPage = lazy(() => import('@/pages/content-types/ContentTypesPage'));
 const ContentTypeEditPage = lazy(() => import('@/pages/content-types/ContentTypeEditPage'));
 const ContentTypeDetailPage = lazy(() => import('@/pages/content-types/ContentTypeDetailPage'));
-const EntriesPage = lazy(() => import('@/pages/entries/EntriesPage'));
 const EntryEditorPage = lazy(() => import('@/pages/entries/EntryEditorPage'));
 const MediaPage = lazy(() => import('@/pages/media/MediaPage'));
 const TaxonomyPage = lazy(() => import('@/pages/taxonomy/TaxonomyPage'));
@@ -110,11 +109,7 @@ export default function App() {
                                         />
                                         <Route
                                             path="/entries"
-                                            element={
-                                                <Suspense fallback={<PageLoader />}>
-                                                    <EntriesPage />
-                                                </Suspense>
-                                            }
+                                            element={<Navigate to="/content-types" replace />}
                                         />
                                         <Route
                                             path="/entries/new"

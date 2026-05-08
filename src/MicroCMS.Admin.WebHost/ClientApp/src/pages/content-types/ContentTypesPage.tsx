@@ -179,88 +179,92 @@ export default function ContentTypesPage() {
   },
   });
 
-  const items = (data?.items ?? []).filter(
-    (ct) =>
-    ct.kind !== 'Component' &&
-      (!search ||
-      ct.displayName.toLowerCase().includes(search.toLowerCase()) ||
-        ct.handle.toLowerCase().includes(search.toLowerCase())),
-  );
+  const matchesSearch = (ct: ContentTypeListItem) =>
+    !search ||
+    ct.displayName.toLowerCase().includes(search.toLowerCase()) ||
+    ct.handle.toLowerCase().includes(search.toLowerCase());
+
+  const pageItems = (data?.items ?? []).filter((ct) => ct.kind === 'Page' && matchesSearch(ct));
+  const contentItems = (data?.items ?? []).filter((ct) => ct.kind === 'Content' && matchesSearch(ct));
+
+  const renderGrid = (items: ContentTypeListItem[], emptyLabel: string, newLink: string) => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-48 animate-pulse rounded-xl bg-slate-100" />
+          ))}
+        </div>
+      );
+    }
+    return (
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
+        {items.map((ct) => (
+          <ContentTypeCard key={ct.id} ct={ct} onDelete={() => setToDelete(ct)} />
+        ))}
+        <Link
+          to={newLink}
+          className="flex min-h-[12rem] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-300 hover:bg-brand-50/30 hover:text-brand-600 transition-colors"
+        >
+          <span className="text-3xl">＋</span>
+          <span className="text-sm font-medium">{emptyLabel}</span>
+        </Link>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-    <div>
+        <div>
           <h1 className="text-2xl font-bold text-slate-900">Content Types</h1>
-        <p className="mt-1 text-sm text-slate-500">Define the schema for your content.</p>
+          <p className="mt-1 text-sm text-slate-500">Define the schema for your content.</p>
         </div>
-  <div className="flex items-center gap-2">
-        <Link to="/content-types/import" className="btn-secondary">
-Import Schema
+        <div className="flex items-center gap-2">
+          <Link to="/content-types/import" className="btn-secondary">
+            Import Schema
           </Link>
           <Link to="/content-types/new" className="btn-primary">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             New Content Type
- </Link>
+          </Link>
         </div>
       </div>
 
       {/* Search */}
- <div>
+      <div>
         <input
           type="search"
-  value={search}
+          value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search content types…"
-       className="form-input w-72"
-     />
-</div>
-
-      {/* Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-slate-100" />
-        ))}
-        </div>
-      ) : items.length === 0 && !search ? (
-     <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-3xl">📋</div>
-          <p className="font-medium text-slate-600">No content types yet</p>
-          <p className="text-sm text-slate-400">Create your first content type to start structuring your content.</p>
-     <Link to="/content-types/new" className="btn-primary mt-2">Create your first</Link>
-        </div>
-      ) : (
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
- {items.map((ct) => (
-            <ContentTypeCard
-    key={ct.id}
-    ct={ct}
-          onDelete={() => setToDelete(ct)}
-            />
-          ))}
-    {/* Create new card */}
-        <Link
-       to="/content-types/new"
-          className="flex min-h-[12rem] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-300 hover:bg-brand-50/30 hover:text-brand-600 transition-colors"
-          >
-            <span className="text-3xl">＋</span>
-            <span className="text-sm font-medium">New Content Type</span>
-      </Link>
+          className="form-input w-72"
+        />
       </div>
-      )}
+
+      {/* Pages section */}
+      <div className="space-y-3">
+        <h2 className="text-base font-semibold text-slate-700">Pages</h2>
+        {renderGrid(pageItems, 'New Page Type', '/content-types/new?kind=Page')}
+      </div>
+
+      {/* Content Types section */}
+      <div className="space-y-3">
+        <h2 className="text-base font-semibold text-slate-700">Content Types</h2>
+        {renderGrid(contentItems, 'New Content Type', '/content-types/new')}
+      </div>
 
       {/* Delete modal */}
-{toDelete && (
+      {toDelete && (
         <DeleteModal
-      contentType={toDelete}
+          contentType={toDelete}
           onClose={() => setToDelete(null)}
           onConfirm={() => deleteMutation.mutate(toDelete.id)}
         />
-)}
+      )}
     </div>
   );
 }

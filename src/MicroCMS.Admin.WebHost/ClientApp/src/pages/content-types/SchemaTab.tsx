@@ -76,6 +76,7 @@ const schemaFormSchema = z.object({
     apiKey: z.string().min(1, 'API key is required').max(64).regex(API_KEY_REGEX, 'Lowercase, digits, hyphens only'),
     description: z.string().max(500).optional(),
     localizationMode: z.enum(['PerLocale', 'Shared']),
+    kind: z.enum(['Content', 'Page']),
     fields: z.array(fieldSchema),
 });
 
@@ -583,6 +584,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
             apiKey: contentType.handle,
             description: contentType.description ?? '',
             localizationMode: contentType.localizationMode === 'Shared' ? 'Shared' : 'PerLocale',
+            kind: (contentType.kind === 'Page' ? 'Page' : 'Content') as 'Content' | 'Page',
             fields: toFormFields(contentType),
         },
     });
@@ -593,6 +595,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
             apiKey: contentType.handle,
             description: contentType.description ?? '',
             localizationMode: contentType.localizationMode === 'Shared' ? 'Shared' : 'PerLocale',
+            kind: (contentType.kind === 'Page' ? 'Page' : 'Content') as 'Content' | 'Page',
             fields: toFormFields(contentType),
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -606,6 +609,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                 displayName: values.name,
                 description: values.description,
                 localizationMode: values.localizationMode,
+                kind: values.kind,
                 fields: values.fields.map((f, idx) => ({
                     id: f.id,
                     handle: toCamelCase(f.name) || `field${idx}`,
@@ -742,6 +746,14 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                                 <option value="PerLocale">Per-locale fields</option>
                                 <option value="Shared">Shared (locale-independent)</option>
                             </select>
+                        </div>
+                        <div>
+                            <label className="form-label">Kind</label>
+                            <select className="form-input mt-1" {...register('kind')}>
+                                <option value="Content">Content — standard headless entry</option>
+                                <option value="Page">Page — linked to a site page</option>
+                            </select>
+                            <p className="mt-1 text-xs text-slate-400">Page-kind entries trigger the page creation wizard on new entry.</p>
                         </div>
                     </div>
                 </div>

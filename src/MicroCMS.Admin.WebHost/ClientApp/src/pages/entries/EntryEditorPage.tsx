@@ -692,7 +692,7 @@ export default function EntryEditorPage() {
     {contentTypeName && (
      <>
    <span>/</span>
-       <button onClick={() => navigate('/entries')} className="hover:text-slate-700">{contentTypeName}</button>
+       <button onClick={() => navigate(`/content-types/${existing?.contentTypeId ?? selectedContentTypeId}`)} className="hover:text-slate-700">{contentTypeName}</button>
               </>
             )}
  {entryTitle && (

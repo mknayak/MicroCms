@@ -94,7 +94,7 @@ export function CreatePageModal({
     <label className="form-label">Content Type</label>
             <select className="form-input mt-1" {...cf.register('contentTypeId')}>
   <option value="">Select…</option>
-     {contentTypes.map((ct) => <option key={ct.id} value={ct.id}>{ct.displayName}</option>)}
+     {contentTypes.filter((ct) => ct.kind === 'Page').map((ct) => <option key={ct.id} value={ct.id}>{ct.displayName}</option>)}
               </select>
       {cf.formState.errors.contentTypeId && <p className="form-error">{cf.formState.errors.contentTypeId.message}</p>}
       </div>

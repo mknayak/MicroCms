@@ -13,6 +13,7 @@ using MicroCMS.Domain.Specifications.Content;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Primitives;
 using MicroCMS.Shared.Results;
+using MicroCMS.Domain.Enums;
 
 namespace MicroCMS.Application.Features.ContentTypes.Handlers;
 
@@ -43,6 +44,7 @@ internal sealed class GetContentTypeQueryHandler(
 
 internal sealed class ListContentTypesQueryHandler(
     IRepository<ContentType, ContentTypeId> repo,
+    IRepository<Entry, EntryId> entryRepo,
     ICacheService cacheService,
     ICurrentUser currentUser)
   : IRequestHandler<ListContentTypesQuery, Result<PagedList<ContentTypeListItemDto>>>
@@ -74,8 +76,19 @@ internal sealed class ListContentTypesQueryHandler(
         var items = await repo.ListAsync(spec, cancellationToken);
      var total = await repo.CountAsync(countSpec, cancellationToken);
 
+        // Fetch entry counts per content type when a site context is available.
+        var entryCounts = new Dictionary<Guid, int>();
+        if (siteId is { } resolvedSiteId)
+        {
+            foreach (var ct in items)
+            {
+                var entryCountSpec = new EntriesBySiteSpec(resolvedSiteId, statusFilter: null, contentTypeId: ct.Id.Value);
+                entryCounts[ct.Id.Value] = await entryRepo.CountAsync(entryCountSpec, cancellationToken);
+            }
+        }
+
    var paged = PagedList<ContentTypeListItemDto>.Create(
-    items.Select(ct => ContentTypeMapper.ToListItemDto(ct)),
+    items.Select(ct => ContentTypeMapper.ToListItemDto(ct, entryCounts.GetValueOrDefault(ct.Id.Value))),
             request.Page, request.PageSize, total);
 
       await cacheService.SetWithTagAsync(cacheKey, paged, CacheTags.TenantContentTypes(tenantId), cancellationToken: cancellationToken);
