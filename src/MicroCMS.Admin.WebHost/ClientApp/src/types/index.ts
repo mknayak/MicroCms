@@ -679,6 +679,84 @@ export interface LayoutDefaultPlacement {
     isLocked: boolean;
 }
 
+// ─── Layout Config types ──────────────────────────────────────────────────────
+
+/**
+ * Asset type values:
+ *   'inline-css' – inline styles  (<style>...</style>)
+ *   'inline-js'  – inline script  (<script>...</script>)
+ *   'raw-html'   – verbatim HTML snippet (any position)
+ *
+ * Use 'raw-html' to inject fully-attributed tags such as
+ * `<link>` with integrity/crossorigin or `<script src="...">` with SRI.
+ */
+export type LayoutAssetType = 'inline-css' | 'inline-js' | 'raw-html';
+
+/**
+ * Injection position for layout assets:
+ *   'head'       – inside <head>
+ *   'body-start' – immediately after <body>
+ *   'body-end'   – immediately before </body>
+ */
+export type LayoutAssetPosition = 'head' | 'body-start' | 'body-end';
+
+/**
+ * A single asset entry in the layout configuration.
+ *
+ * Token placeholders (e.g. `{{page:slug}}`, `{{site:name}}`) may appear
+ * in `content`, `href`, and `src` fields — they are stored verbatim and
+ * resolved at render time.
+ */
+export interface LayoutAsset {
+    /** Stable client-generated identifier (use crypto.randomUUID()). */
+    id: string;
+    /** Sort key; gaps of 10 recommended. Assets are injected in ascending order. */
+    order: number;
+    type: LayoutAssetType;
+    position: LayoutAssetPosition;
+    /**
+     * The verbatim content for the asset.
+     * - `inline-css`: CSS text wrapped in <style>
+     * - `inline-js`:  JS text wrapped in <script>
+     * - `raw-html`:   full HTML tag(s) e.g. `<link href="..." integrity="..." crossorigin="anonymous">`
+     */
+    content?: string;
+    /** When true, a CSP nonce attribute will be injected at render time (Sprint 19). */
+    nonce: boolean;
+    /** Reserved for future per-asset metadata. */
+    attributes: Record<string, string>;
+}
+
+/**
+ * A single `<body>` attribute entry.
+ * `value` may contain token placeholders such as `{{page:slug}}`.
+ *
+ * Common examples:
+ *   `{ attribute: 'id',            value: '{{page:slug}}' }`
+ *   `{ attribute: 'data-template', value: '{{template:key}}' }`
+ *   `{ attribute: 'data-site',     value: '{{site:name}}' }`
+ */
+export interface LayoutBodyAttribute {
+    attribute: string;
+    value: string;
+}
+
+/** Root configuration stored in `Layout.layoutConfigJson`. */
+export interface LayoutConfig {
+    assets: LayoutAsset[];
+    bodyAttributes: LayoutBodyAttribute[];
+}
+
+export interface UpdateLayoutConfigRequest {
+    config: LayoutConfig;
+}
+
+export interface UpdateLayoutShellRequest {
+    shellTemplate: string;
+}
+
+// ─── Layout DTO ───────────────────────────────────────────────────────────────
+
 export interface LayoutDto {
     id: string;
     tenantId: string;
@@ -686,11 +764,14 @@ export interface LayoutDto {
     name: string;
     key: string;
     templateType: LayoutTemplateType;
-    /** Auto-generated from zones[]. Not editable directly via UI. */
+    /** Auto-generated, or hand-authored in advanced mode. */
     shellTemplate?: string;
+    /** true when the shell was last saved via advanced mode (hand-edited). */
+    isShellCustomized: boolean;
     isDefault: boolean;
     zones: LayoutZoneNode[];
     defaultPlacements: LayoutDefaultPlacement[];
+    config: LayoutConfig;
     createdAt: string;
     updatedAt: string;
 }

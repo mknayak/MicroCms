@@ -28,6 +28,16 @@ public sealed record UpdateLayoutDefaultPlacementsCommand(
     IReadOnlyList<LayoutDefaultPlacementDto> Placements) : ICommand<LayoutDto>;
 
 [HasPolicy(ContentPolicies.LayoutManage)]
+public sealed record UpdateLayoutConfigCommand(
+    Guid LayoutId,
+    LayoutConfigDto Config) : ICommand<LayoutDto>;
+
+[HasPolicy(ContentPolicies.LayoutManage)]
+public sealed record UpdateLayoutShellCommand(
+    Guid LayoutId,
+    string ShellTemplate) : ICommand<LayoutDto>;
+
+[HasPolicy(ContentPolicies.LayoutManage)]
 public sealed record SetDefaultLayoutCommand(
     Guid LayoutId) : ICommand<LayoutDto>;
 

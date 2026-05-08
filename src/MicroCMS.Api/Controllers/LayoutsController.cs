@@ -1,5 +1,4 @@
-using MicroCMS.Application.Features.Layouts.Commands;
-using MicroCMS.Application.Features.Layouts.Dtos;
+using MicroCMS.Application.Features.Layouts.Commands;using MicroCMS.Application.Features.Layouts.Dtos;
 using MicroCMS.Application.Features.Layouts.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -83,6 +82,41 @@ public sealed class LayoutsController : ApiControllerBase
   public async Task<IActionResult> SetDefault(Guid id, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new SetDefaultLayoutCommand(id), ct));
 
+    /// <summary>
+    /// Replaces the layout configuration (assets and body attributes).
+    /// The shell template is auto-regenerated from the updated configuration.
+    ///
+    /// <b>Asset types:</b> <c>css-link</c>, <c>js-script</c>, <c>inline-css</c>, <c>inline-js</c>, <c>raw-html</c>
+    ///
+    /// <b>Asset positions:</b> <c>head</c>, <c>body-start</c>, <c>body-end</c>
+    ///
+    /// <b>Token placeholders</b> may appear in asset <c>content</c>, <c>href</c>, <c>src</c>,
+    /// and body attribute <c>value</c> fields. They are stored verbatim and resolved at render time:
+    /// <ul>
+    ///   <li><c>{{page:slug}}</c>, <c>{{page:title}}</c> — page-specific fields</li>
+    ///   <li><c>{{template:key}}</c>, <c>{{template:name}}</c> — template fields</li>
+    ///   <li><c>{{site:name}}</c>, <c>{{site:settings:YOUR_KEY}}</c> — site/tenant settings</li>
+    ///   <li><c>{{seo:title}}</c>, <c>{{seo:description}}</c> — SEO fields (existing)</li>
+    /// </ul>
+    /// Note: <c>user:*</c> tokens are component-scope only and not valid in shell templates.
+    /// </summary>
+    [HttpPut("{id:guid}/config")]
+    [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateConfig(
+        Guid id, [FromBody] UpdateLayoutConfigRequest request, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new UpdateLayoutConfigCommand(id, request.Config), ct));
+
+    /// <summary>
+    /// Directly sets a hand-authored shell template (advanced mode).
+    /// Sets <c>isShellCustomized = true</c> on the layout.
+    /// Note: saving zones or configuration after this will overwrite the custom shell.
+    /// </summary>
+    [HttpPut("{id:guid}/shell")]
+    [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateShell(
+        Guid id, [FromBody] UpdateLayoutShellRequest request, CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new UpdateLayoutShellCommand(id, request.ShellTemplate), ct));
+
     /// <summary>Deletes a layout. Pages that reference it will fall back to the site default.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -94,3 +128,5 @@ public sealed class LayoutsController : ApiControllerBase
 public sealed record UpdateLayoutRequest(string Name, string TemplateType);
 public sealed record UpdateLayoutZonesRequest(IReadOnlyList<LayoutZoneNodeDto> Zones);
 public sealed record UpdateDefaultPlacementsRequest(IReadOnlyList<LayoutDefaultPlacementDto> Placements);
+public sealed record UpdateLayoutConfigRequest(LayoutConfigDto Config);
+public sealed record UpdateLayoutShellRequest(string ShellTemplate);

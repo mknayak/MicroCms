@@ -25,10 +25,12 @@ internal static class LayoutMapper
     {
         var zones = DeserializeZones(l.ZonesJson);
         var placements = DeserializePlacements(l.DefaultPlacementsJson);
+        var config = DeserializeConfig(l.LayoutConfigJson);
         return new LayoutDto(
             l.Id.Value, l.TenantId.Value, l.SiteId.Value,
-       l.Name, l.Key, l.TemplateType.ToString(), l.ShellTemplate,
-      l.IsDefault, zones, placements, l.CreatedAt, l.UpdatedAt);
+            l.Name, l.Key, l.TemplateType.ToString(), l.ShellTemplate,
+            l.IsShellCustomized,
+            l.IsDefault, zones, placements, config, l.CreatedAt, l.UpdatedAt);
     }
 
     internal static LayoutListItemDto ToListItemDto(Layout l)
@@ -64,6 +66,32 @@ internal static class LayoutMapper
         catch { return []; }
     }
 
+    private static LayoutConfigDto DeserializeConfig(string json)
+    {
+        try
+        {
+            var raw = JsonSerializer.Deserialize<LayoutConfigJson>(json, _json);
+            if (raw is null) return EmptyConfig();
+
+            var assets = (raw.Assets ?? []).Select(a => new LayoutAssetDto(
+                a.Id, a.Order, a.Type, a.Position,
+                a.Content, a.Nonce,
+                (IReadOnlyDictionary<string, string>)(a.Attributes ?? new Dictionary<string, string>())
+            )).ToList().AsReadOnly();
+
+            var bodyAttrs = (raw.BodyAttributes ?? [])
+                .Select(b => new LayoutBodyAttributeDto(b.Attribute, b.Value))
+                .ToList().AsReadOnly();
+
+            return new LayoutConfigDto(assets, bodyAttrs);
+        }
+        catch { return EmptyConfig(); }
+    }
+
+    private static LayoutConfigDto EmptyConfig() =>
+        new(Array.AsReadOnly(Array.Empty<LayoutAssetDto>()),
+            Array.AsReadOnly(Array.Empty<LayoutBodyAttributeDto>()));
+
     // Internal JSON shapes matching the stored format
     private sealed class ZoneNodeJson
     {
@@ -82,6 +110,31 @@ internal static class LayoutMapper
         public string Zone { get; set; } = "";
         public int SortOrder { get; set; }
         public bool IsLocked { get; set; }
+    }
+
+    // ── Layout Config JSON shapes ─────────────────────────────────────────
+
+    private sealed class LayoutConfigJson
+    {
+        public List<AssetJson>? Assets { get; set; }
+        public List<BodyAttributeJson>? BodyAttributes { get; set; }
+    }
+
+    private sealed class AssetJson
+    {
+        public string Id { get; set; } = "";
+        public int Order { get; set; }
+        public string Type { get; set; } = "";
+        public string Position { get; set; } = "head";
+        public string? Content { get; set; }
+        public bool Nonce { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
+    }
+
+    private sealed class BodyAttributeJson
+    {
+        public string Attribute { get; set; } = "";
+        public string Value { get; set; } = "";
     }
 }
 
@@ -103,8 +156,8 @@ internal sealed class CreateLayoutCommandHandler(
         var layout = Layout.Create(currentUser.TenantId, siteId.Value,
             request.Name, request.Key, templateType);
 
-        // Generate shell from default zones (header/content/footer)
-        var shell = shellGenerator.Generate(layout.ZonesJson, request.TemplateType);
+        // Generate shell from default zones (header/content/footer) and empty config
+        var shell = shellGenerator.Generate(layout.ZonesJson, layout.LayoutConfigJson, request.TemplateType);
         layout.SetGeneratedShell(shell);
 
         await repo.AddAsync(layout, cancellationToken);
@@ -143,7 +196,7 @@ internal sealed class UpdateLayoutZonesCommandHandler(
         var zonesJson = JsonSerializer.Serialize(request.Zones);
         layout.UpdateZones(zonesJson);
 
-        var shell = shellGenerator.Generate(zonesJson, layout.TemplateType.ToString());
+        var shell = shellGenerator.Generate(zonesJson, layout.LayoutConfigJson, layout.TemplateType.ToString());
         layout.SetGeneratedShell(shell);
 
         repo.Update(layout);
@@ -162,6 +215,42 @@ internal sealed class UpdateLayoutDefaultPlacementsCommandHandler(
 
         var json = JsonSerializer.Serialize(request.Placements);
         layout.UpdateDefaultPlacements(json);
+        repo.Update(layout);
+        return Result.Success(LayoutMapper.ToDto(layout));
+    }
+}
+
+internal sealed class UpdateLayoutConfigCommandHandler(
+    IRepository<Layout, LayoutId> repo,
+    LayoutShellGeneratorService shellGenerator)
+    : IRequestHandler<UpdateLayoutConfigCommand, Result<LayoutDto>>
+{
+    public async Task<Result<LayoutDto>> Handle(UpdateLayoutConfigCommand request, CancellationToken cancellationToken)
+    {
+        var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
+
+        var configJson = JsonSerializer.Serialize(request.Config);
+        layout.UpdateLayoutConfig(configJson);
+
+        var shell = shellGenerator.Generate(layout.ZonesJson, layout.LayoutConfigJson, layout.TemplateType.ToString());
+        layout.SetGeneratedShell(shell);
+
+        repo.Update(layout);
+        return Result.Success(LayoutMapper.ToDto(layout));
+    }
+}
+
+internal sealed class UpdateLayoutShellCommandHandler(
+    IRepository<Layout, LayoutId> repo)
+    : IRequestHandler<UpdateLayoutShellCommand, Result<LayoutDto>>
+{
+    public async Task<Result<LayoutDto>> Handle(UpdateLayoutShellCommand request, CancellationToken cancellationToken)
+    {
+        var layout = await repo.GetByIdAsync(new LayoutId(request.LayoutId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
+
+        layout.SetCustomShell(request.ShellTemplate);
         repo.Update(layout);
         return Result.Success(LayoutMapper.ToDto(layout));
     }

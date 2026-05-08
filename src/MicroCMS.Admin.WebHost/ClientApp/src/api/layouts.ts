@@ -6,6 +6,8 @@ import type {
   UpdateLayoutRequest,
   UpdateLayoutZonesRequest,
   UpdateLayoutDefaultPlacementsRequest,
+  UpdateLayoutConfigRequest,
+  UpdateLayoutShellRequest,
   EditLock,
   AcquireLockRequest,
 } from '@/types';
@@ -28,6 +30,12 @@ export const layoutsApi = {
 
   updateDefaultPlacements: (id: string, data: UpdateLayoutDefaultPlacementsRequest): Promise<LayoutDto> =>
     put<LayoutDto>(`/layouts/${id}/default-placements`, data),
+
+  updateConfig: (id: string, data: UpdateLayoutConfigRequest): Promise<LayoutDto> =>
+    put<LayoutDto>(`/layouts/${id}/config`, data),
+
+  updateShell: (id: string, data: UpdateLayoutShellRequest): Promise<LayoutDto> =>
+    put<LayoutDto>(`/layouts/${id}/shell`, data),
 
   setDefault: (id: string): Promise<LayoutDto> =>
     post<LayoutDto>(`/layouts/${id}/set-default`, null),

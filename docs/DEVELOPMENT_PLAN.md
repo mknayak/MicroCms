@@ -1,7 +1,7 @@
 # MicroCMS — Development Plan
 
-**Version:** 1.7
-**Last Updated:** 2026-04-29
+**Version:** 1.8
+**Last Updated:** 2026-05-08
 **Sprint Cadence:** 2 weeks
 **Target GA:** Sprint 16 (~8.5 months from kickoff)
 **Current Status:** Sprint 14 in progress — AI Core + Provider Adapters; core services and adapters complete; Admin UI AI settings tab and unit tests pending
@@ -456,6 +456,7 @@ Security items:
 | 15 | AI Module | RAG, Semantic Search & AI Safety | 🔲 Not started | — |
 | 16 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
 | 17 | Taxonomy Integration | Taxonomy Integration with Entries | 🔲 Not started | — |
+| 18 | Layout Configuration | Layout Configuration: Assets, Body Attributes & Token Namespaces | 🔲 Not started | — |
 
 ---
 
@@ -483,6 +484,11 @@ Security items:
 | 17 | Application.UnitTests (Taxonomy) | Command validation, DTO population, filtering queries | 🔲 |
 | 17 | Api.ContractTests (Taxonomy) | Taxonomy filtering, bulk update, entryCount | 🔲 |
 | 17 | Vitest (Taxonomy UI) | Category/tag selector, filter badges, API integration | 🔲 |
+| 18 | Domain.UnitTests (Layout) | `LayoutConfigJson` mutation, default value, null rejection | 🔲 |
+| 18 | Application.UnitTests (Layout) | Config DTO round-trip, handler shell regeneration, serialization | 🔲 |
+| 18 | Application.UnitTests (ShellGenerator) | All asset types × all positions, body attributes, ordering, empty config parity | 🔲 |
+| 18 | Api.ContractTests (Layout) | `PUT /layouts/{id}/config` 200 + regenerated shell contains injected asset | 🔲 |
+| 18 | Vitest (Layout Config UI) | Asset add/edit/delete/reorder, body attribute CRUD, single-save flow | 🔲 |
 
 ---
 
@@ -604,6 +610,184 @@ Deliverables:
 
 ---
 
+## Phase 9 — Layout Configuration & Token Foundations (Sprint 18)
+
+### Sprint 18 — Layout Configuration: Assets, Body Attributes & Token Namespaces
+**Goal:** Extend the Layout aggregate with structured configuration (`LayoutConfigJson`) supporting per-layout JS/CSS assets, raw-HTML injection (GA/GTM), and token-driven `<body>` attributes. Token namespaces are defined and stored at design-time; resolution is deferred to Sprint 19.
+
+**Scope boundary:** This sprint covers the full stack from domain → API → Admin UI for *authoring* layout configuration. The rendering pipeline that *resolves* tokens (`{{page:slug}}`, `{{site:settings:ga-id}}` etc.) is Sprint 19.
+
+#### Story 1 — Domain: `LayoutConfigJson` on `Layout` aggregate
+Files: `src/MicroCMS.Domain/Aggregates/Components/Layout.cs`
+
+- Add `LayoutConfigJson` property (`string`, default `"{}"`)
+- Add `UpdateLayoutConfig(string configJson)` mutation — validates non-null/whitespace, stamps `UpdatedAt`
+- Caller (Application layer) is responsible for re-generating the shell after config update, mirroring the `UpdateZones` pattern
+- Unit tests: verify default value, mutation stamps `UpdatedAt`, null/whitespace rejected
+
+#### Story 2 — Application: DTOs, command, handler
+Files: `src/MicroCMS.Application/Features/Layouts/Dtos/LayoutDtos.cs`, `LayoutCommands.cs`, `LayoutHandlers.cs`
+
+**New DTOs:**
+```csharp
+public sealed record LayoutAssetDto(
+    string Id,           // stable client-generated ID
+    int Order,           // sort key (gaps of 10 recommended)
+    string Type,         // "css-link" | "js-script" | "inline-css" | "inline-js" | "raw-html"
+    string Position,     // "head" | "body-start" | "body-end"
+    string? Href,
+    string? Src,
+    string? Content,
+    bool Defer,
+    bool Async,
+    bool Nonce,          // reserved for CSP nonce injection (Sprint 19)
+    IReadOnlyDictionary<string, string> Attributes); // integrity, crossorigin, etc.
+
+public sealed record LayoutBodyAttributeDto(
+    string Attribute,    // e.g. "id", "data-template", "class"
+    string Value);       // literal or token, e.g. "{{page:slug}}"
+
+public sealed record LayoutConfigDto(
+    IReadOnlyList<LayoutAssetDto> Assets,
+    IReadOnlyList<LayoutBodyAttributeDto> BodyAttributes);
+```
+- Extend `LayoutDto` with `LayoutConfigDto Config`
+- New `UpdateLayoutConfigCommand(Guid LayoutId, LayoutConfigDto Config) : ICommand<LayoutDto>`
+- Handler: serialize config → `layout.UpdateLayoutConfig(json)` → regenerate shell → save
+- Extend `LayoutMapper.ToDto` to deserialize `LayoutConfigJson` → `LayoutConfigDto`
+- Unit tests: serialization round-trip, handler wires shell regeneration
+
+#### Story 3 — Shell Generator: asset injection + body attributes
+Files: `src/MicroCMS.Application/Features/Layouts/Services/LayoutShellGeneratorService.cs`
+
+`Generate(zonesJson, layoutConfigJson, templateType)` — inject into three positions:
+
+```html
+<head>
+  <!-- SEO tokens (existing) -->
+  <!-- HEAD assets ordered by .Order:
+       css-link → <link rel="stylesheet" href="..." {extra attrs}>
+       inline-css → <style>...</style>
+       inline-js@head → <script [nonce]>...</script>
+       js-script@head → <script src="..." [defer] [async] [nonce] {extra attrs}></script>
+       raw-html@head → verbatim content -->
+</head>
+<body {bodyAttributes e.g. id="{{page:slug}}" data-template="{{template:key}}"} >
+  <!-- BODY-START assets: raw-html@body-start -->
+  ... zones (existing) ...
+  <!-- BODY-END assets ordered by .Order:
+       js-script@body-end, inline-js@body-end, raw-html@body-end -->
+</body>
+```
+
+Token values (`{{page:slug}}`, `{{site:settings:ga-id}}`) written verbatim — **not resolved here**.
+Unit tests: empty config produces identical output to current generator; each asset type emits correct HTML; body attributes rendered correctly; ordering by `.Order` respected.
+
+#### Story 4 — Infrastructure: EF config + migration
+Files: `src/MicroCMS.Infrastructure/Persistence/Common/Configurations/LayoutConfiguration.cs`, new migration
+
+- Add `LayoutConfigJson` column (`TEXT`, `HasDefaultValue("{}")`, `IsRequired`) to `LayoutConfiguration`
+- Generate migration: `AddLayoutConfigJson`
+
+#### Story 5 — API: new endpoint + request model
+Files: `src/MicroCMS.Api/Controllers/LayoutsController.cs`
+
+- `PUT /layouts/{id}/config` → dispatches `UpdateLayoutConfigCommand`
+- Request model: `UpdateLayoutConfigRequest { LayoutConfigDto Config }`
+- Swagger XML doc: note token namespaces (`page:*`, `template:*`, `site:*`, `user:*`) are valid in asset `content` and body attribute `value` fields; resolved at render time (Sprint 19)
+- Contract test: verify endpoint returns 200 with regenerated `shellTemplate` containing injected asset HTML
+
+#### Story 6 — Frontend: TypeScript types + API client
+Files: `src/MicroCMS.Admin.WebHost/ClientApp/src/types/index.ts`, `src/api/layouts.ts`
+
+```typescript
+export type LayoutAssetType = 'css-link' | 'js-script' | 'inline-css' | 'inline-js' | 'raw-html';
+export type LayoutAssetPosition = 'head' | 'body-start' | 'body-end';
+
+export interface LayoutAsset {
+  id: string;
+  order: number;
+  type: LayoutAssetType;
+  position: LayoutAssetPosition;
+  href?: string;
+  src?: string;
+  content?: string;
+  defer: boolean;
+  async: boolean;
+  nonce: boolean;
+  attributes: Record<string, string>;
+}
+
+export interface LayoutBodyAttribute { attribute: string; value: string; }
+export interface LayoutConfig { assets: LayoutAsset[]; bodyAttributes: LayoutBodyAttribute[]; }
+export interface UpdateLayoutConfigRequest { config: LayoutConfig; }
+```
+- Extend `LayoutDto` with `config: LayoutConfig`
+- Add `layoutsApi.updateConfig(id: string, data: UpdateLayoutConfigRequest): Promise<LayoutDto>`
+
+#### Story 7 — Admin UI: two-tab Layout Designer + Configuration panel
+Files: `src/MicroCMS.Admin.WebHost/ClientApp/src/pages/layouts/LayoutDesignerPage.tsx` (refactor), new `LayoutConfigPanel.tsx`
+
+**Tab system:**
+- Tabs rendered in topbar: **Layout Structure** (existing) | **Layout Configuration** (new)
+- `dirty` flag covers both tabs — single **"Save Layout"** button saves zones (if dirty) then config (if dirty) sequentially
+- Button label: `Save Layout` (replaces current `Save Zones`)
+
+**Layout Configuration tab — Assets section:**
+- Ordered list (sorted by `order`); each row shows: order badge | type chip | position chip | href/src/content preview (truncated 40 chars) | defer/async/nonce toggles | Edit (pencil) | Delete (trash)
+- "Add Asset" → inline expand form: type selector → conditional href/src/content textarea → position selector → defer/async/nonce checkboxes → optional extra attributes (key/value pairs, add/remove rows)
+- Up/Down reorder buttons (same UI pattern as zone reorder); swaps `order` values
+- Token hint text beneath content/value inputs: *Available tokens: `{{page:slug}}`, `{{page:title}}`, `{{template:key}}`, `{{site:name}}`, `{{site:settings:YOUR_KEY}}`*
+
+**Layout Configuration tab — Body Attributes section:**
+- Simple table: `attribute` input | `value` input with token hint | delete button
+- "Add Attribute" appends empty row
+- Pre-populated defaults on new layout: `{ attribute: "id", value: "{{page:slug}}" }`, `{ attribute: "data-template", value: "{{template:key}}" }`
+
+#### Story 8 — ADR: document design decisions
+File: `docs/adr/ADR-008-layout-configuration-and-token-namespaces.md`
+
+Captures:
+- Single `LayoutConfigJson` blob rationale (no separate columns; neither queried independently)
+- Token namespaces table (`page:*`, `template:*`, `site:*`, `user:*`) — defined at design-time, resolved at render-time
+- Asset types, position injection contract, ordering by `order` field
+- Body attributes as token-aware HTML attributes
+- `nonce: true` flag defined now; injection deferred to Sprint 19
+- Explicit out-of-scope: `ITokenResolver` implementations, rendering pipeline, CSP nonce injection, `site:settings:*` key-value store
+
+**Token Namespace Reference (authoritative — used by Sprint 19):**
+
+| Namespace | Resolved By | Examples | Shell-safe? |
+|---|---|---|---|
+| `page:*` | Page aggregate at render time | `page:slug`, `page:title`, `page:published-at` | ✅ |
+| `template:*` | Template aggregate at render time | `template:key`, `template:name` | ✅ |
+| `site:*` | Site/tenant settings at render time | `site:name`, `site:settings:ga-id` | ✅ |
+| `user:*` | Auth context at request time | `user:id`, `user:name`, `user:role` | ❌ component scope only |
+| `data:*` | Component instance data | `data:title`, `data:image-url` | ❌ component scope only |
+| `seo:*` | Page SEO fields (existing) | `seo:title`, `seo:description` | ✅ existing |
+
+Token syntax is **unified**: `{{namespace:key}}` for both Handlebars and HTML template types (colon-delimited). Existing `seo_title` underscore tokens remain for backward compatibility; new tokens always use colon syntax.
+
+**Out of scope → Sprint 19 (Token Resolution & Rendering):**
+- `ITokenResolver` interface + namespace implementations
+- Rendering pipeline resolving tokens in `ShellTemplate`
+- CSP nonce injection for `nonce: true` assets
+- `site:settings:*` key-value store on Site aggregate
+- `user:*` scope restriction enforcement
+
+**Acceptance Criteria:**
+1. `PUT /layouts/{id}/config` persists assets and body attributes; `GET /layouts/{id}` returns `config` field populated.
+2. Saving a layout with a `css-link` asset produces a `shellTemplate` containing a `<link>` tag in `<head>`.
+3. Saving a layout with `bodyAttributes` produces a `shellTemplate` `<body>` tag with those attributes.
+4. Asset `content` containing `{{page:slug}}` is stored verbatim in `shellTemplate` (not resolved).
+5. Layout Configuration tab visible in Admin UI; assets and body attributes can be added, reordered, edited, and deleted.
+6. Single Save Layout button saves both zones and config in one user action.
+7. Unit tests pass for shell generator (all asset types × all positions).
+8. Migration `AddLayoutConfigJson` applies cleanly; existing layouts default to `"{}"`.
+9. ADR-008 committed to `docs/adr/`.
+
+---
+
 ## Known Deferred Items
 
 | Item | Deferred To | Reason |
@@ -613,6 +797,8 @@ Deliverables:
 | Real virus-scan pipeline (ClamAV) for `MediaAsset` | ~~Sprint 8~~ ✅ Done | `MediaScanJob` + `ClamAvScanner` TCP client implemented |
 | Token revocation on Admin UI logout | Sprint 7 | Requires identity layer revocation endpoint |
 | Taxonomy integration with Entries | Sprint 17 | Requires completed Admin UI, GraphQL API, and Search infrastructure |
+| Token resolution pipeline (`ITokenResolver`, `page:*`, `site:*`, `template:*`, `user:*`) | Sprint 19 | Requires Sprint 18 `LayoutConfigJson` and token namespace contract to be finalised |
+| CSP nonce injection for `nonce: true` assets | Sprint 19 | Requires rendering pipeline from Sprint 19 |
 
 ---
 

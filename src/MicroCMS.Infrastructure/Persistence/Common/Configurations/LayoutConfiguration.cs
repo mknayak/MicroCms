@@ -40,6 +40,10 @@ internal sealed class LayoutConfiguration : IEntityTypeConfiguration<Layout>
         builder.Property(l => l.ShellTemplate)
             .HasColumnType("TEXT");
 
+        builder.Property(l => l.IsShellCustomized)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(l => l.ZonesJson)
             .HasColumnType("TEXT")
             .IsRequired()
@@ -49,6 +53,11 @@ internal sealed class LayoutConfiguration : IEntityTypeConfiguration<Layout>
             .HasColumnType("TEXT")
             .IsRequired()
             .HasDefaultValue("[]");
+
+        builder.Property(l => l.LayoutConfigJson)
+            .HasColumnType("TEXT")
+            .IsRequired()
+            .HasDefaultValue("{}");
 
         builder.Property(l => l.IsDefault).IsRequired();
         builder.Property(l => l.CreatedAt).IsRequired();
