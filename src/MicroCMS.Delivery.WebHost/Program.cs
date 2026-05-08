@@ -28,6 +28,7 @@ builder.Host.UseSerilog((ctx, lc) => lc
 // ── Application + Infrastructure layers ──────────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.UseNullLlmService();
 
 // ── Delivery Core: API key auth + component renderer ─────────────────────────
 builder.Services.AddDeliveryServices();

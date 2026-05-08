@@ -174,6 +174,22 @@ public static class DependencyInjection
         services.AddScoped<IRepository<SiteTemplate, SiteTemplateId>, EfRepository<SiteTemplate, SiteTemplateId>>();
     }
 
+    /// <summary>
+    /// Replaces the <see cref="ILlmService"/> registration added by <see cref="AddInfrastructure"/>
+    /// with a no-op implementation. Call this from hosts that do not need AI features (e.g. the
+    /// Delivery WebHost) to avoid a dependency on <c>AiOrchestrator</c>.
+    /// </summary>
+    public static IServiceCollection UseNullLlmService(this IServiceCollection services)
+    {
+        // Remove the LlmServiceAdapter descriptor registered by AddInfrastructure.
+        var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(ILlmService));
+        if (descriptor is not null)
+            services.Remove(descriptor);
+
+        services.AddScoped<ILlmService, NullLlmService>();
+        return services;
+    }
+
     private static void RegisterCoreServices(IServiceCollection services)
     {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
