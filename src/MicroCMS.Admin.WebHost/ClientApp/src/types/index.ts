@@ -192,6 +192,8 @@ export interface FieldDefinitionDto {
     isList: boolean;
     sortOrder: number;
     description?: string;
+    /** Logical group this field belongs to. Defaults to "Default". */
+    groupName: string;
     /** Static option list for Enum fields. Null when field uses a dynamic source. */
     options?: string[];
     /** Dynamic source config for Enum fields. When set, options are resolved at runtime. */

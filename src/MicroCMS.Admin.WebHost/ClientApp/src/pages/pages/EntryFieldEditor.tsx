@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import type { Entry, FieldDefinitionDto } from '@/types';
 import { MediaPickerField } from './MediaPickerField';
 import { EntryPickerField } from './EntryPickerField';
+import { orderedGroups } from '@/pages/content-types/schemaTab.helpers';
+import { DEFAULT_GROUP } from '@/pages/content-types/schemaTab.types';
 
 export function EntryFieldEditor({
   entry, fields, onSave, saving,
@@ -21,6 +23,9 @@ export function EntryFieldEditor({
 
   const sortedFields = [...fields].sort((a, b) => a.sortOrder - b.sortOrder);
   const isDirty = JSON.stringify(draft) !== JSON.stringify(entry.fields);
+  const groups = orderedGroups(sortedFields.map((f) => ({ groupName: f.groupName ?? DEFAULT_GROUP })));
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (g: string) => setCollapsedGroups((prev) => { const n = new Set(prev); n.has(g) ? n.delete(g) : n.add(g); return n; });
 
 return (
     <div className="flex flex-col gap-0 overflow-hidden">
@@ -41,9 +46,26 @@ return (
   </div>
     </div>
 
-      {/* Fields */}
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-        {sortedFields.map((f) => {
+      {/* Fields – grouped accordion */}
+      <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
+        {groups.map((group) => {
+          const groupFields = sortedFields.filter((f) => (f.groupName ?? DEFAULT_GROUP) === group);
+          const isCollapsed = collapsedGroups.has(group);
+          return (
+            <div key={group} className="rounded-md border border-slate-200 overflow-hidden">
+              {/* Accordion header – shown for every group */}
+              <button
+                type="button"
+                onClick={() => toggleGroup(group)}
+                className="flex w-full items-center justify-between bg-slate-50 px-3 py-1.5 text-left hover:bg-slate-100 transition-colors"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">{group}</span>
+                <span className="text-[10px] text-slate-400">{isCollapsed ? '▶' : '▼'}</span>
+              </button>
+              {/* Fields */}
+              {!isCollapsed && (
+                <div className="space-y-3 p-3">
+                  {groupFields.map((f) => {
           const val = draft[f.handle];
           const ft = f.fieldType.toLowerCase();
      return (
@@ -131,6 +153,11 @@ return (
          </div>
        )}
     </div>
+          );
+        })}
+                </div>
+              )}
+            </div>
           );
         })}
     </div>

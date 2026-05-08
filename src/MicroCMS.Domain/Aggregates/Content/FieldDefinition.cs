@@ -121,7 +121,8 @@ public sealed class FieldDefinition : Entity<Guid>
         bool isList,
   int sortOrder,
         string? description,
-    string? validationJson)
+    string? validationJson,
+        string groupName = "Default")
         : base(id)
     {
    ContentTypeId = contentTypeId;
@@ -136,6 +137,7 @@ IsRequired = isRequired;
         SortOrder = sortOrder;
         Description = description;
   ValidationJson = validationJson;
+        GroupName = string.IsNullOrWhiteSpace(groupName) ? "Default" : groupName.Trim();
   }
 
     public ContentTypeId ContentTypeId { get; private set; }
@@ -149,6 +151,9 @@ IsRequired = isRequired;
     public bool IsList { get; private set; }
     public int SortOrder { get; private set; }
   public string? Description { get; private set; }
+
+    /// <summary>Logical group this field belongs to. Defaults to "Default".</summary>
+    public string GroupName { get; private set; } = "Default";
 
     /// <summary>
     /// JSON-encoded <see cref="FieldValidationConfig"/> — stores static Enum options,
@@ -171,7 +176,8 @@ IsRequired = isRequired;
      string? description = null,
  string? validationJson = null,
         bool isIndexed = false,
-        bool isList = false)
+        bool isList = false,
+        string groupName = "Default")
     {
         ValidateHandle(handle);
         ValidateLabel(label);
@@ -189,7 +195,8 @@ IsRequired = isRequired;
          isList,
 sortOrder,
             description?.Trim(),
-    validationJson);
+    validationJson,
+            groupName);
     }
 
     internal void Update(
@@ -201,7 +208,8 @@ sortOrder,
      bool isList,
         int sortOrder,
     string? description,
-        string? validationJson = null)
+        string? validationJson = null,
+        string groupName = "Default")
   {
         ValidateLabel(label);
    Label = label.Trim();
@@ -214,6 +222,7 @@ sortOrder,
         Description = description?.Trim();
         if (validationJson is not null)
             ValidationJson = validationJson;
+        GroupName = string.IsNullOrWhiteSpace(groupName) ? "Default" : groupName.Trim();
     }
 
     private static void ValidateHandle(string handle)

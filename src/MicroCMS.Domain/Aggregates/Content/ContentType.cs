@@ -167,7 +167,8 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
       string? description = null,
    string? validationJson = null,
         bool isIndexed = false,
-        bool isList = false)
+        bool isList = false,
+        string groupName = "Default")
     {
         EnsureNotArchived();
 
@@ -182,7 +183,7 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
           Id, handle, label, fieldType,
       isRequired, isLocalized, isUnique,
          sortOrder: _fields.Count,
-            description, validationJson, isIndexed, isList);
+            description, validationJson, isIndexed, isList, groupName);
 
         _fields.Add(field);
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -199,11 +200,12 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
         bool isList,
         int sortOrder,
         string? description,
-        string? validationJson = null)
+        string? validationJson = null,
+        string groupName = "Default")
     {
         EnsureNotArchived();
         var field = GetFieldOrThrow(fieldId);
-        field.Update(label, fieldType, isRequired, isLocalized, isIndexed, isList, sortOrder, description, validationJson);
+        field.Update(label, fieldType, isRequired, isLocalized, isIndexed, isList, sortOrder, description, validationJson, groupName);
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

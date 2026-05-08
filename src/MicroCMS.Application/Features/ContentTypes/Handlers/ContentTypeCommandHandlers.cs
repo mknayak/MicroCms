@@ -101,7 +101,8 @@ internal sealed class AddFieldCommandHandler(
        description: request.Description,
       validationJson: validationJson,
     isIndexed: request.IsIndexed,
-            isList: request.IsList);
+            isList: request.IsList,
+            groupName: request.GroupName);
 
         repo.Update(ct);
         await InvalidateAsync(ct.TenantId, ct.Id.Value, cancellationToken);
@@ -234,14 +235,15 @@ ICacheService cacheService)
         if (f.Id.HasValue)
         ct.UpdateField(f.Id.Value, f.Label, fieldType,
    f.IsRequired, f.IsLocalized, f.IsIndexed, f.IsList,
-            f.SortOrder, f.Description, validationJson);
+            f.SortOrder, f.Description, validationJson, f.GroupName);
         else
             ct.AddField(f.Handle, f.Label, fieldType,
            f.IsRequired, f.IsLocalized, f.IsUnique,
              description: f.Description,
    validationJson: validationJson,
        isIndexed: f.IsIndexed,
-           isList: f.IsList);
+           isList: f.IsList,
+           groupName: f.GroupName);
     }
 
     private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(

@@ -27,6 +27,7 @@ public sealed record AddFieldCommand(
     bool IsIndexed = false,
     bool IsList = false,
     string? Description = null,
+    string GroupName = "Default",
     /// <summary>Static options for Enum fields. Ignored when DynamicSource is set.</summary>
     IReadOnlyList<string>? Options = null,
     /// <summary>Dynamic source config for Enum/Reference fields.</summary>
@@ -75,6 +76,7 @@ public sealed record UpdateFieldInput(
     bool IsList = false,
     int SortOrder = 0,
     string? Description = null,
+    string GroupName = "Default",
     /// <summary>Static options for Enum fields.</summary>
     IReadOnlyList<string>? Options = null,
     /// <summary>Dynamic source config for Enum/Reference fields.</summary>

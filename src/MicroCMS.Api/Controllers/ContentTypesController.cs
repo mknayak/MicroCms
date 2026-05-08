@@ -61,6 +61,7 @@ public sealed class ContentTypesController : ApiControllerBase
    id, request.Handle, request.Label, request.FieldType,
      request.IsRequired, request.IsLocalized, request.IsUnique,
  request.IsIndexed, request.IsList, request.Description,
+        request.GroupName,
         request.Options,
   request.DynamicSource is null ? null : new FieldDynamicSourceInput(
       request.DynamicSource.ContentTypeHandle,
@@ -119,6 +120,7 @@ cancellationToken);
     .Select(f => new UpdateFieldInput(
    f.Id, f.Handle, f.Label, f.FieldType,
  f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.IsList, f.SortOrder, f.Description,
+  f.GroupName,
   f.Options,
         f.DynamicSource is null ? null : new FieldDynamicSourceInput(
             f.DynamicSource.ContentTypeHandle,
@@ -231,6 +233,7 @@ public sealed record AddFieldRequest(
     bool IsIndexed = false,
     bool IsList = false,
     string? Description = null,
+    string GroupName = "Default",
     /// <summary>Static option list for Enum fields.</summary>
     IReadOnlyList<string>? Options = null,
     /// <summary>Dynamic source config for Enum/Reference fields.</summary>
@@ -258,6 +261,7 @@ Guid? Id,
  bool IsList = false,
  int SortOrder = 0,
     string? Description = null,
+    string GroupName = "Default",
     IReadOnlyList<string>? Options = null,
     FieldDynamicSourceRequest? DynamicSource = null,
     /// <summary>Source config for MultiList fields.</summary>

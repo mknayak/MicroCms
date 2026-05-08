@@ -48,6 +48,7 @@ public static class ContentTypeMapper
             f.IsList,
             f.SortOrder,
             f.Description,
+            f.GroupName,
             Options: validation?.Options,
             DynamicSource: validation?.DynamicSource,
             MultiListSource: validation?.MultiListSource);

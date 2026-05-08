@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +15,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { useSite } from '@/contexts/SiteContext';
 import { MediaPickerField } from '@/pages/pages/MediaPickerField';
 import { EntryPickerField } from '@/pages/pages/EntryPickerField';
+import { orderedGroups } from '@/pages/content-types/schemaTab.helpers';
+import { DEFAULT_GROUP } from '@/pages/content-types/schemaTab.types';
 
 // ─── Form schema ──────────────────────────────────────────────────────────────
 
@@ -334,6 +337,71 @@ function FieldInput({ field, value, onChange, contentTypeId }: { field: FieldDef
     return <ListFieldInput field={field} value={value} onChange={onChange} contentTypeId={contentTypeId} />;
   }
   return <ScalarFieldInput field={field} value={value} onChange={onChange} contentTypeId={contentTypeId} />;
+}
+
+// ─── Field Group Section (collapsible accordion) ──────────────────────────────
+
+function FieldGroupSection({
+  groupName,
+  groupFields,
+  watchedFields,
+  control,
+  contentTypeId,
+}: {
+  groupName: string;
+  groupFields: FieldDefinitionDto[];
+  watchedFields: Record<string, unknown>;
+  control: Control<FormValues>;
+  contentTypeId?: string;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <div className="rounded-lg border border-slate-200 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        className="flex w-full items-center justify-between bg-slate-50 px-4 py-2.5 text-left hover:bg-slate-100 transition-colors border-b border-slate-200"
+      >
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">{groupName}</span>
+        <span className="text-xs text-slate-400 select-none">{collapsed ? '▶' : '▼'}</span>
+      </button>
+      {!collapsed && (
+        <div className="space-y-4 p-4">
+          {groupFields.map((field) => (
+            <div key={field.id} className="card space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <label className="form-label mb-0">
+                    {field.label}
+                    {field.isRequired && <span className="ml-1 text-red-500">*</span>}
+                  </label>
+                  {field.isLocalized && <span className="badge-brand text-xs">Localized</span>}
+                  {field.isIndexed && <span className="badge-amber text-xs">Indexed</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  {(field.fieldType === 'ShortText' || field.fieldType === 'LongText') && (
+                    <>
+                      <CharCounter value={typeof watchedFields?.[field.handle] === 'string' ? watchedFields[field.handle] as string : ''} max={field.fieldType === 'ShortText' ? 100 : 500} />
+                      <button type="button" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
+                        <span>✦</span> Generate with AI
+                      </button>
+                    </>
+                  )}
+                  <span className="text-xs text-slate-400">{field.fieldType}</span>
+                </div>
+              </div>
+              {field.description && <p className="text-xs text-slate-400">{field.description}</p>}
+              <Controller
+                control={control}
+                name={`fields.${field.handle}`}
+                render={({ field: f }) => <FieldInput field={field} value={f.value} onChange={f.onChange} contentTypeId={contentTypeId} />}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Publishing Panel ─────────────────────────────────────────────────────────
@@ -798,38 +866,21 @@ key={loc}
             </div>
           </div>
 
-          {/* Dynamic fields */}
-        {selectedContentType?.fields.map((field) => (
- <div key={field.id} className="card space-y-2">
-  <div className="flex items-center justify-between">
-       <div className="flex items-center gap-2">
-        <label className="form-label mb-0">
-{field.label}
-   {field.isRequired && <span className="ml-1 text-red-500">*</span>}
-  </label>
-    {field.isLocalized && <span className="badge-brand text-xs">Localized</span>}
-       {field.isIndexed && <span className="badge-amber text-xs">Indexed</span>}
-     </div>
- <div className="flex items-center gap-3">
-{(field.fieldType === 'ShortText' || field.fieldType === 'LongText') && (
-       <>
-     <CharCounter value={typeof watchedFields?.[field.handle] === 'string' ? watchedFields[field.handle] as string : ''} max={field.fieldType === 'ShortText' ? 100 : 500} />
-   <button type="button" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
-  <span>✦</span> Generate with AI
-      </button>
-   </>
-        )}
-       <span className="text-xs text-slate-400">{field.fieldType}</span>
-        </div>
-       </div>
-    {field.description && <p className="text-xs text-slate-400">{field.description}</p>}
-              <Controller
-      control={control}
-     name={`fields.${field.handle}`}
-   render={({ field: f }) => <FieldInput field={field} value={f.value} onChange={f.onChange} contentTypeId={selectedContentTypeId} />}
-/>
-            </div>
-          ))}
+          {/* Dynamic fields – grouped accordion */}
+          {selectedContentType && (() => {
+            const allFields = selectedContentType.fields;
+            const groups = orderedGroups(allFields.map((f) => ({ groupName: f.groupName ?? DEFAULT_GROUP })));
+            return groups.map((group) => (
+              <FieldGroupSection
+                key={group}
+                groupName={group}
+                groupFields={allFields.filter((f) => (f.groupName ?? DEFAULT_GROUP) === group)}
+                watchedFields={watchedFields ?? {}}
+                control={control}
+                contentTypeId={selectedContentTypeId}
+              />
+            ));
+          })()}
         </div>
 
         {/* ── Right sidebar ────────────────────────────────────────────── */}

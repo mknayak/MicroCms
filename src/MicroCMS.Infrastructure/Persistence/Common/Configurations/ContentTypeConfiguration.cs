@@ -109,6 +109,11 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
             field.Property(f => f.Description)
                 .HasMaxLength(FieldDefinition.MaxDescriptionLength);
 
+            field.Property(f => f.GroupName)
+                .HasMaxLength(100)
+                .IsRequired()
+                .HasDefaultValue("Default");
+
             field.Property(f => f.ValidationJson);
 
             // Handle must be unique within a content type

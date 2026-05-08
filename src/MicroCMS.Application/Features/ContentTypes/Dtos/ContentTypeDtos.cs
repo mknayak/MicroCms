@@ -29,6 +29,7 @@ public sealed record FieldDefinitionDto(
     bool IsList,
     int SortOrder,
     string? Description,
+    string GroupName = "Default",
     /// <summary>
     /// Static option list for Enum fields.
     /// Null when the field uses a dynamic source or is not Enum.
