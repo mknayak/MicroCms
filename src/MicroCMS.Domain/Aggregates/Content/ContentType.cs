@@ -67,6 +67,14 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
     /// </summary>
     public SiteTemplateId? SiteTemplateId { get; private set; }
 
+    /// <summary>
+    /// Optional parent content type. When set, the effective field list is the
+    /// union of the parent's fields (tagged inherited) plus this type's own fields,
+    /// with child fields winning on Handle collision.
+    /// Depth is limited to 1 — a type that already has a parent cannot itself be a parent.
+    /// </summary>
+    public ContentTypeId? ParentContentTypeId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public IReadOnlyList<FieldDefinition> Fields => _fields.AsReadOnly();
@@ -140,6 +148,18 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
 
         Status = ContentTypeStatus.Active;
         UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Validates that this type may be published when it has a parent.
+    /// Call this from the publish handler after loading the parent.
+    /// </summary>
+    public void EnsureParentIsActive(ContentType? parent)
+    {
+        if (ParentContentTypeId is not null && (parent is null || parent.Status != ContentTypeStatus.Active))
+            throw new BusinessRuleViolationException(
+                "ContentType.ParentNotActive",
+                "Cannot publish a child content type whose parent is not yet active.");
     }
 
     public void Archive()
@@ -237,6 +257,41 @@ public sealed class ContentType : AggregateRoot<ContentTypeId>
            "Component-kind content types cannot change their kind.");
         Kind = kind;
         if (kind != ContentTypeKind.Page) { SiteTemplateId = null; }
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets or clears the parent content type.
+    /// Pass <c>null</c> to remove the parent relationship.
+    /// </summary>
+    /// <param name="parent">The parent, or null to detach.</param>
+    public void SetParent(ContentType? parent)
+    {
+        EnsureNotArchived();
+
+        if (parent is null)
+        {
+            ParentContentTypeId = null;
+            UpdatedAt = DateTimeOffset.UtcNow;
+            return;
+        }
+
+        if (Kind == ContentTypeKind.Component || parent.Kind == ContentTypeKind.Component)
+            throw new BusinessRuleViolationException(
+                "ContentType.HierarchyComponentForbidden",
+                "Component-kind content types cannot participate in inheritance.");
+
+        if (parent.Id == Id)
+            throw new BusinessRuleViolationException(
+                "ContentType.SelfReference",
+                "A content type cannot inherit from itself.");
+
+        if (parent.ParentContentTypeId is not null)
+            throw new BusinessRuleViolationException(
+                "ContentType.HierarchyDepthExceeded",
+                "Hierarchy depth is limited to one level. The selected parent already inherits from another type.");
+
+        ParentContentTypeId = parent.Id;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

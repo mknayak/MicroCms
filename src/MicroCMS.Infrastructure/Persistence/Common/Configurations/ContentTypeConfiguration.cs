@@ -64,6 +64,19 @@ internal sealed class ContentTypeConfiguration : IEntityTypeConfiguration<Conten
                 v => v.HasValue ? new SiteTemplateId(v.Value) : (SiteTemplateId?)null)
             .HasColumnName("SiteTemplateId");
 
+        builder.Property(ct => ct.ParentContentTypeId)
+            .HasConversion(
+                id => id.HasValue ? id.Value.Value : (Guid?)null,
+                v => v.HasValue ? new ContentTypeId(v.Value) : (ContentTypeId?)null)
+            .HasColumnName("ParentContentTypeId")
+            .IsRequired(false);
+
+        builder.HasOne<ContentType>()
+            .WithMany()
+            .HasForeignKey(ct => ct.ParentContentTypeId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Property(ct => ct.CreatedAt).IsRequired();
         builder.Property(ct => ct.UpdatedAt).IsRequired();
 

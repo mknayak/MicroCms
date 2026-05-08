@@ -5,20 +5,59 @@ namespace MicroCMS.Application.Features.ContentTypes.Mappers;
 
 public static class ContentTypeMapper
 {
-    public static ContentTypeDto ToDto(ContentType ct) => new(
-        ct.Id.Value,
-        ct.TenantId.Value,
-        ct.SiteId.Value,
-        ct.Handle,
-        ct.DisplayName,
-        ct.Description,
-        ct.LocalizationMode.ToString(),
-        ct.Status.ToString(),
-        ct.Kind.ToString(),
-        ct.SiteTemplateId?.Value,
-        ct.CreatedAt,
-        ct.UpdatedAt,
-        ct.Fields.OrderBy(f => f.SortOrder).Select(ToFieldDto).ToList().AsReadOnly());
+    /// <summary>
+    /// Maps a content type to its DTO.
+    /// When <paramref name="parent"/> is provided, parent fields are merged in first
+    /// (tagged <c>IsInherited = true</c>). Child fields with the same handle override the parent.
+    /// </summary>
+    public static ContentTypeDto ToDto(ContentType ct, ContentType? parent = null)
+    {
+        IReadOnlyList<FieldDefinitionDto> fields;
+
+        if (parent is not null)
+        {
+            // Build merged field list: parent first, then child overrides
+            var parentFields = parent.Fields
+                .OrderBy(f => f.SortOrder)
+                .Select(f => ToFieldDto(f, isInherited: true))
+                .ToList();
+
+            var childHandles = ct.Fields.Select(f => f.Handle).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // Remove parent entries that are overridden by a child field
+            var mergedParent = parentFields
+                .Where(f => !childHandles.Contains(f.Handle))
+                .ToList();
+
+            var childFields = ct.Fields
+                .OrderBy(f => f.SortOrder)
+                .Select(f => ToFieldDto(f, isInherited: false))
+                .ToList();
+
+            fields = mergedParent.Concat(childFields).ToList().AsReadOnly();
+        }
+        else
+        {
+            fields = ct.Fields.OrderBy(f => f.SortOrder).Select(f => ToFieldDto(f)).ToList().AsReadOnly();
+        }
+
+        return new ContentTypeDto(
+            ct.Id.Value,
+            ct.TenantId.Value,
+            ct.SiteId.Value,
+            ct.Handle,
+            ct.DisplayName,
+            ct.Description,
+            ct.LocalizationMode.ToString(),
+            ct.Status.ToString(),
+            ct.Kind.ToString(),
+            ct.SiteTemplateId?.Value,
+            ct.CreatedAt,
+            ct.UpdatedAt,
+            fields,
+            ParentContentTypeId: ct.ParentContentTypeId?.Value,
+            ParentHandle: parent?.Handle);
+    }
 
     public static ContentTypeListItemDto ToListItemDto(ContentType ct,
         int entryCount = 0, int localeCount = 0) => new(
@@ -33,7 +72,7 @@ public static class ContentTypeMapper
         localeCount,
         ct.UpdatedAt);
 
-    internal static FieldDefinitionDto ToFieldDto(FieldDefinition f)
+    internal static FieldDefinitionDto ToFieldDto(FieldDefinition f, bool isInherited = false)
     {
         var validation = f.Validation;
         return new FieldDefinitionDto(
@@ -49,6 +88,7 @@ public static class ContentTypeMapper
             f.SortOrder,
             f.Description,
             f.GroupName,
+            IsInherited: isInherited,
             Options: validation?.Options,
             DynamicSource: validation?.DynamicSource,
             MultiListSource: validation?.MultiListSource);

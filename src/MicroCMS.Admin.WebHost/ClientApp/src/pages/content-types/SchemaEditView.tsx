@@ -3,11 +3,13 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { UseFormRegister, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { siteTemplatesApi } from '@/api/siteTemplates';
+import { contentTypesApi } from '@/api/contentTypes';
 import { FIELD_TYPE_COLORS, FIELD_TYPE_LABELS } from './contentTypeDetail.shared';
 import { EnumOptionsEditor, ReferenceSourceEditor, MultiListSourceEditor } from './SchemaFieldEditors';
 import { FIELD_TYPES, DEFAULT_GROUP, makeBlankField } from './schemaTab.types';
 import { orderedGroups } from './schemaTab.helpers';
 import type { SchemaFormValues } from './schemaTab.types';
+import type { FieldDefinitionDto } from '@/types';
 
 // ─── FieldRow (single expandable field inside a group) ────────────────────────
 
@@ -194,7 +196,7 @@ function GroupSection({
                     <span className="text-xs text-slate-400">{allFieldIndices.length} field{allFieldIndices.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    {!isDefault && !renaming && (
+                    {!renaming && (
                         <button type="button" onClick={() => { setRenaming(true); setRenameValue(groupName); }} className="rounded px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-200" title="Rename group">✎</button>
                     )}
                     {!isDefault && allFieldIndices.length === 0 && (
@@ -232,16 +234,74 @@ function GroupSection({
     );
 }
 
+// ─── InheritedFieldsSection ───────────────────────────────────────────────────
+
+function InheritedFieldsSection({ fields, parentHandle }: { fields: FieldDefinitionDto[]; parentHandle?: string }) {
+    const [collapsed, setCollapsed] = useState(false);
+    const groups = orderedGroups(fields);
+
+    return (
+        <div className="rounded-lg border border-indigo-200 overflow-hidden">
+            <button
+                type="button"
+                onClick={() => setCollapsed((c) => !c)}
+                className="flex w-full items-center justify-between bg-indigo-50 px-4 py-2.5 text-left border-b border-indigo-200 hover:bg-indigo-100 transition-colors"
+            >
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                        Inherited from {parentHandle ?? 'parent'}
+                    </span>
+                    <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
+                        {fields.length} field{fields.length !== 1 ? 's' : ''} · read-only
+                    </span>
+                </div>
+                <span className="text-xs text-indigo-400 select-none">{collapsed ? '▶' : '▼'}</span>
+            </button>
+            {!collapsed && (
+                <div className="divide-y divide-indigo-100 bg-white">
+                    {groups.map((group) => {
+                        const gFields = fields.filter((f) => (f.groupName ?? DEFAULT_GROUP) === group);
+                        return (
+                            <div key={group}>
+                                {group !== DEFAULT_GROUP && (
+                                    <p className="bg-slate-50 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100">
+                                        {group}
+                                    </p>
+                                )}
+                                {gFields.map((f) => (
+                                    <div key={f.id} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-500">
+                                        <span className={`rounded px-2 py-0.5 text-xs font-medium ${FIELD_TYPE_COLORS[f.fieldType] ?? 'bg-slate-100 text-slate-600'}`}>
+                                            {FIELD_TYPE_LABELS[f.fieldType] ?? f.fieldType}
+                                        </span>
+                                        <span className="font-medium text-slate-600">{f.label}</span>
+                                        <span className="font-mono text-xs text-slate-400">{f.handle}</span>
+                                        {f.isRequired && <span className="rounded bg-red-50 px-1 py-0.5 text-[10px] font-medium text-red-500">Required</span>}
+                                        {f.isLocalized && <span className="rounded bg-brand-50 px-1 py-0.5 text-[10px] font-medium text-brand-600">Localized</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── SchemaEditView ───────────────────────────────────────────────────────────
 
 export function SchemaEditView({
     contentTypeId,
     contentTypeName,
+    inheritedFields,
+    parentHandle,
     onCancel,
     isSubmitting,
 }: {
     contentTypeId: string;
     contentTypeName: string;
+    inheritedFields?: FieldDefinitionDto[];
+    parentHandle?: string;
     onCancel: () => void;
     isSubmitting: boolean;
 }) {
@@ -252,6 +312,12 @@ export function SchemaEditView({
     const { data: siteTemplates } = useQuery({
         queryKey: ['site-templates'],
         queryFn: () => siteTemplatesApi.list(),
+    });
+
+    const { data: allContentTypes } = useQuery({
+        queryKey: ['content-types'],
+        queryFn: () => contentTypesApi.list({ pageSize: 200 }),
+        select: (d) => d.items.filter((ct) => ct.id !== contentTypeId && ct.kind !== 'Component'),
     });
 
     const currentFields = watch('fields');
@@ -349,8 +415,23 @@ export function SchemaEditView({
                             <p className="mt-1 text-xs text-slate-400">Pages of this type inherit this template. Individual pages can override it.</p>
                         </div>
                     )}
+                    <div className="col-span-2">
+                        <label className="form-label">Inherits From (optional)</label>
+                        <select className="form-input mt-1" {...register('parentContentTypeId')}>
+                            <option value="">— No parent —</option>
+                            {(allContentTypes ?? []).map((ct) => (
+                                <option key={ct.id} value={ct.id}>{ct.displayName} ({ct.handle})</option>
+                            ))}
+                        </select>
+                        <p className="mt-1 text-xs text-slate-400">Fields from the parent are merged in (read-only) at the top of the schema.</p>
+                    </div>
                 </div>
             </div>
+
+            {/* Inherited fields (read-only) */}
+            {inheritedFields && inheritedFields.length > 0 && (
+                <InheritedFieldsSection fields={inheritedFields} parentHandle={parentHandle} />
+            )}
 
             {/* Field groups */}
             <div className="space-y-4">

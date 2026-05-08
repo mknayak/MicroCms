@@ -13,7 +13,8 @@ public sealed record CreateContentTypeCommand(
     string DisplayName,
     string? Description = null,
     LocalizationMode Localization = LocalizationMode.PerLocale,
-    string Kind = "Content") : ICommand<ContentTypeDto>;
+    string Kind = "Content",
+    Guid? ParentContentTypeId = null) : ICommand<ContentTypeDto>;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record AddFieldCommand(
@@ -54,7 +55,9 @@ public sealed record UpdateContentTypeCommand(
     LocalizationMode? Localization = null,
     string? Kind = null,
     Guid? SiteTemplateId = null,
-    IReadOnlyList<UpdateFieldInput>? Fields = null) : ICommand<ContentTypeDto>;
+    IReadOnlyList<UpdateFieldInput>? Fields = null,
+    Guid? ParentContentTypeId = null,
+    bool ClearParent = false) : ICommand<ContentTypeDto>;
 
 /// <summary>
 /// Represents a field in the full-update payload.

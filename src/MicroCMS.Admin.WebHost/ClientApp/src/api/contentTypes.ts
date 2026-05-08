@@ -24,6 +24,7 @@ export interface CreateContentTypeRequest {
   description?: string;
   localizationMode?: string;
   kind?: string;
+  parentContentTypeId?: string;
 }
 
 export interface UpdateFieldRequest {
@@ -53,6 +54,8 @@ export interface UpdateContentTypeRequest {
   kind?: string;
   siteTemplateId?: string;
   fields?: UpdateFieldRequest[];
+  parentContentTypeId?: string;
+  clearParent?: boolean;
 }
 
 export interface ImportSchemaRequest {

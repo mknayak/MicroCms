@@ -74,8 +74,15 @@ internal sealed class CreateContentTypeCommandHandler(
       currentUser.TenantId, siteId,
             request.Handle, request.DisplayName, request.Description,
             request.Localization, kind);
+
+        if (request.ParentContentTypeId.HasValue)
+        {
+            var parent = await repo.GetByIdAsync(new ContentTypeId(request.ParentContentTypeId.Value), cancellationToken)
+                ?? throw new NotFoundException(nameof(ContentType), request.ParentContentTypeId.Value);
+            ct.SetParent(parent);
+        }
+
    await repo.AddAsync(ct, cancellationToken);
-        // Invalidate the list cache so new content type is visible immediately.
         await cacheService.RemoveByTagAsync(CacheTags.TenantContentTypes(currentUser.TenantId), cancellationToken);
  return Result.Success(ContentTypeMapper.ToDto(ct));
     }
@@ -143,10 +150,16 @@ internal sealed class PublishContentTypeCommandHandler(
     {
  var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
     ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
+
+        ContentType? parent = null;
+        if (ct.ParentContentTypeId is { } parentId)
+            parent = await repo.GetByIdAsync(parentId, cancellationToken);
+
+        ct.EnsureParentIsActive(parent);
         ct.Publish();
   repo.Update(ct);
         await InvalidateAsync(ct.TenantId, ct.Id.Value, cancellationToken);
-        return Result.Success(ContentTypeMapper.ToDto(ct));
+        return Result.Success(ContentTypeMapper.ToDto(ct, parent));
     }
 
     private Task InvalidateAsync(TenantId tenantId, Guid id, CancellationToken ct) => Task.WhenAll(
@@ -187,11 +200,29 @@ ICacheService cacheService)
 
       ct.Update(request.DisplayName, request.Description, request.Localization);
     await ApplyKindAndLayout(ct, request, siteTemplateRepo, cancellationToken);
+
+        ContentType? parent = null;
+        if (request.ClearParent)
+        {
+            ct.SetParent(null);
+        }
+        else if (request.ParentContentTypeId.HasValue)
+        {
+            parent = await repo.GetByIdAsync(new ContentTypeId(request.ParentContentTypeId.Value), cancellationToken)
+                ?? throw new NotFoundException(nameof(ContentType), request.ParentContentTypeId.Value);
+            ct.SetParent(parent);
+        }
+        else if (ct.ParentContentTypeId is { } existingParentId)
+        {
+            // Parent unchanged — load for the mapper
+            parent = await repo.GetByIdAsync(existingParentId, cancellationToken);
+        }
+
         if (request.Fields is not null) ApplyFieldUpdates(ct, request.Fields);
 
  repo.Update(ct);
         await InvalidateAsync(ct.TenantId, ct.Id.Value, cancellationToken);
-        return Result.Success(ContentTypeMapper.ToDto(ct));
+        return Result.Success(ContentTypeMapper.ToDto(ct, parent));
     }
 
     private static async Task ApplyKindAndLayout(

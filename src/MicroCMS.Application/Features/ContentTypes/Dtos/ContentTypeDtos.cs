@@ -15,7 +15,9 @@ public sealed record ContentTypeDto(
     Guid? SiteTemplateId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    IReadOnlyList<FieldDefinitionDto> Fields);
+    IReadOnlyList<FieldDefinitionDto> Fields,
+    Guid? ParentContentTypeId = null,
+    string? ParentHandle = null);
 
 public sealed record FieldDefinitionDto(
     Guid Id,
@@ -30,6 +32,7 @@ public sealed record FieldDefinitionDto(
     int SortOrder,
     string? Description,
     string GroupName = "Default",
+    bool IsInherited = false,
     /// <summary>
     /// Static option list for Enum fields.
     /// Null when the field uses a dynamic source or is not Enum.

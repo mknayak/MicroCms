@@ -35,7 +35,11 @@ internal sealed class GetContentTypeQueryHandler(
         var ct = await repo.GetByIdAsync(new ContentTypeId(request.ContentTypeId), cancellationToken)
      ?? throw new NotFoundException(nameof(ContentType), request.ContentTypeId);
 
-      var dto = ContentTypeMapper.ToDto(ct);
+        ContentType? parent = null;
+        if (ct.ParentContentTypeId is { } parentId)
+            parent = await repo.GetByIdAsync(parentId, cancellationToken);
+
+      var dto = ContentTypeMapper.ToDto(ct, parent);
       await cacheService.SetWithTagAsync(cacheKey, dto, CacheTags.TenantContentTypes(tenantId), cancellationToken: cancellationToken);
 
         return Result.Success(dto);

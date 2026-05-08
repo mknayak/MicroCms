@@ -12,6 +12,7 @@ export function toCamelCase(str: string): string {
 
 export function toFormFields(ct: ContentType): SchemaFormValues['fields'] {
     return (ct.fields ?? [])
+        .filter((f: FieldDefinitionDto) => !f.isInherited)   // inherited fields are read-only; exclude from the editable array
         .slice()
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((f: FieldDefinitionDto) => ({

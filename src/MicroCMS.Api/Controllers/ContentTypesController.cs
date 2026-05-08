@@ -43,7 +43,7 @@ public sealed class ContentTypesController : ApiControllerBase
 
         var result = await Sender.Send(
       new CreateContentTypeCommand(request.Handle, request.DisplayName,
-    request.Description, locMode, request.Kind ?? "Content"),
+    request.Description, locMode, request.Kind ?? "Content", request.ParentContentTypeId),
        cancellationToken);
         return CreatedOrProblem(result, nameof(Get), new { id = result.IsSuccess ? result.Value.Id : Guid.Empty });
     }
@@ -138,7 +138,8 @@ cancellationToken);
 
         var result = await Sender.Send(
        new UpdateContentTypeCommand(id, request.DisplayName, request.Description, locMode,
-           request.Kind, request.SiteTemplateId, fields),
+           request.Kind, request.SiteTemplateId, fields,
+           request.ParentContentTypeId, request.ClearParent),
        cancellationToken);
         return OkOrProblem(result);
     }
@@ -221,7 +222,8 @@ public sealed record CreateContentTypeRequest(
     string DisplayName,
  string? Description = null,
     string? LocalizationMode = null,
-    string? Kind = null);
+    string? Kind = null,
+    Guid? ParentContentTypeId = null);
 
 public sealed record AddFieldRequest(
     string Handle,
@@ -247,7 +249,9 @@ public sealed record UpdateContentTypeRequest(
     string? LocalizationMode = null,
     string? Kind = null,
     Guid? SiteTemplateId = null,
-    IReadOnlyList<UpdateFieldRequest>? Fields = null);
+    IReadOnlyList<UpdateFieldRequest>? Fields = null,
+    Guid? ParentContentTypeId = null,
+    bool ClearParent = false);
 
 public sealed record UpdateFieldRequest(
 Guid? Id,

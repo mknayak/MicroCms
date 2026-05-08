@@ -63,6 +63,8 @@ export const schemaFormSchema = z.object({
     localizationMode: z.enum(['PerLocale', 'Shared']),
     kind: z.enum(['Content', 'Page']),
     siteTemplateId: z.string().optional(),
+    /** UUID of the parent content type, or empty string for none. */
+    parentContentTypeId: z.string().optional(),
     fields: z.array(fieldSchema),
 });
 

@@ -171,6 +171,10 @@ export interface ContentType {
     kind: ContentTypeKind;
     /** Only set when kind === 'Page'. The template applied to pages of this type. */
     siteTemplateId?: string;
+    /** When set, this type inherits fields from the referenced parent. */
+    parentContentTypeId?: string;
+    /** Display handle of the parent (populated by the API when parentContentTypeId is set). */
+    parentHandle?: string;
     fields: FieldDefinitionDto[];
     createdAt: string;
     updatedAt: string;
@@ -194,6 +198,8 @@ export interface FieldDefinitionDto {
     description?: string;
     /** Logical group this field belongs to. Defaults to "Default". */
     groupName: string;
+    /** True when this field is inherited from a parent content type (read-only in the child editor). */
+    isInherited: boolean;
     /** Static option list for Enum fields. Null when field uses a dynamic source. */
     options?: string[];
     /** Dynamic source config for Enum fields. When set, options are resolved at runtime. */

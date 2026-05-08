@@ -27,6 +27,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
             localizationMode: contentType.localizationMode === 'Shared' ? 'Shared' : 'PerLocale',
             kind: (contentType.kind === 'Page' ? 'Page' : 'Content') as 'Content' | 'Page',
             siteTemplateId: contentType.siteTemplateId ?? '',
+            parentContentTypeId: contentType.parentContentTypeId ?? '',
             fields: toFormFields(contentType),
         },
     });
@@ -41,6 +42,7 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
             localizationMode: contentType.localizationMode === 'Shared' ? 'Shared' : 'PerLocale',
             kind: (contentType.kind === 'Page' ? 'Page' : 'Content') as 'Content' | 'Page',
             siteTemplateId: contentType.siteTemplateId ?? '',
+            parentContentTypeId: contentType.parentContentTypeId ?? '',
             fields: toFormFields(contentType),
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,13 +54,17 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
     });
 
     const saveMutation = useMutation({
-        mutationFn: (values: SchemaFormValues) =>
-            contentTypesApi.update(contentType.id, {
+        mutationFn: (values: SchemaFormValues) => {
+            const originalParent = contentType.parentContentTypeId ?? '';
+            const newParent = values.parentContentTypeId ?? '';
+            return contentTypesApi.update(contentType.id, {
                 displayName: values.name,
                 description: values.description,
                 localizationMode: values.localizationMode,
                 kind: values.kind,
                 siteTemplateId: values.kind === 'Page' && values.siteTemplateId ? values.siteTemplateId : undefined,
+                parentContentTypeId: newParent || undefined,
+                clearParent: !!originalParent && !newParent,
                 fields: values.fields.map((f, idx) => ({
                     id: f.id,
                     handle: toCamelCase(f.name) || `field${idx}`,
@@ -79,7 +85,8 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                         ? (f.multiListSource?.contentTypeHandle?.trim() ? f.multiListSource : undefined)
                         : undefined,
                 })),
-            }),
+            });
+        },
         onSuccess: () => {
             toast.success('Schema saved.');
             void qc.invalidateQueries({ queryKey: ['content-types'] });
@@ -130,6 +137,8 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                     <SchemaEditView
                         contentTypeId={contentType.id}
                         contentTypeName={contentType.displayName}
+                        inheritedFields={(contentType.fields ?? []).filter((f) => f.isInherited)}
+                        parentHandle={contentType.parentHandle}
                         onCancel={handleCancel}
                         isSubmitting={isSubmitting || saveMutation.isPending}
                     />

@@ -24,10 +24,15 @@ function ReadOnlyFieldRow({ field, onEdit }: { field: FieldDefinitionDto; onEdit
     if (field.description) validators.push(field.description);
 
     return (
-        <tr className="hover:bg-slate-50 group">
-            <td className="px-3 py-3 text-slate-200">⠿</td>
+        <tr className={`group ${field.isInherited ? 'bg-slate-50/60' : 'hover:bg-slate-50'}`}>
+            <td className="px-3 py-3 text-slate-200">{field.isInherited ? '' : '⠿'}</td>
             <td className="px-4 py-3">
-                <p className="font-medium text-slate-800">{field.label}</p>
+                <div className="flex items-center gap-2">
+                    <p className={`font-medium ${field.isInherited ? 'text-slate-400' : 'text-slate-800'}`}>{field.label}</p>
+                    {field.isInherited && (
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inherited</span>
+                    )}
+                </div>
                 {field.description && <p className="text-xs text-slate-400 truncate max-w-xs">{field.description}</p>}
             </td>
             <td className="px-4 py-3 font-mono text-xs text-slate-500">{field.handle}</td>
@@ -43,9 +48,11 @@ function ReadOnlyFieldRow({ field, onEdit }: { field: FieldDefinitionDto; onEdit
                 {validators.length ? validators.join(' · ') : '—'}
             </td>
             <td className="px-4 py-3">
-                <button onClick={onEdit} className="opacity-0 group-hover:opacity-100 transition-opacity rounded px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50">
-                    Edit
-                </button>
+                {!field.isInherited && (
+                    <button onClick={onEdit} className="opacity-0 group-hover:opacity-100 transition-opacity rounded px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50">
+                        Edit
+                    </button>
+                )}
             </td>
         </tr>
     );
@@ -119,6 +126,20 @@ export function SchemaReadOnlyView({
                 <span>Click <strong>Edit Schema</strong> to add, remove, or reorder fields.</span>
             </div>
 
+            {/* Parent inheritance banner */}
+            {contentType.parentContentTypeId && (
+                <div className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm text-indigo-800">
+                    <span>🧬</span>
+                    <span>
+                        Inherits fields from{' '}
+                        <strong>{contentType.parentHandle ?? contentType.parentContentTypeId}</strong>.{' '}
+                        Inherited fields have an{' '}
+                        <span className="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Inherited</span>{' '}
+                        badge and cannot be edited here.
+                    </span>
+                </div>
+            )}
+
             {/* Basic info */}
             <div className="rounded-lg border border-slate-200 bg-white px-5 py-4">
                 <div className="grid grid-cols-2 gap-6 text-sm">
@@ -150,6 +171,12 @@ export function SchemaReadOnlyView({
                                     ? (siteTemplates?.find((t) => t.id === contentType.siteTemplateId)?.name ?? contentType.siteTemplateId)
                                     : <span className="text-slate-400">None</span>}
                             </p>
+                        </div>
+                    )}
+                    {contentType.parentContentTypeId && (
+                        <div>
+                            <p className="text-xs font-medium text-slate-500 uppercase mb-1">Inherits From</p>
+                            <p className="font-mono text-slate-700">{contentType.parentHandle ?? contentType.parentContentTypeId}</p>
                         </div>
                     )}
                 </div>

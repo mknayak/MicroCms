@@ -69,11 +69,12 @@ internal sealed class CreateApiClientCommandHandler(
         if (!Enum.TryParse<ApiKeyType>(request.KeyType, ignoreCase: true, out var keyType))
           return Result.Failure<ApiClientCreatedDto>(
     Error.Validation("ApiClient.InvalidKeyType", $"'{request.KeyType}' is not a valid key type."));
+        var siteId = currentUser.SiteId;
 
      var rawKey = GenerateRawKey();
         var hashed = hasher.Hash(rawKey);
         var client = ApiClient.Create(
-            currentUser.TenantId, new SiteId(request.SiteId),
+            currentUser.TenantId, siteId.Value,
   request.Name, keyType, hashed, request.Scopes, request.ExpiresAt);
 
         await clientRepository.AddAsync(client, cancellationToken);
