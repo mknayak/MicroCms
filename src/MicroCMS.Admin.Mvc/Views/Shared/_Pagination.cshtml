@@ -1,0 +1,42 @@
+@model (int PageNumber, int TotalPages, string RouteKey, object RouteValues)
+
+@if (Model.TotalPages > 1)
+{
+    var prev = Model.PageNumber - 1;
+    var next = Model.PageNumber + 1;
+    var routeDict = new RouteValueDictionary(Model.RouteValues);
+
+    <nav aria-label="Pagination" class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+
+            @* Previous *@
+            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                @{
+                    routeDict[Model.RouteKey] = prev;
+                }
+                <a class="page-link" href="@Url.Action(null, routeDict)">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+
+            @* Pages *@
+            @for (int p = Math.Max(1, Model.PageNumber - 2); p <= Math.Min(Model.TotalPages, Model.PageNumber + 2); p++)
+            {
+                routeDict[Model.RouteKey] = p;
+                <li class="page-item @(p == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action(null, routeDict)">@p</a>
+                </li>
+            }
+
+            @* Next *@
+            <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                @{
+                    routeDict[Model.RouteKey] = next;
+                }
+                <a class="page-link" href="@Url.Action(null, routeDict)">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

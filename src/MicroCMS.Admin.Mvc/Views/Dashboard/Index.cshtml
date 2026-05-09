@@ -1,0 +1,88 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h4 fw-bold mb-0">Dashboard</h1>
+    <span class="text-muted small">@DateTime.UtcNow.ToString("dddd, dd MMMM yyyy")</span>
+</div>
+
+@* ── Stats cards ────────────────────────────────────────────────────────────── *@
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        @await Html.PartialAsync("_StatCard", (Icon: "bi-file-earmark-text", Label: "Total Entries", Value: Model.Stats.TotalEntries.ToString("N0"), Color: "primary"))
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        @await Html.PartialAsync("_StatCard", (Icon: "bi-check-circle", Label: "Published", Value: Model.Stats.PublishedEntries.ToString("N0"), Color: "success"))
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        @await Html.PartialAsync("_StatCard", (Icon: "bi-pencil-square", Label: "Drafts", Value: Model.Stats.DraftEntries.ToString("N0"), Color: "warning"))
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        @await Html.PartialAsync("_StatCard", (Icon: "bi-images", Label: "Media Assets", Value: Model.Stats.TotalAssets.ToString("N0"), Color: "info"))
+    </div>
+</div>
+
+<div class="row g-3">
+    @* ── Quick links ────────────────────────────────────────────────────────── *@
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold border-0">
+                <i class="bi bi-lightning-charge me-2 text-primary"></i>Quick Actions
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a asp-controller="ContentTypes" asp-action="Create" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i>New Content Type
+                </a>
+                <a asp-controller="Entries" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-earmark-plus me-1"></i>Browse Entries
+                </a>
+                <a asp-controller="Media" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-cloud-upload me-1"></i>Upload Media
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* ── Recent activity ─────────────────────────────────────────────────────── *@
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold border-0">
+                <i class="bi bi-activity me-2 text-primary"></i>Recent Activity
+            </div>
+
+            @if (Model.RecentActivity.Count == 0)
+            {
+                <div class="card-body text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                    <p class="mt-2 mb-0">No activity yet.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.RecentActivity)
+                    {
+                        <li class="list-group-item px-3 py-2">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="avatar-circle bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width:34px;height:34px;font-size:.8rem;font-weight:700;">
+                                    @(item.ActorName.Length > 0 ? item.ActorName[0].ToString().ToUpperInvariant() : "?")
+                                </div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="mb-0 text-truncate">
+                                        <strong>@item.ActorName</strong>
+                                        <span class="text-muted">@item.Description</span>
+                                        <strong>@item.EntityTitle</strong>
+                                    </p>
+                                    <small class="text-muted">@item.CreatedAt</small>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>

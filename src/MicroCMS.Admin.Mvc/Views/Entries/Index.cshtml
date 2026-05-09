@@ -1,0 +1,143 @@
+@model EntryListViewModel
+@{
+    ViewData["Title"] = "Entries";
+    var statuses = new[] { "Draft", "PendingReview", "Published", "Unpublished", "Archived", "Scheduled" };
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h4 fw-bold mb-0">Entries</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.ContentTypeName))
+        {
+            <small class="text-muted">in <strong>@Model.ContentTypeName</strong></small>
+        }
+        <small class="text-muted ms-2">@Model.TotalCount entry/entries</small>
+    </div>
+    <a asp-action="Create" asp-route-contentTypeId="@Model.ContentTypeId"
+       class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>New Entry
+    </a>
+</div>
+
+@* ── Filters ──────────────────────────────────────────────────────────────────── *@
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <input type="hidden" name="contentTypeId" value="@Model.ContentTypeId" />
+    <div class="col-sm-4 col-lg-3">
+        <input type="search" name="search" value="@Model.SearchQuery"
+               class="form-control form-control-sm" placeholder="Search…" />
+    </div>
+    <div class="col-sm-3 col-lg-2">
+        <select name="status" class="form-select form-select-sm">
+            <option value="">All statuses</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(s == Model.StatusFilter)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary btn-sm">
+            <i class="bi bi-funnel me-1"></i>Filter
+        </button>
+        @if (!string.IsNullOrWhiteSpace(Model.StatusFilter) || !string.IsNullOrWhiteSpace(Model.SearchQuery))
+        {
+            <a asp-action="Index" asp-route-contentTypeId="@Model.ContentTypeId"
+               class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+        }
+    </div>
+</form>
+
+@* ── Table ──────────────────────────────────────────────────────────────────── *@
+@if (Model.Items.Count == 0)
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-file-earmark-x" style="font-size:2.5rem;"></i>
+        <p class="mt-2">No entries found.</p>
+        <a asp-action="Create" asp-route-contentTypeId="@Model.ContentTypeId"
+           class="btn btn-primary btn-sm">Create First Entry</a>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title / Slug</th>
+                        <th>Content Type</th>
+                        <th>Locale</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@entry.Id"
+                                   class="fw-semibold text-decoration-none text-truncate d-block"
+                                   style="max-width:220px;">
+                                    @(entry.Title ?? "(untitled)")
+                                </a>
+                                <small class="text-muted font-monospace">@entry.Slug</small>
+                            </td>
+                            <td><small class="text-muted">@(entry.ContentTypeName ?? entry.ContentTypeId[..8])</small></td>
+                            <td><span class="badge bg-light text-dark border">@entry.Locale</span></td>
+                            <td><small class="text-muted">@(entry.AuthorName ?? "—")</small></td>
+                            <td>@await Html.PartialAsync("_StatusBadge", entry.Status)</td>
+                            <td><small class="text-muted">@(entry.UpdatedAt?.Length >= 10 ? entry.UpdatedAt[..10] : entry.UpdatedAt)</small></td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@entry.Id"
+                                       class="btn btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    @if (entry.Status is "Draft" or "Unpublished")
+                                    {
+                                        <form asp-action="Publish" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@entry.Id" />
+                                            <button type="submit" class="btn btn-outline-success" title="Publish">
+                                                <i class="bi bi-send-check"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (entry.Status == "Published")
+                                    {
+                                        <form asp-action="Unpublish" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@entry.Id" />
+                                            <button type="submit" class="btn btn-outline-warning" title="Unpublish">
+                                                <i class="bi bi-pause-circle"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <form asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('Delete this entry?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@entry.Id" />
+                                        <input type="hidden" name="contentTypeId" value="@Model.ContentTypeId" />
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Pagination", (
+        PageNumber: Model.PageNumber,
+        TotalPages: Model.TotalPages,
+        RouteKey: "page",
+        RouteValues: (object)new { contentTypeId = Model.ContentTypeId, status = Model.StatusFilter, search = Model.SearchQuery }
+    ))
+}

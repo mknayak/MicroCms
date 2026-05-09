@@ -1170,6 +1170,13 @@ export interface SetPageSiteTemplateRequest {
     siteTemplateId: string | null;
 }
 
+export type EffectiveTemplateSource = 'None' | 'PageOverride' | 'ContentTypeDefault';
+
+export interface EffectiveTemplateDto {
+    source: EffectiveTemplateSource;
+    template: SiteTemplateDto | null;
+}
+
 // ─── Package Manager ──────────────────────────────────────────────────────────
 
 export interface PackageContents {

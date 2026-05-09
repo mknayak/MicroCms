@@ -1220,7 +1220,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Ai.AiProviderSettings", b =>
                 {
-                    b.OwnsOne("MicroCMS.Domain.Aggregates.Ai.AiBudget", "Budget", b1 =>
+                    b.OwnsOne("MicroCMS.Domain.Aggregates.Ai.AiProviderSettings.Budget#MicroCMS.Domain.Aggregates.Ai.AiBudget", "Budget", b1 =>
                         {
                             b1.Property<Guid>("AiProviderSettingsId")
                                 .HasColumnType("TEXT");
@@ -1243,13 +1243,13 @@ namespace MicroCMS.Infrastructure.Migrations
 
                             b1.HasKey("AiProviderSettingsId");
 
-                            b1.ToTable("AiProviderSettings");
+                            b1.ToTable("AiProviderSettings", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("AiProviderSettingsId");
                         });
 
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Ai.AiModelTierOverride", "ModelOverrides", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Ai.AiProviderSettings.ModelOverrides#MicroCMS.Domain.Aggregates.Ai.AiModelTierOverride", "ModelOverrides", b1 =>
                         {
                             b1.Property<Guid>("AiProviderSettingsId")
                                 .HasColumnType("TEXT");
@@ -1271,7 +1271,7 @@ namespace MicroCMS.Infrastructure.Migrations
                                 .HasForeignKey("AiProviderSettingsId");
                         });
 
-                    b.OwnsOne("MicroCMS.Domain.Aggregates.Ai.AiSafetyConfig", "Safety", b1 =>
+                    b.OwnsOne("MicroCMS.Domain.Aggregates.Ai.AiProviderSettings.Safety#MicroCMS.Domain.Aggregates.Ai.AiSafetyConfig", "Safety", b1 =>
                         {
                             b1.Property<Guid>("AiProviderSettingsId")
                                 .HasColumnType("TEXT");
@@ -1303,7 +1303,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
                             b1.HasKey("AiProviderSettingsId");
 
-                            b1.ToTable("AiProviderSettings");
+                            b1.ToTable("AiProviderSettings", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("AiProviderSettingsId");
@@ -1320,7 +1320,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Ai.CopilotConversation", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Ai.CopilotMessage", "Messages", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Ai.CopilotConversation.Messages#MicroCMS.Domain.Aggregates.Ai.CopilotMessage", "Messages", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1349,7 +1349,7 @@ namespace MicroCMS.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ConversationId");
 
-                            b1.OwnsMany("MicroCMS.Domain.Aggregates.Ai.CopilotCitation", "Citations", b2 =>
+                            b1.OwnsMany("MicroCMS.Domain.Aggregates.Ai.CopilotConversation.Messages#MicroCMS.Domain.Aggregates.Ai.CopilotMessage.Citations#MicroCMS.Domain.Aggregates.Ai.CopilotCitation", "Citations", b2 =>
                                 {
                                     b2.Property<Guid>("MessageId")
                                         .HasColumnType("TEXT");
@@ -1387,7 +1387,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Components.PageTemplate", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Components.ComponentPlacement", "Placements", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Components.PageTemplate.Placements#MicroCMS.Domain.Aggregates.Components.ComponentPlacement", "Placements", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1434,7 +1434,7 @@ namespace MicroCMS.Infrastructure.Migrations
                         .HasForeignKey("ParentContentTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Content.FieldDefinition", "Fields", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Content.ContentType.Fields#MicroCMS.Domain.Aggregates.Content.FieldDefinition", "Fields", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1507,7 +1507,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Content.Entry", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Content.EntryVersion", "Versions", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Content.Entry.Versions#MicroCMS.Domain.Aggregates.Content.EntryVersion", "Versions", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1546,7 +1546,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Content.EntryGroup", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Content.EntryGroupMember", "Members", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Content.EntryGroup.Members#MicroCMS.Domain.Aggregates.Content.EntryGroupMember", "Members", b1 =>
                         {
                             b1.Property<Guid>("GroupId")
                                 .HasColumnType("TEXT");
@@ -1567,7 +1567,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Identity.User", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Identity.Role", "Roles", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Identity.User.Roles#MicroCMS.Domain.Aggregates.Identity.Role", "Roles", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1609,7 +1609,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Media.MediaAsset", b =>
                 {
-                    b.OwnsOne("MicroCMS.Domain.ValueObjects.AssetMetadata", "Metadata", b1 =>
+                    b.OwnsOne("MicroCMS.Domain.Aggregates.Media.MediaAsset.Metadata#MicroCMS.Domain.ValueObjects.AssetMetadata", "Metadata", b1 =>
                         {
                             b1.Property<Guid>("MediaAssetId")
                                 .HasColumnType("TEXT");
@@ -1649,7 +1649,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
                             b1.HasKey("MediaAssetId");
 
-                            b1.ToTable("MediaAssets");
+                            b1.ToTable("MediaAssets", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("MediaAssetId");
@@ -1661,7 +1661,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Pages.Page", b =>
                 {
-                    b.OwnsOne("MicroCMS.Domain.ValueObjects.SeoMetadata", "Seo", b1 =>
+                    b.OwnsOne("MicroCMS.Domain.Aggregates.Pages.Page.Seo#MicroCMS.Domain.ValueObjects.SeoMetadata", "Seo", b1 =>
                         {
                             b1.Property<Guid>("PageId")
                                 .HasColumnType("TEXT");
@@ -1688,7 +1688,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
                             b1.HasKey("PageId");
 
-                            b1.ToTable("Pages");
+                            b1.ToTable("Pages", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("PageId");
@@ -1700,7 +1700,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Settings.TenantConfig", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Settings.ConfigEntry", "Entries", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Settings.TenantConfig.Entries#MicroCMS.Domain.Aggregates.Settings.ConfigEntry", "Entries", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1747,7 +1747,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Tenant.SiteSettings", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Settings.ConfigEntry", "ConfigEntries", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Tenant.SiteSettings.ConfigEntries#MicroCMS.Domain.Aggregates.Settings.ConfigEntry", "ConfigEntries", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1794,7 +1794,90 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Tenant.Tenant", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Tenant.Site", "Sites", b1 =>
+                    b.OwnsOne("MicroCMS.Domain.Aggregates.Tenant.Tenant.Quota#MicroCMS.Domain.ValueObjects.TenantQuota", "Quota", b1 =>
+                        {
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<long>("MaxAiTokensPerMonth")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Quota_MaxAiTokensPerMonth");
+
+                            b1.Property<int>("MaxApiCallsPerMinute")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Quota_MaxApiCallsPerMinute");
+
+                            b1.Property<int>("MaxContentTypes")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Quota_MaxContentTypes");
+
+                            b1.Property<int>("MaxSites")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Quota_MaxSites");
+
+                            b1.Property<long>("MaxStorageBytes")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Quota_MaxStorageBytes");
+
+                            b1.Property<int>("MaxUsers")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Quota_MaxUsers");
+
+                            b1.HasKey("TenantId");
+
+                            b1.ToTable("Tenants", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId");
+                        });
+
+                    b.OwnsOne("MicroCMS.Domain.Aggregates.Tenant.Tenant.Settings#MicroCMS.Domain.ValueObjects.TenantSettings", "Settings", b1 =>
+                        {
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<bool>("AiEnabled")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("Settings_AiEnabled");
+
+                            b1.Property<string>("DefaultLocale")
+                                .IsRequired()
+                                .HasMaxLength(35)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Settings_DefaultLocale");
+
+                            b1.Property<string>("DisplayName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Settings_DisplayName");
+
+                            b1.Property<string>("EnabledLocales")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Settings_EnabledLocales");
+
+                            b1.Property<string>("LogoUrl")
+                                .HasMaxLength(2048)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Settings_LogoUrl");
+
+                            b1.Property<string>("TimeZoneId")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Settings_TimeZoneId");
+
+                            b1.HasKey("TenantId");
+
+                            b1.ToTable("Tenants", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId");
+                        });
+
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Tenant.Tenant.Sites#MicroCMS.Domain.Aggregates.Tenant.Site", "Sites", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -1837,7 +1920,7 @@ namespace MicroCMS.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("TenantId");
 
-                            b1.OwnsMany("MicroCMS.Domain.ValueObjects.SiteEnvironment", "Environments", b2 =>
+                            b1.OwnsMany("MicroCMS.Domain.Aggregates.Tenant.Tenant.Sites#MicroCMS.Domain.Aggregates.Tenant.Site.Environments#MicroCMS.Domain.ValueObjects.SiteEnvironment", "Environments", b2 =>
                                 {
                                     b2.Property<Guid>("SiteId")
                                         .HasColumnType("TEXT");
@@ -1870,89 +1953,6 @@ namespace MicroCMS.Infrastructure.Migrations
                             b1.Navigation("Environments");
                         });
 
-                    b.OwnsOne("MicroCMS.Domain.ValueObjects.TenantQuota", "Quota", b1 =>
-                        {
-                            b1.Property<Guid>("TenantId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<long>("MaxAiTokensPerMonth")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Quota_MaxAiTokensPerMonth");
-
-                            b1.Property<int>("MaxApiCallsPerMinute")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Quota_MaxApiCallsPerMinute");
-
-                            b1.Property<int>("MaxContentTypes")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Quota_MaxContentTypes");
-
-                            b1.Property<int>("MaxSites")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Quota_MaxSites");
-
-                            b1.Property<long>("MaxStorageBytes")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Quota_MaxStorageBytes");
-
-                            b1.Property<int>("MaxUsers")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Quota_MaxUsers");
-
-                            b1.HasKey("TenantId");
-
-                            b1.ToTable("Tenants");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TenantId");
-                        });
-
-                    b.OwnsOne("MicroCMS.Domain.ValueObjects.TenantSettings", "Settings", b1 =>
-                        {
-                            b1.Property<Guid>("TenantId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<bool>("AiEnabled")
-                                .HasColumnType("INTEGER")
-                                .HasColumnName("Settings_AiEnabled");
-
-                            b1.Property<string>("DefaultLocale")
-                                .IsRequired()
-                                .HasMaxLength(35)
-                                .HasColumnType("TEXT")
-                                .HasColumnName("Settings_DefaultLocale");
-
-                            b1.Property<string>("DisplayName")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("TEXT")
-                                .HasColumnName("Settings_DisplayName");
-
-                            b1.Property<string>("EnabledLocales")
-                                .IsRequired()
-                                .HasMaxLength(1024)
-                                .HasColumnType("TEXT")
-                                .HasColumnName("Settings_EnabledLocales");
-
-                            b1.Property<string>("LogoUrl")
-                                .HasMaxLength(2048)
-                                .HasColumnType("TEXT")
-                                .HasColumnName("Settings_LogoUrl");
-
-                            b1.Property<string>("TimeZoneId")
-                                .IsRequired()
-                                .HasMaxLength(64)
-                                .HasColumnType("TEXT")
-                                .HasColumnName("Settings_TimeZoneId");
-
-                            b1.HasKey("TenantId");
-
-                            b1.ToTable("Tenants");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TenantId");
-                        });
-
                     b.Navigation("Quota")
                         .IsRequired();
 
@@ -1964,7 +1964,7 @@ namespace MicroCMS.Infrastructure.Migrations
 
             modelBuilder.Entity("MicroCMS.Domain.Aggregates.Webhooks.WebhookSubscription", b =>
                 {
-                    b.OwnsMany("MicroCMS.Domain.Aggregates.Webhooks.WebhookDeliveryLog", "DeliveryLogs", b1 =>
+                    b.OwnsMany("MicroCMS.Domain.Aggregates.Webhooks.WebhookSubscription.DeliveryLogs#MicroCMS.Domain.Aggregates.Webhooks.WebhookDeliveryLog", "DeliveryLogs", b1 =>
                         {
                             b1.Property<Guid>("WebhookSubscriptionId")
                                 .HasColumnType("TEXT");

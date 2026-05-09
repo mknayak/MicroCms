@@ -6,7 +6,10 @@ using MicroCMS.Application.Features.SiteTemplates.Commands;
 using MicroCMS.Application.Features.SiteTemplates.Dtos;
 using MicroCMS.Application.Features.SiteTemplates.Queries;
 using MicroCMS.Domain.Aggregates.Components;
+using MicroCMS.Domain.Aggregates.Content;
+using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications.Content;
 using MicroCMS.Domain.Specifications.SiteTemplates;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
@@ -161,3 +164,76 @@ internal sealed class ListSiteTemplatesQueryHandler(
   return Result.Success<IReadOnlyList<SiteTemplateListItemDto>>(dtos);
   }
 }
+
+/// <summary>
+/// Resolves the effective SiteTemplate for a page by walking:
+///   1. Page.SiteTemplateId  (explicit page-level override)
+///   2. ContentType.SiteTemplateId  (default for the page's backing content type)
+///   3. None  (renderer falls back to default / first Layout for the site)
+/// </summary>
+internal sealed class GetEffectiveTemplateQueryHandler(
+    IRepository<Page, PageId> pageRepo,
+    IRepository<Entry, EntryId> entryRepo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo,
+    IRepository<SiteTemplate, SiteTemplateId> templateRepo,
+    IRepository<Layout, LayoutId> layoutRepo)
+    : IRequestHandler<GetEffectiveTemplateQuery, Result<EffectiveTemplateDto>>
+{
+    public async Task<Result<EffectiveTemplateDto>> Handle(
+        GetEffectiveTemplateQuery request, CancellationToken cancellationToken)
+    {
+        var page = await pageRepo.GetByIdAsync(new PageId(request.PageId), cancellationToken)
+            ?? throw new NotFoundException(nameof(Page), request.PageId);
+
+        // ── 1. Page-level override ────────────────────────────────────────
+        var pageResult = await TryPageOverrideAsync(page, templateRepo, layoutRepo, cancellationToken);
+        if (pageResult is not null) return Result.Success(pageResult);
+
+        // ── 2. ContentType default ────────────────────────────────────────
+        var contentTypeResult = await TryContentTypeDefaultAsync(
+            page, entryRepo, contentTypeRepo, templateRepo, layoutRepo, cancellationToken);
+        if (contentTypeResult is not null) return Result.Success(contentTypeResult);
+
+        // ── 3. No SiteTemplate — caller falls back to default Layout ──────
+        return Result.Success(new EffectiveTemplateDto(EffectiveTemplateSource.None, null));
+    }
+
+    private static async Task<EffectiveTemplateDto?> TryPageOverrideAsync(
+        Page page,
+        IRepository<SiteTemplate, SiteTemplateId> templateRepo,
+        IRepository<Layout, LayoutId> layoutRepo,
+        CancellationToken ct)
+    {
+        if (!page.SiteTemplateId.HasValue) return null;
+        var t = await templateRepo.GetByIdAsync(page.SiteTemplateId.Value, ct);
+        if (t is null) return null;
+        var layout = await layoutRepo.GetByIdAsync(t.LayoutId, ct);
+        return new EffectiveTemplateDto(EffectiveTemplateSource.PageOverride, SiteTemplateMapper.ToDto(t, layout?.Name));
+    }
+
+    private static async Task<EffectiveTemplateDto?> TryContentTypeDefaultAsync(
+        Page page,
+        IRepository<Entry, EntryId> entryRepo,
+        IRepository<ContentType, ContentTypeId> contentTypeRepo,
+        IRepository<SiteTemplate, SiteTemplateId> templateRepo,
+        IRepository<Layout, LayoutId> layoutRepo,
+        CancellationToken ct)
+    {
+        ContentTypeId? contentTypeId = page.CollectionContentTypeId;
+        if (contentTypeId is null && page.LinkedEntryId is not null)
+        {
+            var entry = await entryRepo.GetByIdAsync(page.LinkedEntryId.Value, ct);
+            contentTypeId = entry?.ContentTypeId;
+        }
+        if (contentTypeId is null) return null;
+
+        var ct2 = await contentTypeRepo.GetByIdAsync(contentTypeId.Value, ct);
+        if (ct2?.SiteTemplateId is not { } ctTemplateId) return null;
+
+        var t = await templateRepo.GetByIdAsync(ctTemplateId, ct);
+        if (t is null) return null;
+        var layout = await layoutRepo.GetByIdAsync(t.LayoutId, ct);
+        return new EffectiveTemplateDto(EffectiveTemplateSource.ContentTypeDefault, SiteTemplateMapper.ToDto(t, layout?.Name));
+    }
+}
+

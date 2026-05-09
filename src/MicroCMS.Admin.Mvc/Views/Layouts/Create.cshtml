@@ -1,0 +1,51 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model CreateLayoutRequest
+@{
+    ViewData["Title"] = "New Layout";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-action="Index">Layouts</a></li>
+            <li class="breadcrumb-item active">New</li>
+        </ol>
+    </nav>
+    <h1 class="h4 fw-bold mb-0">New Layout</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Name</label>
+                        <input asp-for="Name" class="form-control" placeholder="Main Layout" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Key</label>
+                        <input asp-for="Key" class="form-control font-monospace" placeholder="main" required />
+                        <div class="form-text">Unique identifier (lowercase, hyphens ok).</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Template Type</label>
+                        <select asp-for="TemplateType" class="form-select">
+                            <option value="Handlebars">Handlebars</option>
+                            <option value="Html">HTML</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Create Layout
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

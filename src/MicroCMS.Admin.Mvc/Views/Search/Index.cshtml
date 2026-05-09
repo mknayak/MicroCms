@@ -1,0 +1,91 @@
+@model SearchViewModel
+@{
+    ViewData["Title"] = string.IsNullOrWhiteSpace(Model.Query) ? "Search" : $"Search — {Model.Query}";
+    int totalPages = Model.PageSize > 0 ? (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize) : 1;
+}
+
+<h1 class="h4 fw-bold mb-4">Search</h1>
+
+<form asp-action="Index" method="get" class="mb-4">
+    <div class="input-group" style="max-width:560px;">
+        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+        <input type="search" name="q" value="@Model.Query" class="form-control border-start-0"
+               placeholder="Search entries by title or content…" autofocus />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.Query))
+{
+    <p class="text-muted small mb-3">
+        <strong>@Model.TotalCount</strong> result@(Model.TotalCount == 1 ? "" : "s")
+        for <strong>&ldquo;@Model.Query&rdquo;</strong>
+    </p>
+
+    @if (Model.Hits.Count == 0)
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-search" style="font-size:2.5rem;"></i>
+            <p class="mt-2">No results found.</p>
+            <p class="small">Try different keywords or check for spelling errors.</p>
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm mb-3">
+            @foreach (var hit in Model.Hits)
+            {
+                var scorePercent = (int)Math.Round(hit.Score * 100, 0);
+                <div class="list-group-item border-0 border-bottom p-3">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h6 class="mb-0 fw-semibold">
+                                    <a asp-controller="Entries" asp-action="Edit"
+                                       asp-route-id="@hit.EntryId"
+                                       class="text-decoration-none stretched-link">
+                                        @(hit.Title ?? hit.Slug)
+                                    </a>
+                                </h6>
+                                @await Html.PartialAsync("_StatusBadge", hit.Status)
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(hit.Excerpt))
+                            {
+                                <p class="mb-1 text-muted small text-truncate">@hit.Excerpt</p>
+                            }
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <code class="small text-muted">@hit.Slug</code>
+                                <span class="badge bg-light text-dark border">@hit.Locale</span>
+                                @if (!string.IsNullOrWhiteSpace(hit.PublishedAt) && hit.PublishedAt.Length >= 10)
+                                {
+                                    <small class="text-muted">Published @hit.PublishedAt[..10]</small>
+                                }
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 text-end">
+                            <span class="badge rounded-pill border"
+                                  style="background:transparent; font-size:.7rem;"
+                                  title="Relevance score">
+                                <i class="bi bi-graph-up me-1 text-primary"></i>@scorePercent%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @await Html.PartialAsync("_Pagination", (
+            PageNumber: Model.Page,
+            TotalPages: totalPages,
+            RouteKey: "page",
+            RouteValues: (object)new { q = Model.Query }
+        ))
+    }
+}
+else
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-search" style="font-size:3rem;"></i>
+        <p class="mt-3">Enter keywords above to search across all published entries.</p>
+    </div>
+}

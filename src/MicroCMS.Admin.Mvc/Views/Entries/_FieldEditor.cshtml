@@ -1,0 +1,191 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@* Model: (FieldDefinitionDto Field, string InputName, string? Value) *@
+@model (FieldDefinitionDto Field, string InputName, string? Value)
+
+@{
+    var field = Model.Field;
+    var name  = Model.InputName;
+    var val   = Model.Value ?? string.Empty;
+    var id    = $"field_{field.Handle}";
+}
+
+<div class="mb-3">
+    <label for="@id" class="form-label fw-semibold">
+        @field.Label
+        @if (field.IsRequired)
+        {
+            <span class="text-danger ms-1" title="Required">*</span>
+        }
+        @if (field.IsLocalized)
+        {
+            <i class="bi bi-translate text-info ms-1" title="Localized" style="font-size:.75rem;"></i>
+        }
+    </label>
+
+    @if (field.FieldType == "ShortText")
+    {
+        <input type="text" id="@id" name="@name" value="@val"
+               class="form-control" @(field.IsRequired ? "required" : "") />
+    }
+    else if (field.FieldType == "LongText")
+    {
+        <textarea id="@id" name="@name" rows="4"
+                  class="form-control font-monospace"
+                  @(field.IsRequired ? "required" : "")>@val</textarea>
+    }
+    else if (field.FieldType == "RichText")
+    {
+        @* Quill.js rich-text editor. JS initialises it from the hidden input value. *@
+        <div class="quill-editor-wrapper border rounded-2 overflow-hidden">
+            <div id="quill_@field.Handle"
+                 class="quill-editor"
+                 data-input-id="@id"
+                 style="min-height:220px; font-size:.9rem; font-family:inherit;">@Html.Raw(val)</div>
+        </div>
+        <input type="hidden" id="@id" name="@name" value="@val" class="quill-hidden-input" />
+        <div class="form-text">Rich text — use the toolbar to apply formatting. HTML is stored.</div>
+    }
+    else if (field.FieldType == "Boolean")
+    {
+        var isChecked = val is "true" or "True" or "on";
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="@id"
+                   name="@name" value="true" @(isChecked ? "checked" : "") />
+            <label class="form-check-label" for="@id">Enabled</label>
+        </div>
+    }
+    else if (field.FieldType == "Integer")
+    {
+        <input type="number" step="1" id="@id" name="@name" value="@val"
+               class="form-control" @(field.IsRequired ? "required" : "") />
+    }
+    else if (field.FieldType == "Decimal")
+    {
+        <input type="number" step="any" id="@id" name="@name" value="@val"
+               class="form-control" @(field.IsRequired ? "required" : "") />
+    }
+    else if (field.FieldType == "DateTime")
+    {
+        @* Convert ISO 8601 → datetime-local (trim seconds/ms) *@
+        var dtVal = val.Length >= 16 ? val[..16] : val;
+        <input type="datetime-local" id="@id" name="@name" value="@dtVal"
+               class="form-control" @(field.IsRequired ? "required" : "") />
+    }
+    else if (field.FieldType == "Enum" && field.Options is { Count: > 0 })
+    {
+        <select id="@id" name="@name" class="form-select"
+                @(field.IsRequired ? "required" : "")>
+            @if (!field.IsRequired)
+            {
+                <option value="">— select —</option>
+            }
+            @foreach (var opt in field.Options)
+            {
+                <option value="@opt" selected="@(opt == val)">@opt</option>
+            }
+        </select>
+    }
+    else if (field.FieldType == "AssetReference")
+    {
+        @* Media library picker — Browse button opens the asset picker modal *@
+        <div class="input-group">
+            <input type="text" id="@id" name="@name" value="@val"
+                   class="form-control font-monospace" placeholder="Select or paste an Asset ID…"
+                   @(field.IsRequired ? "required" : "") />
+            <button type="button" class="btn btn-outline-secondary asset-picker-btn"
+                    data-target-id="@id"
+                    data-bs-toggle="modal" data-bs-target="#assetPickerModal"
+                    title="Browse media library">
+                <i class="bi bi-image me-1"></i>Browse
+            </button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(val))
+        {
+            <div class="form-text text-success">
+                <i class="bi bi-check-circle me-1"></i>Asset selected — <code>@val[..Math.Min(val.Length, 20)]…</code>
+            </div>
+        }
+        else
+        {
+            <div class="form-text">Click Browse to select from the media library.</div>
+        }
+    }
+    else if (field.FieldType == "Reference")
+    {
+        @* Entry reference picker — Browse button opens the entry picker modal *@
+        <div class="input-group">
+            <input type="text" id="@id" name="@name" value="@val"
+                   class="form-control font-monospace" placeholder="Select or paste an Entry ID…"
+                   @(field.IsRequired ? "required" : "") />
+            <button type="button" class="btn btn-outline-secondary entry-picker-btn"
+                    data-target-id="@id"
+                    data-bs-toggle="modal" data-bs-target="#entryPickerModal"
+                    title="Browse entries">
+                <i class="bi bi-link me-1"></i>Browse
+            </button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(val))
+        {
+            <div class="form-text text-success">
+                <i class="bi bi-check-circle me-1"></i>Entry selected — <code>@val[..Math.Min(val.Length, 20)]…</code>
+            </div>
+        }
+        else
+        {
+            <div class="form-text">Click Browse to select a referenced entry.</div>
+        }
+    }
+    else if (field.FieldType == "Location")
+    {
+        @* Two number inputs combined into a hidden "lat,lng" field *@
+        var parts = val.Split(',', 2);
+        var lat = parts.Length > 0 ? parts[0].Trim() : string.Empty;
+        var lng = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted small">Lat</span>
+                    <input type="number" step="any" name="@(name)_lat" value="@lat"
+                           class="form-control" placeholder="e.g. 51.5074" />
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted small">Lng</span>
+                    <input type="number" step="any" name="@(name)_lng" value="@lng"
+                           class="form-control" placeholder="e.g. -0.1278" />
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="@id" name="@name" value="@val" class="location-combined" />
+        <div class="form-text">Decimal coordinates (WGS 84).</div>
+    }
+    else if (field.FieldType == "MultiList")
+    {
+        @* Tag-input widget. A hidden input stores values as newline-separated text. *@
+        <div class="multilist-widget" data-input-id="@id">
+            <div class="multilist-tags d-flex flex-wrap gap-1 align-items-start p-2 border rounded-2 bg-white"
+                 style="min-height:48px; cursor:text;"></div>
+            <input type="hidden" id="@id" name="@name" value="@val" />
+            <div class="input-group input-group-sm mt-1">
+                <input type="text" class="form-control multilist-input"
+                       placeholder="Type a value, then press Enter or click Add" />
+                <button type="button" class="btn btn-outline-secondary multilist-add">
+                    <i class="bi bi-plus me-1"></i>Add
+                </button>
+            </div>
+        </div>
+        <div class="form-text">Each tag is stored as a separate value.</div>
+    }
+    else
+    {
+        @* Fallback for unknown / future field types *@
+        <input type="text" id="@id" name="@name" value="@val"
+               class="form-control" @(field.IsRequired ? "required" : "") />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(field.Description))
+    {
+        <div class="form-text text-muted">@field.Description</div>
+    }
+</div>

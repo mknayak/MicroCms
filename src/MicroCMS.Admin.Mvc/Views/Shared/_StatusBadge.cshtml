@@ -1,0 +1,20 @@
+@model string
+
+@{
+    var (badgeClass, icon) = Model?.ToLowerInvariant() switch
+    {
+        "published"     => ("bg-success",   "bi-check-circle"),
+        "draft"         => ("bg-secondary", "bi-pencil"),
+        "pendingreview" => ("bg-warning text-dark", "bi-hourglass-split"),
+        "archived"      => ("bg-dark",      "bi-archive"),
+        "unpublished"   => ("bg-light text-dark border", "bi-dash-circle"),
+        "scheduled"     => ("bg-info",      "bi-clock"),
+        "active"        => ("bg-success",   "bi-circle-fill"),
+        "inactive"      => ("bg-secondary", "bi-circle"),
+        _               => ("bg-secondary", "bi-question-circle"),
+    };
+}
+
+<span class="badge @badgeClass">
+    <i class="bi @icon me-1"></i>@Model
+</span>

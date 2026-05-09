@@ -1,0 +1,344 @@
+@model ContentTypeDetailViewModel
+@{
+    ViewData["Title"] = Model.ContentType.DisplayName;
+    var ct      = Model.ContentType;
+    var activeTab = (ViewContext.HttpContext.Request.Query["tab"].ToString() is { Length: > 0 } t) ? t : "entries";
+
+    string TabClass(string tab) => activeTab == tab
+        ? "nav-link active border-bottom border-2 border-primary fw-semibold"
+        : "nav-link text-muted";
+}
+
+@* ── Page header ─────────────────────────────────────────────────────────────── *@
+<div class="d-flex align-items-start justify-content-between mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small mb-1">
+                <li class="breadcrumb-item"><a asp-action="Index">Content Types</a></li>
+                <li class="breadcrumb-item active">@ct.DisplayName</li>
+            </ol>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-2 p-2 bg-primary bg-opacity-10 text-primary" style="font-size:1.4rem;">
+                <i class="bi bi-layout-text-sidebar-reverse"></i>
+            </div>
+            <div>
+                <h1 class="h4 fw-bold mb-0">@ct.DisplayName</h1>
+                <small class="text-muted">
+                    <code>@ct.Handle</code> ·
+                    @ct.Fields.Count field(s) ·
+                    @Model.EntryCount entry/entries ·
+                    @await Html.PartialAsync("_StatusBadge", ct.Status)
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Entries" asp-action="Create"
+           asp-route-contentTypeId="@ct.Id"
+           class="btn btn-primary btn-sm">
+            <i class="bi bi-plus me-1"></i>New Entry
+        </a>
+        <a asp-action="Edit" asp-route-id="@ct.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Edit Schema
+        </a>
+    </div>
+</div>
+
+@* ── Tab bar ──────────────────────────────────────────────────────────────────── *@
+<ul class="nav nav-tabs border-bottom mb-4">
+    <li class="nav-item">
+        <a class="@TabClass("entries")" href="?tab=entries">
+            <i class="bi bi-files me-1"></i>Entries
+            <span class="badge bg-secondary ms-1 small">@Model.EntryCount</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@TabClass("schema")" href="?tab=schema">
+            <i class="bi bi-list-columns me-1"></i>Schema
+            <span class="badge bg-secondary ms-1 small">@ct.Fields.Count</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@TabClass("groups")" href="?tab=groups">
+            <i class="bi bi-folder me-1"></i>Groups
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@TabClass("localization")" href="?tab=localization">
+            <i class="bi bi-translate me-1"></i>Localization
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@TabClass("api-preview")" href="?tab=api-preview">
+            <i class="bi bi-code me-1"></i>API Preview
+        </a>
+    </li>
+</ul>
+
+@* ── Tab: Entries ─────────────────────────────────────────────────────────────── *@
+@if (activeTab == "entries")
+{
+    if (Model.RecentEntries.Count == 0)
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-file-earmark-text" style="font-size:2.5rem;"></i>
+            <p class="mt-2">No entries yet.</p>
+            <a asp-controller="Entries" asp-action="Create"
+               asp-route-contentTypeId="@ct.Id"
+               class="btn btn-primary btn-sm">Create First Entry</a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Recent Entries</span>
+                <a asp-controller="Entries" asp-action="Index" asp-route-contentTypeId="@ct.Id"
+                   class="btn btn-link btn-sm p-0">View all →</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title / Slug</th>
+                            <th>Locale</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model.RecentEntries)
+                        {
+                            <tr>
+                                <td class="fw-semibold">
+                                    <a asp-controller="Entries" asp-action="Edit" asp-route-id="@entry.Id"
+                                       class="text-decoration-none">
+                                        @(entry.Title ?? entry.Slug)
+                                    </a>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">@entry.Locale</span></td>
+                                <td>@await Html.PartialAsync("_StatusBadge", entry.Status)</td>
+                                <td class="text-muted">@(entry.UpdatedAt?.Length >= 10 ? entry.UpdatedAt[..10] : entry.UpdatedAt)</td>
+                                <td class="text-end">
+                                    <a asp-controller="Entries" asp-action="Edit" asp-route-id="@entry.Id"
+                                       class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@* ── Tab: Schema ──────────────────────────────────────────────────────────────── *@
+@if (activeTab == "schema")
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-semibold mb-0">Field Definitions</h5>
+        <a asp-action="Edit" asp-route-id="@ct.Id" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Edit Schema
+        </a>
+    </div>
+
+    @if (ct.Fields.Count == 0)
+    {
+        <div class="text-center py-5 text-muted card border-0 shadow-sm">
+            <i class="bi bi-columns-gap" style="font-size:2rem;"></i>
+            <p class="mt-2">No fields defined yet. Edit the schema to add fields.</p>
+        </div>
+    }
+    else
+    {
+        @* Group fields by group name *@
+        var groups = ct.Fields.GroupBy(f => string.IsNullOrWhiteSpace(f.GroupName) ? "Default" : f.GroupName).ToList();
+        foreach (var group in groups)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-light fw-semibold small text-uppercase letter-spacing-1">
+                    <i class="bi bi-folder2-open me-2 text-muted"></i>@group.Key
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:32px;">#</th>
+                                <th>Label</th>
+                                <th>Handle</th>
+                                <th>Type</th>
+                                <th>List</th>
+                                <th>Required</th>
+                                <th>Localized</th>
+                                <th>Indexed</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var field in group.OrderBy(f => f.SortOrder))
+                            {
+                                <tr class="@(field.IsInherited ? "table-secondary text-muted" : "")">
+                                    <td class="text-muted small">@field.SortOrder</td>
+                                    <td>
+                                        <span class="fw-semibold">@field.Label</span>
+                                        @if (field.IsInherited)
+                                        {
+                                            <span class="badge bg-light text-dark border ms-1" style="font-size:.6rem;">inherited</span>
+                                        }
+                                    </td>
+                                    <td><code class="small">@field.Handle</code></td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border">@field.FieldType</span>
+                                    </td>
+                                    <td>
+                                        @if (field.IsList)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-info" title="Is a list"></i>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (field.IsRequired)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success" title="Required"></i>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (field.IsLocalized)
+                                        {
+                                            <i class="bi bi-translate text-info" title="Localized"></i>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (field.IsIndexed)
+                                        {
+                                            <i class="bi bi-lightning-fill text-warning" title="Indexed"></i>
+                                        }
+                                    </td>
+                                    <td class="text-muted small">@field.Description</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+}
+
+@* ── Tab: Groups ──────────────────────────────────────────────────────────────── *@
+@if (activeTab == "groups")
+{
+    var fieldGroups = ct.Fields
+        .GroupBy(f => string.IsNullOrWhiteSpace(f.GroupName) ? "Default" : f.GroupName)
+        .ToList();
+
+    <h5 class="fw-semibold mb-3">Field Groups</h5>
+    <div class="row g-3">
+        @foreach (var group in fieldGroups)
+        {
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold border-0">
+                        <i class="bi bi-folder2-open me-2 text-primary"></i>@group.Key
+                    </div>
+                    <ul class="list-group list-group-flush small">
+                        @foreach (var f in group.OrderBy(x => x.SortOrder))
+                        {
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>@f.Label</span>
+                                <code class="text-muted">@f.FieldType</code>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@* ── Tab: Localization ────────────────────────────────────────────────────────── *@
+@if (activeTab == "localization")
+{
+    <h5 class="fw-semibold mb-3">Localization</h5>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Mode</dt>
+                <dd class="col-sm-9">
+                    <span class="badge bg-light text-dark border">@ct.LocalizationMode</span>
+                </dd>
+                <dt class="col-sm-3">Localized fields</dt>
+                <dd class="col-sm-9">
+                    @{
+                        var localizedFields = ct.Fields.Where(f => f.IsLocalized).ToList();
+                    }
+                    @if (localizedFields.Any())
+                    {
+                        @foreach (var f in localizedFields)
+                        {
+                            <span class="badge bg-info bg-opacity-10 text-info border me-1">@f.Label</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">None — all fields are global</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+}
+
+@* ── Tab: API Preview ─────────────────────────────────────────────────────────── *@
+@if (activeTab == "api-preview")
+{
+    var jsonExample = System.Text.Json.JsonSerializer.Serialize(
+        new Dictionary<string, object>
+        {
+            ["id"] = "00000000-0000-0000-0000-000000000000",
+            ["contentTypeId"] = ct.Id,
+            ["slug"] = "example-slug",
+            ["status"] = "Published",
+            ["locale"] = "en",
+            ["fields"] = ct.Fields.ToDictionary(
+                f => f.Handle,
+                f => (object)(f.FieldType switch
+                {
+                    "Integer" or "Decimal" => 0,
+                    "Boolean" => false,
+                    "DateTime" => "2024-01-01T00:00:00Z",
+                    _ => "..."
+                })
+            )
+        },
+        new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+    <h5 class="fw-semibold mb-3">API Preview</h5>
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 small fw-semibold">
+            <i class="bi bi-link-45deg me-1 text-primary"></i>REST Endpoint
+        </div>
+        <div class="card-body">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success">GET</span>
+                <code class="small">/api/v1/entries?contentTypeId=@ct.Id&amp;status=Published</code>
+            </div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge bg-info">GET</span>
+                <code class="small">/api/v1/entries/{id}</code>
+            </div>
+        </div>
+    </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 small fw-semibold">
+            <i class="bi bi-code me-1 text-primary"></i>Example Response Shape
+        </div>
+        <div class="card-body p-0">
+            <pre class="mb-0 p-3 bg-dark text-light rounded-bottom" style="font-size:.8rem;max-height:400px;overflow:auto;">@jsonExample</pre>
+        </div>
+    </div>
+}

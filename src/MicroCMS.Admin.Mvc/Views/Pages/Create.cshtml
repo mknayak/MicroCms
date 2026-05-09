@@ -1,0 +1,47 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model CreateStaticPageRequest
+@{
+    ViewData["Title"] = "New Page";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-action="Index">Pages</a></li>
+            <li class="breadcrumb-item active">New</li>
+        </ol>
+    </nav>
+    <h1 class="h4 fw-bold mb-0">New Page</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Title</label>
+                        <input asp-for="Title" class="form-control" placeholder="Home" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Slug</label>
+                        <div class="input-group">
+                            <span class="input-group-text">/</span>
+                            <input asp-for="Slug" class="form-control font-monospace" placeholder="home" required />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Create Page
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

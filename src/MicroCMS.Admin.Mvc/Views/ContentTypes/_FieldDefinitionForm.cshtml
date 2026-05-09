@@ -1,0 +1,120 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model AddFieldRequest
+@{
+    var fieldTypes = new[]
+    {
+        "ShortText", "LongText", "RichText", "Boolean", "Integer", "Decimal",
+        "DateTime", "Enum", "AssetReference", "Reference", "Location", "MultiList"
+    };
+    var fieldTypeDescriptions = new Dictionary<string, string>
+    {
+        ["ShortText"]      = "Single-line text",
+        ["LongText"]       = "Multi-line plain text",
+        ["RichText"]       = "HTML rich text editor",
+        ["Boolean"]        = "True / false toggle",
+        ["Integer"]        = "Whole number",
+        ["Decimal"]        = "Decimal number",
+        ["DateTime"]       = "Date and/or time",
+        ["Enum"]           = "Fixed list of options",
+        ["AssetReference"] = "Link to a media asset",
+        ["Reference"]      = "Link to another entry",
+        ["Location"]       = "Latitude / Longitude",
+        ["MultiList"]      = "Multiple text values",
+    };
+}
+
+<div class="row g-3">
+
+    @* Label *@
+    <div class="col-sm-6">
+        <label class="form-label fw-semibold">Label <span class="text-danger">*</span></label>
+        <input type="text" name="Label" value="@Model.Label" class="form-control" required
+               placeholder="e.g. Article Title" autocomplete="off" />
+        <div class="form-text">Displayed in the editor UI.</div>
+    </div>
+
+    @* Handle — hidden in Edit modal via JS *@
+    <div class="col-sm-6 handle-row">
+        <label class="form-label fw-semibold">Handle <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <span class="input-group-text bg-light text-muted"><i class="bi bi-code-slash"></i></span>
+            <input type="text" name="Handle" value="@Model.Handle" class="form-control font-monospace"
+                   placeholder="article_title" pattern="^[a-z][a-z0-9_]*$" autocomplete="off" />
+        </div>
+        <div class="form-text">Lowercase + underscores. Used as the API key. Cannot be changed after creation.</div>
+    </div>
+
+    @* Field Type *@
+    <div class="col-sm-6">
+        <label class="form-label fw-semibold">Field Type <span class="text-danger">*</span></label>
+        <select name="FieldType" class="form-select" required>
+            @foreach (var ft in fieldTypes)
+            {
+                <option value="@ft" selected="@(ft == (Model.FieldType ?? "ShortText"))">
+                    @ft — @fieldTypeDescriptions.GetValueOrDefault(ft, "")
+                </option>
+            }
+        </select>
+    </div>
+
+    @* Group Name *@
+    <div class="col-sm-6">
+        <label class="form-label fw-semibold">Group</label>
+        <input type="text" name="GroupName" value="@(Model.GroupName ?? "Default")"
+               class="form-control" placeholder="Default" autocomplete="off" />
+        <div class="form-text">Groups related fields together visually in the editor.</div>
+    </div>
+
+    @* Sort Order *@
+    <div class="col-sm-4">
+        <label class="form-label fw-semibold">Sort Order</label>
+        <input type="number" name="SortOrder" value="@Model.SortOrder" min="0" class="form-control" />
+    </div>
+
+    @* Description *@
+    <div class="col-12">
+        <label class="form-label fw-semibold">Description / Help Text</label>
+        <input type="text" name="Description" value="@Model.Description" class="form-control"
+               placeholder="Short guidance shown below the field in the content editor" autocomplete="off" />
+    </div>
+
+    @* Flags — labels wrap inputs so no IDs needed (avoids duplicates across two modals) *@
+    <div class="col-12">
+        <p class="form-label fw-semibold mb-2">Flags</p>
+        <div class="row g-2">
+            @{
+                var flags = new[]
+                {
+                    ("IsRequired",  Model.IsRequired,  "Required",  "Entry cannot be saved without a value"),
+                    ("IsLocalized", Model.IsLocalized, "Localized", "Different value stored per locale"),
+                    ("IsUnique",    Model.IsUnique,    "Unique",    "Value must be unique across entries"),
+                    ("IsIndexed",   Model.IsIndexed,   "Indexed",   "Enables fast API filtering on this field"),
+                    ("IsList",      Model.IsList,      "List",      "Stores multiple values (array)"),
+                };
+            }
+            @foreach (var (fname, fval, flabel, fdesc) in flags)
+            {
+                <div class="col-sm-4">
+                    <label class="d-flex align-items-start gap-2 p-2 border rounded-2 cursor-pointer"
+                           style="cursor:pointer;">
+                        <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
+                               name="@fname" value="true" @(fval ? "checked" : "") />
+                        <span>
+                            <span class="fw-semibold d-block">@flabel</span>
+                            <small class="text-muted">@fdesc</small>
+                        </span>
+                    </label>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Enum options — shown only when FieldType = Enum *@
+    <div class="col-12 options-row" style="display:@(Model.FieldType == "Enum" ? "" : "none")">
+        <label class="form-label fw-semibold">Enum Options <span class="text-danger">*</span></label>
+        <textarea name="optionsRaw" class="form-control font-monospace" rows="4"
+                  placeholder="Draft&#10;In Review&#10;Published">@(Model.Options is not null ? string.Join("\n", Model.Options) : "")</textarea>
+        <div class="form-text">One option per line. These become the selectable values in the editor.</div>
+    </div>
+
+</div>

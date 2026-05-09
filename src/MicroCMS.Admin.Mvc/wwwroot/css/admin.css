@@ -1,0 +1,98 @@
+/* ── MicroCMS Admin MVC — Custom Styles ─────────────────────────────────────── */
+
+/* Sidebar */
+.sidebar {
+    transition: width 0.2s ease;
+}
+
+.sidebar .nav-link {
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar .nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff !important;
+}
+
+/* Avatar circles */
+.avatar-circle {
+    user-select: none;
+    flex-shrink: 0;
+}
+
+/* Card hover effect */
+.asset-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.asset-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Table improvements */
+.table thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6c757d;
+}
+
+/* Code style */
+code {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0 4px;
+    font-size: 0.85em;
+}
+
+/* Form section headers */
+.form-section-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+}
+
+/* Status badge sizing */
+.badge {
+    font-weight: 500;
+}
+
+/* Main content scroll */
+main {
+    max-height: calc(100vh - 56px);
+}
+
+/* Navbar search placeholder */
+.navbar input::placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Bootstrap 5 object-fit utility (if not available in older bootstrap) */
+.object-fit-cover {
+    object-fit: cover;
+}
+
+/* Modal */
+.modal-content {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    margin-bottom: 0.25rem;
+}
+
+/* Stat card icon */
+.stat-icon {
+    border-radius: 0.5rem;
+}

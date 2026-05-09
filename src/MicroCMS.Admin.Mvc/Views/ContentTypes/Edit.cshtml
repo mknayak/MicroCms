@@ -1,0 +1,325 @@
+@model ContentTypeFormViewModel
+@{
+    ViewData["Title"] = $"Edit — {Model.DisplayName}";
+    var activeTab = (ViewContext.HttpContext.Request.Query["tab"].ToString() is { Length: > 0 } t) ? t : "settings";
+    string TabClass(string tab) => activeTab == tab
+        ? "nav-link active border-bottom border-2 border-primary fw-semibold"
+        : "nav-link text-muted";
+
+    var fieldTypes = new[]
+    {
+        "ShortText", "LongText", "RichText", "Boolean", "Integer", "Decimal",
+        "DateTime", "Enum", "AssetReference", "Reference", "Location", "MultiList"
+    };
+}
+
+<div class="mb-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Content Types</a></li>
+            <li class="breadcrumb-item"><a asp-action="Detail" asp-route-id="@Model.Id">@Model.DisplayName</a></li>
+            <li class="breadcrumb-item active">Edit Schema</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex align-items-center gap-3">
+        <div class="rounded-2 p-2 bg-primary bg-opacity-10 text-primary" style="font-size:1.4rem;">
+            <i class="bi bi-layout-text-sidebar-reverse"></i>
+        </div>
+        <div>
+            <h1 class="h4 fw-bold mb-0">@Model.DisplayName</h1>
+            <small class="text-muted"><code>@Model.Handle</code></small>
+        </div>
+    </div>
+</div>
+
+@* ── Tab bar ──────────────────────────────────────────────────────────────────── *@
+<ul class="nav nav-tabs border-bottom mb-4">
+    <li class="nav-item">
+        <a class="@TabClass("settings")" href="?tab=settings">
+            <i class="bi bi-gear me-1"></i>Settings
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@TabClass("schema")" href="?tab=schema">
+            <i class="bi bi-list-columns me-1"></i>Fields
+            <span class="badge bg-secondary ms-1 small">@Model.Fields.Count</span>
+        </a>
+    </li>
+</ul>
+
+@* ── Tab: Settings ───────────────────────────────────────────────────────────── *@
+@if (activeTab == "settings")
+{
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        @await Html.PartialAsync("_ContentTypeForm", Model)
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Save Settings
+                            </button>
+                            <a asp-action="Detail" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Tab: Schema ─────────────────────────────────────────────────────────────── *@
+@if (activeTab == "schema")
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-semibold mb-0">
+            @Model.Fields.Count field@(Model.Fields.Count == 1 ? "" : "s") defined
+        </h6>
+        <button type="button" class="btn btn-primary btn-sm"
+                data-bs-toggle="modal" data-bs-target="#addFieldModal">
+            <i class="bi bi-plus-circle me-1"></i>Add Field
+        </button>
+    </div>
+
+    @if (Model.Fields.Count == 0)
+    {
+        <div class="text-center py-5 text-muted border rounded-2">
+            <i class="bi bi-columns-gap" style="font-size:2.5rem;"></i>
+            <p class="mt-2 mb-3">No fields yet. Add your first field to define the schema.</p>
+            <button type="button" class="btn btn-primary btn-sm"
+                    data-bs-toggle="modal" data-bs-target="#addFieldModal">
+                <i class="bi bi-plus me-1"></i>Add First Field
+            </button>
+        </div>
+    }
+    else
+    {
+        @* Group by GroupName *@
+        var groups = Model.Fields
+            .OrderBy(f => f.SortOrder)
+            .GroupBy(f => string.IsNullOrWhiteSpace(f.GroupName) ? "Default" : f.GroupName)
+            .ToList();
+
+        foreach (var group in groups)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-light border-0 fw-semibold small text-uppercase text-muted">
+                    <i class="bi bi-folder2-open me-2"></i>@group.Key
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:30px;">#</th>
+                                <th>Label</th>
+                                <th>Handle</th>
+                                <th>Type</th>
+                                <th>Flags</th>
+                                <th>Description</th>
+                                <th class="text-end" style="width:100px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var field in group)
+                            {
+                                <tr class="@(field.IsInherited ? "table-secondary text-muted" : "")">
+                                    <td class="text-muted small">@field.SortOrder</td>
+                                    <td>
+                                        <span class="fw-semibold">@field.Label</span>
+                                        @if (field.IsInherited)
+                                        {
+                                            <span class="badge bg-light text-dark border ms-1" style="font-size:.6rem;">inherited</span>
+                                        }
+                                    </td>
+                                    <td><code class="small">@field.Handle</code></td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border">@field.FieldType</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            @if (field.IsRequired)  { <span class="badge bg-success bg-opacity-75 small" title="Required">R</span> }
+                                            @if (field.IsLocalized) { <span class="badge bg-info bg-opacity-75 small" title="Localized">L</span> }
+                                            @if (field.IsIndexed)   { <span class="badge bg-warning text-dark bg-opacity-75 small" title="Indexed">I</span> }
+                                            @if (field.IsList)      { <span class="badge bg-secondary bg-opacity-75 small" title="List">[]</span> }
+                                            @if (field.IsUnique)    { <span class="badge bg-dark bg-opacity-75 small" title="Unique">U</span> }
+                                        </div>
+                                    </td>
+                                    <td class="text-muted small">@field.Description</td>
+                                    <td class="text-end">
+                                        @if (!field.IsInherited)
+                                        {
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button" class="btn btn-outline-secondary edit-field-btn"
+                                                        data-bs-toggle="modal" data-bs-target="#editFieldModal"
+                                                        data-field-id="@field.Id"
+                                                        data-label="@field.Label"
+                                                        data-field-type="@field.FieldType"
+                                                        data-is-required="@field.IsRequired.ToString().ToLower()"
+                                                        data-is-localized="@field.IsLocalized.ToString().ToLower()"
+                                                        data-is-unique="@field.IsUnique.ToString().ToLower()"
+                                                        data-is-indexed="@field.IsIndexed.ToString().ToLower()"
+                                                        data-is-list="@field.IsList.ToString().ToLower()"
+                                                        data-sort-order="@field.SortOrder"
+                                                        data-description="@field.Description"
+                                                        data-group-name="@field.GroupName"
+                                                        data-options="@(field.Options is not null ? string.Join("\n", field.Options) : "")"
+                                                        title="Edit field">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <form asp-action="DeleteField" asp-route-id="@Model.Id"
+                                                      asp-route-fieldId="@field.Id" method="post" class="d-inline"
+                                                      onsubmit="return confirm('Delete field &quot;@field.Label&quot;? This will remove it from all entries.');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger" title="Delete field">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+}
+
+@* ════════════════════════════════════════════════════════════════════════════════
+   Add Field modal
+   ════════════════════════════════════════════════════════════════════════════════ *@
+<div class="modal fade" id="addFieldModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <form asp-action="AddField" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Field</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @await Html.PartialAsync("_FieldDefinitionForm", new AddFieldRequest())
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus me-1"></i>Add Field
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ════════════════════════════════════════════════════════════════════════════════
+   Edit Field modal — populated via JS from data attributes
+   ════════════════════════════════════════════════════════════════════════════════ *@
+<div class="modal fade" id="editFieldModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <form id="editFieldForm" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil me-2 text-primary"></i>Edit Field</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @await Html.PartialAsync("_FieldDefinitionForm", new AddFieldRequest())
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-save me-1"></i>Save Field
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // ── Edit Field modal ────────────────────────────────────────────────────
+        document.querySelectorAll('.edit-field-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var fieldId   = this.dataset.fieldId;
+                var form      = document.getElementById('editFieldForm');
+
+                // Build the UpdateField action URL with the specific fieldId
+                form.action = '@Url.Action("UpdateField", "ContentTypes", new { id = Model.Id, fieldId = "__FID__" })'
+                    .replace('__FID__', encodeURIComponent(fieldId));
+
+                // Populate fields
+                setVal(form, 'Label',       this.dataset.label);
+                setVal(form, 'FieldType',   this.dataset.fieldType);
+                setChk(form, 'IsRequired',  this.dataset.isRequired  === 'true');
+                setChk(form, 'IsLocalized', this.dataset.isLocalized === 'true');
+                setChk(form, 'IsUnique',    this.dataset.isUnique    === 'true');
+                setChk(form, 'IsIndexed',   this.dataset.isIndexed   === 'true');
+                setChk(form, 'IsList',      this.dataset.isList      === 'true');
+                setVal(form, 'SortOrder',   this.dataset.sortOrder);
+                setVal(form, 'Description', this.dataset.description);
+                setVal(form, 'GroupName',   this.dataset.groupName);
+                setVal(form, 'optionsRaw',  this.dataset.options);
+
+                // Disable handle field (it belongs to AddField only)
+                var handleRow = form.querySelector('.handle-row');
+                if (handleRow) handleRow.classList.add('d-none');
+
+                // Show/hide options row based on type
+                toggleOptions(form.querySelector('[name="FieldType"]'));
+            });
+        });
+
+        function setVal(form, name, value) {
+            var el = form.querySelector('[name="' + name + '"]');
+            if (el) el.value = value || '';
+        }
+
+        function setChk(form, name, checked) {
+            var el = form.querySelector('[name="' + name + '"]');
+            if (el) el.checked = checked;
+        }
+
+        // ── Show/hide options textarea for Enum type ────────────────────────────
+        function toggleOptions(select) {
+            if (!select) return;
+            var form       = select.closest('form');
+            var optionsRow = form?.querySelector('.options-row');
+            if (optionsRow) optionsRow.style.display = select.value === 'Enum' ? '' : 'none';
+        }
+
+        document.querySelectorAll('[name="FieldType"]').forEach(function (sel) {
+            sel.addEventListener('change', function () { toggleOptions(this); });
+            toggleOptions(sel);
+        });
+
+        // ── Auto-generate handle from label (Add modal only) ───────────────────
+        var addModal = document.getElementById('addFieldModal');
+        if (addModal) {
+            var labelInput  = addModal.querySelector('[name="Label"]');
+            var handleInput = addModal.querySelector('[name="Handle"]');
+            if (labelInput && handleInput) {
+                labelInput.addEventListener('input', function () {
+                    if (!handleInput.dataset.touched) {
+                        handleInput.value = this.value
+                            .toLowerCase()
+                            .replace(/\s+/g, '_')
+                            .replace(/[^a-z0-9_]/g, '')
+                            .replace(/^(\d)/, '_$1');
+                    }
+                });
+                handleInput.addEventListener('input', function () {
+                    this.dataset.touched = 'true';
+                });
+            }
+        }
+    </script>
+}

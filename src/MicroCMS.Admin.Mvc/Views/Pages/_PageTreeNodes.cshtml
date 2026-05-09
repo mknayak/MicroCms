@@ -1,0 +1,32 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model List<PageTreeNode>
+
+<ul class="list-group list-group-flush">
+    @foreach (var node in Model)
+    {
+        <li class="list-group-item d-flex align-items-center justify-content-between py-2"
+            style="padding-left: @(node.Depth * 24 + 12)px;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi @(node.Children.Count > 0 ? "bi-folder2-open" : "bi-file-earmark") text-muted"></i>
+                <span class="fw-semibold">@node.Title</span>
+                <small class="text-muted font-monospace">/</small>
+                <small class="text-muted font-monospace">@node.Slug</small>
+                <span class="badge bg-light text-dark border" style="font-size:.7rem;">@node.PageType</span>
+            </div>
+            <div class="btn-group btn-group-sm">
+                <form asp-action="Delete" method="post" class="d-inline"
+                      onsubmit="return confirm('Delete page @node.Title and all its children?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@node.Id" />
+                    <button type="submit" class="btn btn-outline-danger" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </li>
+        @if (node.Children.Count > 0)
+        {
+            @await Html.PartialAsync("_PageTreeNodes", node.Children)
+        }
+    }
+</ul>

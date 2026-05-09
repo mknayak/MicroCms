@@ -68,12 +68,24 @@ OkOrProblem(await Sender.Send(new ListSiteTemplatesQuery(), ct));
         OkOrProblem(await Sender.Send(
     new SaveSiteTemplatePlacementsCommand(id, request.PlacementsJson), ct));
 
+    /// <summary>
+    /// Resolves the effective SiteTemplate for a page using the hierarchy:
+    /// page override → content-type default → none (layout fallback).
+    /// </summary>
+    [HttpGet("effective")]
+    [ProducesResponseType(typeof(EffectiveTemplateDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEffective(
+        [FromQuery] Guid pageId,
+        CancellationToken ct = default) =>
+        OkOrProblem(await Sender.Send(new GetEffectiveTemplateQuery(pageId), ct));
+
     /// <summary>Deletes a site template. Pages that reference it lose their inherited placements.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default) =>
-     NoContentOrProblem(await Sender.Send(new DeleteSiteTemplateCommand(id), ct));
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default) =>
+        NoContentOrProblem(await Sender.Send(new DeleteSiteTemplateCommand(id), ct));
 }
 
 // ── Request bodies ────────────────────────────────────────────────────────────

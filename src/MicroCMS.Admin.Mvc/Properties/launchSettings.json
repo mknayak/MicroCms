@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "MicroCMS.Admin.Mvc": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:63324;http://localhost:63325"
+    }
+  }
+}

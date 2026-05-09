@@ -1,0 +1,75 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model List<ContentTypeListItem>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Handle</th>
+                    <th>Fields</th>
+                    <th>Entries</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ct in Model)
+                {
+                    <tr data-ct-name="@ct.DisplayName" data-ct-handle="@ct.Handle">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="rounded-2 p-1 bg-primary bg-opacity-10 text-primary" style="font-size:.95rem;">
+                                    <i class="bi bi-layout-text-sidebar-reverse"></i>
+                                </span>
+                                <div>
+                                    <a asp-action="Detail" asp-route-id="@ct.Id"
+                                       class="fw-semibold text-decoration-none text-dark">
+                                        @ct.DisplayName
+                                    </a>
+                                    <div><code class="small text-muted">@ct.Handle</code></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><code class="small">@ct.Handle</code></td>
+                        <td><span class="badge bg-light text-dark border">@ct.FieldCount</span></td>
+                        <td>
+                            <a asp-controller="Entries" asp-action="Index"
+                               asp-route-contentTypeId="@ct.Id"
+                               class="text-decoration-none">
+                                @ct.EntryCount
+                            </a>
+                        </td>
+                        <td>@await Html.PartialAsync("_StatusBadge", ct.Status)</td>
+                        <td><small class="text-muted">@(ct.UpdatedAt.Length >= 10 ? ct.UpdatedAt[..10] : ct.UpdatedAt)</small></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Detail" asp-route-id="@ct.Id"
+                                   class="btn btn-outline-secondary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@ct.Id"
+                                   class="btn btn-outline-secondary" title="Edit schema">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a asp-controller="Entries" asp-action="Index"
+                                   asp-route-contentTypeId="@ct.Id"
+                                   class="btn btn-outline-secondary" title="Browse entries">
+                                    <i class="bi bi-files"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-ct-id="@ct.Id" data-ct-name="@ct.DisplayName"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

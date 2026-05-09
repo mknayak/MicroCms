@@ -1,0 +1,245 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model TenantDetailViewModel
+@{
+    ViewData["Title"] = Model.Tenant.DisplayName;
+    var tenant = Model.Tenant;
+    var activeTab = (ViewContext.HttpContext.Request.Query["tab"].ToString() is { Length: > 0 } t) ? t : "sites";
+    string TabClass(string tab) => activeTab == tab
+        ? "nav-link active border-bottom border-2 border-primary fw-semibold"
+        : "nav-link text-muted";
+}
+
+<div class="mb-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-action="Index">Tenants</a></li>
+            <li class="breadcrumb-item active">@tenant.DisplayName</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-2 p-2 bg-primary bg-opacity-10 text-primary" style="font-size:1.4rem;">
+                <i class="bi bi-building"></i>
+            </div>
+            <div>
+                <h1 class="h4 fw-bold mb-0">@tenant.DisplayName</h1>
+                <small class="text-muted"><code>@tenant.Slug</code> · @await Html.PartialAsync("_StatusBadge", tenant.Status)</small>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm"
+                data-bs-toggle="modal" data-bs-target="#addSiteModal">
+            <i class="bi bi-plus me-1"></i>Add Site
+        </button>
+    </div>
+</div>
+
+@* ── Tab bar ──────────────────────────────────────────────────────────────────── *@
+<ul class="nav nav-tabs border-bottom mb-4">
+    <li class="nav-item">
+        <a class="@TabClass("sites")" href="?tab=sites">
+            <i class="bi bi-globe me-1"></i>Sites
+            <span class="badge bg-secondary ms-1 small">@tenant.Sites.Count</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@TabClass("settings")" href="?tab=settings">
+            <i class="bi bi-gear me-1"></i>Settings
+        </a>
+    </li>
+</ul>
+
+@* ── Tab: Sites ───────────────────────────────────────────────────────────────── *@
+@if (activeTab == "sites")
+{
+    @if (tenant.Sites.Count == 0)
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-globe" style="font-size:2.5rem;"></i>
+            <p class="mt-2">No sites yet.</p>
+            <button type="button" class="btn btn-primary btn-sm"
+                    data-bs-toggle="modal" data-bs-target="#addSiteModal">
+                Add First Site
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Handle</th>
+                            <th>Domain</th>
+                            <th>Locale</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var site in tenant.Sites)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@site.Name</td>
+                                <td><code class="text-muted">@site.Handle</code></td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(site.CustomDomain))
+                                    {
+                                        <small class="font-monospace text-muted">@site.CustomDomain</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td><span class="badge bg-light text-dark border">@site.DefaultLocale</span></td>
+                                <td>
+                                    <span class="badge @(site.IsActive ? "bg-success" : "bg-secondary")">
+                                        @(site.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-controller="Sites" asp-action="Settings"
+                                       asp-route-id="@site.Id"
+                                       class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-gear me-1"></i>Settings
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@* ── Tab: Settings ───────────────────────────────────────────────────────────── *@
+@if (activeTab == "settings")
+{
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 fw-semibold">
+                    <i class="bi bi-gear me-2 text-primary"></i>Tenant Settings
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="UpdateSettings" asp-route-id="@tenant.Id" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Display Name</label>
+                            <input type="text" name="DisplayName" value="@tenant.DisplayName"
+                                   class="form-control" required />
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold">Default Locale</label>
+                                <input type="text" name="DefaultLocale" value="@tenant.DefaultLocale"
+                                       class="form-control" placeholder="en" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold">Time Zone</label>
+                                <input type="text" name="TimeZoneId" value="@tenant.TimeZoneId"
+                                       class="form-control" placeholder="UTC" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Logo URL</label>
+                            <input type="url" name="LogoUrl" value="@tenant.LogoUrl"
+                                   class="form-control" placeholder="https://…" />
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="aiEnabled"
+                                       name="AiEnabled" value="true"
+                                       @(tenant.AiEnabled ? "checked" : "") />
+                                <label class="form-check-label fw-semibold" for="aiEnabled">AI Features</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-save me-1"></i>Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 fw-semibold">
+                    <i class="bi bi-info-circle me-2 text-muted"></i>Details
+                </div>
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between py-2">
+                        <span class="text-muted">ID</span>
+                        <code class="text-truncate ms-2">@tenant.Id</code>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between py-2">
+                        <span class="text-muted">Slug</span>
+                        <code>@tenant.Slug</code>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between py-2">
+                        <span class="text-muted">Status</span>
+                        @await Html.PartialAsync("_StatusBadge", tenant.Status)
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between py-2">
+                        <span class="text-muted">Created</span>
+                        <span>@(tenant.CreatedAt.Length >= 10 ? tenant.CreatedAt[..10] : tenant.CreatedAt)</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between py-2">
+                        <span class="text-muted">Updated</span>
+                        <span>@(tenant.UpdatedAt?.Length >= 10 ? tenant.UpdatedAt[..10] : tenant.UpdatedAt)</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Add Site modal ───────────────────────────────────────────────────────────── *@
+<div class="modal fade" id="addSiteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="CreateSite" asp-route-id="@tenant.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">Add Site</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Site Name <span class="text-danger">*</span></label>
+                        <input type="text" name="Name" class="form-control" required
+                               placeholder="My Website" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Handle <span class="text-danger">*</span></label>
+                        <input type="text" name="Handle" class="form-control font-monospace" required
+                               placeholder="my-website" pattern="[a-z0-9\-]+" />
+                        <div class="form-text">Lowercase letters, numbers and hyphens only.</div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Default Locale</label>
+                            <input type="text" name="DefaultLocale" value="en"
+                                   class="form-control" placeholder="en" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Custom Domain</label>
+                            <input type="text" name="CustomDomain" class="form-control"
+                                   placeholder="example.com" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Create Site</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

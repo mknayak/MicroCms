@@ -1,0 +1,46 @@
+@model ContentTypeFormViewModel
+
+<div class="mb-3">
+    <label asp-for="DisplayName" class="form-label fw-semibold"></label>
+    <input asp-for="DisplayName" class="form-control" placeholder="e.g. Blog Post" />
+    <span asp-validation-for="DisplayName" class="text-danger small"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Handle" class="form-label fw-semibold"></label>
+    <div class="input-group">
+        <span class="input-group-text text-muted"><i class="bi bi-code-slash"></i></span>
+        <input asp-for="Handle" class="form-control font-monospace"
+               placeholder="blog_post"
+               readonly="@(Model.IsEdit ? "readonly" : null)" />
+    </div>
+    <div class="form-text">Lowercase letters, numbers and underscores only. Cannot be changed after creation.</div>
+    <span asp-validation-for="Handle" class="text-danger small"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label fw-semibold"></label>
+    <textarea asp-for="Description" class="form-control" rows="2"
+              placeholder="Short description of this content type…"></textarea>
+    <span asp-validation-for="Description" class="text-danger small"></span>
+</div>
+
+<div class="row g-3">
+    <div class="col-sm-6">
+        <label asp-for="LocalizationMode" class="form-label fw-semibold"></label>
+        <select asp-for="LocalizationMode" class="form-select">
+            <option value="Single">Single locale</option>
+            <option value="Localized">Localized</option>
+        </select>
+    </div>
+    @if (!Model.IsEdit)
+    {
+        <div class="col-sm-6">
+            <label asp-for="Kind" class="form-label fw-semibold"></label>
+            <select asp-for="Kind" class="form-select">
+                <option value="Content">Content</option>
+                <option value="Page">Page</option>
+            </select>
+        </div>
+    }
+</div>

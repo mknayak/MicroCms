@@ -1,0 +1,54 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model List<LayoutListItem>
+@{
+    ViewData["Title"] = "Layouts";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h4 fw-bold mb-0">Layouts</h1>
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>New Layout
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-layout-three-columns" style="font-size:2.5rem;"></i>
+        <p class="mt-2">No layouts defined yet.</p>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var layout in Model)
+        {
+            <div class="col-md-4 col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold mb-0">@layout.Name</h6>
+                            @if (layout.IsDefault)
+                            {
+                                <span class="badge bg-primary">Default</span>
+                            }
+                        </div>
+                        <code class="small text-muted d-block">@layout.Key</code>
+                        <span class="badge bg-light text-dark border mt-2">@layout.TemplateType</span>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center pt-0">
+                        <small class="text-muted">@layout.UpdatedAt[..10]</small>
+                        <form asp-action="Delete" method="post" class="d-inline"
+                              onsubmit="return confirm('Delete layout @layout.Name?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@layout.Id" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

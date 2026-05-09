@@ -1,0 +1,102 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model EntryFormViewModel
+
+@{
+    var entry  = Model.Existing;
+    var status = entry?.Status ?? "Draft";
+}
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold border-0 d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-send me-2 text-primary"></i>Publishing</span>
+        @await Html.PartialAsync("_StatusBadge", status)
+    </div>
+    <div class="card-body">
+        @if (Model.IsNew)
+        {
+            <p class="text-muted small mb-3">Save the entry first, then you can publish it.</p>
+        }
+        else
+        {
+            @* Version info *@
+            <div class="mb-3 small text-muted">
+                <div>Version <strong>@(entry!.CurrentVersionNumber)</strong></div>
+                @if (!string.IsNullOrWhiteSpace(entry.UpdatedAt))
+                {
+                    <div>Last saved @entry.UpdatedAt[..10]</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(entry.PublishedAt))
+                {
+                    <div class="text-success">Published @entry.PublishedAt[..10]</div>
+                }
+            </div>
+
+            @* Workflow buttons based on status *@
+            <div class="d-grid gap-2">
+                @if (status is "Draft" or "Unpublished" or "PendingReview")
+                {
+                    <form asp-action="Publish" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@entry.Id" />
+                        <input type="hidden" name="returnTo" value="edit" />
+                        <button type="submit" class="btn btn-success btn-sm w-100">
+                            <i class="bi bi-send-check me-1"></i>Publish
+                        </button>
+                    </form>
+                }
+
+                @if (status == "Published")
+                {
+                    <form asp-action="Unpublish" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@entry.Id" />
+                        <input type="hidden" name="returnTo" value="edit" />
+                        <button type="submit" class="btn btn-outline-warning btn-sm w-100">
+                            <i class="bi bi-pause-circle me-1"></i>Unpublish
+                        </button>
+                    </form>
+                }
+
+                <form asp-action="Delete" method="post"
+                      onsubmit="return confirm('Delete this entry? This cannot be undone.');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@entry.Id" />
+                    <input type="hidden" name="contentTypeId" value="@entry.ContentTypeId" />
+                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                        <i class="bi bi-trash me-1"></i>Delete Entry
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+@* Metadata card *@
+@if (!Model.IsNew && entry is not null)
+{
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white fw-semibold border-0">
+            <i class="bi bi-info-circle me-2 text-muted"></i>Metadata
+        </div>
+        <ul class="list-group list-group-flush small">
+            <li class="list-group-item d-flex justify-content-between py-2">
+                <span class="text-muted">ID</span>
+                <code class="text-truncate ms-2" style="max-width:140px;" title="@entry.Id">@entry.Id[..8]…</code>
+            </li>
+            <li class="list-group-item d-flex justify-content-between py-2">
+                <span class="text-muted">Locale</span>
+                <span class="badge bg-light text-dark border">@entry.Locale</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between py-2">
+                <span class="text-muted">Content Type</span>
+                <a asp-controller="ContentTypes" asp-action="Detail"
+                   asp-route-id="@entry.ContentTypeId"
+                   class="text-decoration-none small">@Model.ContentType.DisplayName</a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between py-2">
+                <span class="text-muted">Created</span>
+                <span>@(entry.CreatedAt.Length >= 10 ? entry.CreatedAt[..10] : entry.CreatedAt)</span>
+            </li>
+        </ul>
+    </div>
+}

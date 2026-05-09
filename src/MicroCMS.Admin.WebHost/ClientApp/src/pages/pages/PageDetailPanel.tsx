@@ -9,7 +9,7 @@ import { siteTemplatesApi } from '@/api/siteTemplates';
 import { ApiError } from '@/api/client';
 import { EntryFieldEditor } from './EntryFieldEditor';
 import { LinkEntrySection } from './LinkEntrySection';
-import type { PageDto, Entry } from '@/types';
+import type { PageDto, Entry, EffectiveTemplateSource } from '@/types';
 
 type RightTab = 'content' | 'page';
 
@@ -116,6 +116,12 @@ export function PageDetailPanel({
     queryFn: () => siteTemplatesApi.list(),
   });
 
+  const { data: effectiveTemplate } = useQuery({
+    queryKey: ['effective-template', pageId],
+    queryFn: () => siteTemplatesApi.getEffective(pageId),
+    enabled: !!pageId,
+  });
+
   useEffect(() => {
     if (page && !templateLoaded) { setSiteTemplateId(page.siteTemplateId ?? ''); setTemplateLoaded(true); }
   }, [page, templateLoaded]);
@@ -127,6 +133,7 @@ export function PageDetailPanel({
     onSuccess: () => {
       toast.success('Template linked.');
       void qc.invalidateQueries({ queryKey: ['page-detail', pageId] });
+      void qc.invalidateQueries({ queryKey: ['effective-template', pageId] });
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
   });
@@ -151,6 +158,9 @@ export function PageDetailPanel({
   });
 
   const assignedTemplate = siteTemplates.find((t) => t.id === page?.siteTemplateId);
+  const effectiveTemplateDto = effectiveTemplate?.template;
+  const effectiveSource: EffectiveTemplateSource = effectiveTemplate?.source ?? 'None';
+  const isInherited = effectiveSource !== 'None' && !page?.siteTemplateId;
   const hasLinkedEntry   = !!page?.linkedEntryId;
   const fields           = contentType?.fields ?? [];
 
@@ -241,44 +251,70 @@ export function PageDetailPanel({
 
           {/* PAGE TEMPLATE */}
           <section className="px-4 py-4">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Page Template</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Page Template</p>
             <p className="mb-2 text-[11px] text-slate-400">
-       Inherit shared placements (nav, header, footer) from a reusable template.
-       The template also defines the layout zones available on this page.
-       </p>
+              Inherit shared placements (nav, header, footer) from a reusable template.
+              The template also defines the layout zones available on this page.
+            </p>
+
+            {/* Effective template badge (inherited or override) */}
+            {effectiveTemplateDto && (
+              <div className={`mb-2 flex items-center justify-between rounded-md border px-3 py-2 ${
+                isInherited
+                  ? 'border-slate-200 bg-slate-50'
+                  : 'border-brand-100 bg-brand-50'
+              }`}>
+                <div className="min-w-0">
+                  <span className={`text-[11px] font-semibold ${isInherited ? 'text-slate-600' : 'text-brand-800'}`}>
+                    {effectiveTemplateDto.name}
+                  </span>
+                  {isInherited && (
+                    <span className="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                      inherited
+                    </span>
+                  )}
+                  {effectiveSource === 'ContentTypeDefault' && (
+                    <p className="mt-0.5 text-[10px] text-slate-400">via content type default</p>
+                  )}
+                </div>
+                <Link to={`/page-templates/${effectiveTemplateDto.id}/designer`}
+                  className="ml-2 flex-shrink-0 text-[11px] font-semibold text-brand-600 hover:underline">
+                  View →
+                </Link>
+              </div>
+            )}
+
             {/* Dropdown + Link button */}
-          <div className="flex gap-2">
-    <select className="form-input flex-1 text-xs" value={siteTemplateId}
-        onChange={(e) => setSiteTemplateId(e.target.value)}>
-     <option value="">— No template —</option>
-     {siteTemplates.map((t) => (
-  <option key={t.id} value={t.id}>{t.name} ({t.layoutName})</option>
-     ))}
- </select>
-<button onClick={() => setSiteTemplateMutation.mutate()} disabled={setSiteTemplateMutation.isPending}
-  className="btn-secondary px-3 py-1.5 text-xs">
-   {setSiteTemplateMutation.isPending ? '…' : 'Link'}
-</button>
-    </div>
-      {/* Template badge + quick links */}
-    {assignedTemplate && (
-  <div className="mt-2 flex items-center justify-between rounded-md border border-brand-100 bg-brand-50 px-3 py-2">
-<span className="text-[11px] font-semibold text-brand-800">{assignedTemplate.name}</span>
-   <Link to={`/page-templates/${assignedTemplate.id}/designer`}
-    className="text-[11px] font-semibold text-brand-600 hover:underline">
- View template →
-    </Link>
-   </div>
-  )}
- {/* Design page button */}
-   <button onClick={() => navigate(`/pages/${page.id}/designer`)}
+            <div className="flex gap-2">
+              <select className="form-input flex-1 text-xs" value={siteTemplateId}
+                onChange={(e) => setSiteTemplateId(e.target.value)}>
+                <option value="">— {effectiveTemplateDto && !assignedTemplate ? 'Keep inherited' : 'No template'} —</option>
+                {siteTemplates.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name} ({t.layoutName})</option>
+                ))}
+              </select>
+              <button onClick={() => setSiteTemplateMutation.mutate()} disabled={setSiteTemplateMutation.isPending}
+                className="btn-secondary px-3 py-1.5 text-xs">
+                {setSiteTemplateMutation.isPending ? '…' : assignedTemplate ? 'Update' : 'Link'}
+              </button>
+            </div>
+            {assignedTemplate && (
+              <button
+                onClick={() => { setSiteTemplateId(''); setSiteTemplateMutation.mutate(); }}
+                className="mt-1 text-[10px] text-slate-400 hover:text-red-500">
+                Remove override
+              </button>
+            )}
+
+            {/* Design page button */}
+            <button onClick={() => navigate(`/pages/${page.id}/designer`)}
               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-100">
-  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-   </svg>
-          Design this page
-         </button>
-  </section>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Design this page
+            </button>
+          </section>
 
    {/* PAGE INFO */}
           <section className="px-4 py-4">

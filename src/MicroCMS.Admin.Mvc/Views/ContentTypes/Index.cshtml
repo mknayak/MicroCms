@@ -1,0 +1,109 @@
+@model ContentTypeListViewModel
+@{
+    ViewData["Title"] = "Content Types";
+    var pageItems    = Model.Items.Where(ct => ct.Kind == "Page").ToList();
+    var contentItems = Model.Items.Where(ct => ct.Kind != "Page").ToList();
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h4 fw-bold mb-0">Content Types</h1>
+        <small class="text-muted">@Model.TotalCount type(s) · Define the schema for your content</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" asp-route-kind="Page" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-plus me-1"></i>New Page Type
+        </a>
+        <a asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>New Content Type
+        </a>
+    </div>
+</div>
+
+@* ── Search ─────────────────────────────────────────────────────────────────── *@
+<div class="mb-4">
+    <div class="input-group" style="max-width:320px;">
+        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+        <input type="search" id="ctSearch" class="form-control border-start-0"
+               placeholder="Search content types…" autocomplete="off" />
+    </div>
+</div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-layout-text-sidebar-reverse" style="font-size:2.5rem;"></i>
+        <p class="mt-2">No content types yet. Create your first one.</p>
+        <a asp-action="Create" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+}
+else
+{
+    @* ── Pages section ────────────────────────────────────────────────────────── *@
+    @if (pageItems.Any())
+    {
+        <h6 class="text-uppercase text-muted fw-semibold small mb-2 mt-3">Pages</h6>
+        @await Html.PartialAsync("_ContentTypeTable", pageItems)
+    }
+
+    @* ── Content Types section ────────────────────────────────────────────────── *@
+    <h6 class="text-uppercase text-muted fw-semibold small mb-2 mt-4">Content Types</h6>
+    @if (contentItems.Any())
+    {
+        @await Html.PartialAsync("_ContentTypeTable", contentItems)
+    }
+    else
+    {
+        <p class="text-muted small">No content types yet.</p>
+    }
+
+    @await Html.PartialAsync("_Pagination", (PageNumber: Model.PageNumber, TotalPages: Model.TotalPages, RouteKey: "page", RouteValues: (object)new { }))
+}
+
+@* ── Delete confirmation modal ──────────────────────────────────────────────── *@
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Delete Content Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="ctNameDisplay"></strong>?</p>
+                <p class="text-danger small">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    This will also delete all associated entries and cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteId" name="id" />
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Delete modal
+        document.getElementById('deleteModal').addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteId').value = btn.dataset.ctId;
+            document.getElementById('ctNameDisplay').textContent = btn.dataset.ctName;
+        });
+
+        // Client-side search
+        document.getElementById('ctSearch').addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll('table tbody tr[data-ct-name]').forEach(function (row) {
+                const name   = (row.dataset.ctName   || '').toLowerCase();
+                const handle = (row.dataset.ctHandle || '').toLowerCase();
+                row.style.display = (!q || name.includes(q) || handle.includes(q)) ? '' : 'none';
+            });
+        });
+    </script>
+}

@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"] = "Import Package";
+
+    // Step is driven by query string: ?step=1 (upload), ?step=2 (confirm), step=3 (result)
+    var stepParam = ViewContext.HttpContext.Request.Query["step"].ToString();
+    var step = stepParam == "2" ? 2 : stepParam == "3" ? 3 : 1;
+
+    // On success the controller sets TempData["ImportResult"]
+    var importResult = TempData["ImportResult"] as string;
+    var importError  = TempData["ErrorMessage"] as string;
+}
+
+<div class="mb-4">
+    <h1 class="h4 fw-bold mb-1">Import Package</h1>
+    <p class="text-muted">Restore or migrate content from a MicroCMS ZIP package.</p>
+</div>
+
+@* ── Step indicator ───────────────────────────────────────────────────────────── *@
+<div class="d-flex align-items-center gap-0 mb-5" style="max-width:480px;">
+    @{
+        void StepBubble(int n, string label)
+        {
+            var active   = step == n;
+            var done     = step > n;
+            var bubbleCss = done ? "bg-success text-white" : active ? "bg-primary text-white" : "bg-light text-muted border";
+        }
+    }
+    @for (int n = 1; n <= 3; n++)
+    {
+        var labels = new[] { "", "Upload", "Review", "Result" };
+        var active = step == n;
+        var done   = step > n;
+        var bubbleCss = done ? "bg-success text-white" : active ? "bg-primary text-white" : "bg-light text-muted border";
+        <div class="d-flex flex-column align-items-center" style="flex:1;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1 @bubbleCss"
+                 style="width:36px;height:36px;">
+                @if (done) { <i class="bi bi-check"></i> } else { @n }
+            </div>
+            <small class="text-muted">@labels[n]</small>
+        </div>
+        @if (n < 3)
+        {
+            <div class="flex-grow-0 mt-n3" style="width:60px;height:2px;background:@(done ? "#198754" : "#dee2e6");"></div>
+        }
+    }
+</div>
+
+@* ── Step 1: Upload ──────────────────────────────────────────────────────────── *@
+@if (step == 1)
+{
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 fw-semibold">
+                    <i class="bi bi-upload me-2 text-primary"></i>Upload Package File
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-warning d-flex align-items-start gap-2 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill mt-1 flex-shrink-0"></i>
+                        <span class="small">
+                            Importing will add or update content. Existing entries with matching IDs may be overwritten.
+                            <strong>Make sure you have a backup.</strong>
+                        </span>
+                    </div>
+
+                    <form asp-action="Import" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Package File (.zip) <span class="text-danger">*</span></label>
+                            <input type="file" name="packageFile" class="form-control" accept=".zip" required
+                                   id="packageFileInput" />
+                            <div class="form-text">Maximum 50 MB. Only files exported from MicroCMS are supported.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Conflict Strategy</label>
+                            <select name="conflictStrategy" class="form-select">
+                                <option value="skip">Skip duplicates (safest)</option>
+                                <option value="overwrite">Overwrite existing</option>
+                                <option value="merge">Merge — preserve local changes</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-1"></i>Import Package
+                            </button>
+                            <a asp-action="Export" class="btn btn-outline-secondary">
+                                <i class="bi bi-download me-1"></i>Export first
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4 small text-muted">
+                    <h6 class="fw-semibold text-dark mb-3">
+                        <i class="bi bi-shield-check me-2 text-success"></i>What gets imported?
+                    </h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Content type schemas</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Draft and published entries</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Media asset metadata</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Taxonomies and components</li>
+                        <li class="mb-2"><i class="bi bi-x-circle text-danger me-2"></i>Binary media files (not included in ZIP)</li>
+                        <li class="mb-0"><i class="bi bi-x-circle text-danger me-2"></i>Passwords or API secrets</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Step 3: Result ──────────────────────────────────────────────────────────── *@
+@if (step == 3 || !string.IsNullOrWhiteSpace(importResult) || !string.IsNullOrWhiteSpace(importError))
+{
+    @if (!string.IsNullOrWhiteSpace(importError))
+    {
+        <div class="card border-0 shadow-sm border-start border-danger border-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-danger mb-2">
+                    <i class="bi bi-x-circle-fill me-2"></i>Import Failed
+                </h5>
+                <p class="text-muted mb-3">@importError</p>
+                <a href="?step=1" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Try Again
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-success mb-2">
+                    <i class="bi bi-check-circle-fill me-2"></i>Import Successful
+                </h5>
+                <p class="text-muted mb-3">Your package was imported successfully.</p>
+                <div class="d-flex gap-2">
+                    <a asp-controller="ContentTypes" asp-action="Index" class="btn btn-primary btn-sm">
+                        <i class="bi bi-layout-text-sidebar-reverse me-1"></i>View Content Types
+                    </a>
+                    <a asp-controller="Entries" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-file-earmark-text me-1"></i>Browse Entries
+                    </a>
+                    <a href="?step=1" class="btn btn-outline-secondary btn-sm">Import Another</a>
+                </div>
+            </div>
+        </div>
+    }
+}

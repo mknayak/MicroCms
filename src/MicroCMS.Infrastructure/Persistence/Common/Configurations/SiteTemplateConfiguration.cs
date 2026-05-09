@@ -35,11 +35,11 @@ internal sealed class SiteTemplateConfiguration : IEntityTypeConfiguration<SiteT
         builder.Property(t => t.Description)
             .HasMaxLength(500);
 
-      builder.Property(t => t.PlacementsJson)
-     .HasColumnType("TEXT")
-    .IsRequired();
+              builder.Property(t => t.PlacementsJson)
+           .HasColumnType("TEXT")
+          .IsRequired();
 
-        builder.HasIndex(t => new { t.TenantId, t.SiteId });
+              builder.HasIndex(t => new { t.TenantId, t.SiteId });
 
         builder.Ignore(t => t.DomainEvents);
     }

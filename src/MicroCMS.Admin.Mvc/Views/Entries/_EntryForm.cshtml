@@ -1,0 +1,182 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model EntryFormViewModel
+
+@{
+    var ct     = Model.ContentType;
+    var groups = ct.Fields
+        .OrderBy(f => f.SortOrder)
+        .GroupBy(f => string.IsNullOrWhiteSpace(f.GroupName) ? "Default" : f.GroupName)
+        .ToList();
+}
+
+<div class="row g-4">
+
+    @* ── Main editor column ───────────────────────────────────────────────────── *@
+    <div class="col-lg-8">
+
+        @* Slug + Locale *@
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 fw-semibold small text-uppercase text-muted">
+                <i class="bi bi-link-45deg me-2"></i>Slug &amp; Locale
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-8">
+                        <label asp-for="Slug" class="form-label fw-semibold">Slug</label>
+                        <input asp-for="Slug" class="form-control font-monospace"
+                               placeholder="url-friendly-slug" required />
+                        <span asp-validation-for="Slug" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-4">
+                        <label asp-for="Locale" class="form-label fw-semibold">Locale</label>
+                        <input asp-for="Locale" class="form-control" placeholder="en" />
+                        <span asp-validation-for="Locale" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Field groups *@
+        @if (ct.Fields.Count == 0)
+        {
+            <div class="alert alert-info d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>This content type has no fields defined.
+                    <a asp-controller="ContentTypes" asp-action="Edit"
+                       asp-route-id="@ct.Id">Edit the schema</a> to add fields.
+                </span>
+            </div>
+        }
+        else
+        {
+            foreach (var group in groups)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-0 fw-semibold small text-uppercase text-muted">
+                        <i class="bi bi-folder2-open me-2"></i>@group.Key
+                    </div>
+                    <div class="card-body">
+                        @foreach (var field in group)
+                        {
+                            @await Html.PartialAsync("_FieldEditor", (
+                                field,
+                                $"Fields[{field.Handle}]",
+                                Model.FieldValue(field.Handle)
+                            ))
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+        @* Change note *@
+        @if (!Model.IsNew)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 fw-semibold small text-uppercase text-muted">
+                    <i class="bi bi-journal-text me-2"></i>Change Note
+                </div>
+                <div class="card-body">
+                    <textarea asp-for="ChangeNote" class="form-control" rows="2"
+                              placeholder="Briefly describe what you changed (optional)..."></textarea>
+                </div>
+            </div>
+        }
+
+        @* Save button (primary CTA) *@
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>@(Model.IsNew ? "Create Entry" : "Save Changes")
+            </button>
+            <a asp-action="Index"
+               asp-route-contentTypeId="@ct.Id"
+               class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </div>
+
+    @* ── Sidebar ──────────────────────────────────────────────────────────────── *@
+    <div class="col-lg-4">
+        @await Html.PartialAsync("_PublishingPanel", Model)
+    </div>
+</div>
+
+@* Asset Picker Modal - opened by AssetReference field Browse buttons *@
+<div class="modal fade" id="assetPickerModal" tabindex="-1" aria-labelledby="assetPickerModalLabel">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="assetPickerModalLabel">
+                    <i class="bi bi-image me-2 text-primary"></i>Select Media Asset
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" id="assetPickerSearch" class="form-control"
+                           placeholder="Search by filename or tag..." />
+                    <select id="assetPickerType" class="form-select" style="max-width:150px;">
+                        <option value="">All types</option>
+                        <option value="Image">Images</option>
+                        <option value="Video">Video</option>
+                        <option value="Document">Documents</option>
+                        <option value="Audio">Audio</option>
+                    </select>
+                    <button type="button" class="btn btn-outline-secondary px-3" id="assetPickerSearchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="assetPickerLoading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="assetPickerEmpty" class="text-center text-muted py-5 d-none">
+                    <i class="bi bi-image" style="font-size:2.5rem;"></i>
+                    <p class="mt-2 mb-0">No assets found. Try a different search.</p>
+                </div>
+                <div id="assetPickerResults" class="row g-3"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <small class="text-muted me-auto" id="assetPickerCount"></small>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Entry Picker Modal - opened by Reference field Browse buttons *@
+<div class="modal fade" id="entryPickerModal" tabindex="-1" aria-labelledby="entryPickerModalLabel">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="entryPickerModalLabel">
+                    <i class="bi bi-link-45deg me-2 text-primary"></i>Select Entry Reference
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" id="entryPickerSearch" class="form-control"
+                           placeholder="Search by title or slug..." />
+                    <button type="button" class="btn btn-outline-secondary px-3" id="entryPickerSearchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="entryPickerLoading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="entryPickerEmpty" class="text-center text-muted py-5 d-none">
+                    <i class="bi bi-files" style="font-size:2.5rem;"></i>
+                    <p class="mt-2 mb-0">No entries found.</p>
+                </div>
+                <div id="entryPickerResults"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <small class="text-muted me-auto" id="entryPickerCount"></small>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

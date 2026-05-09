@@ -1,0 +1,29 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model List<PageTreeNode>
+@{
+    ViewData["Title"] = "Pages";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h4 fw-bold mb-0">Pages</h1>
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>New Page
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-file-earmark-richtext" style="font-size:2.5rem;"></i>
+        <p class="mt-2">No pages yet.</p>
+        <a asp-action="Create" class="btn btn-primary btn-sm">Create First Page</a>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            @await Html.PartialAsync("_PageTreeNodes", Model)
+        </div>
+    </div>
+}

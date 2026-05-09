@@ -1,0 +1,89 @@
+@using MicroCMS.Admin.Mvc.Models.ApiDtos
+@model ComponentDto
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="d-flex align-items-start justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a asp-action="Index">Components</a></li>
+                <li class="breadcrumb-item active">@Model.Name</li>
+            </ol>
+        </nav>
+        <h1 class="h4 fw-bold mb-0">@Model.Name</h1>
+        <code class="text-muted small">@Model.Key</code>
+    </div>
+    <a asp-action="Items" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-collection me-1"></i>View Items (@Model.ItemCount)
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold border-0">
+                <i class="bi bi-list-columns me-2 text-primary"></i>Fields (@Model.Fields.Count)
+            </div>
+            @if (Model.Fields.Count == 0)
+            {
+                <div class="card-body text-center text-muted py-4">No fields defined.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Label</th>
+                                <th>Handle</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in Model.Fields.OrderBy(f => f.SortOrder))
+                            {
+                                <tr>
+                                    <td class="text-muted small">@f.SortOrder</td>
+                                    <td>@f.Label</td>
+                                    <td><code class="small">@f.Handle</code></td>
+                                    <td><span class="badge bg-light text-dark border">@f.FieldType</span></td>
+                                    <td>@(f.IsRequired ? "✔" : "")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold border-0">
+                <i class="bi bi-info-circle me-2 text-primary"></i>Details
+            </div>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Category</span>
+                    <span>@Model.Category</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Template</span>
+                    <span>@Model.TemplateType</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Items</span>
+                    <span>@Model.ItemCount</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Used in</span>
+                    <span>@Model.UsageCount pages/layouts</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

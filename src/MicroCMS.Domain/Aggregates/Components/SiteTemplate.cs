@@ -69,4 +69,5 @@ return new SiteTemplate(SiteTemplateId.New(), tenantId, siteId, layoutId, name, 
         PlacementsJson = placementsJson;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
-}
+
+    }

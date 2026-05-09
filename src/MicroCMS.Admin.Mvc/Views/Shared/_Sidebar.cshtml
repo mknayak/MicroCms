@@ -1,0 +1,81 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+
+    bool IsActive(string ctrl) =>
+        string.Equals(ctrl, controller, StringComparison.OrdinalIgnoreCase);
+
+    string NavClass(string ctrl) =>
+        "nav-link" + (IsActive(ctrl) ? " active bg-primary text-white rounded" : " text-white-50");
+}
+
+<aside class="sidebar d-flex flex-column bg-dark text-white" style="width:220px;min-height:calc(100vh - 56px);">
+    <nav class="nav flex-column gap-1 p-2 pt-3 flex-grow-1">
+
+        <small class="text-uppercase text-white-25 px-2 mb-1" style="font-size:.65rem;letter-spacing:.08em;">Content</small>
+
+        <a class="@NavClass("Dashboard")" asp-controller="Dashboard" asp-action="Index">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+        <a class="@NavClass("ContentTypes")" asp-controller="ContentTypes" asp-action="Index">
+            <i class="bi bi-layout-text-sidebar-reverse me-2"></i>Content Types
+        </a>
+        <a class="@NavClass("Entries")" asp-controller="Entries" asp-action="Index">
+            <i class="bi bi-file-earmark-text me-2"></i>Entries
+        </a>
+        <a class="@NavClass("Media")" asp-controller="Media" asp-action="Index">
+            <i class="bi bi-images me-2"></i>Media
+        </a>
+        <a class="@NavClass("Taxonomy")" asp-controller="Taxonomy" asp-action="Index">
+            <i class="bi bi-tags me-2"></i>Taxonomy
+        </a>
+
+        <hr class="border-secondary my-2" />
+        <small class="text-uppercase text-white-25 px-2 mb-1" style="font-size:.65rem;letter-spacing:.08em;">Site</small>
+
+        @if (User.IsInRole("SystemAdmin") || User.IsInRole("TenantAdmin") || User.IsInRole("Editor"))
+        {
+            <a class="@NavClass("Pages")" asp-controller="Pages" asp-action="Index">
+                <i class="bi bi-file-earmark-richtext me-2"></i>Pages
+            </a>
+            <a class="@NavClass("Layouts")" asp-controller="Layouts" asp-action="Index">
+                <i class="bi bi-layout-three-columns me-2"></i>Layouts
+            </a>
+        }
+
+        <a class="@NavClass("Components")" asp-controller="Components" asp-action="Index">
+            <i class="bi bi-puzzle me-2"></i>Components
+        </a>
+
+        <hr class="border-secondary my-2" />
+        <small class="text-uppercase text-white-25 px-2 mb-1" style="font-size:.65rem;letter-spacing:.08em;">Admin</small>
+
+        @if (User.IsInRole("SystemAdmin") || User.IsInRole("TenantAdmin"))
+        {
+            <a class="@NavClass("Users")" asp-controller="Users" asp-action="Index">
+                <i class="bi bi-people me-2"></i>Users
+            </a>
+            <a class="@NavClass("Settings")" asp-controller="Settings" asp-action="Index">
+                <i class="bi bi-gear me-2"></i>Settings
+            </a>
+        }
+
+        @if (User.IsInRole("SystemAdmin"))
+        {
+            <a class="@NavClass("Tenants")" asp-controller="Tenants" asp-action="Index">
+                <i class="bi bi-building me-2"></i>Tenants
+            </a>
+        }
+
+        @if (User.IsInRole("SystemAdmin") || User.IsInRole("TenantAdmin") || User.IsInRole("Designer"))
+        {
+            <a class="@NavClass("Packages")" asp-controller="Packages" asp-action="Export">
+                <i class="bi bi-box-arrow-up me-2"></i>Export
+            </a>
+            <a class="@(IsActive("Packages") ? "nav-link active bg-primary text-white rounded" : "nav-link text-white-50")"
+               asp-controller="Packages" asp-action="Import">
+                <i class="bi bi-box-arrow-in-down me-2"></i>Import
+            </a>
+        }
+
+    </nav>
+</aside>

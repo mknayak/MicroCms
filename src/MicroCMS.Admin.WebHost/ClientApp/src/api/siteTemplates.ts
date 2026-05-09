@@ -1,18 +1,21 @@
 import { get, post, put, del } from './client';
-import type { SiteTemplateDto, SiteTemplateListItem, CreateSiteTemplateRequest, UpdateSiteTemplateRequest, SaveSiteTemplateRequest } from '@/types';
+import type { SiteTemplateDto, SiteTemplateListItem, CreateSiteTemplateRequest, UpdateSiteTemplateRequest, SaveSiteTemplateRequest, EffectiveTemplateDto } from '@/types';
 
 export const siteTemplatesApi = {
   list: (): Promise<SiteTemplateListItem[]> =>
     get<SiteTemplateListItem[]>('/site-templates'),
 
   get: (id: string): Promise<SiteTemplateDto> =>
- get<SiteTemplateDto>(`/site-templates/${id}`),
+    get<SiteTemplateDto>(`/site-templates/${id}`),
+
+  getEffective: (pageId: string): Promise<EffectiveTemplateDto> =>
+    get<EffectiveTemplateDto>(`/site-templates/effective?pageId=${pageId}`),
 
   create: (data: CreateSiteTemplateRequest): Promise<SiteTemplateDto> =>
- post<SiteTemplateDto>('/site-templates', data),
+    post<SiteTemplateDto>('/site-templates', data),
 
   update: (id: string, data: UpdateSiteTemplateRequest): Promise<SiteTemplateDto> =>
-  put<SiteTemplateDto>(`/site-templates/${id}`, data),
+    put<SiteTemplateDto>(`/site-templates/${id}`, data),
 
   savePlacements: (id: string, data: SaveSiteTemplateRequest): Promise<SiteTemplateDto> =>
     put<SiteTemplateDto>(`/site-templates/${id}/placements`, {
@@ -22,3 +25,4 @@ export const siteTemplatesApi = {
   delete: (id: string): Promise<void> =>
     del(`/site-templates/${id}`),
 };
+
