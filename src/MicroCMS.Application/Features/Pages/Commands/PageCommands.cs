@@ -33,14 +33,14 @@ public sealed record PageSeoDto(
     string? CanonicalUrl,
     string? OgImage);
 
-public sealed record PageTemplatePlacementDto(Guid Id, Guid ComponentId, string Zone, int SortOrder);
+public sealed record PageTemplatePlacementDto(Guid Id, Guid ComponentId, string Zone, int SortOrder, Guid? BoundEntryId = null);
 
 public sealed record PageTemplateDto(
     Guid Id, Guid PageId,
     IReadOnlyList<PageTemplatePlacementDto> Placements,
     DateTimeOffset UpdatedAt);
 
-public sealed record PageTemplatePlacementInput(Guid ComponentId, string Zone, int SortOrder);
+public sealed record PageTemplatePlacementInput(Guid ComponentId, string Zone, int SortOrder, Guid? BoundEntryId = null);
 
 // ── Commands ──────────────────────────────────────────────────────────────────
 
@@ -305,7 +305,7 @@ internal sealed class GetPageTemplateQueryHandler(
 
     internal static PageTemplateDto ToDto(PageTemplate t) => new(
         t.Id.Value, t.PageId.Value,
-        t.Placements.Select(p => new PageTemplatePlacementDto(p.Id, p.ComponentId.Value, p.Zone, p.SortOrder))
+        t.Placements.Select(p => new PageTemplatePlacementDto(p.Id, p.ComponentId.Value, p.Zone, p.SortOrder, p.BoundItemId?.Value))
        .ToList().AsReadOnly(),
    t.UpdatedAt);
 }
@@ -314,41 +314,46 @@ internal sealed class SavePageTemplateCommandHandler(
     IRepository<Page, PageId> pageRepo,
     IRepository<PageTemplate, PageTemplateId> templateRepo,
     IRepository<Component, ComponentId> compRepo,
+    IUnitOfWork unitOfWork,
     ICurrentUser currentUser)
     : IRequestHandler<SavePageTemplateCommand, Result<PageTemplateDto>>
 {
     public async Task<Result<PageTemplateDto>> Handle(
-    SavePageTemplateCommand request, CancellationToken cancellationToken)
+        SavePageTemplateCommand request, CancellationToken cancellationToken)
     {
         var pageId = new PageId(request.PageId);
-      _ = await pageRepo.GetByIdAsync(pageId, cancellationToken)
-       ?? throw new NotFoundException(nameof(Page), request.PageId);
+        _ = await pageRepo.GetByIdAsync(pageId, cancellationToken)
+            ?? throw new NotFoundException(nameof(Page), request.PageId);
 
- var existing = await templateRepo.ListAsync(new PageTemplateByPageSpec(pageId), cancellationToken);
+        var existing = await templateRepo.ListAsync(new PageTemplateByPageSpec(pageId), cancellationToken);
         PageTemplate template;
 
         if (existing.Count > 0)
         {
             template = existing[0];
-      foreach (var p in template.Placements.ToList())
+            foreach (var p in template.Placements.ToList())
                 template.RemovePlacement(p.Id);
-   templateRepo.Update(template);
+            templateRepo.Update(template);
         }
         else
         {
             template = PageTemplate.Create(currentUser.TenantId, pageId);
-      await templateRepo.AddAsync(template, cancellationToken);
+            await templateRepo.AddAsync(template, cancellationToken);
+            // Flush the new PageTemplate row to the DB so the FK exists before
+            // child ComponentPlacement rows are inserted in the same transaction.
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-    foreach (var input in request.Placements.OrderBy(p => p.SortOrder))
+        foreach (var input in request.Placements.OrderBy(p => p.SortOrder))
         {
-  _ = await compRepo.GetByIdAsync(new ComponentId(input.ComponentId), cancellationToken)
-     ?? throw new NotFoundException(nameof(Component), input.ComponentId);
-template.AddPlacement(new ComponentId(input.ComponentId), input.Zone, input.SortOrder);
-   }
+            _ = await compRepo.GetByIdAsync(new ComponentId(input.ComponentId), cancellationToken)
+                ?? throw new NotFoundException(nameof(Component), input.ComponentId);
+            var boundItemId = input.BoundEntryId.HasValue ? new ComponentItemId(input.BoundEntryId.Value) : (ComponentItemId?)null;
+            template.AddPlacement(new ComponentId(input.ComponentId), input.Zone, input.SortOrder, boundItemId);
+        }
 
         templateRepo.Update(template);
-   return Result.Success(GetPageTemplateQueryHandler.ToDto(template));
+        return Result.Success(GetPageTemplateQueryHandler.ToDto(template));
     }
 }
 

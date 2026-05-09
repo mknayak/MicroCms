@@ -581,6 +581,7 @@ export interface SavePlacementNode {
     // component-only:
     componentId?: string;
     boundItemId?: string;
+    boundEntryId?: string;
     isLayoutDefault?: boolean;
     // grid-row-only:
     columns?: Array<{
@@ -607,6 +608,7 @@ export interface PageTemplatePlacementDto {
     componentId: string;
     zone: string;
     sortOrder: number;
+    boundEntryId?: string;
 }
 
 export interface PageTemplateDto {

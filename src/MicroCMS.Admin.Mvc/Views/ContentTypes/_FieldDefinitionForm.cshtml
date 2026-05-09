@@ -50,9 +50,14 @@
         <select name="FieldType" class="form-select" required>
             @foreach (var ft in fieldTypes)
             {
-                <option value="@ft" selected="@(ft == (Model.FieldType ?? "ShortText"))">
-                    @ft — @fieldTypeDescriptions.GetValueOrDefault(ft, "")
-                </option>
+                if (ft == (Model.FieldType ?? "ShortText"))
+                {
+                    <option value="@ft" selected>@ft — @fieldTypeDescriptions.GetValueOrDefault(ft, "")</option>
+                }
+                else
+                {
+                    <option value="@ft">@ft — @fieldTypeDescriptions.GetValueOrDefault(ft, "")</option>
+                }
             }
         </select>
     </div>

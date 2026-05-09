@@ -398,11 +398,22 @@ function ComponentPreview({ component }: { component: DesignerPlacement }) {
 
 // ─── Properties Panel ─────────────────────────────────────────────────────────
 
-function PropertiesPanel({ selected, placements, onRemove }: {
+function PropertiesPanel({ selected, placements, onRemove, onBindEntry, onResetBinding }: {
     selected: DesignerPlacement | null;
     placements: DesignerPlacement[];
     onRemove: (id: string) => void;
+    onBindEntry: (localId: string, entryId: string | null, entryTitle: string | null) => void;
+    onResetBinding: (localId: string) => void;
 }) {
+    // Load component items (entries) for the selected component
+    const { data: itemsResult, isLoading: itemsLoading } = useQuery({
+        queryKey: ['component-items', selected?.componentId],
+        queryFn: () => componentsApi.listItems(selected!.componentId!, { pageSize: 200, status: 'Published' }),
+        enabled: !!selected?.componentId,
+        staleTime: 30_000,
+    });
+    const items = itemsResult?.items ?? [];
+
     if (!selected) {
         return (
             <aside className="flex w-64 flex-shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white">
@@ -451,6 +462,54 @@ function PropertiesPanel({ selected, placements, onRemove }: {
                 <div>
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Zone</p>
                     <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs">{selected.zone}</div>
+                </div>
+                {/* Entry binding */}
+                <div>
+                    <div className="mb-1 flex items-center justify-between">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bound Entry</p>
+                        {selected.isLayoutDefault && selected.templateBoundItemId && selected.boundEntryId && selected.boundEntryId !== selected.templateBoundItemId && (
+                            <button
+                                onClick={() => onResetBinding(selected.localId)}
+                                className="text-[10px] font-semibold text-brand-500 hover:underline"
+                                title="Remove page override and revert to template default"
+                            >
+                                ↺ Reset to template
+                            </button>
+                        )}
+                    </div>
+                    {selected.isLayoutDefault && selected.templateBoundItemId && (
+                        <p className="mb-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-[10px] text-slate-500">
+                            <span className="mr-1 text-amber-600">Template default:</span>
+                            {selected.templateBoundItemId}
+                        </p>
+                    )}
+                    {itemsLoading ? (
+                        <div className="h-8 animate-pulse rounded-md bg-slate-100" />
+                    ) : items.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic">No published entries for this component.</p>
+                    ) : (
+                        <select
+                            value={selected.boundEntryId ?? (selected.isLayoutDefault ? (selected.templateBoundItemId ?? '') : '')}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) {
+                                    onBindEntry(selected.localId, null, null);
+                                } else {
+                                    const entry = items.find((i) => i.id === val);
+                                    onBindEntry(selected.localId, val, entry?.slug ?? val);
+                                }
+                            }}
+                            className={`w-full rounded-md border px-2 py-1.5 text-xs text-slate-800 focus:border-brand-400 focus:outline-none ${selected.isLayoutDefault && selected.boundEntryId && selected.boundEntryId !== selected.templateBoundItemId ? 'border-brand-300 bg-brand-50' : 'border-slate-200 bg-white'}`}
+                        >
+                            <option value="">— Use template default —</option>
+                            {items.map((item) => (
+                                <option key={item.id} value={item.id}>{item.slug}</option>
+                            ))}
+                        </select>
+                    )}
+                    {selected.boundEntryId && (
+                        <p className="mt-1 truncate font-mono text-[10px] text-slate-400">{selected.boundEntryId}</p>
+                    )}
                 </div>
                 {selected.isLayoutDefault && (
                     <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -557,26 +616,49 @@ export default function PageDesignerPage() {
         let inherited: DesignerPlacement[] = [];
     if (siteTemplate) {
          try {
-       const parsed = JSON.parse(siteTemplate.placementsJson ?? '[]') as DesignerPlacement[];
-    inherited = parsed.map((p) => {
-      const comp = allComponents.find((c) => c.id === p.componentId);
-         return { ...p, localId: `tpl-${uid()}`, componentName: comp?.name ?? p.componentName, isLayoutDefault: true };
-  });
+             const parsed = JSON.parse(siteTemplate.placementsJson ?? '[]') as DesignerPlacement[];
+         inherited = parsed.map((p) => {
+           const comp = allComponents.find((c) => c.id === p.componentId);
+              return { ...p, localId: `tpl-${uid()}`, componentName: comp?.name ?? p.componentName, isLayoutDefault: true, templateBoundItemId: p.boundItemId };
+       });
             } catch { /* ignore */ }
       }
 
-        // Page-specific placements
-        const pageSpecific: DesignerPlacement[] = (loadedTemplate?.placements ?? []).map((p) => {
- const comp = allComponents.find((c) => c.id === p.componentId);
-        return {
-                localId: uid(), type: 'component' as const,
-                componentId: p.componentId, componentName: comp?.name ?? p.componentId,
-       componentKey: comp?.key ?? '', componentCategory: comp?.category ?? 'Content',
-    zone: p.zone, sortOrder: p.sortOrder, isLayoutDefault: false,
-            };
-    });
+        // Page-specific placements — may be pure page additions or entry overrides for inherited placements.
+        // Identify overrides: a saved placement that shares componentId+zone with an inherited one.
+        const pageSpecific: DesignerPlacement[] = [];
+        const overrideMap = new Map<string, string>(); // `${componentId}:${zone}` → boundEntryId
 
-        setPlacements([...inherited, ...pageSpecific]);
+        for (const p of (loadedTemplate?.placements ?? [])) {
+            const inheritedMatch = inherited.find(
+                (inh) => inh.componentId === p.componentId && inh.zone === p.zone,
+            );
+            if (inheritedMatch) {
+                // This is a page-level override for an inherited placement — store it in map.
+                overrideMap.set(`${p.componentId}:${p.zone}`, p.boundEntryId ?? '');
+            } else {
+                const comp = allComponents.find((c) => c.id === p.componentId);
+                pageSpecific.push({
+                    localId: uid(), type: 'component' as const,
+                    componentId: p.componentId, componentName: comp?.name ?? p.componentId,
+                    componentKey: comp?.key ?? '', componentCategory: comp?.category ?? 'Content',
+                    zone: p.zone, sortOrder: p.sortOrder, isLayoutDefault: false,
+                    boundEntryId: p.boundEntryId,
+                });
+            }
+        }
+
+        // Apply page overrides back onto inherited placements
+        const mergedInherited = inherited.map((inh) => {
+            const key = `${inh.componentId}:${inh.zone}`;
+            if (overrideMap.has(key)) {
+                const overrideEntryId = overrideMap.get(key) || undefined;
+                return { ...inh, boundEntryId: overrideEntryId };
+            }
+            return inh;
+        });
+
+        setPlacements([...mergedInherited, ...pageSpecific]);
         setInitialised(true);
         setDirty(false);
     }, [pageId, loadedTemplate, siteTemplate, siteTemplateId, allComponents, initialised]);
@@ -597,10 +679,10 @@ export default function PageDesignerPage() {
     const saveMutation = useMutation({
         mutationFn: () =>
             pagesApi.saveTemplate(pageId!, {
-                // Only save page-specific (non-inherited) placements
+                // Save page-specific placements + inherited placements that have a page-level entry override.
                 placements: placements
-                    .filter((p) => !p.isLayoutDefault)
-                    .map((p) => ({ type: 'component' as const, componentId: p.componentId!, zone: p.zone, sortOrder: p.sortOrder })),
+                    .filter((p) => !p.isLayoutDefault || (p.isLayoutDefault && p.boundEntryId !== undefined && p.boundEntryId !== (p.templateBoundItemId ?? '')))
+                    .map((p) => ({ type: 'component' as const, componentId: p.componentId!, zone: p.zone, sortOrder: p.sortOrder, boundEntryId: p.boundEntryId })),
             }),
         onSuccess: () => {
             toast.success('Page template saved.');
@@ -657,6 +739,20 @@ export default function PageDesignerPage() {
     const handleRemove = useCallback((localId: string) => {
         setPlacements((prev) => prev.filter((p) => p.localId !== localId));
         setSelectedLocalId((cur) => cur === localId ? null : cur);
+        setDirty(true);
+    }, []);
+
+    const handleBindEntry = useCallback((localId: string, entryId: string | null, entryTitle: string | null) => {
+        setPlacements((prev) => prev.map((p) =>
+            p.localId === localId ? { ...p, boundEntryId: entryId ?? undefined, boundItemTitle: entryTitle ?? undefined } : p,
+        ));
+        setDirty(true);
+    }, []);
+
+    const handleResetBinding = useCallback((localId: string) => {
+        setPlacements((prev) => prev.map((p) =>
+            p.localId === localId ? { ...p, boundEntryId: undefined, boundItemTitle: undefined } : p,
+        ));
         setDirty(true);
     }, []);
 
@@ -767,6 +863,8 @@ onDrop={handleDrop}
                     selected={selectedPlacement}
                     placements={placements}
                     onRemove={handleRemove}
+                    onBindEntry={handleBindEntry}
+                    onResetBinding={handleResetBinding}
                 />
             </div>
 

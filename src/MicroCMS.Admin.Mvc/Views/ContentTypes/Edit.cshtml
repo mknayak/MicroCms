@@ -79,8 +79,7 @@
         <h6 class="fw-semibold mb-0">
             @Model.Fields.Count field@(Model.Fields.Count == 1 ? "" : "s") defined
         </h6>
-        <button type="button" class="btn btn-primary btn-sm"
-                data-bs-toggle="modal" data-bs-target="#addFieldModal">
+        <button type="button" class="btn btn-primary btn-sm" id="addFieldBtn">
             <i class="bi bi-plus-circle me-1"></i>Add Field
         </button>
     </div>
@@ -90,8 +89,7 @@
         <div class="text-center py-5 text-muted border rounded-2">
             <i class="bi bi-columns-gap" style="font-size:2.5rem;"></i>
             <p class="mt-2 mb-3">No fields yet. Add your first field to define the schema.</p>
-            <button type="button" class="btn btn-primary btn-sm"
-                    data-bs-toggle="modal" data-bs-target="#addFieldModal">
+            <button type="button" class="btn btn-primary btn-sm addFieldBtn">
                 <i class="bi bi-plus me-1"></i>Add First Field
             </button>
         </div>
@@ -154,7 +152,6 @@
                                         {
                                             <div class="btn-group btn-group-sm">
                                                 <button type="button" class="btn btn-outline-secondary edit-field-btn"
-                                                        data-bs-toggle="modal" data-bs-target="#editFieldModal"
                                                         data-field-id="@field.Id"
                                                         data-label="@field.Label"
                                                         data-field-type="@field.FieldType"

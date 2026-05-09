@@ -85,13 +85,17 @@ function Palette({
 function ColDropZone({
   zoneName,
   placements,
+  selectedLocalId,
   onDrop,
   onRemove,
+  onSelect,
 }: {
   zoneName: string;
   placements: PlacementNode[];
+  selectedLocalId: string | null;
   onDrop: (zoneName: string, comp: ComponentListItem) => void;
   onRemove: (localId: string) => void;
+  onSelect: (localId: string) => void;
 }) {
   const [over, setOver] = useState(false);
   return (
@@ -115,12 +119,15 @@ function ColDropZone({
       )}
       <div className="space-y-1 p-1">
         {placements.map((p) => (
-          <div key={p.localId} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
+          <div key={p.localId}
+            onClick={() => onSelect(p.localId)}
+            className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 transition-colors ${p.localId === selectedLocalId ? 'border-brand-400 bg-brand-50 ring-1 ring-brand-300' : 'border-slate-200 bg-white hover:border-brand-200 hover:bg-brand-50/40'}`}>
      <div>
               <p className="text-xs font-semibold text-slate-800">{p.componentName}</p>
      <p className="font-mono text-[10px] text-slate-400">{p.componentKey}</p>
+     {p.boundItemId && <p className="mt-0.5 text-[10px] text-brand-600">● bound</p>}
      </div>
-            <button onClick={() => onRemove(p.localId)} className="text-slate-300 hover:text-red-500">
+            <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="text-slate-300 hover:text-red-500">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
@@ -137,13 +144,17 @@ function ColDropZone({
 function ZoneStrip({
   zone,
   placements,
+  selectedLocalId,
   onDrop,
   onRemove,
+  onSelect,
 }: {
   zone: LayoutZoneNode;
   placements: PlacementNode[];
+  selectedLocalId: string | null;
   onDrop: (zoneName: string, comp: ComponentListItem) => void;
   onRemove: (localId: string) => void;
+  onSelect: (localId: string) => void;
 }) {
   const [over, setOver] = useState(false);
 
@@ -166,8 +177,10 @@ function ZoneStrip({
   <ColDropZone
        zoneName={col.zoneName}
      placements={placements.filter((p) => p.zone === col.zoneName)}
+     selectedLocalId={selectedLocalId}
     onDrop={onDrop}
      onRemove={onRemove}
+     onSelect={onSelect}
          />
     </div>
           ))}
@@ -191,12 +204,15 @@ function ZoneStrip({
  )}
   <div className="space-y-1 p-1">
 {placements.map((p) => (
-      <div key={p.localId} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
+      <div key={p.localId}
+        onClick={() => onSelect(p.localId)}
+        className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 transition-colors ${p.localId === selectedLocalId ? 'border-brand-400 bg-brand-50 ring-1 ring-brand-300' : 'border-slate-200 bg-white hover:border-brand-200 hover:bg-brand-50/40'}`}>
          <div>
              <p className="text-xs font-semibold text-slate-800">{p.componentName}</p>
                   <p className="font-mono text-[10px] text-slate-400">{p.componentKey}</p>
+                  {p.boundItemId && <p className="mt-0.5 text-[10px] text-brand-600">● bound</p>}
       </div>
-           <button onClick={() => onRemove(p.localId)} className="text-slate-300 hover:text-red-500">
+           <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="text-slate-300 hover:text-red-500">
   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
       </svg>
@@ -220,6 +236,7 @@ export default function PageTemplateDesignerPage() {
   const [initialised, setInitialised] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState('');
+  const [selectedLocalId, setSelectedLocalId] = useState<string | null>(null);
 
   const { data: template, isLoading: templateLoading } = useQuery({
     queryKey: ['site-template', id],
@@ -239,6 +256,15 @@ export default function PageTemplateDesignerPage() {
     queryFn: () => componentsApi.list({ pageSize: 200 }),
   });
   const allComponents = componentsResult?.items ?? [];
+
+  // Selected placement and its component items
+  const selected = placements.find((p) => p.localId === selectedLocalId) ?? null;
+
+  const { data: selectedCompItems } = useQuery({
+    queryKey: ['component-items', selected?.componentId],
+    queryFn: () => componentsApi.listItems(selected!.componentId!, { pageSize: 200 }),
+    enabled: !!selected?.componentId,
+  });
 
   // Load placements from template JSON (once)
   useEffect(() => {
@@ -266,6 +292,7 @@ export default function PageTemplateDesignerPage() {
 zone: p.zone,
         sortOrder: p.sortOrder,
         componentId: p.componentId,
+        boundItemId: p.boundItemId ?? undefined,
     })),
     }),
     onSuccess: () => { toast.success('Template saved.'); setDirty(false); void qc.invalidateQueries({ queryKey: ['site-template', id] }); },
@@ -290,7 +317,21 @@ zone: p.zone,
 
   const handleRemove = useCallback((localId: string) => {
     setPlacements((prev) => prev.filter((p) => p.localId !== localId));
+    setSelectedLocalId((prev) => prev === localId ? null : prev);
  setDirty(true);
+  }, []);
+
+  const handleSelect = useCallback((localId: string) => {
+    setSelectedLocalId((prev) => prev === localId ? null : localId);
+  }, []);
+
+  const handleBindItem = useCallback((localId: string, itemId: string, itemTitle: string) => {
+    setPlacements((prev) => prev.map((p) =>
+      p.localId === localId
+        ? { ...p, boundItemId: itemId || undefined, boundItemTitle: itemId ? itemTitle : undefined }
+        : p,
+    ));
+    setDirty(true);
   }, []);
 
   if (templateLoading) {
@@ -367,44 +408,87 @@ zone: p.zone,
  key={zone.id}
   zone={zone}
        placements={zonePlacements}
+       selectedLocalId={selectedLocalId}
              onDrop={handleDrop}
    onRemove={handleRemove}
+   onSelect={handleSelect}
              />
        );
         })}
           </div>
         </div>
 
-   {/* RIGHT — info */}
+   {/* RIGHT — properties or info */}
 <aside className="flex w-56 flex-shrink-0 flex-col overflow-y-auto border-l border-slate-200 bg-white">
-       <div className="border-b border-slate-200 px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Template Info</p>
-          </div>
-  <div className="space-y-4 px-4 py-4 text-xs">
-            <div>
-              <p className="text-slate-400">Layout</p>
-  <p className="mt-0.5 font-semibold text-slate-700">{layout?.name ?? '—'}</p>
-       </div>
-          <div>
-       <p className="text-slate-400">Zones available</p>
-    <div className="mt-1 space-y-1">
-       {zones.map((z) => (
-           <div key={z.id} className="flex items-center gap-2">
-      <span className={`h-1.5 w-1.5 rounded-full ${z.type === 'grid-row' ? 'bg-purple-400' : 'bg-brand-400'}`} />
-   <span className="font-mono text-slate-600">{z.name}</span>
-        <span className="text-slate-400">
-             ({placements.filter((p) => p.zone === z.name).length})
-   </span>
-         </div>
- ))}
-     </div>
-    </div>
+  {selected ? (
+    <>
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Properties</p>
+        <button onClick={() => setSelectedLocalId(null)} className="text-slate-300 hover:text-slate-600">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div className="space-y-4 px-4 py-4 text-xs">
         <div>
-              <p className="text-slate-400">Total placements</p>
-       <p className="mt-0.5 text-lg font-bold text-slate-800">{placements.length}</p>
-   </div>
+          <p className="text-slate-400">Component</p>
+          <p className="mt-0.5 font-semibold text-slate-700">{selected.componentName}</p>
+          <p className="font-mono text-[10px] text-slate-400">{selected.componentKey}</p>
+        </div>
+        <div>
+          <p className="mb-1 text-slate-400">Bound item</p>
+          <select
+            value={selected.boundItemId ?? ''}
+            onChange={(e) => {
+              const item = selectedCompItems?.items.find((i) => i.id === e.target.value);
+              handleBindItem(selected.localId, e.target.value, item?.slug ?? e.target.value);
+            }}
+            className="w-full rounded border border-slate-200 bg-white py-1.5 px-2 text-xs focus:border-brand-400 focus:outline-none"
+          >
+            <option value="">— render template (no entry) —</option>
+            {(selectedCompItems?.items ?? []).map((item) => (
+              <option key={item.id} value={item.id}>{item.slug}</option>
+            ))}
+          </select>
+          <p className="mt-1 text-[10px] text-slate-400">
+            Select an item to bind specific data to this placement.
+          </p>
+        </div>
+      </div>
+    </>
+  ) : (
+    <>
+      <div className="border-b border-slate-200 px-4 py-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Template Info</p>
+      </div>
+      <div className="space-y-4 px-4 py-4 text-xs">
+        <div>
+          <p className="text-slate-400">Layout</p>
+          <p className="mt-0.5 font-semibold text-slate-700">{layout?.name ?? '—'}</p>
+        </div>
+        <div>
+          <p className="text-slate-400">Zones available</p>
+          <div className="mt-1 space-y-1">
+            {zones.map((z) => (
+              <div key={z.id} className="flex items-center gap-2">
+                <span className={`h-1.5 w-1.5 rounded-full ${z.type === 'grid-row' ? 'bg-purple-400' : 'bg-brand-400'}`} />
+                <span className="font-mono text-slate-600">{z.name}</span>
+                <span className="text-slate-400">
+                  ({placements.filter((p) => p.zone === z.name).length})
+                </span>
+              </div>
+            ))}
           </div>
-        </aside>
+        </div>
+        <div>
+          <p className="text-slate-400">Total placements</p>
+          <p className="mt-0.5 text-lg font-bold text-slate-800">{placements.length}</p>
+        </div>
+      </div>
+    </>
+  )}
+</aside>
       </div>
 
       {/* Status bar */}

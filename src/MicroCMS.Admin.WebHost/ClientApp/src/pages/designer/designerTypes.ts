@@ -53,7 +53,9 @@ export interface PlacementNode {
   componentName?: string;
   componentKey?: string;
   componentCategory?: ComponentCategory;
-  boundItemId?: string;   // linked ComponentItem ID
+  boundItemId?: string;        // template-level bound item (from SiteTemplate JSON)
+  boundEntryId?: string;       // page-level override entry ID
+  templateBoundItemId?: string; // original template default — used to detect & reset page overrides
   boundItemTitle?: string;     // denormalized display title
   isLayoutDefault?: boolean;   // inherited from layout — cannot be removed, only rebound
 

@@ -51,15 +51,13 @@ internal sealed class RenderPageBySlugQueryHandler(
 
         // ── 1. Resolve Page ───────────────────────────────────────────────
         var pages = await pageRepo.ListAsync(new PageBySlugSpec(siteId, request.Slug), cancellationToken);
-        var page = pages.FirstOrDefault()
-            ?? throw new NotFoundException(nameof(Page), request.Slug);
+        var page = pages.FirstOrDefault() ?? throw new NotFoundException(nameof(Page), request.Slug);
 
         // ── 2. Resolve SiteTemplate via hierarchy ─────────────────────────
         var siteTemplate = await ResolveSiteTemplateAsync(page, entryRepo, contentTypeRepo, siteTemplateRepo, cancellationToken);
 
         // ── 3. Load page-specific PageTemplate ───────────────────────────
-        var templates = await templateRepo.ListAsync(
-            new PageTemplateByPageSpec(page.Id), cancellationToken);
+        var templates = await templateRepo.ListAsync(new PageTemplateByPageSpec(page.Id), cancellationToken);
         var pageTemplate = templates.FirstOrDefault();
 
         // ── 4. Render placements → zone HTML ──────────────────────────────
@@ -76,12 +74,12 @@ internal sealed class RenderPageBySlugQueryHandler(
         // ── 7. Build RenderContext for token resolution ───────────────────
         var renderContext = new RenderContext
         {
-            SiteId    = siteId,
-            TenantId  = page.TenantId,
-            PageSlug  = page.Slug.Value,
+            SiteId = siteId,
+            TenantId = page.TenantId,
+            PageSlug = page.Slug.Value,
             PageTitle = page.Title,
             PagePublishedAt = null,
-            TemplateKey  = layout?.Key,
+            TemplateKey = layout?.Key,
             TemplateName = layout?.Name,
         };
 
@@ -91,9 +89,9 @@ internal sealed class RenderPageBySlugQueryHandler(
             html = await renderer.RenderLayoutAsync(
                 layout, zones,
                 renderContext,
-                seoTitle:       seo.Title,
+                seoTitle: seo.Title,
                 seoDescription: seo.Description,
-                seoOgImage:     seo.OgImage,
+                seoOgImage: seo.OgImage,
                 cancellationToken: cancellationToken);
 
         return Result.Success(new RenderedPageDto(
@@ -227,7 +225,6 @@ internal sealed class RenderPageBySlugQueryHandler(
             StringComparer.OrdinalIgnoreCase);
     }
 
-    /// <summary>Renders placements stored as the flat legacy <see cref="ComponentPlacement"/> list (PageTemplate).</summary>
     private static async Task AppendLegacyPlacementsAsync(
         PageTemplate pageTemplate,
         IRepository<Component, ComponentId> compRepo,
@@ -239,18 +236,23 @@ internal sealed class RenderPageBySlugQueryHandler(
         foreach (var placement in pageTemplate.Placements.OrderBy(p => p.SortOrder))
         {
             var comp = await compRepo.GetByIdAsync(placement.ComponentId, ct);
-            if (comp is null || comp.BackingContentTypeId is null) continue;
-
-            var contentTypeId = comp.BackingContentTypeId.Value.Value;
-            var items = await entryRepo.ListAsync(
-                new EntriesBySiteSpec(comp.SiteId, EntryStatus.Published.ToString(), contentTypeId), ct);
+            if (comp is null) continue;
 
             var sb = zoneHtml.TryGetValue(placement.Zone, out var existing)
                 ? existing
                 : (zoneHtml[placement.Zone] = new StringBuilder());
 
-            foreach (var item in items)
-                sb.Append(await renderer.RenderComponentAsync(comp, item, ct));
+            // Bound entry → render that specific entry; otherwise fall back to TemplateContent.
+            if (placement.BoundItemId.HasValue)
+            {
+                var entry = await entryRepo.GetByIdAsync(new EntryId(placement.BoundItemId.Value.Value), ct);
+                if (entry is not null)
+                    sb.Append(await renderer.RenderComponentAsync(comp, entry, ct));
+            }
+            else
+            {
+                sb.Append(await renderer.RenderComponentStaticAsync(comp, ct));
+            }
         }
     }
 
@@ -308,18 +310,23 @@ internal sealed class RenderPageBySlugQueryHandler(
     {
         var compId = new ComponentId(node.ComponentId!.Value);
         var comp = await compRepo.GetByIdAsync(compId, ct);
-        if (comp is null || comp.BackingContentTypeId is null) return;
-
-        var contentTypeId = comp.BackingContentTypeId.Value.Value;
-        var items = await entryRepo.ListAsync(
-            new EntriesBySiteSpec(comp.SiteId, EntryStatus.Published.ToString(), contentTypeId), ct);
+        if (comp is null) return;
 
         var sb = zoneHtml.TryGetValue(node.Zone, out var existing)
             ? existing
             : (zoneHtml[node.Zone] = new StringBuilder());
 
-        foreach (var item in items)
-            sb.Append(await renderer.RenderComponentAsync(comp, item, ct));
+        // Bound entry → render that specific entry; otherwise render TemplateContent.
+        if (node.BoundItemId.HasValue)
+        {
+            var entry = await entryRepo.GetByIdAsync(new EntryId(node.BoundItemId.Value), ct);
+            if (entry is not null)
+                sb.Append(await renderer.RenderComponentAsync(comp, entry, ct));
+        }
+        else
+        {
+            sb.Append(await renderer.RenderComponentStaticAsync(comp, ct));
+        }
     }
 
     private static async Task AppendGridRowAsync(
@@ -348,10 +355,10 @@ internal sealed class RenderPageBySlugQueryHandler(
                 result[prop.Name] = prop.Value.ValueKind switch
                 {
                     JsonValueKind.String => prop.Value.GetString() ?? string.Empty,
-                    JsonValueKind.Null   => string.Empty,
-                    JsonValueKind.True   => "true",
-                    JsonValueKind.False  => "false",
-                    _                    => prop.Value.ToString(),
+                    JsonValueKind.Null => string.Empty,
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
+                    _ => prop.Value.ToString(),
                 };
             }
         }
@@ -367,6 +374,7 @@ internal sealed class RenderPageBySlugQueryHandler(
         public string Zone { get; init; } = string.Empty;
         public int SortOrder { get; init; }
         public Guid? ComponentId { get; init; }
+        public Guid? BoundItemId { get; init; }
         public List<GridColumn>? Columns { get; init; }
     }
 

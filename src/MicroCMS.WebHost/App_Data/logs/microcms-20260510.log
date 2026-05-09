@@ -1,0 +1,540 @@
+2026-05-10 00:43:22.825 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-05-10 00:43:22.897 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'MediaAsset._tags' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.901 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'Plugin._capabilities' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.905 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'ApiClient._scopes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.907 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._corsOrigins' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.909 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._locales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.912 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSecuritySettings._ipAllowlist' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.914 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'WebhookSubscription._events' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.918 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'AssetMetadata.ExifData' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:22.922 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSettings.EnabledLocales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:43:24.029 +08:00 [INF] Quartz.Core.SchedulerSignalerImpl: Initialized Scheduler Signaller of type: Quartz.Core.SchedulerSignalerImpl
+2026-05-10 00:43:24.031 +08:00 [INF] Quartz.Core.QuartzScheduler: Quartz Scheduler created
+2026-05-10 00:43:24.033 +08:00 [INF] Quartz.Core.QuartzScheduler: JobFactory set to: Quartz.Simpl.MicrosoftDependencyInjectionJobFactory
+2026-05-10 00:43:24.034 +08:00 [INF] Quartz.Simpl.RAMJobStore: RAMJobStore initialized.
+2026-05-10 00:43:24.036 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Quartz Scheduler 3.9.0.0 - 'QuartzScheduler' with instanceId 'NON_CLUSTERED' initialized
+2026-05-10 00:43:24.037 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using thread pool 'Quartz.Simpl.DefaultThreadPool', size: 10
+2026-05-10 00:43:24.038 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using job store 'Quartz.Simpl.RAMJobStore', supports persistence: False, clustered: False
+2026-05-10 00:43:24.048 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding 2 jobs, 2 triggers.
+2026-05-10 00:43:24.052 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.MediaScanJob
+2026-05-10 00:43:24.060 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.OutboxDispatcherJob
+2026-05-10 00:43:24.230 +08:00 [INF] Microsoft.Hosting.Lifetime: Now listening on: https://localhost:54188
+2026-05-10 00:43:24.232 +08:00 [INF] Microsoft.Hosting.Lifetime: Now listening on: http://localhost:54189
+2026-05-10 00:43:24.310 +08:00 [INF] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+2026-05-10 00:43:24.313 +08:00 [INF] Microsoft.Hosting.Lifetime: Hosting environment: Development
+2026-05-10 00:43:24.314 +08:00 [INF] Microsoft.Hosting.Lifetime: Content root path: C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.WebHost
+2026-05-10 00:43:24.315 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED started.
+2026-05-10 00:43:25.139 +08:00 [INF] MicroCMS.Infrastructure.Install.InstallationStateService: Installation state: installed.
+2026-05-10 00:43:43.557 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 00:43:43.565 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 4ms
+2026-05-10 00:43:45.773 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling LoginCommand
+2026-05-10 00:43:46.519 +08:00 [WRN] Microsoft.EntityFrameworkCore.Query: Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-10 00:43:46.839 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled LoginCommand in 1063ms
+2026-05-10 00:43:46.988 +08:00 [WRN] Microsoft.EntityFrameworkCore.Query: Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-10 00:43:46.999 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:43:47.006 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:43:47.006 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:43:47.011 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 00:43:47.019 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 7ms
+2026-05-10 00:43:50.111 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 00:43:50.171 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 59ms
+2026-05-10 00:43:58.463 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:43:58.465 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:43:58.473 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 8ms
+2026-05-10 00:43:58.493 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:43:58.509 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 14ms
+2026-05-10 00:43:58.601 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 135ms
+2026-05-10 00:44:41.630 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:44:41.630 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:44:41.630 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:44:41.639 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 1ms
+2026-05-10 00:44:41.641 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 00:44:41.642 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 2ms
+2026-05-10 00:44:44.963 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 00:44:44.963 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 00:44:44.965 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 0ms
+2026-05-10 00:44:44.969 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 2ms
+2026-05-10 00:44:45.026 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:44:45.026 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:44:45.030 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 2ms
+2026-05-10 00:44:45.030 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 00:44:45.041 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:44:45.043 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 00:44:48.111 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 00:44:48.111 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 00:44:48.113 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 0ms
+2026-05-10 00:44:48.119 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 2ms
+2026-05-10 00:44:48.156 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:44:48.156 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:44:48.159 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 00:44:48.159 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 00:44:48.169 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:44:48.171 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 00:45:01.380 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 00:45:01.381 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 00:45:01.381 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 0ms
+2026-05-10 00:45:01.384 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 1ms
+2026-05-10 00:45:01.431 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:45:01.431 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:45:01.434 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 00:45:01.434 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 00:45:01.455 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:45:01.457 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 00:45:10.054 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SaveSiteTemplatePlacementsCommand
+2026-05-10 00:45:10.068 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SaveSiteTemplatePlacementsCommand in 12ms
+2026-05-10 00:45:10.079 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:45:10.081 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 00:45:13.744 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 00:45:13.748 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 1ms
+2026-05-10 00:45:16.911 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:45:16.923 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 3ms
+2026-05-10 00:45:16.954 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 00:45:16.964 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 7ms
+2026-05-10 00:45:21.038 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling UpdateSiteTemplateCommand
+2026-05-10 00:45:21.051 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled UpdateSiteTemplateCommand in 11ms
+2026-05-10 00:45:21.060 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 00:45:21.061 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 0ms
+2026-05-10 00:45:23.863 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:45:23.865 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 00:45:52.596 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:45:52.596 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:45:52.598 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:45:52.600 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 2ms
+2026-05-10 00:45:52.601 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 00:45:52.603 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 00:46:33.158 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTreeQuery
+2026-05-10 00:46:33.158 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListContentTypesQuery
+2026-05-10 00:46:33.207 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListContentTypesQuery in 45ms
+2026-05-10 00:46:33.219 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTreeQuery in 59ms
+2026-05-10 00:46:34.672 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 00:46:34.678 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 1ms
+2026-05-10 00:46:34.679 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 00:46:34.680 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEffectiveTemplateQuery
+2026-05-10 00:46:34.693 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 11ms
+2026-05-10 00:46:34.711 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEntryQuery
+2026-05-10 00:46:34.752 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEffectiveTemplateQuery in 69ms
+2026-05-10 00:46:34.767 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEntryQuery in 53ms
+2026-05-10 00:46:34.791 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetContentTypeQuery
+2026-05-10 00:46:34.800 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetContentTypeQuery in 7ms
+2026-05-10 00:46:38.966 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SetPageSiteTemplateCommand
+2026-05-10 00:46:39.004 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SetPageSiteTemplateCommand in 34ms
+2026-05-10 00:46:39.013 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEffectiveTemplateQuery
+2026-05-10 00:46:39.013 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 00:46:39.015 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEffectiveTemplateQuery in 1ms
+2026-05-10 00:46:39.016 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 0ms
+2026-05-10 00:46:39.965 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:46:39.967 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:46:39.965 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:46:39.967 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 00:46:39.972 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 3ms
+2026-05-10 00:46:39.975 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 00:46:39.977 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 00:46:39.978 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 00:46:39.979 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 0ms
+2026-05-10 00:46:40.179 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 196ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '26cd3d86-061a-442a-9a4a-050da37a68a2' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 00:46:41.627 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 00:46:41.652 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 22ms
+2026-05-10 00:46:53.318 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:46:53.320 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 00:55:32.296 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 00:55:32.297 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:55:32.297 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 0ms
+2026-05-10 00:55:32.298 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 00:55:32.301 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 0ms
+2026-05-10 00:55:32.379 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:55:32.381 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 00:55:32.380 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 00:55:32.380 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 00:55:32.388 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 00:55:32.388 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 0ms
+2026-05-10 00:55:32.390 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 1ms
+2026-05-10 00:55:32.524 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 133ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '26cd3d86-061a-442a-9a4a-050da37a68a2' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 00:55:32.510 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:55:32.559 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:55:32.577 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 18ms
+2026-05-10 00:55:32.593 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 00:55:33.642 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 00:55:33.647 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 2ms
+2026-05-10 00:56:01.022 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 00:56:01.027 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentQuery
+2026-05-10 00:56:01.034 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentQuery in 4ms
+2026-05-10 00:56:01.037 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 13ms
+2026-05-10 00:56:06.697 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 00:56:06.701 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 2ms
+2026-05-10 00:56:08.107 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling PublishComponentItemCommand
+2026-05-10 00:56:08.251 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling PublishComponentItemCommand after 141ms
+MicroCMS.Domain.Exceptions.InvalidStateTransitionException: 'Entry' cannot transition from 'Draft' to 'Approve'.
+   at MicroCMS.Domain.Aggregates.Content.Entry.EnsureStatus(EntryStatus required, String operation) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Domain\Aggregates\Content\Entry.cs:line 247
+   at MicroCMS.Domain.Aggregates.Content.Entry.Approve() in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Domain\Aggregates\Content\Entry.cs:line 127
+   at MicroCMS.Application.Features.Components.Handlers.PublishComponentItemCommandHandler.Handle(PublishComponentItemCommand request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Components\Handlers\ComponentHandlers.cs:line 296
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 00:57:46.263 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling RefreshTokenCommand
+2026-05-10 00:57:46.290 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled RefreshTokenCommand in 25ms
+2026-05-10 00:57:46.307 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SwitchSiteCommand
+2026-05-10 00:57:46.314 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SwitchSiteCommand in 5ms
+2026-05-10 00:58:10.898 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-05-10 00:58:10.970 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'MediaAsset._tags' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.975 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'Plugin._capabilities' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.977 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'ApiClient._scopes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.979 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._corsOrigins' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.981 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._locales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.983 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSecuritySettings._ipAllowlist' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.984 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'WebhookSubscription._events' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.988 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'AssetMetadata.ExifData' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:10.992 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSettings.EnabledLocales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-10 00:58:11.680 +08:00 [INF] Quartz.Core.SchedulerSignalerImpl: Initialized Scheduler Signaller of type: Quartz.Core.SchedulerSignalerImpl
+2026-05-10 00:58:11.681 +08:00 [INF] Quartz.Core.QuartzScheduler: Quartz Scheduler created
+2026-05-10 00:58:11.683 +08:00 [INF] Quartz.Core.QuartzScheduler: JobFactory set to: Quartz.Simpl.MicrosoftDependencyInjectionJobFactory
+2026-05-10 00:58:11.683 +08:00 [INF] Quartz.Simpl.RAMJobStore: RAMJobStore initialized.
+2026-05-10 00:58:11.684 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Quartz Scheduler 3.9.0.0 - 'QuartzScheduler' with instanceId 'NON_CLUSTERED' initialized
+2026-05-10 00:58:11.685 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using thread pool 'Quartz.Simpl.DefaultThreadPool', size: 10
+2026-05-10 00:58:11.686 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using job store 'Quartz.Simpl.RAMJobStore', supports persistence: False, clustered: False
+2026-05-10 00:58:11.696 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding 2 jobs, 2 triggers.
+2026-05-10 00:58:11.699 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.MediaScanJob
+2026-05-10 00:58:11.708 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.OutboxDispatcherJob
+2026-05-10 00:58:11.875 +08:00 [INF] Microsoft.Hosting.Lifetime: Now listening on: https://localhost:54188
+2026-05-10 00:58:11.877 +08:00 [INF] Microsoft.Hosting.Lifetime: Now listening on: http://localhost:54189
+2026-05-10 00:58:11.955 +08:00 [INF] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+2026-05-10 00:58:11.957 +08:00 [INF] Microsoft.Hosting.Lifetime: Hosting environment: Development
+2026-05-10 00:58:11.958 +08:00 [INF] Microsoft.Hosting.Lifetime: Content root path: C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.WebHost
+2026-05-10 00:58:11.959 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED started.
+2026-05-10 00:58:12.551 +08:00 [INF] MicroCMS.Infrastructure.Install.InstallationStateService: Installation state: installed.
+2026-05-10 00:58:27.848 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 00:58:27.855 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 4ms
+2026-05-10 00:58:30.105 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling LoginCommand
+2026-05-10 00:58:30.860 +08:00 [WRN] Microsoft.EntityFrameworkCore.Query: Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-10 00:58:31.176 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled LoginCommand in 1068ms
+2026-05-10 00:58:31.344 +08:00 [WRN] Microsoft.EntityFrameworkCore.Query: Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-10 00:58:31.354 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:58:31.354 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:58:31.360 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 00:58:31.367 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 00:58:31.376 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 7ms
+2026-05-10 00:58:32.948 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 00:58:33.019 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 69ms
+2026-05-10 00:58:34.934 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:58:34.935 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:58:34.945 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 8ms
+2026-05-10 00:58:34.963 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:58:34.979 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 14ms
+2026-05-10 00:58:35.070 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 132ms
+2026-05-10 00:58:40.156 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 00:58:40.226 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 64ms
+2026-05-10 00:59:00.565 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 00:59:00.574 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 6ms
+2026-05-10 00:59:03.160 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 00:59:03.163 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 1ms
+2026-05-10 00:59:08.072 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 00:59:08.077 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 1ms
+2026-05-10 00:59:10.151 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 00:59:10.151 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:59:10.156 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 00:59:10.156 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 2ms
+2026-05-10 00:59:11.773 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 00:59:11.781 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 3ms
+2026-05-10 00:59:19.239 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SaveSiteTemplatePlacementsCommand
+2026-05-10 00:59:19.255 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SaveSiteTemplatePlacementsCommand in 12ms
+2026-05-10 00:59:19.265 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 00:59:19.269 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 00:59:24.291 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListContentTypesQuery
+2026-05-10 00:59:24.325 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListContentTypesQuery in 31ms
+2026-05-10 00:59:27.292 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 00:59:27.296 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentQuery
+2026-05-10 00:59:27.297 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 2ms
+2026-05-10 00:59:27.305 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentQuery in 8ms
+2026-05-10 00:59:28.607 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 00:59:28.623 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 13ms
+2026-05-10 00:59:34.056 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling PublishComponentItemCommand
+2026-05-10 00:59:34.110 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled PublishComponentItemCommand in 50ms
+2026-05-10 00:59:34.120 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 00:59:34.122 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 1ms
+2026-05-10 00:59:38.987 +08:00 [WRN] MicroCMS.Infrastructure.Search.OpenSearchService: OpenSearch index failed for entry "72d3f3fb-087c-4c56-a839-12b9472214ac": Invalid OpenSearch.Client response built from a unsuccessful () low level call on PUT: /entries-94b266d0d58840ee82414f005db41594/_doc/72d3f3fb-087c-4c56-a839-12b9472214ac
+# Audit trail of this API call:
+ - [1] BadRequest: Node: http://localhost:9200/ Took: 00:00:04.2044321
+# OriginalException: System.Net.Http.HttpRequestException: No connection could be made because the target machine actively refused it. (localhost:9200)
+ ---> System.Net.Sockets.SocketException (10061): No connection could be made because the target machine actively refused it.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.AddHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.HttpConnectionWaiter`1.WaitForConnectionWithTelemetryAsync(HttpRequestMessage request, HttpConnectionPool pool, Boolean async, CancellationToken requestCancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.DiagnosticsHandler.SendAsyncCore(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at OpenSearch.Net.HttpConnection.RequestAsync[TResponse](RequestData requestData, CancellationToken cancellationToken)
+# Request:
+<Request stream not captured or already read to completion by serializer. Set DisableDirectStreaming() on ConnectionSettings to force it to be set on the response.>
+# Response:
+<Response stream not captured or already read to completion by serializer. Set DisableDirectStreaming() on ConnectionSettings to force it to be set on the response.>
+
+2026-05-10 01:00:04.303 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 01:00:04.306 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 1ms
+2026-05-10 01:00:05.338 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 01:00:05.341 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 1ms
+2026-05-10 01:00:07.988 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:00:07.988 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 01:00:07.988 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 01:00:07.992 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 1ms
+2026-05-10 01:00:07.994 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 01:00:07.997 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 2ms
+2026-05-10 01:00:10.224 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:00:10.230 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 1ms
+2026-05-10 01:00:13.893 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:00:13.894 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentQuery
+2026-05-10 01:00:13.897 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 2ms
+2026-05-10 01:00:13.899 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentQuery in 2ms
+2026-05-10 01:00:16.389 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 01:00:16.392 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 1ms
+2026-05-10 01:02:21.503 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListContentTypesQuery
+2026-05-10 01:02:21.506 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTreeQuery
+2026-05-10 01:02:21.509 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListContentTypesQuery in 5ms
+2026-05-10 01:02:21.571 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTreeQuery in 63ms
+2026-05-10 01:02:22.996 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 01:02:23.000 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 0ms
+2026-05-10 01:02:23.002 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEffectiveTemplateQuery
+2026-05-10 01:02:23.002 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 01:02:23.015 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 10ms
+2026-05-10 01:02:23.015 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEffectiveTemplateQuery in 11ms
+2026-05-10 01:02:23.034 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEntryQuery
+2026-05-10 01:02:23.052 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEntryQuery in 15ms
+2026-05-10 01:02:23.074 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetContentTypeQuery
+2026-05-10 01:02:23.082 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetContentTypeQuery in 6ms
+2026-05-10 01:02:27.187 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 01:02:27.187 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:02:27.187 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 01:02:27.187 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 01:02:27.194 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 01:02:27.195 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 01:02:27.197 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 01:02:27.196 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 01:02:27.198 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 0ms
+2026-05-10 01:02:27.391 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 186ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '26cd3d86-061a-442a-9a4a-050da37a68a2' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 01:02:28.702 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:02:28.735 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 24ms
+2026-05-10 01:02:44.756 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:02:44.759 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 01:02:52.289 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 01:02:52.289 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEffectiveTemplateQuery
+2026-05-10 01:02:52.293 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 1ms
+2026-05-10 01:02:52.306 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEffectiveTemplateQuery in 11ms
+2026-05-10 01:02:52.315 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEntryQuery
+2026-05-10 01:02:52.319 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEntryQuery in 2ms
+2026-05-10 01:02:52.335 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetMediaAssetQuery
+2026-05-10 01:02:52.391 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetMediaAssetQuery in 54ms
+2026-05-10 01:03:04.962 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 01:03:04.962 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 01:03:04.962 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 01:03:04.967 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 01:03:04.968 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 0ms
+2026-05-10 01:03:04.971 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 01:03:04.971 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 01:03:05.099 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 125ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '9852e2fb-d300-4572-b301-4396cb2f729b' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 01:03:09.034 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListContentTypesQuery
+2026-05-10 01:03:09.034 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTreeQuery
+2026-05-10 01:03:09.036 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListContentTypesQuery in 0ms
+2026-05-10 01:03:09.038 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTreeQuery in 1ms
+2026-05-10 01:03:10.340 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 01:03:10.342 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetContentTypeQuery
+2026-05-10 01:03:10.347 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 2ms
+2026-05-10 01:03:10.354 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetContentTypeQuery in 0ms
+2026-05-10 01:03:15.070 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SetPageSiteTemplateCommand
+2026-05-10 01:03:15.104 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SetPageSiteTemplateCommand in 33ms
+2026-05-10 01:03:15.113 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEffectiveTemplateQuery
+2026-05-10 01:03:15.113 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 01:03:15.117 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 0ms
+2026-05-10 01:03:15.117 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEffectiveTemplateQuery in 1ms
+2026-05-10 01:03:16.136 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:03:16.139 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 01:03:17.373 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:03:17.377 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 1ms
+2026-05-10 01:10:25.398 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 01:10:25.399 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 01:10:25.402 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 01:10:25.420 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 01:10:25.398 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '94b266d0-d588-40ee-8241-4f005db41594' could not be resolved to a known tenant.
+2026-05-10 01:10:25.407 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 01:10:25.402 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 01:10:25.408 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:10:25.430 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 01:10:25.429 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 2ms
+2026-05-10 01:10:25.432 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:10:25.434 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 0ms
+2026-05-10 01:10:25.588 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 154ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '9852e2fb-d300-4572-b301-4396cb2f729b' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 01:10:25.481 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 44ms
+2026-05-10 01:10:25.595 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 2ms
+2026-05-10 01:10:25.412 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 01:10:25.420 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 01:10:25.658 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 0ms
+2026-05-10 01:10:25.660 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 1ms
+2026-05-10 01:10:28.052 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-10 01:10:28.053 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetInstallStatusQuery
+2026-05-10 01:10:28.056 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 1ms
+2026-05-10 01:10:28.057 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetInstallStatusQuery in 0ms
+2026-05-10 01:10:28.126 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 01:10:28.128 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 01:10:28.128 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 01:10:28.128 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 01:10:28.130 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 01:10:28.131 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 0ms
+2026-05-10 01:10:28.132 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 0ms
+2026-05-10 01:10:28.220 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:10:28.249 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 116ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '9852e2fb-d300-4572-b301-4396cb2f729b' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 01:10:28.251 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms
+2026-05-10 01:10:28.256 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 01:10:28.311 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 01:10:29.652 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:10:29.656 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 1ms
+2026-05-10 01:10:46.103 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:10:46.104 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentQuery
+2026-05-10 01:10:46.106 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 1ms
+2026-05-10 01:10:46.107 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentQuery in 0ms
+2026-05-10 01:10:59.675 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling CreateComponentItemCommand
+2026-05-10 01:10:59.704 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled CreateComponentItemCommand in 27ms
+2026-05-10 01:10:59.748 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 01:10:59.750 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 1ms
+2026-05-10 01:11:04.885 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling UpdateComponentItemCommand
+2026-05-10 01:11:04.890 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled UpdateComponentItemCommand in 4ms
+2026-05-10 01:11:04.898 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 01:11:04.900 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 0ms
+2026-05-10 01:11:13.602 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling UpdateComponentItemCommand
+2026-05-10 01:11:13.611 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled UpdateComponentItemCommand in 7ms
+2026-05-10 01:11:13.620 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 01:11:13.622 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 0ms
+2026-05-10 01:11:18.687 +08:00 [WRN] MicroCMS.Infrastructure.Search.OpenSearchService: OpenSearch index failed for entry "20fab35b-367b-499c-9630-b34475ea35ff": Invalid OpenSearch.Client response built from a unsuccessful () low level call on PUT: /entries-94b266d0d58840ee82414f005db41594/_doc/20fab35b-367b-499c-9630-b34475ea35ff
+# Audit trail of this API call:
+ - [1] BadRequest: Node: http://localhost:9200/ Took: 00:00:04.0299901
+# OriginalException: System.Net.Http.HttpRequestException: No connection could be made because the target machine actively refused it. (localhost:9200)
+ ---> System.Net.Sockets.SocketException (10061): No connection could be made because the target machine actively refused it.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.AddHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.HttpConnectionWaiter`1.WaitForConnectionWithTelemetryAsync(HttpRequestMessage request, HttpConnectionPool pool, Boolean async, CancellationToken requestCancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.DiagnosticsHandler.SendAsyncCore(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at OpenSearch.Net.HttpConnection.RequestAsync[TResponse](RequestData requestData, CancellationToken cancellationToken)
+# Request:
+<Request stream not captured or already read to completion by serializer. Set DisableDirectStreaming() on ConnectionSettings to force it to be set on the response.>
+# Response:
+<Response stream not captured or already read to completion by serializer. Set DisableDirectStreaming() on ConnectionSettings to force it to be set on the response.>
+
+2026-05-10 01:11:18.687 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling UpdateComponentItemCommand
+2026-05-10 01:11:18.698 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled UpdateComponentItemCommand in 2ms
+2026-05-10 01:11:18.706 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 01:11:18.710 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 1ms
+2026-05-10 01:11:20.428 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentQuery
+2026-05-10 01:11:20.428 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:11:20.432 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentQuery in 1ms
+2026-05-10 01:11:20.440 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 5ms
+2026-05-10 01:11:23.996 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling PublishComponentItemCommand
+2026-05-10 01:11:24.014 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled PublishComponentItemCommand in 7ms
+2026-05-10 01:11:24.022 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentItemQuery
+2026-05-10 01:11:24.025 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentItemQuery in 0ms
+2026-05-10 01:11:28.674 +08:00 [WRN] MicroCMS.Infrastructure.Search.OpenSearchService: OpenSearch index failed for entry "20fab35b-367b-499c-9630-b34475ea35ff": Invalid OpenSearch.Client response built from a unsuccessful () low level call on PUT: /entries-94b266d0d58840ee82414f005db41594/_doc/20fab35b-367b-499c-9630-b34475ea35ff
+# Audit trail of this API call:
+ - [1] BadRequest: Node: http://localhost:9200/ Took: 00:00:04.0190824
+# OriginalException: System.Net.Http.HttpRequestException: No connection could be made because the target machine actively refused it. (localhost:9200)
+ ---> System.Net.Sockets.SocketException (10061): No connection could be made because the target machine actively refused it.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.AddHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.HttpConnectionWaiter`1.WaitForConnectionWithTelemetryAsync(HttpRequestMessage request, HttpConnectionPool pool, Boolean async, CancellationToken requestCancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.DiagnosticsHandler.SendAsyncCore(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at OpenSearch.Net.HttpConnection.RequestAsync[TResponse](RequestData requestData, CancellationToken cancellationToken)
+# Request:
+<Request stream not captured or already read to completion by serializer. Set DisableDirectStreaming() on ConnectionSettings to force it to be set on the response.>
+# Response:
+<Response stream not captured or already read to completion by serializer. Set DisableDirectStreaming() on ConnectionSettings to force it to be set on the response.>
+
+2026-05-10 01:11:29.016 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListContentTypesQuery
+2026-05-10 01:11:29.017 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTreeQuery
+2026-05-10 01:11:29.018 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListContentTypesQuery in 0ms
+2026-05-10 01:11:29.020 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTreeQuery in 0ms
+2026-05-10 01:11:30.378 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageQuery
+2026-05-10 01:11:30.388 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListSiteTemplatesQuery
+2026-05-10 01:11:30.388 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEffectiveTemplateQuery
+2026-05-10 01:11:30.388 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetEntryQuery
+2026-05-10 01:11:30.389 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetPageQuery in 1ms
+2026-05-10 01:11:30.394 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListSiteTemplatesQuery in 1ms
+2026-05-10 01:11:30.398 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEffectiveTemplateQuery in 1ms
+2026-05-10 01:11:30.400 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetEntryQuery in 1ms
+2026-05-10 01:11:30.415 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetContentTypeQuery
+2026-05-10 01:11:30.416 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetContentTypeQuery in 0ms
+2026-05-10 01:11:30.425 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetMediaAssetQuery
+2026-05-10 01:11:30.429 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetMediaAssetQuery in 1ms
+2026-05-10 01:11:32.765 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentsQuery
+2026-05-10 01:11:32.766 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListLayoutsQuery
+2026-05-10 01:11:32.767 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetLayoutQuery
+2026-05-10 01:11:32.767 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetPageTemplateQuery
+2026-05-10 01:11:32.767 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:11:32.769 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentsQuery in 1ms
+2026-05-10 01:11:32.821 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 16ms
+2026-05-10 01:11:32.775 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetLayoutQuery in 0ms
+2026-05-10 01:11:32.890 +08:00 [ERR] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Error handling GetPageTemplateQuery after 114ms
+MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'PageTemplate' with key '9852e2fb-d300-4572-b301-4396cb2f729b' was not found.
+   at MicroCMS.Application.Features.Pages.Commands.GetPageTemplateQueryHandler.Handle(GetPageTemplateQuery request, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Features\Pages\Commands\PageCommands.cs:line 301
+   at MicroCMS.Application.Common.Behaviors.UnitOfWorkBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\UnitOfWorkBehavior.cs:line 27
+   at MicroCMS.Application.Common.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\ValidationBehavior.cs:line 23
+   at MicroCMS.Application.Common.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Application\Common\Behaviors\LoggingBehavior.cs:line 28
+2026-05-10 01:11:32.772 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListLayoutsQuery in 0ms
+2026-05-10 01:11:33.921 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListComponentItemsQuery
+2026-05-10 01:11:33.924 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 1ms
+2026-05-10 01:11:42.200 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetSiteTemplateQuery
+2026-05-10 01:11:42.202 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetSiteTemplateQuery in 0ms

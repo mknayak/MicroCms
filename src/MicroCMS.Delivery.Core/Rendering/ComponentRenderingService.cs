@@ -32,6 +32,20 @@ internal sealed class ComponentRenderingService(
         return componentRenderer.RenderAsync(component, dto, cancellationToken);
     }
 
+    public Task<string> RenderComponentStaticAsync(
+        Component component,
+        CancellationToken cancellationToken = default)
+    {
+        var dto = new DeliveryComponentItemDto(
+            Guid.Empty,
+            component.Id.Value,
+            component.Key,
+            string.Empty,
+            System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{}"));
+
+        return componentRenderer.RenderAsync(component, dto, cancellationToken);
+    }
+
     public Task<string> RenderLayoutAsync(
         Layout layout,
         IReadOnlyDictionary<string, string> zones,

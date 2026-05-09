@@ -292,7 +292,9 @@ internal sealed class PublishComponentItemCommandHandler(
             ?? throw new NotFoundException(nameof(Entry), request.ItemId);
 
         // Entries require Approved state before Publish — auto-approve for component items
-        if (entry.Status == EntryStatus.Draft || entry.Status == EntryStatus.PendingReview)
+        if (entry.Status == EntryStatus.Draft)
+            entry.Submit();
+        if (entry.Status == EntryStatus.PendingReview)
             entry.Approve();
         entry.Publish();
         entryRepo.Update(entry);

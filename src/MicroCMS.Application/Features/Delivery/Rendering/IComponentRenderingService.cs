@@ -19,6 +19,14 @@ public interface IComponentRenderingService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Renders a component using only its template, with no entry data (empty field bag).
+    /// Used for static/structural components that carry no backing content type.
+    /// </summary>
+    Task<string> RenderComponentStaticAsync(
+        Component component,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Injects zone HTML into a layout shell, resolves all <c>{{namespace:key}}</c> tokens
     /// via the registered <see cref="TokenResolutionPipeline"/>, and returns a full HTML document.
     /// </summary>
