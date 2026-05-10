@@ -1,5 +1,6 @@
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Entities;
+using MicroCMS.Domain.Events.Pages;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Shared.Ids;
 
@@ -40,6 +41,13 @@ WebComponent = 2,
     /// The Delivery API emits a hydration hint comment for this type.
     /// </summary>
     RazorPartial = 3,
+
+    /// <summary>
+    /// Plain HTML template — <c>TemplateContent</c> is returned as-is after substituting
+    /// <c>{{fieldName}}</c> tokens with the corresponding item field values.
+    /// No Handlebars helpers or partials are evaluated.
+    /// </summary>
+    Html = 4,
 }
 
 /// <summary>
@@ -146,6 +154,7 @@ SiteId = siteId;
     TemplateType = templateType;
         TemplateContent = templateContent?.Trim();
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new ComponentUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>Saves or clears the wireframe thumbnail for this component.</summary>

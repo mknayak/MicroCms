@@ -1,4 +1,5 @@
 using MicroCMS.Domain.Enums;
+using MicroCMS.Domain.Events.Pages;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
@@ -106,6 +107,7 @@ public static Page CreateCollection(
  ParentId = newParentId;
       Depth = newDepth;
       UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     public void UpdateTitle(string title)
@@ -113,6 +115,7 @@ public static Page CreateCollection(
         Validate(title);
         Title = title.Trim();
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     public void LinkEntry(EntryId entryId)
@@ -121,6 +124,7 @@ public static Page CreateCollection(
  throw new BusinessRuleViolationException("Page.NotStatic", "Only Static pages can be linked to an entry.");
         LinkedEntryId = entryId;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     /// <summary>Clears the linked entry association from a Static page.</summary>
@@ -130,6 +134,7 @@ public static Page CreateCollection(
       throw new BusinessRuleViolationException("Page.NotStatic", "Only Static pages can have a linked entry.");
         LinkedEntryId = null;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     /// <summary>Assigns or clears the layout for this page.</summary>
@@ -137,6 +142,7 @@ public static Page CreateCollection(
     {
         LayoutId = layoutId;
    UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     /// <summary>
@@ -150,6 +156,7 @@ public static Page CreateCollection(
     {
         SiteTemplateId = siteTemplateId;
    UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     /// <summary>
@@ -161,6 +168,7 @@ public static Page CreateCollection(
         ArgumentNullException.ThrowIfNull(seo, nameof(seo));
         Seo = seo;
      UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new PageUpdatedEvent(Id, TenantId, SiteId, Slug.Value));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

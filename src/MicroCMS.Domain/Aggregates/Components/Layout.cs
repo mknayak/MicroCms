@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Events.Pages;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Shared.Ids;
 
@@ -127,6 +128,7 @@ public static Layout Create(
         Name = name.Trim();
         TemplateType = templateType;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new LayoutUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>
@@ -138,6 +140,7 @@ public static Layout Create(
         ArgumentException.ThrowIfNullOrWhiteSpace(zonesJson, nameof(zonesJson));
         ZonesJson = zonesJson;
   UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new LayoutUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>Replaces default placement JSON for this layout.</summary>
@@ -146,6 +149,7 @@ public static Layout Create(
         ArgumentException.ThrowIfNullOrWhiteSpace(defaultPlacementsJson, nameof(defaultPlacementsJson));
         DefaultPlacementsJson = defaultPlacementsJson;
     UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new LayoutUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>
@@ -158,6 +162,7 @@ public static Layout Create(
         ArgumentException.ThrowIfNullOrWhiteSpace(layoutConfigJson, nameof(layoutConfigJson));
         LayoutConfigJson = layoutConfigJson;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new LayoutUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>
@@ -169,6 +174,7 @@ public static Layout Create(
         ShellTemplate = shellTemplate;
         IsShellCustomized = false;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new LayoutUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>
@@ -181,6 +187,7 @@ public static Layout Create(
         ShellTemplate = shellTemplate;
         IsShellCustomized = true;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new LayoutUpdatedEvent(Id, TenantId, SiteId));
     }
 
     public void MarkAsDefault() { IsDefault = true; UpdatedAt = DateTimeOffset.UtcNow; }

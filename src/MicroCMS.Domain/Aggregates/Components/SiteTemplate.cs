@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Events.Pages;
 using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Domain.Aggregates.Components;
@@ -60,6 +61,7 @@ return new SiteTemplate(SiteTemplateId.New(), tenantId, siteId, layoutId, name, 
      Description = description?.Trim();
         LayoutId = layoutId;
      UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new SiteTemplateUpdatedEvent(Id, TenantId, SiteId));
     }
 
     /// <summary>Replaces the full placement tree from serialised JSON.</summary>
@@ -68,6 +70,7 @@ return new SiteTemplate(SiteTemplateId.New(), tenantId, siteId, layoutId, name, 
         ArgumentException.ThrowIfNullOrWhiteSpace(placementsJson, nameof(placementsJson));
         PlacementsJson = placementsJson;
         UpdatedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new SiteTemplateUpdatedEvent(Id, TenantId, SiteId));
     }
 
     }

@@ -15,7 +15,8 @@ namespace MicroCMS.Delivery.Core.Rendering;
 /// <list type="table">
 ///   <item><term>Handlebars</term><description>Rendered server-side via Handlebars.Net. Fields JSON is flattened to named tokens.</description></item>
 ///   <item><term>React</term><description>Emits <c>&lt;!-- component:key id:... type:React --&gt;</c> for client-side hydration.</description></item>
-///   <item><term>WebComponent</term><description>Emits a hydration hint comment.</description></item>
+///   <item><term>WebComponent</term><description>Renders <c>TemplateContent</c> with <c>{{fieldName}}</c> token substitution, allowing attribute bindings on custom elements.</description></item>
+///   <item><term>Html</term><description>Returns <c>TemplateContent</c> as-is after substituting <c>{{fieldName}}</c> tokens with item field values.</description></item>
 ///   <item><term>RazorPartial</term><description>Emits a hydration hint comment. Rendering must be done by an MVC host via <c>Html.PartialAsync(component.Key)</c>.</description></item>
 /// </list>
 /// </summary>
@@ -45,6 +46,8 @@ Component component,
         var html = component.TemplateType switch
         {
             RenderingTemplateType.Handlebars => RenderHandlebars(component, item),
+            RenderingTemplateType.Html => RenderHtml(component, item),
+            RenderingTemplateType.WebComponent => RenderHtml(component, item),
             _ => RenderFallbackComment(component, item),
         };
 
@@ -77,6 +80,25 @@ Component component,
     /// </summary>
     private static string EscapeNamespaceTokens(string template) =>
         NamespaceTokenPattern.Replace(template, @"\{{$1}}");
+
+    // ── HTML ──────────────────────────────────────────────────────────────
+
+    private string RenderHtml(Component component, DeliveryComponentItemDto item)
+    {
+        try
+        {
+            var data = BuildDataDictionary(item);
+            return Regex.Replace(
+                component.TemplateContent!,
+                @"\{\{([a-zA-Z][a-zA-Z0-9_]*)\}\}",
+                m => data.TryGetValue(m.Groups[1].Value, out var val) ? val?.ToString() ?? string.Empty : m.Value);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "HTML render failed for component {Key}", component.Key);
+            return $"<!-- render-error component:{component.Key} -->";
+        }
+    }
 
     // ── Fallback ──────────────────────────────────────────────────────────
 
