@@ -19,7 +19,6 @@
     <ProjectReference Include="..\MicroCMS.Infrastructure\MicroCMS.Infrastructure.csproj" />
     <ProjectReference Include="..\MicroCMS.Api\MicroCMS.Api.csproj" />
     <ProjectReference Include="..\MicroCMS.GraphQL\MicroCMS.GraphQL.csproj" />
-    <ProjectReference Include="..\MicroCMS.Admin.WebHost\MicroCMS.Admin.WebHost.csproj" />
     <ProjectReference Include="..\MicroCMS.Plugins.Abstractions\MicroCMS.Plugins.Abstractions.csproj" />
     <ProjectReference Include="..\MicroCMS.Plugins.Hosting\MicroCMS.Plugins.Hosting.csproj" />
     <ProjectReference Include="..\MicroCMS.Ai.Abstractions\MicroCMS.Ai.Abstractions.csproj" />

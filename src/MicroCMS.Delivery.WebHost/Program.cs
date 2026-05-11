@@ -13,11 +13,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Configuration ─────────────────────────────────────────────────────────────
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables();
+
 
 // ── Serilog ───────────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((ctx, lc) => lc

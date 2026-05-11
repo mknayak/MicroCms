@@ -6,11 +6,6 @@ using MicroCMS.WebHost.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .AddJsonFile("Configuration/appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"Configuration/appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables();
-
 // ── Bridge TrustedClients:Admin → Jwt ────────────────────────────────────────
 // JwtTokenService (Infrastructure) reads Jwt:Secret/Issuer/Audience/AccessTokenMinutes
 // to mint tokens. WebHost validates via TrustedClients.  Rather than duplicating
