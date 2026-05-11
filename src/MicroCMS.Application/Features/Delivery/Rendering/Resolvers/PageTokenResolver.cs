@@ -59,7 +59,7 @@ public sealed class PageTokenResolver : ITokenResolver
         value = token.ToLowerInvariant() switch
         {
             "page:slug"         => context.PageSlug,
-            "page:title"        => context.PageTitle,
+            "page:pagetitle"        => context.PageTitle,
             "page:published-at" => context.PagePublishedAt?.ToString("O") ?? string.Empty,
             _                   => null
         };
