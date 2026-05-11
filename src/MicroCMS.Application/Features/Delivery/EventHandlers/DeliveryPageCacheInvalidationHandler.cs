@@ -63,7 +63,7 @@ internal sealed class DeliveryPageCacheInvalidationHandler(
     public Task Handle(
         DomainEventNotification<EntryUnpublishedEvent> notification,
         CancellationToken cancellationToken)
-        => InvalidatePagesForEntryAsync(notification.DomainEvent.SiteId, notification.DomainEvent.EntryId, cancellationToken);
+        => InvalidatePagesForEntryAsync(siteId: null, notification.DomainEvent.EntryId, cancellationToken);
 
     public Task Handle(
         DomainEventNotification<EntryUpdatedEvent> notification,

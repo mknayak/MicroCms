@@ -82,6 +82,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<OutboxDeliveryRecord> OutboxDeliveryRecords => Set<OutboxDeliveryRecord>();
     public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
     public DbSet<Component> Components => Set<Component>();
     public DbSet<PageTemplate> PageTemplates => Set<PageTemplate>();

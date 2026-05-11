@@ -24,3 +24,15 @@ public sealed class PageBySlugSpec : BaseSpecification<Page>
   private PageBySlugSpec(SiteId siteId, Slug slug)
         : base(p => p.SiteId == siteId && p.Slug == slug) { }
 }
+
+/// <summary>All pages linked to a specific entry, optionally scoped to a site.</summary>
+public sealed class PagesByLinkedEntrySpec : BaseSpecification<Page>
+{
+    /// <summary>Pages linked to <paramref name="entryId"/> within a specific site.</summary>
+    public PagesByLinkedEntrySpec(SiteId siteId, EntryId entryId)
+        : base(p => p.SiteId == siteId && p.LinkedEntryId == entryId) { }
+
+    /// <summary>Pages linked to <paramref name="entryId"/> across all sites.</summary>
+    public PagesByLinkedEntrySpec(EntryId entryId)
+        : base(p => p.LinkedEntryId == entryId) { }
+}

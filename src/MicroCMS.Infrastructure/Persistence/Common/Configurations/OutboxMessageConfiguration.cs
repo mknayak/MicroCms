@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Events;
 using MicroCMS.Infrastructure.Persistence.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -24,6 +25,10 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.Property(m => m.Content)
             .IsRequired();
 
+        builder.Property(m => m.DispatchMode)
+            .IsRequired()
+            .HasDefaultValue(OutboxDispatchMode.Exclusive);
+
         builder.Property(m => m.TenantId);
         builder.Property(m => m.OccurredOnUtc).IsRequired();
         builder.Property(m => m.ProcessedOnUtc);
@@ -35,13 +40,15 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
             .IsRequired()
             .HasDefaultValue(0);
 
-        // Primary dispatcher index: fetch oldest unprocessed messages first.
-        // Note: HasFilter with a SQL fragment is provider-specific (SQL Server syntax shown).
-        // PostgreSQL and SQLite support partial indexes but with different syntax;
-        // the filtered index can be added manually via a migration edit if needed.
-        builder.HasIndex(m => new { m.ProcessedOnUtc, m.OccurredOnUtc });
+        // Exclusive dispatcher: unprocessed Exclusive rows ordered by time.
+        builder.HasIndex(m => new { m.DispatchMode, m.ProcessedOnUtc, m.OccurredOnUtc });
 
         // Per-tenant dispatch: list unprocessed messages for a tenant
-        builder.HasIndex(m => new { m.TenantId, m.ProcessedOnUtc });
+        builder.HasIndex(m => new { m.TenantId, m.DispatchMode, m.ProcessedOnUtc });
+
+        builder.HasMany<OutboxDeliveryRecord>()
+            .WithOne()
+            .HasForeignKey(r => r.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

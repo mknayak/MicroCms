@@ -73,13 +73,15 @@ internal sealed class DomainEventsToOutboxInterceptor : SaveChangesInterceptor
             ?? domainEvent.GetType().Name;
 
         var content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), SerializerOptions);
+        var dispatchMode = OutboxDispatchAttribute.For(domainEvent.GetType());
 
         return new OutboxMessage(
             id: Guid.NewGuid(),
             type: type,
             content: content,
             tenantId: tenantId,
-            occurredOnUtc: domainEvent.OccurredOn);
+            occurredOnUtc: domainEvent.OccurredOn,
+            dispatchMode: dispatchMode);
     }
 
     /// <summary>

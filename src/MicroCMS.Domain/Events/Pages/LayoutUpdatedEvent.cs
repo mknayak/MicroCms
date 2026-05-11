@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Events;
 using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Domain.Events.Pages;
@@ -7,6 +8,7 @@ namespace MicroCMS.Domain.Events.Pages;
 /// Delivery must invalidate all rendered pages for the affected site because any page
 /// using this layout may have stale HTML.
 /// </summary>
+[OutboxDispatch(OutboxDispatchMode.Broadcast)]
 public sealed record LayoutUpdatedEvent(
     LayoutId LayoutId,
     TenantId TenantId,

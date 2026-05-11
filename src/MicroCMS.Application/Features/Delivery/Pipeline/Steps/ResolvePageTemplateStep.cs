@@ -1,3 +1,4 @@
+using MicroCMS.Domain.Aggregates.Components;
 using MicroCMS.Domain.Aggregates.Pages;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.Specifications.Layouts;

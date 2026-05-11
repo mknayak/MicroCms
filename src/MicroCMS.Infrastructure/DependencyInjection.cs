@@ -71,7 +71,7 @@ public static class DependencyInjection
         RegisterTenancyServices(services);
         RegisterStorageServices(services, configuration);
         RegisterSearchAndCache(services, configuration);
-        RegisterBackgroundJobs(services);
+        RegisterBackgroundJobs(services, configuration);
 
         return services;
     }
@@ -364,9 +364,29 @@ public static class DependencyInjection
         }
     }
 
-    /// <summary>Registers the MediaScan and OutboxDispatcher Quartz jobs.</summary>
-    private static void RegisterBackgroundJobs(IServiceCollection services)
+    /// <summary>
+    /// Registers Quartz background jobs.
+    ///
+    /// Every host runs both jobs:
+    /// <list type="bullet">
+    ///   <item><see cref="OutboxDispatcherJob"/> — claims and processes <c>Exclusive</c> outbox rows
+    ///         (webhooks, search indexing). Exactly one instance wins the race per message.</item>
+    ///   <item><see cref="BroadcastOutboxPollerJob"/> — processes <c>Broadcast</c> outbox rows
+    ///         independently per instance (in-memory cache invalidation). Progress is tracked via
+    ///         <see cref="OutboxDeliveryRecord"/> keyed on (MessageId, InstanceId).</item>
+    ///   <item><see cref="MediaScanJob"/> — periodic media-folder scan (Authoring instances only;
+    ///         harmless no-op on Delivery because no media folders are modified there).</item>
+    /// </list>
+    /// </summary>
+    private static void RegisterBackgroundJobs(IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<OutboxInstanceOptions>(
+            configuration.GetSection(OutboxInstanceOptions.SectionName));
+
+        // Singleton so Quartz can inject it directly into the job constructor.
+        services.AddSingleton(sp =>
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OutboxInstanceOptions>>().Value);
+
         services.AddQuartz(q =>
         {
             var mediaScanKey = new JobKey("MediaScanJob");
@@ -378,11 +398,20 @@ public static class DependencyInjection
                     .WithIntervalInSeconds(30)
                     .RepeatForever()));
 
-            var outboxKey = new JobKey("OutboxDispatcherJob");
-            q.AddJob<OutboxDispatcherJob>(opts => opts.WithIdentity(outboxKey));
+            var exclusiveKey = new JobKey("OutboxDispatcherJob");
+            q.AddJob<OutboxDispatcherJob>(opts => opts.WithIdentity(exclusiveKey));
             q.AddTrigger(opts => opts
-                .ForJob(outboxKey)
+                .ForJob(exclusiveKey)
                 .WithIdentity("OutboxDispatcherTrigger")
+                .WithSimpleSchedule(s => s
+                    .WithIntervalInSeconds(5)
+                    .RepeatForever()));
+
+            var broadcastKey = new JobKey("BroadcastOutboxPollerJob");
+            q.AddJob<BroadcastOutboxPollerJob>(opts => opts.WithIdentity(broadcastKey));
+            q.AddTrigger(opts => opts
+                .ForJob(broadcastKey)
+                .WithIdentity("BroadcastOutboxPollerTrigger")
                 .WithSimpleSchedule(s => s
                     .WithIntervalInSeconds(5)
                     .RepeatForever()));

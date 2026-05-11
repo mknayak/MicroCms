@@ -11,10 +11,14 @@ using Quartz;
 namespace MicroCMS.Infrastructure.BackgroundJobs;
 
 /// <summary>
-/// Quartz job that polls the outbox table for unprocessed <see cref="OutboxMessage"/> rows,
-/// deserialises each domain event, wraps it in a <see cref="DomainEventNotification{T}"/>,
-/// and publishes it via MediatR — delivering it to all registered <c>INotificationHandler</c>
-/// implementations (search indexer, cache invalidation, etc.).
+/// Quartz job that polls the outbox table for unprocessed <see cref="OutboxDispatchMode.Exclusive"/>
+/// <see cref="OutboxMessage"/> rows, deserialises each domain event, wraps it in a
+/// <see cref="DomainEventNotification{T}"/>, and publishes it via MediatR.
+///
+/// Only <c>Exclusive</c> messages are processed here — exactly one host instance will
+/// claim and mark each row. <c>Broadcast</c> messages (cache invalidation, per-process
+/// state) are handled by <see cref="BroadcastOutboxPollerJob"/>, which tracks per-instance
+/// delivery via <see cref="OutboxDeliveryRecord"/>.
 ///
 /// Uses <c>[DisallowConcurrentExecution]</c> to prevent overlapping runs.
 /// Marks each message as processed atomically; failures are recorded so the message
@@ -49,7 +53,9 @@ public sealed class OutboxDispatcherJob : IJob
         var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
 
         var messages = await db.Set<OutboxMessage>()
-            .Where(m => m.ProcessedOnUtc == null && m.RetryCount < MaxRetries)
+            .Where(m => m.DispatchMode == OutboxDispatchMode.Exclusive
+                     && m.ProcessedOnUtc == null
+                     && m.RetryCount < MaxRetries)
             .OrderBy(m => m.OccurredOnUtc)
             .Take(BatchSize)
             .ToListAsync(ct);

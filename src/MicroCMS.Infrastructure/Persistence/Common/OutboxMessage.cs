@@ -1,3 +1,5 @@
+using MicroCMS.Domain.Events;
+
 namespace MicroCMS.Infrastructure.Persistence.Common;
 
 /// <summary>
@@ -14,13 +16,15 @@ public sealed class OutboxMessage
         string type,
         string content,
         Guid? tenantId,
-        DateTimeOffset occurredOnUtc)
+        DateTimeOffset occurredOnUtc,
+        OutboxDispatchMode dispatchMode = OutboxDispatchMode.Exclusive)
     {
         Id = id;
         Type = type;
         Content = content;
         TenantId = tenantId;
         OccurredOnUtc = occurredOnUtc;
+        DispatchMode = dispatchMode;
     }
 
     /// <summary>Primary key — same Guid used in the domain event, enabling idempotency checks.</summary>
@@ -31,6 +35,15 @@ public sealed class OutboxMessage
 
     /// <summary>JSON-serialised event payload.</summary>
     public string Content { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Controls how this message is dispatched across host instances.
+    /// <see cref="OutboxDispatchMode.Exclusive"/> — claimed and processed by exactly one instance.
+    /// <see cref="OutboxDispatchMode.Broadcast"/> — every registered instance processes it independently
+    /// via <c>OutboxDeliveryRecord</c>; <see cref="ProcessedOnUtc"/> is set when the first instance
+    /// claims it so Exclusive queries skip it, but per-instance progress is tracked separately.
+    /// </summary>
+    public OutboxDispatchMode DispatchMode { get; private set; }
 
     /// <summary>
     /// The tenant the event belongs to. Null for system-level events (e.g. tenant creation itself).
