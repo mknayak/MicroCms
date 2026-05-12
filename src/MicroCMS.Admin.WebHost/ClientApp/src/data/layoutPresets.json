@@ -1,0 +1,386 @@
+{
+  "tagColors": {
+    "div":     "blue",
+    "section": "indigo",
+    "header":  "violet",
+    "footer":  "violet",
+    "main":    "teal",
+    "aside":   "orange",
+    "nav":     "pink",
+    "article": "cyan",
+    "form":    "green",
+    "ul":      "slate",
+    "ol":      "slate",
+    "li":      "slate",
+    "span":    "slate",
+    "p":       "slate",
+    "h1":      "rose",
+    "h2":      "rose",
+    "h3":      "rose",
+    "a":       "slate",
+    "figure":  "teal",
+    "table":   "amber",
+    "thead":   "amber",
+    "tbody":   "amber",
+    "tr":      "amber",
+    "td":      "amber",
+    "th":      "amber"
+  },
+
+  "groups": [
+    {
+      "group": "Semantic HTML",
+      "items": [
+        { "kind": "tag", "tag": "div",     "color": "blue"   },
+        { "kind": "tag", "tag": "section", "color": "indigo" },
+        { "kind": "tag", "tag": "header",  "color": "violet" },
+        { "kind": "tag", "tag": "footer",  "color": "violet" },
+        { "kind": "tag", "tag": "main",    "color": "teal"   },
+        { "kind": "tag", "tag": "aside",   "color": "orange" },
+        { "kind": "tag", "tag": "nav",     "color": "pink"   },
+        { "kind": "tag", "tag": "article", "color": "cyan"   },
+        { "kind": "tag", "tag": "form",    "color": "green"  },
+        { "kind": "tag", "tag": "ul",      "color": "slate"  },
+        { "kind": "tag", "tag": "figure",  "color": "teal"   }
+      ]
+    },
+    {
+      "group": "Bootstrap — Grid",
+      "items": [
+        {
+          "kind": "snippet",
+          "label": "Container",
+          "color": "blue",
+          "tree": {
+            "tag": "div", "label": "Container", "cssClass": "container",
+            "children": [{ "kind": "zone", "label": "Container Zone" }]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Container Fluid",
+          "color": "blue",
+          "tree": {
+            "tag": "div", "label": "Container Fluid", "cssClass": "container-fluid",
+            "children": [{ "kind": "zone", "label": "Container Zone" }]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Row 2 cols (6-6)",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Row 6-6", "cssClass": "row",
+            "children": [
+              { "tag": "div", "label": "Col 6", "cssClass": "col-6",
+                "children": [{ "kind": "zone", "label": "Zone col-6" }] },
+              { "tag": "div", "label": "Col 6", "cssClass": "col-6",
+                "children": [{ "kind": "zone", "label": "Zone col-6" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Row 2 cols (4-8)",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Row 4-8", "cssClass": "row",
+            "children": [
+              { "tag": "div", "label": "Col 4", "cssClass": "col-4",
+                "children": [{ "kind": "zone", "label": "Zone col-4" }] },
+              { "tag": "div", "label": "Col 8", "cssClass": "col-8",
+                "children": [{ "kind": "zone", "label": "Zone col-8" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Row 2 cols (8-4)",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Row 8-4", "cssClass": "row",
+            "children": [
+              { "tag": "div", "label": "Col 8", "cssClass": "col-8",
+                "children": [{ "kind": "zone", "label": "Zone col-8" }] },
+              { "tag": "div", "label": "Col 4", "cssClass": "col-4",
+                "children": [{ "kind": "zone", "label": "Zone col-4" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Row 3 cols (4-4-4)",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Row 4-4-4", "cssClass": "row",
+            "children": [
+              { "tag": "div", "label": "Col 4", "cssClass": "col-4",
+                "children": [{ "kind": "zone", "label": "Zone col-4" }] },
+              { "tag": "div", "label": "Col 4", "cssClass": "col-4",
+                "children": [{ "kind": "zone", "label": "Zone col-4" }] },
+              { "tag": "div", "label": "Col 4", "cssClass": "col-4",
+                "children": [{ "kind": "zone", "label": "Zone col-4" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Row 3 cols (3-6-3)",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Row 3-6-3", "cssClass": "row",
+            "children": [
+              { "tag": "div", "label": "Col 3", "cssClass": "col-3",
+                "children": [{ "kind": "zone", "label": "Zone col-3" }] },
+              { "tag": "div", "label": "Col 6", "cssClass": "col-6",
+                "children": [{ "kind": "zone", "label": "Zone col-6" }] },
+              { "tag": "div", "label": "Col 3", "cssClass": "col-3",
+                "children": [{ "kind": "zone", "label": "Zone col-3" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Row 4 cols (3-3-3-3)",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Row 3-3-3-3", "cssClass": "row",
+            "children": [
+              { "tag": "div", "label": "Col 3", "cssClass": "col-3",
+                "children": [{ "kind": "zone", "label": "Zone col-3" }] },
+              { "tag": "div", "label": "Col 3", "cssClass": "col-3",
+                "children": [{ "kind": "zone", "label": "Zone col-3" }] },
+              { "tag": "div", "label": "Col 3", "cssClass": "col-3",
+                "children": [{ "kind": "zone", "label": "Zone col-3" }] },
+              { "tag": "div", "label": "Col 3", "cssClass": "col-3",
+                "children": [{ "kind": "zone", "label": "Zone col-3" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Sidebar Left (3-9)",
+          "color": "orange",
+          "tree": {
+            "tag": "div", "label": "Page Layout", "cssClass": "container",
+            "children": [
+              { "tag": "div", "label": "Row", "cssClass": "row",
+                "children": [
+                  { "tag": "div", "label": "Sidebar", "cssClass": "col-3",
+                    "children": [{ "kind": "zone", "label": "Sidebar Zone" }] },
+                  { "tag": "div", "label": "Main Content", "cssClass": "col-9",
+                    "children": [{ "kind": "zone", "label": "Content Zone" }] }
+                ]}
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Sidebar Right (9-3)",
+          "color": "orange",
+          "tree": {
+            "tag": "div", "label": "Page Layout", "cssClass": "container",
+            "children": [
+              { "tag": "div", "label": "Row", "cssClass": "row",
+                "children": [
+                  { "tag": "div", "label": "Main Content", "cssClass": "col-9",
+                    "children": [{ "kind": "zone", "label": "Content Zone" }] },
+                  { "tag": "div", "label": "Sidebar", "cssClass": "col-3",
+                    "children": [{ "kind": "zone", "label": "Sidebar Zone" }] }
+                ]}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "Bootstrap — Components",
+      "items": [
+        {
+          "kind": "snippet",
+          "label": "Card",
+          "color": "teal",
+          "tree": {
+            "tag": "div", "label": "Card", "cssClass": "card",
+            "children": [
+              { "tag": "div", "label": "Card Header", "cssClass": "card-header",
+                "children": [{ "kind": "zone", "label": "Card Header Zone" }] },
+              { "tag": "div", "label": "Card Body", "cssClass": "card-body",
+                "children": [{ "kind": "zone", "label": "Card Body Zone" }] },
+              { "tag": "div", "label": "Card Footer", "cssClass": "card-footer",
+                "children": [{ "kind": "zone", "label": "Card Footer Zone" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Alert",
+          "color": "rose",
+          "tree": {
+            "tag": "div", "label": "Alert", "cssClass": "alert alert-info",
+            "htmlAttributes": { "role": "alert" },
+            "children": [{ "kind": "zone", "label": "Alert Content" }]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Navbar",
+          "color": "pink",
+          "tree": {
+            "tag": "nav", "label": "Navbar", "cssClass": "navbar navbar-expand-lg",
+            "children": [
+              { "tag": "div", "label": "Container", "cssClass": "container-fluid",
+                "children": [
+                  { "tag": "a", "label": "Brand", "cssClass": "navbar-brand",
+                    "htmlAttributes": { "href": "#" },
+                    "children": [{ "kind": "zone", "label": "Brand Zone" }] },
+                  { "tag": "div", "label": "Nav Links", "cssClass": "navbar-nav",
+                    "children": [{ "kind": "zone", "label": "Nav Zone" }] }
+                ]}
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Breadcrumb",
+          "color": "slate",
+          "tree": {
+            "tag": "nav", "label": "Breadcrumb", "cssClass": "",
+            "htmlAttributes": { "aria-label": "breadcrumb" },
+            "children": [
+              { "tag": "ol", "label": "Breadcrumb List", "cssClass": "breadcrumb",
+                "children": [{ "kind": "zone", "label": "Breadcrumb Items" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Form",
+          "color": "green",
+          "tree": {
+            "tag": "form", "label": "Form", "cssClass": "",
+            "children": [
+              { "tag": "div", "label": "Form Body", "cssClass": "mb-3",
+                "children": [{ "kind": "zone", "label": "Form Fields Zone" }] },
+              { "tag": "div", "label": "Form Actions", "cssClass": "d-flex gap-2",
+                "children": [{ "kind": "zone", "label": "Form Actions Zone" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Modal",
+          "color": "violet",
+          "tree": {
+            "tag": "div", "label": "Modal", "cssClass": "modal fade",
+            "htmlAttributes": { "tabindex": "-1", "aria-hidden": "true" },
+            "children": [
+              { "tag": "div", "label": "Modal Dialog", "cssClass": "modal-dialog",
+                "children": [
+                  { "tag": "div", "label": "Modal Content", "cssClass": "modal-content",
+                    "children": [
+                      { "tag": "div", "label": "Modal Header", "cssClass": "modal-header",
+                        "children": [{ "kind": "zone", "label": "Modal Header Zone" }] },
+                      { "tag": "div", "label": "Modal Body", "cssClass": "modal-body",
+                        "children": [{ "kind": "zone", "label": "Modal Body Zone" }] },
+                      { "tag": "div", "label": "Modal Footer", "cssClass": "modal-footer",
+                        "children": [{ "kind": "zone", "label": "Modal Footer Zone" }] }
+                    ]}
+                ]}
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Accordion",
+          "color": "amber",
+          "tree": {
+            "tag": "div", "label": "Accordion", "cssClass": "accordion",
+            "children": [
+              { "tag": "div", "label": "Accordion Item", "cssClass": "accordion-item",
+                "children": [
+                  { "tag": "h2", "label": "Accordion Header", "cssClass": "accordion-header",
+                    "children": [{ "kind": "zone", "label": "Header Zone" }] },
+                  { "tag": "div", "label": "Accordion Collapse", "cssClass": "accordion-collapse collapse show",
+                    "children": [
+                      { "tag": "div", "label": "Accordion Body", "cssClass": "accordion-body",
+                        "children": [{ "kind": "zone", "label": "Body Zone" }] }
+                    ]}
+                ]}
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "List Group",
+          "color": "cyan",
+          "tree": {
+            "tag": "ul", "label": "List Group", "cssClass": "list-group",
+            "children": [
+              { "tag": "li", "label": "Item 1", "cssClass": "list-group-item",
+                "children": [{ "kind": "zone", "label": "Item 1 Zone" }] },
+              { "tag": "li", "label": "Item 2", "cssClass": "list-group-item",
+                "children": [{ "kind": "zone", "label": "Item 2 Zone" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Tabs",
+          "color": "indigo",
+          "tree": {
+            "tag": "div", "label": "Tabs", "cssClass": "",
+            "children": [
+              { "tag": "ul", "label": "Tab Nav", "cssClass": "nav nav-tabs",
+                "children": [{ "kind": "zone", "label": "Tab Nav Zone" }] },
+              { "tag": "div", "label": "Tab Content", "cssClass": "tab-content",
+                "children": [{ "kind": "zone", "label": "Tab Panels Zone" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Hero / Jumbotron",
+          "color": "teal",
+          "tree": {
+            "tag": "div", "label": "Hero", "cssClass": "p-5 mb-4 bg-light rounded-3",
+            "children": [
+              { "tag": "div", "label": "Hero Container", "cssClass": "container-fluid py-5",
+                "children": [{ "kind": "zone", "label": "Hero Content Zone" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Table",
+          "color": "amber",
+          "tree": {
+            "tag": "table", "label": "Table", "cssClass": "table table-bordered",
+            "children": [
+              { "tag": "thead", "label": "Table Head", "cssClass": "",
+                "children": [{ "kind": "zone", "label": "Table Head Zone" }] },
+              { "tag": "tbody", "label": "Table Body", "cssClass": "",
+                "children": [{ "kind": "zone", "label": "Table Body Zone" }] }
+            ]
+          }
+        },
+        {
+          "kind": "snippet",
+          "label": "Page Shell (Header+Content+Footer)",
+          "color": "violet",
+          "tree": {
+            "tag": "div", "label": "Page Shell", "cssClass": "d-flex flex-column min-vh-100",
+            "children": [
+              { "tag": "header", "label": "Header", "cssClass": "",
+                "children": [{ "kind": "zone", "label": "Header Zone" }] },
+              { "tag": "main", "label": "Main", "cssClass": "flex-grow-1",
+                "children": [{ "kind": "zone", "label": "Content Zone" }] },
+              { "tag": "footer", "label": "Footer", "cssClass": "",
+                "children": [{ "kind": "zone", "label": "Footer Zone" }] }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

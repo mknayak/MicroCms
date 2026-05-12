@@ -4,12 +4,26 @@ namespace MicroCMS.Application.Features.Layouts.Dtos;
 
 public sealed record LayoutColumnDefDto(int Span, string ZoneName);
 
+/// <summary>
+/// A node in the layout tree.
+/// Type values:
+///   "html-element" – structural HTML wrapper; may have children
+///   "drop-zone"    – named zone where page components are placed (leaf)
+///   "zone"         – legacy flat zone (backward-compat)
+///   "grid-row"     – legacy grid row (backward-compat)
+/// </summary>
 public sealed record LayoutZoneNodeDto(
     string Id,
-    string Type,   // "zone" | "grid-row"
+    string Type,
     string Name,
     string Label,
     int SortOrder,
+    // html-element fields
+    string? Tag = null,
+    string? CssClass = null,
+    IReadOnlyDictionary<string, string>? HtmlAttributes = null,
+    IReadOnlyList<LayoutZoneNodeDto>? Children = null,
+    // legacy grid-row
     IReadOnlyList<LayoutColumnDefDto>? Columns = null);
 
 public sealed record LayoutDefaultPlacementDto(

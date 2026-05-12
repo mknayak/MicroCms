@@ -9,7 +9,7 @@ export interface LayoutColumnDef {
   zoneName: string; // e.g. "content-col-8", "content-col-4"
 }
 
-export type LayoutZoneNodeType = 'zone' | 'grid-row';
+export type LayoutZoneNodeType = 'html-element' | 'drop-zone' | 'zone' | 'grid-row';
 
 export interface LayoutZoneNode {
   id: string;
@@ -17,7 +17,13 @@ export interface LayoutZoneNode {
   name: string;      // machine name used in HTML token, e.g. "header"
   label: string;         // display label in designer
   sortOrder: number;
-  columns?: LayoutColumnDef[];  // only present when type === 'grid-row'
+  // html-element fields
+  tag?: string;
+  cssClass?: string;
+  htmlAttributes?: Record<string, string>;
+  children?: LayoutZoneNode[];
+  // legacy grid-row fields
+  columns?: LayoutColumnDef[];
 }
 
 // ─── Default placement on a layout (inherited by pages) ──────────────────────

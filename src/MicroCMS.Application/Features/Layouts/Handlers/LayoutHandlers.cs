@@ -46,13 +46,20 @@ internal static class LayoutMapper
         try
         {
             var nodes = JsonSerializer.Deserialize<List<ZoneNodeJson>>(json, _json) ?? [];
-            return nodes.Select(n => new LayoutZoneNodeDto(
-      n.Id, n.Type, n.Name, n.Label, n.SortOrder,
-        n.Columns?.Select(c => new LayoutColumnDefDto(c.Span, c.ZoneName)).ToList()
- )).ToList().AsReadOnly();
+            return nodes.Select(MapZoneNode).ToList().AsReadOnly();
         }
         catch { return []; }
     }
+
+    private static LayoutZoneNodeDto MapZoneNode(ZoneNodeJson n) => new(
+        n.Id, n.Type, n.Name, n.Label, n.SortOrder,
+        Tag: n.Tag,
+        CssClass: n.CssClass,
+        HtmlAttributes: n.HtmlAttributes is { Count: > 0 }
+            ? (IReadOnlyDictionary<string, string>)n.HtmlAttributes
+            : null,
+        Children: n.Children?.Select(MapZoneNode).ToList().AsReadOnly(),
+        Columns: n.Columns?.Select(c => new LayoutColumnDefDto(c.Span, c.ZoneName)).ToList());
 
     private static IReadOnlyList<LayoutDefaultPlacementDto> DeserializePlacements(string json)
     {
@@ -96,10 +103,16 @@ internal static class LayoutMapper
     private sealed class ZoneNodeJson
     {
         public string Id { get; set; } = "";
-        public string Type { get; set; } = "zone";
+        public string Type { get; set; } = "drop-zone";
         public string Name { get; set; } = "";
         public string Label { get; set; } = "";
         public int SortOrder { get; set; }
+        // html-element fields
+        public string? Tag { get; set; }
+        public string? CssClass { get; set; }
+        public Dictionary<string, string>? HtmlAttributes { get; set; }
+        public List<ZoneNodeJson>? Children { get; set; }
+        // legacy grid-row
         public List<ColumnJson>? Columns { get; set; }
     }
     private sealed class ColumnJson { public int Span { get; set; } public string ZoneName { get; set; } = ""; }

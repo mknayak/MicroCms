@@ -670,13 +670,28 @@ export interface LayoutColumnDef {
     zoneName: string;
 }
 
-/** A node in the layout's zone tree — either a simple zone or a grid row of column-zones. */
+/**
+ * A node in the layout tree.
+ * - `html-element`: a structural HTML tag (div, section, header, …) that can contain children
+ * - `drop-zone`: a named zone where page-designer components are dropped (leaf node)
+ * - `zone` / `grid-row`: legacy flat types — preserved for backward-compat deserialization only
+ */
 export interface LayoutZoneNode {
     id: string;
-    type: 'zone' | 'grid-row';
-    name: string; // machine name, used as token in shell template
+    type: 'html-element' | 'drop-zone' | 'zone' | 'grid-row';
+    name: string;        // machine name / zone token
     label: string;       // display label in layout designer
     sortOrder: number;
+
+    // html-element fields
+    tag?: string;                           // e.g. 'div', 'section', 'header'
+    cssClass?: string;                      // class attribute value
+    htmlAttributes?: Record<string, string>; // extra HTML attributes
+
+    // children (html-element only)
+    children?: LayoutZoneNode[];
+
+    // legacy grid-row fields
     columns?: LayoutColumnDef[];
 }
 

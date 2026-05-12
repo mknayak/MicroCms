@@ -39,32 +39,51 @@ public sealed class LayoutShellGeneratorService
         AppendBodyStartAssets(sb, config, "  ");
 
         foreach (var zone in zones.OrderBy(z => z.SortOrder))
-        {
-            if (zone.Type == "grid-row" && zone.Columns?.Count > 0)
-            {
-                sb.AppendLine($"  <div class=\"grid-row\" data-zone-row=\"{zone.Name}\">");
-                foreach (var col in zone.Columns)
-                {
-                    var token = col.ZoneName.Replace("-", "_");
-                    sb.AppendLine($"    <div class=\"col-{col.Span}\" data-zone=\"{col.ZoneName}\">");
-                    sb.AppendLine($"      {{{{{{{token}}}}}}}");
-                    sb.AppendLine("    </div>");
-                }
-                sb.AppendLine("  </div>");
-            }
-            else
-            {
-                var token = zone.Name.Replace("-", "_");
-                sb.AppendLine($"  <div data-zone=\"{zone.Name}\">");
-                sb.AppendLine($"    {{{{{{{token}}}}}}}");
-                sb.AppendLine("  </div>");
-            }
-        }
+            AppendNodeHandlebars(sb, zone, "  ");
 
         AppendBodyEndAssets(sb, config, "  ");
         sb.AppendLine("</body>");
         sb.AppendLine("</html>");
         return sb.ToString();
+    }
+
+    private static void AppendNodeHandlebars(StringBuilder sb, ZoneNodeDto node, string indent)
+    {
+        switch (node.Type)
+        {
+            case "html-element":
+            {
+                var tag = string.IsNullOrWhiteSpace(node.Tag) ? "div" : node.Tag;
+                var attrs = BuildHtmlAttrs(node);
+                sb.AppendLine($"{indent}<{tag}{attrs}>");
+                foreach (var child in (node.Children ?? []).OrderBy(c => c.SortOrder))
+                    AppendNodeHandlebars(sb, child, indent + "  ");
+                sb.AppendLine($"{indent}</{tag}>");
+                break;
+            }
+            case "drop-zone":
+            case "zone":
+            {
+                var token = node.Name.Replace("-", "_");
+                sb.AppendLine($"{indent}<div data-zone=\"{node.Name}\">");
+                sb.AppendLine($"{indent}  {{{{{{{token}}}}}}}");
+                sb.AppendLine($"{indent}</div>");
+                break;
+            }
+            case "grid-row" when node.Columns?.Count > 0:
+            {
+                sb.AppendLine($"{indent}<div class=\"grid-row\" data-zone-row=\"{node.Name}\">");
+                foreach (var col in node.Columns)
+                {
+                    var token = col.ZoneName.Replace("-", "_");
+                    sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\" data-zone=\"{col.ZoneName}\">");
+                    sb.AppendLine($"{indent}    {{{{{{{token}}}}}}}");
+                    sb.AppendLine($"{indent}  </div>");
+                }
+                sb.AppendLine($"{indent}</div>");
+                break;
+            }
+        }
     }
 
     // ── HTML builder ──────────────────────────────────────────────────────
@@ -81,30 +100,59 @@ public sealed class LayoutShellGeneratorService
         AppendBodyStartAssets(sb, config, "  ");
 
         foreach (var zone in zones.OrderBy(z => z.SortOrder))
-        {
-            if (zone.Type == "grid-row" && zone.Columns?.Count > 0)
-            {
-                sb.AppendLine($"  <div class=\"grid-row\" data-zone-row=\"{zone.Name}\">");
-                foreach (var col in zone.Columns)
-                {
-                    sb.AppendLine($"    <div class=\"col-{col.Span}\" data-zone=\"{col.ZoneName}\">");
-                    sb.AppendLine($"      {{{{zone:{col.ZoneName}}}}}");
-                    sb.AppendLine("    </div>");
-                }
-                sb.AppendLine("  </div>");
-            }
-            else
-            {
-                sb.AppendLine($"  <div data-zone=\"{zone.Name}\">");
-                sb.AppendLine($"    {{{{zone:{zone.Name}}}}}");
-                sb.AppendLine("  </div>");
-            }
-        }
+            AppendNodeHtml(sb, zone, "  ");
 
         AppendBodyEndAssets(sb, config, "  ");
         sb.AppendLine("</body>");
         sb.AppendLine("</html>");
         return sb.ToString();
+    }
+
+    private static void AppendNodeHtml(StringBuilder sb, ZoneNodeDto node, string indent)
+    {
+        switch (node.Type)
+        {
+            case "html-element":
+            {
+                var tag = string.IsNullOrWhiteSpace(node.Tag) ? "div" : node.Tag;
+                var attrs = BuildHtmlAttrs(node);
+                sb.AppendLine($"{indent}<{tag}{attrs}>");
+                foreach (var child in (node.Children ?? []).OrderBy(c => c.SortOrder))
+                    AppendNodeHtml(sb, child, indent + "  ");
+                sb.AppendLine($"{indent}</{tag}>");
+                break;
+            }
+            case "drop-zone":
+            case "zone":
+            {
+                sb.AppendLine($"{indent}<div data-zone=\"{node.Name}\">");
+                sb.AppendLine($"{indent}  {{{{zone:{node.Name}}}}}");
+                sb.AppendLine($"{indent}</div>");
+                break;
+            }
+            case "grid-row" when node.Columns?.Count > 0:
+            {
+                sb.AppendLine($"{indent}<div class=\"grid-row\" data-zone-row=\"{node.Name}\">");
+                foreach (var col in node.Columns)
+                {
+                    sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\" data-zone=\"{col.ZoneName}\">");
+                    sb.AppendLine($"{indent}    {{{{zone:{col.ZoneName}}}}}");
+                    sb.AppendLine($"{indent}  </div>");
+                }
+                sb.AppendLine($"{indent}</div>");
+                break;
+            }
+        }
+    }
+
+    private static string BuildHtmlAttrs(ZoneNodeDto node)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(node.CssClass))
+            parts.Add($"class=\"{node.CssClass}\"");
+        if (node.HtmlAttributes is { Count: > 0 })
+            parts.AddRange(node.HtmlAttributes.Select(kv => $"{kv.Key}=\"{kv.Value}\""));
+        return parts.Count > 0 ? " " + string.Join(" ", parts) : string.Empty;
     }
 
     // ── Asset injection helpers ───────────────────────────────────────────
@@ -249,10 +297,16 @@ public sealed class LayoutShellGeneratorService
     private sealed class ZoneNodeDto
     {
         public string Id { get; set; } = "";
-        public string Type { get; set; } = "zone";
+        public string Type { get; set; } = "drop-zone";
         public string Name { get; set; } = "";
         public string Label { get; set; } = "";
         public int SortOrder { get; set; }
+        // html-element fields
+        public string? Tag { get; set; }
+        public string? CssClass { get; set; }
+        public Dictionary<string, string>? HtmlAttributes { get; set; }
+        public List<ZoneNodeDto>? Children { get; set; }
+        // legacy grid-row
         public List<ColumnDefDto>? Columns { get; set; }
     }
 
