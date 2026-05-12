@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type MutableRefObject } from 'react';
+import { useState, useCallback, useRef, useEffect, type MutableRefObject } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -513,6 +513,170 @@ function LayoutConfigPanel({ config, onChange }: { config: LayoutConfig; onChang
   );
 }
 
+// ─── Layout Preview ──────────────────────────────────────────────────────────
+
+/** Inline styles injected into every preview iframe. */
+const PREVIEW_EXTRA_CSS = `
+  [data-zone]{
+    outline: 2px dashed #6366f1;
+    outline-offset: -2px;
+    background: rgba(99,102,241,.06);
+    min-height: 56px;
+    position: relative;
+  }
+  [data-zone]::before{
+    content: attr(data-zone-label);
+    display: block;
+    font-family: monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6366f1;
+    padding: 3px 6px 6px;
+    letter-spacing: .04em;
+  }
+  [data-zone]:hover{ background: rgba(99,102,241,.13); }
+`;
+
+/**
+ * Injects wireframe zone placeholders into a saved shell template.
+ *
+ * The shell already contains all <link>, <script>, body attrs etc.
+ * We only replace the triple-brace Handlebars tokens that the generator
+ * emits for each drop-zone:  {{{zone_name}}}
+ * Each data-zone wrapper div already exists in the shell; we add a
+ * data-zone-label attribute so CSS ::before can label it, and empty the
+ * token so nothing breaks.
+ */
+function shellToPreview(shell: string): string {
+  // 1. Replace {{{token}}} with empty string (the wrapper div stays)
+  let html = shell.replace(/\{\{\{[^}]+\}\}\}/g, '');
+
+  // 2. For every data-zone="name" div, copy the name into data-zone-label
+  //    so the CSS ::before can display it.
+  html = html.replace(
+    /data-zone="([^"]+)"/g,
+    (_m, name: string) =>
+      `data-zone="${name}" data-zone-label="⬡ ${name}"`,
+  );
+
+  // 3. Strip any {{page:*}} or {{site:*}} tokens (language, title, etc.)
+  html = html.replace(/\{\{[^}]+\}\}/g, '');
+
+  // 4. Inject our extra overlay CSS just before </head>
+  const extraStyle = `<style>${PREVIEW_EXTRA_CSS}</style>`;
+  if (html.includes('</head>')) {
+    html = html.replace('</head>', `${extraStyle}\n</head>`);
+  } else {
+    html = extraStyle + html;
+  }
+
+  return html;
+}
+
+/**
+ * Fallback: build a minimal preview from the unsaved node tree.
+ * Used only when the layout has never been saved (no shellTemplate yet).
+ */
+function buildFallbackPreviewHtml(nodes: LayoutZoneNode[]): string {
+  function renderNode(n: LayoutZoneNode): string {
+    if (n.type === 'drop-zone' || n.type === 'zone') {
+      return `<div data-zone="${n.name}" data-zone-label="⬡ ${n.label || n.name}"></div>`;
+    }
+    if (n.type === 'grid-row' && n.columns?.length) {
+      const cols = n.columns
+        .map(c => `<div class="col-${c.span}"><div data-zone="${c.zoneName}" data-zone-label="⬡ ${c.zoneName}"></div></div>`)
+        .join('');
+      return `<div class="row">${cols}</div>`;
+    }
+    const tag = n.tag ?? 'div';
+    const cls = n.cssClass ? ` class="${n.cssClass}"` : '';
+    const attrs = Object.entries(n.htmlAttributes ?? {})
+      .map(([k, v]) => ` ${k}="${v}"`).join('');
+    const children = [...(n.children ?? [])]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(renderNode).join('');
+    return `<${tag}${cls}${attrs}>${children}</${tag}>`;
+  }
+  const body = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder).map(renderNode).join('');
+  return `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>${PREVIEW_EXTRA_CSS}</style>
+</head><body style="margin:0;padding:16px;background:#f8fafc;">${body}</body></html>`;
+}
+
+function LayoutPreview({
+  nodes,
+  shellTemplate,
+  nodesDirty,
+}: {
+  nodes: LayoutZoneNode[];
+  shellTemplate: string | null | undefined;
+  nodesDirty: boolean;
+}) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Use the real saved shell when available; fall back to tree-built HTML
+  // when there is no shell yet.  Show a warning banner when the structure
+  // has unsaved changes so the author knows the preview may be stale.
+  const previewHtml = shellTemplate
+    ? shellToPreview(shellTemplate)
+    : buildFallbackPreviewHtml(nodes);
+
+  const isFallback = !shellTemplate;
+  const isStale = !isFallback && nodesDirty;
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!doc) return;
+    doc.open();
+    doc.write(previewHtml);
+    doc.close();
+  }, [previewHtml]);
+
+  if (nodes.length === 0 && !shellTemplate) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
+        <svg className="h-12 w-12 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <p className="text-sm font-semibold">No structure to preview yet</p>
+        <p className="text-xs">Add elements in the Structure tab and save to generate the shell</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Info bar */}
+      <div className="flex flex-shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-4 py-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded bg-indigo-100">
+          <svg className="h-3 w-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </span>
+        <p className="text-xs font-semibold text-slate-700">Shell Preview</p>
+        {isFallback ? (
+          <p className="text-xs text-amber-600">⚠ Shell not generated yet — showing unsaved structure. Save to render the real shell with all assets.</p>
+        ) : isStale ? (
+          <p className="text-xs text-amber-600">⚠ Structure has unsaved changes — preview shows the last saved shell. Save to update.</p>
+        ) : (
+          <p className="text-xs text-slate-400">— Rendering the saved generated shell. All configured assets (CDN links, scripts) are active.</p>
+        )}
+      </div>
+      <iframe
+        ref={iframeRef}
+        title="Layout Preview"
+        sandbox="allow-same-origin allow-scripts"
+        className="min-h-0 flex-1 w-full border-0 bg-white"
+      />
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LayoutDesignerPage() {
@@ -520,7 +684,7 @@ export default function LayoutDesignerPage() {
   const qc = useQueryClient();
   const { selectedSiteId } = useSite();
 
-  const [activeTab, setActiveTab] = useState<'structure' | 'configuration' | 'shell'>('structure');
+  const [activeTab, setActiveTab] = useState<'structure' | 'configuration' | 'shell' | 'preview'>('structure');
 
   const [nodes, setNodes] = useState<LayoutZoneNode[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -539,7 +703,7 @@ export default function LayoutDesignerPage() {
   const dragNodeId = useRef<string | null>(null);
   const [rootDropOver, setRootDropOver] = useState(false);
 
-  const dirty = activeTab === 'structure' ? nodesDirty : activeTab === 'configuration' ? configDirty : shellDirty;
+  const dirty = activeTab === 'structure' ? nodesDirty : activeTab === 'configuration' ? configDirty : activeTab === 'shell' ? shellDirty : false;
 
   const { data: layout, isLoading } = useQuery({
     queryKey: ['layout', id],
@@ -686,7 +850,7 @@ export default function LayoutDesignerPage() {
     : activeTab === 'structure' ? 'Save Structure'
     : activeTab === 'configuration' ? 'Save Config'
     : 'Save Shell';
-  const saveVisible = activeTab !== 'shell' || shellEditMode;
+  const saveVisible = (activeTab !== 'shell' || shellEditMode) && activeTab !== 'preview';
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center text-sm text-slate-400">Loading layout…</div>;
@@ -724,9 +888,11 @@ export default function LayoutDesignerPage() {
 
       {/* Tabs */}
       <div className="flex flex-shrink-0 border-b border-slate-200 bg-white px-4">
-        {(['structure', 'configuration', 'shell'] as const).map((tab) => {
+        {(['structure', 'configuration', 'shell', 'preview'] as const).map((tab) => {
           const label = tab === 'structure' ? 'Layout Structure'
-            : tab === 'configuration' ? 'Layout Configuration' : 'Generated Shell';
+            : tab === 'configuration' ? 'Layout Configuration'
+            : tab === 'preview' ? '👁 Preview'
+            : 'Generated Shell';
           const hasDot = (tab === 'structure' && nodesDirty)
             || (tab === 'configuration' && configDirty)
             || (tab === 'shell' && shellDirty);
@@ -845,6 +1011,12 @@ export default function LayoutDesignerPage() {
         </div>
       ) : activeTab === 'configuration' ? (
         <LayoutConfigPanel config={config} onChange={(c) => { setConfig(c); setConfigDirty(true); }} />
+      ) : activeTab === 'preview' ? (
+        <LayoutPreview
+          nodes={nodes}
+          shellTemplate={shellEditMode ? shellText : layout?.shellTemplate}
+          nodesDirty={nodesDirty}
+        />
       ) : (
         <div className="flex min-h-0 flex-1 overflow-auto bg-slate-50 p-6">
           <div className="mx-auto w-full max-w-4xl space-y-4">
