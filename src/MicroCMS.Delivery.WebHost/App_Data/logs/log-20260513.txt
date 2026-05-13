@@ -25,3 +25,41 @@
 2026-05-13 18:08:51.551 +08:00 [WRN] The property 'WebhookSubscription._events' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
 2026-05-13 18:08:51.552 +08:00 [WRN] The property 'AssetMetadata.ExifData' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
 2026-05-13 18:08:51.552 +08:00 [WRN] The property 'TenantSettings.EnabledLocales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:48.587 +08:00 [INF] Initialized Scheduler Signaller of type: Quartz.Core.SchedulerSignalerImpl
+2026-05-13 20:59:48.611 +08:00 [INF] Quartz Scheduler created
+2026-05-13 20:59:48.612 +08:00 [INF] JobFactory set to: Quartz.Simpl.MicrosoftDependencyInjectionJobFactory
+2026-05-13 20:59:48.612 +08:00 [INF] RAMJobStore initialized.
+2026-05-13 20:59:48.613 +08:00 [INF] Quartz Scheduler 3.9.0.0 - 'QuartzScheduler' with instanceId 'NON_CLUSTERED' initialized
+2026-05-13 20:59:48.613 +08:00 [INF] Using thread pool 'Quartz.Simpl.DefaultThreadPool', size: 10
+2026-05-13 20:59:48.613 +08:00 [INF] Using job store 'Quartz.Simpl.RAMJobStore', supports persistence: False, clustered: False
+2026-05-13 20:59:48.618 +08:00 [INF] Adding 3 jobs, 3 triggers.
+2026-05-13 20:59:48.619 +08:00 [INF] Adding job: DEFAULT.MediaScanJob
+2026-05-13 20:59:48.622 +08:00 [INF] Adding job: DEFAULT.OutboxDispatcherJob
+2026-05-13 20:59:48.622 +08:00 [INF] Adding job: DEFAULT.BroadcastOutboxPollerJob
+2026-05-13 20:59:48.895 +08:00 [INF] Now listening on: https://localhost:61827
+2026-05-13 20:59:48.895 +08:00 [INF] Now listening on: http://localhost:61828
+2026-05-13 20:59:48.896 +08:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-13 20:59:48.896 +08:00 [INF] Hosting environment: Development
+2026-05-13 20:59:48.896 +08:00 [INF] Content root path: /Users/manasnayak/Projects/GitHub/micro_cms/MicroCms/src/MicroCMS.Delivery.WebHost
+2026-05-13 20:59:48.898 +08:00 [INF] Scheduler QuartzScheduler_$_NON_CLUSTERED started.
+2026-05-13 20:59:49.505 +08:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-05-13 20:59:49.523 +08:00 [WRN] The property 'MediaAsset._tags' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.524 +08:00 [WRN] The property 'Plugin._capabilities' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.525 +08:00 [WRN] The property 'ApiClient._scopes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.525 +08:00 [WRN] The property 'SiteSettings._corsOrigins' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.525 +08:00 [WRN] The property 'SiteSettings._locales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.527 +08:00 [WRN] The property 'TenantSecuritySettings._ipAllowlist' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.527 +08:00 [WRN] The property 'WebhookSubscription._events' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.529 +08:00 [WRN] The property 'AssetMetadata.ExifData' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 20:59:49.530 +08:00 [WRN] The property 'TenantSettings.EnabledLocales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-13 21:03:43.540 +08:00 [INF] DeliveryApiKey was not authenticated. Failure message: Invalid or revoked API key.
+2026-05-13 21:03:43.543 +08:00 [INF] DeliveryApiKey was not authenticated. Failure message: Invalid or revoked API key.
+2026-05-13 21:03:43.546 +08:00 [INF] AuthenticationScheme: DeliveryApiKey was challenged.
+2026-05-13 21:03:43.548 +08:00 [INF] HTTP GET /api/delivery/pages/home/render responded 401 in 26.2199 ms
+2026-05-13 21:09:05.932 +08:00 [INF] DeliveryApiKey was not authenticated. Failure message: Invalid or revoked API key.
+2026-05-13 21:09:05.933 +08:00 [INF] DeliveryApiKey was not authenticated. Failure message: Invalid or revoked API key.
+2026-05-13 21:09:05.934 +08:00 [INF] AuthenticationScheme: DeliveryApiKey was challenged.
+2026-05-13 21:09:05.934 +08:00 [INF] HTTP GET /api/delivery/pages/home/render responded 401 in 127835.4785 ms
+2026-05-13 21:16:37.313 +08:00 [INF] Handling RenderPageBySlugQuery
+2026-05-13 21:16:37.563 +08:00 [INF] Handled RenderPageBySlugQuery in 250ms
+2026-05-13 21:16:37.567 +08:00 [INF] HTTP GET /api/delivery/pages/home/render responded 200 in 10765.8003 ms

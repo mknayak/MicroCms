@@ -234,6 +234,7 @@ internal static class ServiceCollectionExtensions
         this WebApplicationBuilder builder)
     {
         builder.Services.AddApplication();
+        builder.Services.AddPageRenderSteps(); // core pipeline steps — no cache (admin preview must always be fresh)
         return builder;
     }
 

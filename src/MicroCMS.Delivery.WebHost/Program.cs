@@ -23,6 +23,10 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 // ── Application + Infrastructure layers ──────────────────────────────────────
 builder.Services.AddApplication();
+
+// ── Page render pipeline (cache-read → 8 core steps → cache-write) ─────────── 
+builder.Services.AddCachePageRenderingStep(); 
+
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.UseNullLlmService();
 

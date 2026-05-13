@@ -260,7 +260,9 @@ function NodeCard({
   onDragStart: (id: string) => void;
 }) {
   const [dropOver, setDropOver] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const isElement = node.type === 'html-element';
+  const hasChildren = isElement && (node.children ?? []).length > 0;
   const isSelected = selectedId === node.id;
   const tc = tagColor(node.tag ?? 'div');
 
@@ -285,6 +287,18 @@ function NodeCard({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
             </svg>
           </span>
+          {/* Collapse toggle — only for html-elements */}
+          {isElement && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setCollapsed(c => !c); }}
+              className="flex-shrink-0 rounded p-0.5 text-slate-400 hover:text-slate-600"
+              title={collapsed ? 'Expand' : 'Collapse'}
+            >
+              <svg className={`h-3 w-3 transition-transform ${collapsed ? '-rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
           {isElement ? (
             <span className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${tc.bg} ${tc.text}`}>
               &lt;{node.tag ?? 'div'}&gt;
@@ -299,6 +313,11 @@ function NodeCard({
             )}
             {!isElement && (
               <span className="ml-1.5 font-mono text-[10px] text-slate-400">{node.name}</span>
+            )}
+            {isElement && collapsed && hasChildren && (
+              <span className="ml-1.5 rounded bg-slate-100 px-1 py-0.5 text-[10px] text-slate-400">
+                {(node.children ?? []).length} child{(node.children ?? []).length !== 1 ? 'ren' : ''}
+              </span>
             )}
           </div>
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
@@ -324,7 +343,7 @@ function NodeCard({
         </div>
 
         {/* Children area (html-element only) */}
-        {isElement && (
+        {isElement && !collapsed && (
           <div className={`border-t border-dashed border-slate-200 px-2.5 pb-2 pt-1.5 ${dropOver ? 'bg-blue-50/40' : ''}`}>
             {(node.children ?? []).length === 0 ? (
               <div className="flex items-center rounded border border-dashed border-slate-200 px-2 py-1.5 text-[10px] text-slate-400">

@@ -65,7 +65,7 @@ services.AddAuthorization(opt =>
         services.AddScoped<ILayoutRenderer, LayoutRenderer>();
         services.AddScoped<IComponentRenderingService, ComponentRenderingService>();
 
-      return services;
+        return services;
     }
 }
 
