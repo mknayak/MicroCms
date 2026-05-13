@@ -81,7 +81,7 @@ public sealed class ComponentsController : DeliveryControllerBase
         comp.TemplateType == RenderingTemplateType.Handlebars &&
          !string.IsNullOrWhiteSpace(comp.TemplateContent))
             {
-                var html = await renderer.RenderAsync(comp, result.Value, cancellationToken);
+                var html = await renderer.RenderAsync(comp, result.Value, cancellationToken: cancellationToken);
                 return Content(html, "text/html");
             }
         }

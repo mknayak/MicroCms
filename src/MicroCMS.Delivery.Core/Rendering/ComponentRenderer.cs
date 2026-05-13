@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using HandlebarsDotNet;
 using MicroCMS.Application.Features.Delivery.Dtos;
 using MicroCMS.Domain.Aggregates.Components;
+using MicroCMS.Domain.Aggregates.Content;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -24,7 +25,8 @@ public interface IComponentRenderer
 {
     Task<string> RenderAsync(
         Component component,
-     DeliveryComponentItemDto item,
+        DeliveryComponentItemDto item,
+        IReadOnlyList<FieldDefinition>? fieldDefs = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -35,9 +37,22 @@ internal sealed class ComponentRenderer(ILogger<ComponentRenderer> logger) : ICo
     private static readonly Regex NamespaceTokenPattern = new(
         @"\{\{([a-zA-Z][a-zA-Z0-9_-]*(?::[a-zA-Z0-9_\-\.]+)+)\}\}",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    // Register a global {{html value}} helper once so RichText templates can output
+    // unescaped HTML without requiring triple-brace {{{syntax}}}.
+    // Triple-brace syntax is still fully supported and is the recommended way.
+    static ComponentRenderer()
+    {
+        Handlebars.RegisterHelper("html", (writer, _, arguments) =>
+        {
+            if (arguments.Length > 0)
+                writer.WriteSafeString(arguments[0]?.ToString() ?? string.Empty);
+        });
+    }
     public Task<string> RenderAsync(
-Component component,
+        Component component,
         DeliveryComponentItemDto item,
+        IReadOnlyList<FieldDefinition>? fieldDefs = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(component.TemplateContent))
@@ -45,7 +60,7 @@ Component component,
 
         var html = component.TemplateType switch
         {
-            RenderingTemplateType.Handlebars => RenderHandlebars(component, item),
+            RenderingTemplateType.Handlebars => RenderHandlebars(component, item, fieldDefs),
             RenderingTemplateType.Html => RenderHtml(component, item),
             RenderingTemplateType.WebComponent => RenderHtml(component, item),
             _ => RenderFallbackComment(component, item),
@@ -56,13 +71,10 @@ Component component,
 
     // ── Handlebars ────────────────────────────────────────────────────────
 
-    private string RenderHandlebars(Component component, DeliveryComponentItemDto item)
+    private string RenderHandlebars(Component component, DeliveryComponentItemDto item, IReadOnlyList<FieldDefinition>? fieldDefs)
     {
         try
         {
-            // Escape {{namespace:key}} tokens before Handlebars compilation so they are
-            // emitted literally into the output HTML rather than being silently erased.
-            // They will be resolved by the layout TokenResolutionPipeline after zone injection.
             var escaped = EscapeNamespaceTokens(component.TemplateContent!);
             var template = Handlebars.Compile(escaped);
             return template(BuildDataDictionary(item));
@@ -108,31 +120,49 @@ Component component,
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Flattens the JSON fields bag into a string-keyed dictionary so Handlebars
-    /// can bind values by name, e.g. <c>{{heading}}</c>.
+    /// Converts the entry's field JSON into a rich CLR object graph for Handlebars:
+    /// <list type="bullet">
+    ///   <item>JSON strings → <c>string</c></item>
+    ///   <item>JSON arrays  → <c>List&lt;object?&gt;</c> — enables <c>{{#each fieldName}}</c> loop syntax</item>
+    ///   <item>JSON objects → <c>Dictionary&lt;string, object?&gt;</c> — enables <c>{{asset.url}}</c>, <c>{{ref.title}}</c> dot-access</item>
+    /// </list>
+    /// RichText/Markdown fields: use <c>{{{fieldName}}}</c> (triple braces) in the template
+    /// to output raw HTML, or the registered <c>{{html fieldName}}</c> helper.
     /// </summary>
     private static Dictionary<string, object?> BuildDataDictionary(DeliveryComponentItemDto item)
     {
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
 
-        if (item.Fields is JsonElement je && je.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var prop in je.EnumerateObject())
-            {
-                dict[prop.Name] = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.String => prop.Value.GetString(),
-                    JsonValueKind.Number => prop.Value.TryGetInt64(out var l)
-                          ? (object)l
-                          : prop.Value.GetDouble(),
-                    JsonValueKind.True => (object)true,
-                    JsonValueKind.False => false,
-                    JsonValueKind.Null => null,
-                    _ => prop.Value.ToString(),
-                };
-            }
-        }
+        if (item.Fields is not JsonElement je || je.ValueKind != JsonValueKind.Object)
+            return dict;
+
+        foreach (var prop in je.EnumerateObject())
+            dict[prop.Name] = ConvertJsonElement(prop.Value);
 
         return dict;
+    }
+
+    /// <summary>
+    /// Recursively converts a <see cref="JsonElement"/> to a CLR value suitable for Handlebars.
+    /// </summary>
+    private static object? ConvertJsonElement(JsonElement el)
+    {
+        return el.ValueKind switch
+        {
+            JsonValueKind.String => el.GetString(),
+            JsonValueKind.Number => el.TryGetInt64(out var l) ? (object?)l : el.GetDouble(),
+            JsonValueKind.True   => (object?)true,
+            JsonValueKind.False  => false,
+            JsonValueKind.Null   => null,
+            JsonValueKind.Array  => el.EnumerateArray()
+                                      .Select(e => ConvertJsonElement(e))
+                                      .ToList(),
+            JsonValueKind.Object => el.EnumerateObject()
+                                      .ToDictionary(
+                                          p => p.Name,
+                                          p => ConvertJsonElement(p.Value),
+                                          StringComparer.OrdinalIgnoreCase),
+            _                    => el.ToString(),
+        };
     }
 }

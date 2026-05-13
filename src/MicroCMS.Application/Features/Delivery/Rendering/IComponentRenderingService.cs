@@ -12,10 +12,18 @@ namespace MicroCMS.Application.Features.Delivery.Rendering;
 /// </summary>
 public interface IComponentRenderingService
 {
-    /// <summary>Renders a single component item to an HTML fragment.</summary>
+    /// <summary>
+    /// Renders a single component item to an HTML fragment.
+    /// When <paramref name="contentType"/> is supplied the renderer can:
+    /// <list type="bullet">
+    ///   <item>Mark RichText / Markdown field values as safe HTML (no entity-encoding).</item>
+    ///   <item>Expand Reference / MultiList fields to full entry-field objects.</item>
+    /// </list>
+    /// </summary>
     Task<string> RenderComponentAsync(
         Component component,
         Entry item,
+        ContentType? contentType = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

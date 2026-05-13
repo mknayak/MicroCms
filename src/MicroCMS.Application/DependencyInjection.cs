@@ -9,6 +9,7 @@ using MicroCMS.Application.Features.Delivery.Pipeline;
 using MicroCMS.Application.Features.Delivery.Pipeline.Steps;
 using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Application.Features.Delivery.Rendering.Resolvers;
+using MicroCMS.Application.Features.Delivery.Services;
 using MicroCMS.Application.Features.Layouts.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IApplicationAuthorizationService, DefaultApplicationAuthorizationService>();
         services.AddScoped<LayoutShellGeneratorService>();
         services.AddScoped<ComponentBackingTypeProvisioner>();
+        services.AddScoped<EntryFieldExpander>();
 
         // Token resolution pipeline — resolvers ordered by execution priority.
         // SiteTokenResolver depends on ISettingsReader (Infrastructure), registered after AddInfrastructure().

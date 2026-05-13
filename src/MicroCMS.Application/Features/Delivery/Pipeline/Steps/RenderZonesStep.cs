@@ -22,6 +22,7 @@ namespace MicroCMS.Application.Features.Delivery.Pipeline.Steps;
 internal sealed class RenderZonesStep(
     IRepository<Component, ComponentId> compRepo,
     IRepository<Entry, EntryId> entryRepo,
+    IRepository<ContentType, ContentTypeId> contentTypeRepo,
     IComponentRenderingService renderer)
     : IPageRenderStep
 {
@@ -63,7 +64,10 @@ internal sealed class RenderZonesStep(
             {
                 var entry = await entryRepo.GetByIdAsync(new EntryId(placement.BoundItemId.Value.Value), ct);
                 if (entry is not null)
-                    sb.Append(await renderer.RenderComponentAsync(comp, entry, ct));
+                {
+                    var contentType = await LoadContentTypeAsync(comp, ct);
+                    sb.Append(await renderer.RenderComponentAsync(comp, entry, contentType, ct));
+                }
             }
             else
             {
@@ -122,7 +126,10 @@ internal sealed class RenderZonesStep(
         {
             var entry = await entryRepo.GetByIdAsync(new EntryId(node.BoundItemId.Value), ct);
             if (entry is not null)
-                sb.Append(await renderer.RenderComponentAsync(comp, entry, ct));
+            {
+                var contentType = await LoadContentTypeAsync(comp, ct);
+                sb.Append(await renderer.RenderComponentAsync(comp, entry, contentType, ct));
+            }
         }
         else
         {
@@ -136,6 +143,12 @@ internal sealed class RenderZonesStep(
         var sb = new StringBuilder();
         zones[zone] = sb;
         return sb;
+    }
+
+    private async Task<ContentType?> LoadContentTypeAsync(Component comp, CancellationToken ct)
+    {
+        if (comp.BackingContentTypeId is null) return null;
+        return await contentTypeRepo.GetByIdAsync(comp.BackingContentTypeId.Value, ct);
     }
 
     // ── Private placement node model ──────────────────────────────────────
