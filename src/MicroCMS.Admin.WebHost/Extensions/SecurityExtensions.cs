@@ -75,21 +75,23 @@ internal static class SecurityExtensions
                 // - Visual Studio Browser Link (http://localhost:<random-port>)
                 csp =
                     "default-src 'self'; " +
-                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5174; " +
-                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://localhost:5174; " +
-                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5174 https://cdn.jsdelivr.net; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://localhost:5174 https://cdn.jsdelivr.net; " +
+                    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
                     "img-src 'self' data: blob: https:; " +
-                    "connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;";
+                    "connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; " +
+                    "frame-src 'self' blob:;";
             }
             else
             {
                 csp =
                     "default-src 'self'; " +
-                    "script-src 'self'; " +
-                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " +
+                    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
                     "img-src 'self' data: blob: https:; " +
-                    "connect-src 'self';";
+                    "connect-src 'self'; " +
+                    "frame-src 'self' blob:;";
             }
 
             context.Response.Headers.Append("Content-Security-Policy", csp);

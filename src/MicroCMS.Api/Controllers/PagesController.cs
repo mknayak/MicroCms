@@ -1,3 +1,4 @@
+using MicroCMS.Application.Features.Delivery.Queries;
 using MicroCMS.Application.Features.Pages.Commands;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -128,6 +129,39 @@ public sealed class PagesController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct = default) =>
         OkOrProblem(await Sender.Send(new GetPageQuery(id), ct));
+
+    // ── Preview rendering ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Renders the page server-side and returns the full HTML document for in-editor preview.
+    /// Returns a placeholder HTML page if no Layout is assigned.
+    /// </summary>
+    [HttpGet("{id:guid}/preview")]
+    [Produces("text/html")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Preview(
+        Guid id,
+        [FromQuery] string locale = "en",
+        CancellationToken ct = default)
+    {
+        var pageResult = await Sender.Send(new GetPageQuery(id), ct);
+        if (!pageResult.IsSuccess)
+            return ToProblemResult(pageResult.Error);
+
+        var page = pageResult.Value;
+        var renderResult = await Sender.Send(new RenderPageBySlugQuery(page.SiteId, page.Slug, locale), ct);
+        if (!renderResult.IsSuccess)
+            return ToProblemResult(renderResult.Error);
+
+        const string noLayoutHtml =
+            "<!doctype html><html><head><meta charset='utf-8'></head><body style='font-family:sans-serif;padding:2rem;color:#64748b'>" +
+            "<p>No layout assigned — cannot render preview. Assign a Layout in Pages \u2192 Edit.</p>" +
+            "</body></html>";
+
+        var html = renderResult.Value.Html ?? noLayoutHtml;
+        return Content(html, "text/html; charset=utf-8");
+    }
 
     // ── Entry link ────────────────────────────────────────────────────────
 

@@ -6,6 +6,7 @@ import { componentsApi } from '@/api/components';
 import { pagesApi } from '@/api/pages';
 import { layoutsApi } from '@/api/layouts';
 import { siteTemplatesApi } from '@/api/siteTemplates';
+import { tokenStorage } from '@/api/client';
 import type { ComponentListItem, ComponentCategory, LayoutZoneNode } from '@/types';
 import type { ViewportSize, DesignerPlacement } from './designerTypes';
 import { ApiError } from '@/api/client';
@@ -251,6 +252,31 @@ onDrop={(e) => {
     );
 }
 
+// ─── Canvas Zone helpers ──────────────────────────────────────────────────────
+
+/** Collects all leaf zone/drop-zone names in a LayoutZoneNode subtree. */
+function collectZoneNames(node: LayoutZoneNode): string[] {
+    if (node.type === 'zone' || node.type === 'drop-zone') return [node.name];
+    if (node.type === 'grid-row') return (node.columns ?? []).map((c) => c.zoneName);
+    return (node.children ?? []).flatMap(collectZoneNames);
+}
+
+/**
+ * Returns inline flex styles for Bootstrap-style row/col CSS classes so that
+ * html-element nodes render their children side-by-side when appropriate.
+ */
+function htmlElementStyles(cssClass?: string): { wrapper: React.CSSProperties; children: React.CSSProperties } {
+    if (!cssClass) return { wrapper: {}, children: {} };
+    if (/\brow\b/.test(cssClass))
+        return { wrapper: {}, children: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' } };
+    const m = cssClass.match(/\bcol(?:-[a-z]{2})?-(\d{1,2})\b/);
+    if (m) {
+        const n = parseInt(m[1], 10);
+        return { wrapper: { flex: `0 0 calc(${(n / 12 * 100).toFixed(2)}% - 0.5rem)`, minWidth: 0 }, children: {} };
+    }
+    return { wrapper: {}, children: {} };
+}
+
 function CanvasZone({
     zone, placements, selectedLocalId, onSelect, onMoveUp, onMoveDown, onRemove, onDrop, previewMode, isInherited,
 }: {
@@ -267,8 +293,46 @@ function CanvasZone({
 }) {
     const [dragOver, setDragOver] = useState(false);
 
+    // ── html-element: labelled wrapper, recurse into children ─────────────
+    if (zone.type === 'html-element') {
+        const { wrapper: wrapStyle, children: childStyle } = htmlElementStyles(zone.cssClass);
+        const isFlexRow = !!childStyle.display;
+        const sorted = [...(zone.children ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
+        return (
+            <div style={wrapStyle} className="relative rounded border border-slate-200 bg-white/80 p-2 pt-5">
+                {!previewMode && (
+                    <span className="absolute left-2 top-1 font-mono text-[9px] text-slate-300">
+                        &lt;{zone.tag ?? 'div'}{zone.cssClass ? ` .${zone.cssClass}` : ''}&gt;
+                    </span>
+                )}
+                <div style={childStyle} className={isFlexRow ? '' : 'space-y-2'}>
+                    {sorted.map((child) => (
+                        <CanvasZone
+                            key={child.id}
+                            zone={child}
+                            placements={placements}
+                            selectedLocalId={selectedLocalId}
+                            onSelect={onSelect}
+                            onMoveUp={onMoveUp}
+                            onMoveDown={onMoveDown}
+                            onRemove={onRemove}
+                            onDrop={onDrop}
+                            previewMode={previewMode}
+                            isInherited={isInherited}
+                        />
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // ── leaf zone / grid-row ──────────────────────────────────────────────
+    const leafPlacements = zone.type === 'grid-row'
+        ? placements
+        : placements.filter((p) => p.zone === zone.name);
+
     return (
-        <div className="mb-4">
+        <div className="mb-2">
             {/* Zone label */}
             {!previewMode && (
                 <div className="mb-1 flex items-center gap-2">
@@ -282,83 +346,82 @@ function CanvasZone({
             )}
 
             {/* Grid-row: render column drop zones side by side */}
-        {zone.type === 'grid-row' && zone.columns?.length ? (
-         <div className="grid grid-cols-12 gap-2">
-    {zone.columns.map((col) => (
-       <div key={col.zoneName} style={{ gridColumn: `span ${col.span}` }}>
-         <CanvasColZone
-         zoneName={col.zoneName}
-     placements={placements.filter((p) => p.zone === col.zoneName)}
-          selectedLocalId={selectedLocalId}
-      onSelect={onSelect}
-          onMoveUp={onMoveUp}
-              onMoveDown={onMoveDown}
-        onRemove={onRemove}
-      onDrop={onDrop}
-previewMode={previewMode}
-      />
-  </div>
-      ))}
-     </div>
-      ) : (
-   /* Regular zone: single drop area */
-  <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-       onDragLeave={() => setDragOver(false)}
-       onDrop={(e) => {
-     e.preventDefault(); setDragOver(false);
-          const raw = e.dataTransfer.getData('application/microcms-comp');
-   if (raw) try { onDrop(zone.name, JSON.parse(raw)); } catch { /* ignore */ }
-          }}
-          className={`relative min-h-[60px] rounded-lg border-2 border-dashed transition-colors ${previewMode ? 'border-transparent'
-       : dragOver ? 'border-brand-400 bg-brand-50/40'
-           : placements.length === 0 ? 'border-slate-200 bg-slate-50/60'
-           : 'border-transparent hover:border-slate-200'}`}>
-
-        {placements.length === 0 && !previewMode && (
-              <div className="flex h-14 items-center justify-center">
-     <div className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400">
-         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-            Drop a component here
-       </div>
-      </div>
+            {zone.type === 'grid-row' && zone.columns?.length ? (
+                <div className="grid grid-cols-12 gap-2">
+                    {zone.columns.map((col) => (
+                        <div key={col.zoneName} style={{ gridColumn: `span ${col.span}` }}>
+                            <CanvasColZone
+                                zoneName={col.zoneName}
+                                placements={leafPlacements.filter((p) => p.zone === col.zoneName)}
+                                selectedLocalId={selectedLocalId}
+                                onSelect={onSelect}
+                                onMoveUp={onMoveUp}
+                                onMoveDown={onMoveDown}
+                                onRemove={onRemove}
+                                onDrop={onDrop}
+                                previewMode={previewMode}
+                            />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                /* Regular zone: single drop area */
+                <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                        e.preventDefault(); setDragOver(false);
+                        const raw = e.dataTransfer.getData('application/microcms-comp');
+                        if (raw) try { onDrop(zone.name, JSON.parse(raw)); } catch { /* ignore */ }
+                    }}
+                    className={`relative min-h-[60px] rounded-lg border-2 border-dashed transition-colors ${previewMode ? 'border-transparent'
+                        : dragOver ? 'border-brand-400 bg-brand-50/40'
+                        : leafPlacements.length === 0 ? 'border-slate-200 bg-slate-50/60'
+                        : 'border-transparent hover:border-slate-200'}`}>
+                    {leafPlacements.length === 0 && !previewMode && (
+                        <div className="flex h-14 items-center justify-center">
+                            <div className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400">
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Drop a component here
+                            </div>
+                        </div>
                     )}
-
-   {placements.map((p) => {
-        const isSelected = p.localId === selectedLocalId;
-            return (
-                   <div key={p.localId} onClick={() => !previewMode && onSelect(p.localId)}
-             className={`group relative cursor-pointer border-2 transition-all ${previewMode ? 'border-transparent'
-      : isSelected ? 'border-brand-500 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
-   : 'border-transparent hover:border-brand-300/60'}`}>
-      {!previewMode && (
-       <div className={`absolute right-0 top-0 z-20 flex items-center rounded-bl-md bg-brand-600 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-        <span className="border-r border-white/20 px-2 py-1 text-[10px] font-bold text-white/90">{p.componentName}</span>
-    {p.isLayoutDefault && <span className="border-r border-white/20 px-2 py-1 text-[9px] text-amber-200">inherited</span>}
-         {!p.isLayoutDefault && (
-         <>
- <button onClick={(e) => { e.stopPropagation(); onMoveUp(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
-        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-    </button>
-         <button onClick={(e) => { e.stopPropagation(); onMoveDown(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
-           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-   </button>
-                 <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="px-1.5 py-1 text-red-300 hover:bg-white/20">
-        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-       </button>
-  </>
-          )}
-              </div>
-   )}
-        <ComponentPreview component={p} />
-             </div>
-      );
-        })}
+                    {leafPlacements.map((p) => {
+                        const isSelected = p.localId === selectedLocalId;
+                        return (
+                            <div key={p.localId} onClick={() => !previewMode && onSelect(p.localId)}
+                                className={`group relative cursor-pointer border-2 transition-all ${previewMode ? 'border-transparent'
+                                    : isSelected ? 'border-brand-500 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
+                                    : 'border-transparent hover:border-brand-300/60'}`}>
+                                {!previewMode && (
+                                    <div className={`absolute right-0 top-0 z-20 flex items-center rounded-bl-md bg-brand-600 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                        <span className="border-r border-white/20 px-2 py-1 text-[10px] font-bold text-white/90">{p.componentName}</span>
+                                        {p.isLayoutDefault && <span className="border-r border-white/20 px-2 py-1 text-[9px] text-amber-200">inherited</span>}
+                                        {!p.isLayoutDefault && (
+                                            <>
+                                                <button onClick={(e) => { e.stopPropagation(); onMoveUp(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); onMoveDown(p.localId); }} className="px-1.5 py-1 text-white hover:bg-white/20">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); onRemove(p.localId); }} className="px-1.5 py-1 text-red-300 hover:bg-white/20">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                                <ComponentPreview component={p} />
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
- );
+    );
 }
 
 // ─── Component Preview ────────────────────────────────────────────────────────
@@ -397,6 +460,86 @@ function ComponentPreview({ component }: { component: DesignerPlacement }) {
 }
 
 // ─── Properties Panel ─────────────────────────────────────────────────────────
+
+// ─── Preview Pane ─────────────────────────────────────────────────────────────
+
+type PreviewState = 'idle' | 'loading' | 'ready' | 'error';
+
+function PreviewPane({ pageId, viewport, zoom }: {
+    pageId: string;
+    viewport: ViewportSize;
+    zoom: number;
+}) {
+    const [state, setState] = useState<PreviewState>('idle');
+    const [html, setHtml] = useState<string>('');
+    const [error, setError] = useState<string>('');
+
+    useEffect(() => {
+        setState('loading');
+        const token = tokenStorage.get();
+        fetch(`/api/v1/pages/${pageId}/preview`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+            .then(async (res) => {
+                const text = await res.text();
+                if (!res.ok) {
+                    setError(`${res.status} — ${res.statusText}`);
+                    setState('error');
+                } else {
+                    setHtml(text);
+                    setState('ready');
+                }
+            })
+            .catch((err: unknown) => {
+                setError(err instanceof Error ? err.message : 'Network error');
+                setState('error');
+            });
+    }, [pageId]);
+
+    const frameWidthClass =
+        viewport === 'tablet' ? 'max-w-[768px]' :
+        viewport === 'mobile' ? 'max-w-[375px]' : 'w-full';
+
+    if (state === 'loading') {
+        return (
+            <div className="flex flex-1 items-center justify-center bg-slate-100">
+                <div className="flex flex-col items-center gap-3 text-slate-400">
+                    <svg className="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span className="text-sm">Rendering preview…</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (state === 'error') {
+        return (
+            <div className="flex flex-1 items-center justify-center bg-slate-100 p-8 text-center">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-600">
+                    <p className="font-semibold">Preview failed</p>
+                    <p className="mt-1 text-xs">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-1 flex-col items-center overflow-auto bg-slate-200 py-6">
+            <div className={`${frameWidthClass} mx-auto flex-shrink-0 overflow-hidden rounded-lg shadow-xl`}
+                 style={{ zoom: zoom / 100 }}>
+                <iframe
+                    title="Page preview"
+                    srcDoc={html}
+                    sandbox="allow-same-origin allow-forms"
+                    className="block w-full border-0"
+                    style={{ minHeight: '100vh' }}
+                />
+            </div>
+        </div>
+    );
+}
 
 function PropertiesPanel({ selected, placements, onRemove, onBindEntry, onResetBinding }: {
     selected: DesignerPlacement | null;
@@ -787,15 +930,20 @@ export default function PageDesignerPage() {
             />
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
-                {/* LEFT — component palette only */}
-                <PalettePanel
-                    components={allComponents}
-                    search={paletteSearch}
-                    setSearch={setPaletteSearch}
-                    onDragStart={handleDragStart}
-                />
+                {/* LEFT — component palette (hidden in preview) */}
+                {!previewMode && (
+                    <PalettePanel
+                        components={allComponents}
+                        search={paletteSearch}
+                        setSearch={setPaletteSearch}
+                        onDragStart={handleDragStart}
+                    />
+                )}
 
-                {/* CENTRE — canvas */}
+                {/* CENTRE — canvas or preview iframe */}
+                {previewMode ? (
+                    <PreviewPane pageId={pageId} viewport={viewport} zoom={zoom} />
+                ) : (
                 <div className={`flex min-w-0 flex-1 flex-col overflow-auto ${canvasWrapClass}`} style={{ zoom: zoom / 100 }}>
                     {/* Canvas ruler */}
                     {!previewMode && (
@@ -832,12 +980,8 @@ export default function PageDesignerPage() {
                         )}
                         <div className="p-6">
         {zones.map((zone) => {
-               const colZoneNames = zone.columns?.map((c) => c.zoneName) ?? [];
-      const zonePlacements = placements.filter((p) =>
-             zone.type === 'grid-row'
-               ? colZoneNames.includes(p.zone)
-     : p.zone === zone.name,
-   );
+               const zoneNames = collectZoneNames(zone);
+      const zonePlacements = placements.filter((p) => zoneNames.includes(p.zone));
       return (
    <CanvasZone
           key={zone.id}
@@ -857,8 +1001,10 @@ onDrop={handleDrop}
     </div>
                     </div>
                 </div>
+                )}
 
-                {/* RIGHT — properties */}
+                {/* RIGHT — properties (hidden in preview) */}
+                {!previewMode && (
                 <PropertiesPanel
                     selected={selectedPlacement}
                     placements={placements}
@@ -866,6 +1012,7 @@ onDrop={handleDrop}
                     onBindEntry={handleBindEntry}
                     onResetBinding={handleResetBinding}
                 />
+                )}
             </div>
 
             {/* Status bar */}
