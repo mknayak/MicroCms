@@ -43,3 +43,13 @@ public sealed record BulkDeleteMediaCommand(
 public sealed record BulkRetagMediaCommand(
     IReadOnlyList<Guid> AssetIds,
     IReadOnlyList<string> Tags) : ICommand;
+
+/// <summary>
+/// Sets or clears the virtual path for an asset, making it reachable at
+/// <c>/static/assets/{assetPath}</c> with long-lived browser caching.
+/// Pass <c>null</c> to remove the path.
+/// </summary>
+[HasPolicy(ContentPolicies.MediaUpload)]
+public sealed record SetAssetPathCommand(
+    Guid AssetId,
+    string? AssetPath) : ICommand<MediaAssetDto>;

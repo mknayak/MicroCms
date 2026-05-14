@@ -26,6 +26,8 @@ export function AssetDetail({
   const [tags, setTags]           = useState((asset.tags ?? []).join(', '));
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [editingPath, setEditingPath]   = useState(false);
+  const [assetPath, setAssetPath]       = useState(asset.assetPath ?? '');
   const qc = useQueryClient();
 
   const updateMutation = useMutation({
@@ -61,6 +63,17 @@ export function AssetDetail({
       onUpdated();
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Move failed.'),
+  });
+
+  const setPathMutation = useMutation({
+    mutationFn: () => mediaApi.setAssetPath(asset.id, assetPath.trim() || null),
+    onSuccess: () => {
+      toast.success('Asset path updated.');
+      setEditingPath(false);
+      void qc.invalidateQueries({ queryKey: ['media'] });
+      onUpdated();
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed to update path.'),
   });
 
   const signedUrlMutation = useMutation({
@@ -118,6 +131,47 @@ export function AssetDetail({
           {asset.status === 'Quarantined' && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
               This file was quarantined and cannot be delivered.
+            </div>
+          )}
+
+          {isAvailable && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">Public path</span>
+                {!editingPath && (
+                  <button
+                    onClick={() => setEditingPath(true)}
+                    className="text-xs text-brand-600 hover:underline"
+                  >{assetPath ? 'Edit' : '+ Set path'}</button>
+                )}
+              </div>
+              {editingPath ? (
+                <div className="mt-1.5 space-y-1.5">
+                  <input
+                    autoFocus
+                    className="form-input w-full font-mono text-xs"
+                    value={assetPath}
+                    onChange={(e) => setAssetPath(e.target.value)}
+                    placeholder="e.g. css/main.css"
+                  />
+                  <p className="text-[10px] text-slate-400">Served at /static/assets/{assetPath || '…'}</p>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setPathMutation.mutate()}
+                      disabled={setPathMutation.isPending}
+                      className="btn-primary flex-1 justify-center py-1 text-xs"
+                    >{setPathMutation.isPending ? 'Saving…' : 'Save'}</button>
+                    <button
+                      onClick={() => { setEditingPath(false); setAssetPath(asset.assetPath ?? ''); }}
+                      className="btn-secondary flex-1 justify-center py-1 text-xs"
+                    >Cancel</button>
+                  </div>
+                </div>
+              ) : assetPath ? (
+                <p className="mt-0.5 break-all font-mono text-xs text-slate-700">/static/assets/{assetPath}</p>
+              ) : (
+                <p className="mt-0.5 text-xs text-slate-400 italic">Not set — using GUID URL</p>
+              )}
             </div>
           )}
 

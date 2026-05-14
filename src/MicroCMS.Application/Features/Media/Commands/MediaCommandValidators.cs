@@ -1,21 +1,18 @@
 using FluentValidation;
+using MicroCMS.Application.Features.Media.Options;
 using MicroCMS.Domain.ValueObjects;
+using Microsoft.Extensions.Options;
 
 namespace MicroCMS.Application.Features.Media.Commands;
 
 public sealed class UploadMediaAssetCommandValidator : AbstractValidator<UploadMediaAssetCommand>
 {
-    private static readonly string[] AllowedExtensions =
-    [
-        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg",
-        ".mp4", ".mov", ".avi", ".webm",
-        ".mp3", ".wav", ".ogg",
-        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
-        ".zip", ".tar", ".gz"
-    ];
+    private readonly string[] _allowedExtensions;
 
-    public UploadMediaAssetCommandValidator()
+    public UploadMediaAssetCommandValidator(IOptions<MediaOptions> options)
     {
+        _allowedExtensions = options.Value.AllowedExtensions;
+
         RuleFor(x => x.FileName)
             .NotEmpty()
             .MaximumLength(AssetMetadata.MaxFileNameLength)
@@ -30,10 +27,10 @@ public sealed class UploadMediaAssetCommandValidator : AbstractValidator<UploadM
         RuleFor(x => x.Content).NotNull();
     }
 
-    private static bool HaveAllowedExtension(string fileName)
+    private bool HaveAllowedExtension(string fileName)
     {
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
-        return Array.IndexOf(AllowedExtensions, ext) >= 0;
+        return Array.IndexOf(_allowedExtensions, ext) >= 0;
     }
 }
 

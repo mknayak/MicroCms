@@ -45,9 +45,9 @@ internal sealed class LayoutRenderer(
         Layout layout,
         IReadOnlyDictionary<string, string> zones,
         RenderContext renderContext,
-        string? seoTitle       = null,
+        string? seoTitle = null,
         string? seoDescription = null,
-        string? seoOgImage     = null,
+        string? seoOgImage = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(layout.ShellTemplate))
@@ -57,8 +57,8 @@ internal sealed class LayoutRenderer(
         var zoneResolved = layout.TemplateType switch
         {
             LayoutTemplateType.Handlebars => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
-            LayoutTemplateType.Html       => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
-            _                             => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
+            LayoutTemplateType.Html => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
+            _ => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
         };
 
         // ── 2. Resolve remaining {{namespace:key}} tokens ─────────────────
@@ -69,49 +69,58 @@ internal sealed class LayoutRenderer(
 
     // ── Handlebars ────────────────────────────────────────────────────────
 
+    // Pre-built Handlebars environment with HTML encoding disabled.
+    // Zone values are already trusted HTML fragments; encoding them would break the output.
+    private static readonly IHandlebars _hb = Handlebars.Create(
+        new HandlebarsConfiguration { TextEncoder = null });
+
     private string RenderHandlebars(
         Layout layout,
         IReadOnlyDictionary<string, string> zones,
         string? seoTitle, string? seoDescription, string? seoOgImage)
     {
-  try
-    {
-    var template = Handlebars.Compile(layout.ShellTemplate!);
-var data = BuildHandlebarsData(zones, seoTitle, seoDescription, seoOgImage);
-  return template(data);
+        try
+        {
+            var template = _hb.Compile(layout.ShellTemplate!);
+            var data = BuildHandlebarsData(zones, seoTitle, seoDescription, seoOgImage);
+            return template(data);
         }
         catch (Exception ex)
         {
-   logger.LogError(ex, "Handlebars layout render failed for layout {Key}", layout.Key);
-        return FallbackZoneComment(zones);
+            logger.LogError(ex, "Handlebars layout render failed for layout {Key}", layout.Key);
+            return FallbackZoneComment(zones);
         }
     }
 
     private static Dictionary<string, object?> BuildHandlebarsData(
    IReadOnlyDictionary<string, string> zones,
         string? seoTitle, string? seoDescription, string? seoOgImage)
-  {
+    {
         var data = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
 
-     // Expose zones as  zone_hero_zone, zone_content_zone etc. (hyphens → underscores)
+        // Expose zones as  zone_hero_zone, zone_content_zone etc. (hyphens → underscores)
         // AND as a nested "zones" object so templates can use {{zone.hero-zone}} too.
         var zonesObj = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         foreach (var (name, html) in zones)
         {
+            // Normalise hyphens/spaces, then strip any leading "zone_" so that a zone
+            // named "zone-yfoxwd3p" doesn't become "zone_zone_yfoxwd3p".
             var safeKey = name.Replace('-', '_').Replace(' ', '_');
-        data[$"zone_{safeKey}"] = (object)html;
-  zonesObj[name]          = (object)html;
+            if (safeKey.StartsWith("zone_", StringComparison.OrdinalIgnoreCase))
+                safeKey = safeKey["zone_".Length..];
+            data[$"zone_{safeKey}"] = (object)html;
+            zonesObj[name] = (object)html;
         }
         data["zones"] = zonesObj;
 
         // SEO
-     var seo = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        var seo = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
- ["title"]       = seoTitle,
+            ["title"] = seoTitle,
             ["description"] = seoDescription,
-    ["ogImage"]     = seoOgImage,
-    };
-        data["seo"]  = seo;
+            ["ogImage"] = seoOgImage,
+        };
+        data["seo"] = seo;
         data["title"] = seoTitle;
 
         return data;
@@ -119,20 +128,20 @@ var data = BuildHandlebarsData(zones, seoTitle, seoDescription, seoOgImage);
 
     // ── Simple token replacement (Html / Razor fallback) ──────────────────
 
-private static string RenderTokenReplace(
-        Layout layout,
-        IReadOnlyDictionary<string, string> zones,
-    string? seoTitle, string? seoDescription, string? seoOgImage)
+    private static string RenderTokenReplace(
+            Layout layout,
+            IReadOnlyDictionary<string, string> zones,
+        string? seoTitle, string? seoDescription, string? seoOgImage)
     {
         var shell = layout.ShellTemplate!;
 
         foreach (var (name, html) in zones)
             shell = shell.Replace($"{{{{zone:{name}}}}}", html, StringComparison.OrdinalIgnoreCase);
 
-     shell = shell
-   .Replace("{{seo:title}}",       seoTitle       ?? string.Empty, StringComparison.OrdinalIgnoreCase)
-            .Replace("{{seo:description}}", seoDescription ?? string.Empty, StringComparison.OrdinalIgnoreCase)
-            .Replace("{{seo:ogImage}}",     seoOgImage     ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        shell = shell
+      .Replace("{{seo:title}}", seoTitle ?? string.Empty, StringComparison.OrdinalIgnoreCase)
+               .Replace("{{seo:description}}", seoDescription ?? string.Empty, StringComparison.OrdinalIgnoreCase)
+               .Replace("{{seo:ogImage}}", seoOgImage ?? string.Empty, StringComparison.OrdinalIgnoreCase);
 
         return shell;
     }

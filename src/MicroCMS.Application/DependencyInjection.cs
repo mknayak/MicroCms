@@ -11,6 +11,7 @@ using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Application.Features.Delivery.Rendering.Resolvers;
 using MicroCMS.Application.Features.Delivery.Services;
 using MicroCMS.Application.Features.Layouts.Services;
+using MicroCMS.Application.Features.Media.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroCMS.Application;
@@ -29,6 +30,10 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        // Register MediaOptions with defaults; hosts override via
+        // services.Configure<MediaOptions>(configuration.GetSection(MediaOptions.SectionName))
+        services.AddOptions<MediaOptions>();
+
         var assembly = Assembly.GetExecutingAssembly();
 
         services.AddMediatR(cfg =>

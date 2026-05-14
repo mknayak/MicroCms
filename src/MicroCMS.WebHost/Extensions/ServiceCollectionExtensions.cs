@@ -4,6 +4,7 @@ using MicroCMS.Ai.Core;
 using MicroCMS.Application;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Security;
+using MicroCMS.Application.Features.Media.Options;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.GraphQL;
 using MicroCMS.Infrastructure;
@@ -234,6 +235,8 @@ internal static class ServiceCollectionExtensions
         this WebApplicationBuilder builder)
     {
         builder.Services.AddApplication();
+        builder.Services.Configure<MediaOptions>(
+            builder.Configuration.GetSection(MediaOptions.SectionName));
         builder.Services.AddPageRenderSteps(); // core pipeline steps — no cache (admin preview must always be fresh)
         return builder;
     }

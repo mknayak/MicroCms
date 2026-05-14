@@ -2,6 +2,7 @@ using MicroCMS.Application.Features.Auth.Commands;
 using MicroCMS.Application.Features.Auth.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace MicroCMS.Api.Controllers;
 
@@ -31,6 +32,7 @@ public sealed class AuthController : ApiControllerBase
 
         var command = new LoginCommand(request.Email, request.Password, ipAddress, userAgent);
         var result = await Sender.Send(command, cancellationToken);
+        if (result.IsSuccess) AppendSiteCookie(result.Value.AccessToken);
         return OkOrProblem(result);
     }
 
@@ -47,6 +49,7 @@ public sealed class AuthController : ApiControllerBase
     {
         var command = new RefreshTokenCommand(request.RefreshToken);
         var result = await Sender.Send(command, cancellationToken);
+        if (result.IsSuccess) AppendSiteCookie(result.Value.AccessToken);
         return OkOrProblem(result);
     }
 
@@ -68,6 +71,7 @@ public sealed class AuthController : ApiControllerBase
     {
         var command = new SwitchSiteCommand(request.SiteId);
         var result = await Sender.Send(command, cancellationToken);
+        if (result.IsSuccess) AppendSiteCookieDirect(request.SiteId);
         return OkOrProblem(result);
     }
 
@@ -83,6 +87,7 @@ public sealed class AuthController : ApiControllerBase
     {
         var command = new RevokeTokenCommand(request.RefreshToken);
         var result = await Sender.Send(command, cancellationToken);
+        if (result.IsSuccess) ClearSiteCookie();
         return NoContentOrProblem(result);
     }
 
@@ -134,6 +139,46 @@ public sealed class AuthController : ApiControllerBase
         var result = await Sender.Send(command, cancellationToken);
         return NoContentOrProblem(result);
     }
+    // ── Cookie helpers ────────────────────────────────────────────────────
+
+    // Cookie name the asset delivery endpoint reads to resolve SiteId.
+    private const string SiteCookieName = "mcms_site";
+
+    /// <summary>
+    /// Decodes the JWT access token, reads the <c>site_id</c> claim, and appends
+    /// an <c>HttpOnly; SameSite=Lax; Path=/</c> cookie so the browser sends it on
+    /// every subsequent request — including anonymous asset delivery requests.
+    /// </summary>
+    private void AppendSiteCookie(string accessToken)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        if (!handler.CanReadToken(accessToken)) return;
+
+        var jwt = handler.ReadJwtToken(accessToken);
+        var siteIdClaim = jwt.Claims.FirstOrDefault(c => c.Type == "site_id")?.Value;
+        if (string.IsNullOrEmpty(siteIdClaim)) return;
+
+        AppendSiteCookieDirect(Guid.TryParse(siteIdClaim, out var g) ? g : Guid.Empty);
+    }
+
+    /// <summary>Writes the <c>mcms_site</c> cookie with the given <paramref name="siteId"/>.</summary>
+    private void AppendSiteCookieDirect(Guid siteId)
+    {
+        if (siteId == Guid.Empty) return;
+
+        Response.Cookies.Append(SiteCookieName, siteId.ToString(), new CookieOptions
+        {
+            HttpOnly  = true,
+            SameSite  = SameSiteMode.Lax,
+            Path      = "/",
+            // No Expires → session cookie; cleared when browser closes.
+            // The JWT itself enforces the real expiry; this cookie just carries the id.
+        });
+    }
+
+    /// <summary>Clears the <c>mcms_site</c> cookie on logout.</summary>
+    private void ClearSiteCookie() =>
+        Response.Cookies.Delete(SiteCookieName, new CookieOptions { Path = "/" });
 }
 
 // ── Request models ─────────────────────────────────────────────────────────────

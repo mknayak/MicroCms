@@ -88,6 +88,21 @@ internal sealed class GetMediaAssetQueryHandler(
     }
 }
 
+internal sealed class SetAssetPathCommandHandler(
+    IRepository<MediaAsset, MediaAssetId> repo)
+    : IRequestHandler<SetAssetPathCommand, Result<MediaAssetDto>>
+{
+    public async Task<Result<MediaAssetDto>> Handle(SetAssetPathCommand request, CancellationToken cancellationToken)
+    {
+        var asset = await repo.GetByIdAsync(new MediaAssetId(request.AssetId), cancellationToken)
+            ?? throw new NotFoundException(nameof(MediaAsset), request.AssetId);
+
+        asset.SetAssetPath(request.AssetPath);
+        repo.Update(asset);
+        return Result.Success(MediaMapper.ToDto(asset));
+    }
+}
+
 internal sealed class ListMediaAssetsQueryHandler(
     IRepository<MediaAsset, MediaAssetId> repo,
     ICurrentUser currentUser)

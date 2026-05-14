@@ -6,6 +6,7 @@ using Hellang.Middleware.ProblemDetails;
 using MicroCMS.Application;
 using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Features.Delivery.Handlers;
+using MicroCMS.Application.Features.Media.Options;
 using MicroCMS.Delivery.Core.Extensions;
 using MicroCMS.Domain.Exceptions;
 using MicroCMS.Infrastructure;
@@ -23,6 +24,8 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 // ── Application + Infrastructure layers ──────────────────────────────────────
 builder.Services.AddApplication();
+builder.Services.Configure<MediaOptions>(
+    builder.Configuration.GetSection(MediaOptions.SectionName));
 
 // ── Page render pipeline (cache-read → 8 core steps → cache-write) ─────────── 
 builder.Services.AddCachePageRenderingStep(); 

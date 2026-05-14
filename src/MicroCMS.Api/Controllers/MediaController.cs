@@ -178,6 +178,26 @@ public sealed class MediaController : ApiControllerBase
         return OkOrProblem(result);
     }
 
+    // ── Asset path ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Sets or clears the virtual path for an asset.
+    /// Once set the asset is reachable at <c>/static/assets/{path}</c> with long-lived caching.
+    /// The path must be globally unique. Send <c>{ "assetPath": null }</c> to clear it.
+    /// </summary>
+    [HttpPatch("{id:guid}/path")]
+    [ProducesResponseType(typeof(MediaAssetDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> SetAssetPath(
+        Guid id,
+        [FromBody] SetAssetPathRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new SetAssetPathCommand(id, request.AssetPath), cancellationToken);
+        return OkOrProblem(result);
+    }
+
     // ── AI Alt Text ───────────────────────────────────────────────────────
 
     /// <summary>
@@ -463,6 +483,9 @@ public sealed record UpdateMediaMetadataRequest(string? AltText, IReadOnlyList<s
 public sealed record BulkIdsRequest(IReadOnlyList<Guid> AssetIds);
 public sealed record BulkMoveRequest(IReadOnlyList<Guid> AssetIds, Guid? TargetFolderId);
 public sealed record BulkRetagRequest(IReadOnlyList<Guid> AssetIds, IReadOnlyList<string> Tags);
+
+/// <summary>Sets or clears the virtual <c>/static/assets/{path}</c> path for an asset.</summary>
+public sealed record SetAssetPathRequest(string? AssetPath);
 
 /// <summary>Rename request for media folders — distinct from the content-folder RenameFolderRequest.</summary>
 public sealed record MediaRenameFolderRequest(string NewName);

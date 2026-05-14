@@ -33,3 +33,12 @@ public sealed class AvailableMediaAssetByIdSpec : BaseSpecification<MediaAsset>
 {
     }
 }
+
+/// <summary>A single available media asset resolved by its virtual <see cref="MediaAsset.AssetPath"/> within a site.</summary>
+public sealed class AvailableMediaAssetByPathSpec : BaseSpecification<MediaAsset>
+{
+    public AvailableMediaAssetByPathSpec(SiteId siteId, string assetPath)
+        : base(a => a.SiteId == siteId && a.AssetPath == assetPath && a.Status == MediaAssetStatus.Available)
+    {
+    }
+}

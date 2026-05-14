@@ -35,10 +35,13 @@ export const mediaApi = {
     form.append('file', file);
     if (options?.altText) form.append('altText', options.altText);
     if (options?.tags) form.append('tags', JSON.stringify(options.tags));
-    if (options?.folderId) form.append('folderId', options.folderId);
+
+    const url = options?.folderId
+      ? `/media/upload?folderId=${encodeURIComponent(options.folderId)}`
+      : '/media/upload';
 
     return apiClient
-      .post<MediaAsset>('/media/upload', form, {
+      .post<MediaAsset>(url, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => {
           if (onProgress && e.total) {
@@ -51,6 +54,9 @@ export const mediaApi = {
 
   update: (id: string, data: UpdateMediaAssetRequest): Promise<MediaAsset> =>
     put<MediaAsset>(`/media/${id}/metadata`, data),
+
+  setAssetPath: (id: string, assetPath: string | null): Promise<MediaAsset> =>
+    patch<MediaAsset>(`/media/${id}/path`, { assetPath }),
 
   delete: (id: string): Promise<void> =>
     del(`/media/${id}`),

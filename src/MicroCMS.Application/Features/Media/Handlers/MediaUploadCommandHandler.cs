@@ -4,11 +4,13 @@ using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Media.Commands;
 using MicroCMS.Application.Features.Media.Dtos;
 using MicroCMS.Application.Features.Media.Mappers;
+using MicroCMS.Application.Features.Media.Options;
 using MicroCMS.Domain.Aggregates.Media;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Domain.ValueObjects;
 using MicroCMS.Shared.Ids;
 using MicroCMS.Shared.Results;
+using Microsoft.Extensions.Options;
 
 namespace MicroCMS.Application.Features.Media.Handlers;
 
@@ -17,17 +19,20 @@ namespace MicroCMS.Application.Features.Media.Handlers;
 ///   1. Detect true MIME type from magic bytes.
 ///   2. Validate file size against domain limits.
 ///   3. Write binary to storage provider.
-///   4. Persist <see cref="MediaAsset"/> with status <c>PendingScan</c>.
+///   4. Persist <see cref="MediaAsset"/> with status <c>PendingScan</c>, or
+///      immediately <c>Available</c> when <see cref="MediaOptions.SkipVirusScan"/> is enabled.
 ///
-/// The background <c>MediaScanJob</c> will advance the asset to <c>Available</c> or
-/// <c>Quarantined</c> once ClamAV completes its scan.
+/// When ClamAV is active the background <c>MediaScanJob</c> will advance the asset to
+/// <c>Available</c> or <c>Quarantined</c> once the scan completes.
 /// </summary>
 public sealed class UploadMediaAssetCommandHandler(
     IStorageProvider storageProvider,
     IMimeTypeInspector mimeInspector,
     IRepository<MediaAsset, MediaAssetId> repo,
-    ICurrentUser currentUser) : IRequestHandler<UploadMediaAssetCommand, Result<MediaAssetDto>>
+    ICurrentUser currentUser,
+    IOptions<MediaOptions> mediaOptions) : IRequestHandler<UploadMediaAssetCommand, Result<MediaAssetDto>>
 {
+    private readonly MediaOptions _mediaOptions = mediaOptions.Value;
     public async Task<Result<MediaAssetDto>> Handle(
         UploadMediaAssetCommand request,
         CancellationToken cancellationToken)
@@ -71,6 +76,9 @@ public sealed class UploadMediaAssetCommandHandler(
             request.FolderId);
 
         asset.MarkUploadComplete(); // Uploading → PendingScan
+
+        if (_mediaOptions.SkipVirusScan)
+            asset.MarkAvailable(); // PendingScan → Available (no ClamAV in this environment)
 
         await repo.AddAsync(asset, cancellationToken);
         return Result.Success(MediaMapper.ToDto(asset));

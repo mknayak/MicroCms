@@ -17,7 +17,8 @@ public sealed record MediaAssetDto(
     string Visibility,
     IReadOnlyList<string> Tags,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? AssetPath = null);
 
 public sealed record MediaAssetListItemDto(
     Guid Id,
@@ -32,7 +33,8 @@ public sealed record MediaAssetListItemDto(
     string? ThumbnailUrl,
     DateTimeOffset CreatedAt,
     Guid? FolderId = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null,
+    string? AssetPath = null);
 
 public sealed record MediaFolderDto(
     Guid Id,

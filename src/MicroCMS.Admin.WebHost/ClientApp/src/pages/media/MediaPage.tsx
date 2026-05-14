@@ -111,7 +111,23 @@ export default function MediaPage() {
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
-        accept: { 'image/*': [], 'video/*': [], 'application/pdf': [] },
+        accept: {
+            'image/*': [],
+            'video/*': [],
+            'application/pdf': [],
+            'text/css': ['.css'],
+            'text/javascript': ['.js', '.mjs'],
+            'application/javascript': ['.js', '.mjs'],
+            'text/plain': ['.txt'],
+            'text/html': ['.html', '.htm'],
+            'application/json': ['.json'],
+            'application/xml': ['.xml'],
+            'text/xml': ['.xml'],
+            'font/woff': ['.woff'],
+            'font/woff2': ['.woff2'],
+            'font/ttf': ['.ttf'],
+            'font/otf': ['.otf'],
+        },
         maxSize: 2 * 1024 * 1024 * 1024,
         noClick: false,
     });
@@ -373,6 +389,7 @@ export default function MediaPage() {
             {/* Asset detail panel */}
             {selected && (
                 <AssetDetail
+                    key={selected.id}
                     asset={selected}
                     onClose={() => setSelected(null)}
                     onUpdated={() => { setSelected(null); void qc.invalidateQueries({ queryKey: ['media'] }); }}

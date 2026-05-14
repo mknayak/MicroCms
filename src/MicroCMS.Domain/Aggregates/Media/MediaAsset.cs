@@ -51,6 +51,12 @@ public TenantId TenantId { get; private set; }
     public Guid? FolderId { get; private set; }
     public Guid UploadedBy { get; private set; }
     public MediaAssetStatus Status { get; private set; }
+    /// <summary>
+    /// Optional human-readable virtual path (e.g. <c>css/main.css</c>), globally unique.
+    /// When set, the asset is reachable at <c>/static/assets/{AssetPath}</c> with long-lived caching.
+    /// </summary>
+    public string? AssetPath { get; private set; }
+
     public string? AltText { get; private set; }
     public string? AiAltText { get; private set; }
     public AssetVisibility Visibility { get; private set; } = AssetVisibility.Public;
@@ -147,6 +153,22 @@ public TenantId TenantId { get; private set; }
         EnsureAvailable();
         _tags.Clear();
         _tags.AddRange(tags.Select(t => t.Trim().ToLowerInvariant()).Where(t => t.Length > 0).Distinct());
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets or clears the virtual path used for <c>/static/assets/{path}</c> serving.
+    /// Passing <c>null</c> removes the path. The path must be globally unique.
+    /// </summary>
+    public void SetAssetPath(string? path)
+    {
+        if (path is not null)
+        {
+            path = path.Trim().TrimStart('/');
+            if (path.Length == 0 || path.Length > 500)
+                throw new DomainException("Asset path must be between 1 and 500 characters.");
+        }
+        AssetPath = path;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

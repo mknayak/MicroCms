@@ -486,7 +486,14 @@ function PreviewPane({ pageId, viewport, zoom }: {
                     setError(`${res.status} — ${res.statusText}`);
                     setState('error');
                 } else {
-                    setHtml(text);
+                    // Inject a <base> tag so that absolute paths (e.g. /api/v1/media/…)
+                    // resolve against the current origin inside the srcDoc iframe.
+                    // Without this, about:srcdoc has no host and root-relative URLs fail.
+                    const base = `<base href="${window.location.origin}/">`;
+                    const patched = text.includes('<head>')
+                        ? text.replace('<head>', `<head>\n  ${base}`)
+                        : base + text;
+                    setHtml(patched);
                     setState('ready');
                 }
             })

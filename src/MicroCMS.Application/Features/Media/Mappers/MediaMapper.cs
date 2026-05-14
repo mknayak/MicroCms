@@ -31,12 +31,15 @@ public static class MediaMapper
         a.Visibility.ToString(),
         a.Tags,
         a.CreatedAt,
-        a.UpdatedAt);
+        a.UpdatedAt,
+        a.AssetPath);
 
     public static MediaAssetListItemDto ToListItemDto(MediaAsset a)
     {
         var mediaType = MediaTypeFromMime(a.Metadata.MimeType);
-        var url = $"/api/v1/media/{a.Id.Value}/download";
+        var url = a.AssetPath is not null
+            ? $"/static/assets/{a.AssetPath}"
+            : $"/api/v1/media/{a.Id.Value}/download";
         var thumbnailUrl = mediaType == "image"
             ? $"/api/v1/media/{a.Id.Value}/variant?w=400&h=400&fit=Cover&fmt=WebP&q=80"
             : null;
@@ -54,7 +57,8 @@ public static class MediaMapper
             thumbnailUrl,
             a.CreatedAt,
             a.FolderId,
-            a.Tags);
+            a.Tags,
+            a.AssetPath);
     }
 
     private static string MediaTypeFromMime(string mimeType) => mimeType switch

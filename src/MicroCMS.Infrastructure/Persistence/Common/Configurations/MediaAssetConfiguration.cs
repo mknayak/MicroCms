@@ -36,6 +36,14 @@ internal sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAs
             .HasMaxLength(1024)
             .IsRequired();
 
+        builder.Property(a => a.AssetPath)
+            .HasMaxLength(500);
+        // Unique per site: two sites (even within the same tenant) may use the same path.
+        // The partial filter excludes NULL rows so assets without a public path are unrestricted.
+        builder.HasIndex(a => new { a.TenantId, a.SiteId, a.AssetPath })
+            .IsUnique()
+            .HasFilter("\"AssetPath\" IS NOT NULL");
+
         builder.Property(a => a.FolderId);
         builder.Property(a => a.UploadedBy).IsRequired();
 

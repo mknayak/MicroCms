@@ -1,8 +1,13 @@
 using Hellang.Middleware.ProblemDetails;
 using MicroCMS.Api.Middleware;
+using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Domain.Aggregates.Media;
+using MicroCMS.Domain.Repositories;
+using MicroCMS.Domain.Specifications.Delivery;
 using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Tenancy;
+using MicroCMS.Shared.Ids;
 using Microsoft.EntityFrameworkCore;
 
 namespace MicroCMS.WebHost.Extensions;
@@ -99,8 +104,54 @@ internal static class ApplicationBuilderExtensions
         }
 
         app.MapControllers();
+        app.MapMediaAssetsByPath();
 
         return app;
+    }
+
+    // ── Static asset path endpoint ────────────────────────────────────────
+
+    /// <summary>
+    /// Registers the anonymous <c>GET /static/assets/{**path}</c> endpoint.
+    ///
+    /// Resolves the virtual path to a <see cref="MediaAsset"/> and streams the
+    /// binary from storage with a long-lived <c>Cache-Control: public, max-age=31536000</c>
+    /// header so browsers cache layout CSS/JS files without hitting the GUID-based API.
+    /// </summary>
+    private static void MapMediaAssetsByPath(this WebApplication app)
+    {
+        app.MapGet("/static/assets/{**path}",
+            async (string path,
+            HttpRequest request,
+            HttpResponse response,
+            IRepository<MediaAsset, MediaAssetId> assetRepo,
+            IStorageProvider storageProvider,
+            CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return Results.NotFound();
+
+            // Resolve SiteId from the mcms_site cookie written by the admin SPA
+            // when the user selects a site from the dropdown.
+            if (!request.Cookies.TryGetValue("mcms_site", out var rawSiteId) ||
+                !Guid.TryParse(rawSiteId, out var siteGuid))
+                return Results.NotFound();
+
+            var siteId = new SiteId(siteGuid);
+            var spec = new AvailableMediaAssetByPathSpec(siteId, path.TrimStart('/'));
+            var matches = await assetRepo.ListAsync(spec, ct);
+            var asset = matches.FirstOrDefault();
+            if (asset is null)
+                return Results.NotFound();
+
+            response.Headers.CacheControl = "public, max-age=31536000, immutable";
+
+            var stream = await storageProvider.DownloadAsync(asset.StorageKey, ct);
+            return Results.Stream(stream, contentType: asset.Metadata.MimeType, enableRangeProcessing: true);
+        })
+        .AllowAnonymous()
+        .WithName("GetAssetByPath")
+        .WithTags("Media");
     }
 
     // ── GraphQL middleware ────────────────────────────────────────────────

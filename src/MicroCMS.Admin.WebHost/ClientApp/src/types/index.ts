@@ -384,6 +384,7 @@ export interface MediaAsset {
     folderId?: string;
     uploadedById?: string;
     uploadedByName?: string;
+    assetPath?: string | null;
     createdAt: string;
 }
 
