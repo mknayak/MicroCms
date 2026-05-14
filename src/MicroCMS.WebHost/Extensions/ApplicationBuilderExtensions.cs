@@ -8,6 +8,7 @@ using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Tenancy;
 using MicroCMS.Shared.Ids;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 
 namespace MicroCMS.WebHost.Extensions;
@@ -146,8 +147,18 @@ internal static class ApplicationBuilderExtensions
 
             response.Headers.CacheControl = "public, max-age=31536000, immutable";
 
+            // Prefer the stored MIME type; fall back to extension-based lookup so
+            // browsers always receive a correct Content-Type (e.g. text/css, text/javascript).
+            var mimeType = asset.Metadata.MimeType;
+            if (string.IsNullOrWhiteSpace(mimeType))
+            {
+                var provider = new FileExtensionContentTypeProvider();
+                if (!provider.TryGetContentType(path, out mimeType))
+                    mimeType = "application/octet-stream";
+            }
+
             var stream = await storageProvider.DownloadAsync(asset.StorageKey, ct);
-            return Results.Stream(stream, contentType: asset.Metadata.MimeType, enableRangeProcessing: true);
+            return Results.Stream(stream, contentType: mimeType, enableRangeProcessing: true);
         })
         .AllowAnonymous()
         .WithName("GetAssetByPath")

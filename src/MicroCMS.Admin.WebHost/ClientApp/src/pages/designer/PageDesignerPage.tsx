@@ -539,7 +539,7 @@ function PreviewPane({ pageId, viewport, zoom }: {
                 <iframe
                     title="Page preview"
                     srcDoc={html}
-                    sandbox="allow-same-origin allow-forms"
+                    sandbox="allow-same-origin allow-scripts allow-forms"
                     className="block w-full border-0"
                     style={{ minHeight: '100vh' }}
                 />

@@ -15,6 +15,7 @@ internal static class ApiProxyExtensions
     private const string ApiClusterId = "microcms-api";
     private const string ApiRouteId = "api-route";
     private const string SwaggerRouteId = "swagger-route";
+    private const string StaticAssetsRouteId = "static-assets-route";
 
     internal static WebApplicationBuilder AddAdminApiProxy(this WebApplicationBuilder builder)
     {
@@ -49,6 +50,12 @@ internal static class ApiProxyExtensions
             RouteId = SwaggerRouteId,
  ClusterId = ApiClusterId,
      Match = new RouteMatch { Path = "/swagger/{**catch-all}" },
+        },
+        new RouteConfig
+        {
+            RouteId = StaticAssetsRouteId,
+            ClusterId = ApiClusterId,
+            Match = new RouteMatch { Path = "/static/assets/{**catch-all}" },
         },
     ];
 
