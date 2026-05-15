@@ -80,7 +80,9 @@ export default function ContentTypeEditPage() {
                 description: f.description ?? '',
                 enumMode: f.options && f.options.length > 0 ? 'static' : (f.dynamicSource ? 'dynamic' : 'static'),
                 optionsText: (f.options ?? []).join('\n'),
-                referenceHandle: f.dynamicSource?.contentTypeHandle ?? '',
+                referenceHandle: f.fieldType === 'Component'
+                    ? (f.componentSource?.componentKey ?? '')
+                    : (f.dynamicSource?.contentTypeHandle ?? ''),
             })));
         }
     }, [existing, setValue]);
@@ -120,6 +122,10 @@ export default function ContentTypeEditPage() {
                             (f.fieldType === 'Reference' && f.referenceHandle?.trim())
                               ? { contentTypeHandle: f.referenceHandle!.trim(), labelField: '', valueField: '', statusFilter: 'Published' }
                               : undefined,
+                        componentSourceKey:
+                            f.fieldType === 'Component' && f.referenceHandle?.trim()
+                              ? f.referenceHandle.trim()
+                              : undefined,
                     })),
                 });
             }
@@ -141,6 +147,10 @@ export default function ContentTypeEditPage() {
                         (f.fieldType === 'Enum' && f.enumMode === 'dynamic' && f.referenceHandle?.trim()) ||
                         (f.fieldType === 'Reference' && f.referenceHandle?.trim())
                           ? { contentTypeHandle: f.referenceHandle!.trim(), labelField: '', valueField: '', statusFilter: 'Published' }
+                          : undefined,
+                    componentSourceKey:
+                        f.fieldType === 'Component' && f.referenceHandle?.trim()
+                          ? f.referenceHandle.trim()
                           : undefined,
                 })),
             });

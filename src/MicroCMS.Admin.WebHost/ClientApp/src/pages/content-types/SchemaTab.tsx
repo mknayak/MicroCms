@@ -84,6 +84,9 @@ export function SchemaTab({ contentType }: { contentType: ContentType }) {
                     multiListSource: f.type === 'MultiList'
                         ? (f.multiListSource?.contentTypeHandle?.trim() ? f.multiListSource : undefined)
                         : undefined,
+                    componentSourceKey: f.type === 'Component' && f.componentSourceKey?.trim()
+                        ? f.componentSourceKey.trim()
+                        : undefined,
                 })),
             });
         },

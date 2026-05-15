@@ -108,6 +108,7 @@ export default function ComponentEditorPage() {
           multiListSource: f.multiListSource
             ? { contentTypeHandle: f.multiListSource.contentTypeHandle ?? '', labelField: f.multiListSource.labelField ?? '', valueField: f.multiListSource.valueField ?? '', statusFilter: f.multiListSource.statusFilter ?? 'Published', groupHandle: f.multiListSource.groupHandle ?? '' }
             : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
+          componentSourceKey: f.componentSource?.componentKey ?? '',
         })),
       });
       setTemplateType(comp.templateType);
@@ -137,11 +138,14 @@ export default function ComponentEditorPage() {
           groupName: f.groupName ?? DEFAULT_GROUP,
           options: f.type === 'Enum' && f.enumMode === 'static' ? f.staticOptions : undefined,
           dynamicSource:
-            (f.type === 'Enum' && f.enumMode === 'dynamic') || f.type === 'Reference' || f.type === 'Component'
+            (f.type === 'Enum' && f.enumMode === 'dynamic') || f.type === 'Reference'
               ? (f.dynamicSource?.contentTypeHandle?.trim() ? f.dynamicSource : undefined)
               : undefined,
           multiListSource: f.type === 'MultiList'
             ? (f.multiListSource?.contentTypeHandle?.trim() ? f.multiListSource : undefined)
+            : undefined,
+          componentSourceKey: f.type === 'Component' && f.componentSourceKey?.trim()
+            ? f.componentSourceKey.trim()
             : undefined,
         })),
       }),

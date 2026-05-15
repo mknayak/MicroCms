@@ -19,7 +19,8 @@ public sealed record ComponentFieldInput(
     string? Description,
     IReadOnlyList<string>? Options = null,
     MicroCMS.Application.Features.ContentTypes.Commands.FieldDynamicSourceInput? DynamicSource = null,
-    MicroCMS.Application.Features.ContentTypes.Commands.FieldDynamicSourceInput? MultiListSource = null);
+    MicroCMS.Application.Features.ContentTypes.Commands.FieldDynamicSourceInput? MultiListSource = null,
+    string? ComponentSourceKey = null);
 
 [HasPolicy(ContentPolicies.ComponentManage)]
 public sealed record CreateComponentCommand(

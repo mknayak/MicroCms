@@ -91,6 +91,7 @@ public static class ContentTypeMapper
             IsInherited: isInherited,
             Options: validation?.Options,
             DynamicSource: validation?.DynamicSource,
-            MultiListSource: validation?.MultiListSource);
+            MultiListSource: validation?.MultiListSource,
+            ComponentSource: validation?.ComponentSource);
     }
 }

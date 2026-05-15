@@ -34,7 +34,9 @@ public sealed record AddFieldCommand(
     /// <summary>Dynamic source config for Enum/Reference fields.</summary>
     FieldDynamicSourceInput? DynamicSource = null,
     /// <summary>Source config for MultiList fields.</summary>
-    FieldDynamicSourceInput? MultiListSource = null) : ICommand<ContentTypeDto>;
+    FieldDynamicSourceInput? MultiListSource = null,
+    /// <summary>Component key restriction for Component fields.</summary>
+    string? ComponentSourceKey = null) : ICommand<ContentTypeDto>;
 
 [HasPolicy(ContentPolicies.ContentTypeManage)]
 public sealed record RemoveFieldCommand(
@@ -85,7 +87,9 @@ public sealed record UpdateFieldInput(
     /// <summary>Dynamic source config for Enum/Reference fields.</summary>
     FieldDynamicSourceInput? DynamicSource = null,
     /// <summary>Source config for MultiList fields.</summary>
-    FieldDynamicSourceInput? MultiListSource = null);
+    FieldDynamicSourceInput? MultiListSource = null,
+    /// <summary>Component key restriction for Component fields.</summary>
+    string? ComponentSourceKey = null);
 
 /// <summary>
 /// DTO for specifying a dynamic entry source for Enum fields in commands.

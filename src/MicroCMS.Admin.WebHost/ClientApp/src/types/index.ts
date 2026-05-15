@@ -206,6 +206,8 @@ export interface FieldDefinitionDto {
     dynamicSource?: FieldDynamicSource;
     /** Dynamic source config for MultiList fields. */
     multiListSource?: FieldDynamicSource;
+    /** Restricts a Component field to items of a specific component key. */
+    componentSource?: ComponentFieldSource;
 }
 
 /** Describes how to resolve Enum options dynamically from published entries. */
@@ -216,6 +218,11 @@ export interface FieldDynamicSource {
     statusFilter: string;
     /** When set, restricts the available options to entries belonging to this group handle. */
     groupHandle?: string;
+}
+
+/** Restricts a Component field to items of a specific component (identified by key). */
+export interface ComponentFieldSource {
+    componentKey: string;
 }
 
 /** Matches EnumOptionDto returned by GET /content-types/{id}/fields/{fieldId}/enum-options */
@@ -997,6 +1004,10 @@ export interface ComponentFieldDefinition {
     dynamicSource?: FieldDynamicSource;
     /** Multi-list source for MultiList fields. */
     multiListSource?: FieldDynamicSource;
+    /** Component key restriction for Component fields. */
+    componentSource?: ComponentFieldSource;
+    /** Component key sent when saving a Component field (write-only). */
+    componentSourceKey?: string;
 }
 
 export interface ComponentDto {

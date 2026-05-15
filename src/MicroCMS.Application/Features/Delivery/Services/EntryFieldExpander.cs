@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MicroCMS.Application.Common.Interfaces;
+using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Domain.Aggregates.Content;
 using MicroCMS.Domain.Aggregates.Media;
 using MicroCMS.Domain.Enums;
@@ -15,13 +16,15 @@ namespace MicroCMS.Application.Features.Delivery.Services;
 ///   <item><term>MultiList</term><description>GUID array → list of flattened field dictionaries, recursed up to <see cref="MaxDepth"/> levels deep.</description></item>
 ///   <item><term>AssetReference</term><description>Looks up the <see cref="MediaAsset"/> and writes <c>{id, assetUrl, fileName, mimeType, assetType, altText?, width?, height?}</c>.</description></item>
 ///   <item><term>DateTime</term><description>ISO-8601 string with UTC offset preserved.</description></item>
+///   <item><term>Component</term><description>Renders the linked component item through its template and writes the HTML string, or falls back to reference JSON when <see cref="IComponentFieldRenderer"/> is unavailable.</description></item>
 ///   <item><term>All others</term><description>Unchanged.</description></item>
 /// </list>
 /// </summary>
 public sealed class EntryFieldExpander(
     IRepository<Entry, EntryId> entryRepo,
     IRepository<MediaAsset, MediaAssetId> mediaRepo,
-    IStorageProvider storage)
+    IStorageProvider storage,
+    IComponentFieldRenderer? componentFieldRenderer = null)
 {
     /// <summary>Maximum number of linked-entry levels that will be recursively expanded.</summary>
     public const int MaxDepth = 2;
@@ -93,6 +96,13 @@ public sealed class EntryFieldExpander(
                 await WriteAssetAsync(writer, value, siteId, ct);
                 break;
 
+            case FieldType.Component:
+                // A Component field stores a single ComponentItem entry GUID.
+                // When a renderer is available, render the component template to HTML;
+                // otherwise fall back to reference-style JSON expansion.
+                await WriteComponentAsync(writer, value, fd, siteId, depth, ct);
+                break;
+
             case FieldType.DateTime:
                 WriteDateTime(writer, value);
                 break;
@@ -102,6 +112,31 @@ public sealed class EntryFieldExpander(
                 value.WriteTo(writer);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Handles a <see cref="FieldType.Component"/> field.
+    /// When <see cref="IComponentFieldRenderer"/> is registered the component item is rendered
+    /// to an HTML string and written as a JSON string value.
+    /// Otherwise falls back to reference-style JSON expansion (same as a Reference field).
+    /// </summary>
+    private async Task WriteComponentAsync(Utf8JsonWriter writer, JsonElement value, FieldDefinition fd, SiteId siteId, int depth, CancellationToken ct)
+    {
+        var componentKey = fd.Validation?.ComponentSource?.ComponentKey;
+        var itemId = ParseEntryId(value);
+
+        if (componentFieldRenderer is not null && !string.IsNullOrWhiteSpace(componentKey) && itemId is not null)
+        {
+            var html = await componentFieldRenderer.RenderAsync(componentKey, itemId.Value.Value, siteId, ct);
+            if (html is not null)
+            {
+                writer.WriteStringValue(html);
+                return;
+            }
+        }
+
+        // Fallback: expand as a reference object so the field still has useful data.
+        await WriteReferenceAsync(writer, value, siteId, depth, ct);
     }
 
     /// <summary>

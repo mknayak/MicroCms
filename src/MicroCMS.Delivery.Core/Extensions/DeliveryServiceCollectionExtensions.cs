@@ -60,9 +60,10 @@ services.AddAuthorization(opt =>
         services.AddSingleton<IComponentRenderer, ComponentRenderer>();
 
         // Token resolvers and pipeline are registered in AddApplication().
-        // LayoutRenderer and ComponentRenderingService are scoped because
-        // they depend on the scoped TokenResolutionPipeline.
+        // LayoutRenderer, ComponentRenderingService and ComponentFieldRenderer are scoped because
+        // they depend on the scoped TokenResolutionPipeline and scoped repositories.
         services.AddScoped<ILayoutRenderer, LayoutRenderer>();
+        services.AddScoped<IComponentFieldRenderer, ComponentFieldRenderer>();
         services.AddScoped<IComponentRenderingService, ComponentRenderingService>();
 
         return services;

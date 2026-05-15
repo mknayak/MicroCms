@@ -98,6 +98,15 @@ export const contentTypesApi = {
   getEnumOptions: (contentTypeId: string, fieldId: string): Promise<EnumOptionDto[]> =>
     get<EnumOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/enum-options`),
 
+  /** Resolves dynamic enum options from source params directly (no owning CT/field ID required). */
+  getEnumOptionsBySource: (params: {
+    contentTypeHandle: string;
+    labelField: string;
+    valueField: string;
+    statusFilter?: string;
+  }): Promise<EnumOptionDto[]> =>
+    get<EnumOptionDto[]>('/content-types/fields/enum-options-by-source', { params }),
+
   /** Returns the candidate entry list (left pane) for a MultiList field picker. */
   getMultiListOptions: (contentTypeId: string, fieldId: string): Promise<MultiListOptionDto[]> =>
     get<MultiListOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/multilist-options`),

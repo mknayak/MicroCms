@@ -17,7 +17,8 @@ public sealed record ComponentFieldDto(
     string GroupName = "Default",
     IReadOnlyList<string>? Options = null,
     FieldDynamicSource? DynamicSource = null,
-    FieldDynamicSource? MultiListSource = null);
+    FieldDynamicSource? MultiListSource = null,
+    ComponentFieldSource? ComponentSource = null);
 
 public sealed record ComponentDto(
 Guid Id,

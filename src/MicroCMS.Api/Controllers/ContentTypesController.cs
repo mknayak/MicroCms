@@ -74,7 +74,8 @@ public sealed class ContentTypesController : ApiControllerBase
       request.MultiListSource.LabelField,
       request.MultiListSource.ValueField,
       request.MultiListSource.StatusFilter,
-      request.MultiListSource.GroupHandle)),
+      request.MultiListSource.GroupHandle),
+  request.ComponentSourceKey),
 cancellationToken);
         return OkOrProblem(result);
     }
@@ -133,7 +134,8 @@ cancellationToken);
             f.MultiListSource.LabelField,
             f.MultiListSource.ValueField,
             f.MultiListSource.StatusFilter,
-            f.MultiListSource.GroupHandle)))
+            f.MultiListSource.GroupHandle),
+        f.ComponentSourceKey))
      .ToList();
 
         var result = await Sender.Send(
@@ -213,6 +215,41 @@ cancellationToken);
         var result = await Sender.Send(new ResolveMultiListOptionsQuery(id, fieldId), cancellationToken);
         return OkOrProblem(result);
     }
+
+    /// <summary>
+    /// Resolves the selectable options for a dynamic Enum field.
+    /// Used by the entry/component-item editor to populate the dropdown.
+    /// </summary>
+    [HttpGet("{id:guid}/fields/{fieldId:guid}/enum-options")]
+    [ProducesResponseType(typeof(IReadOnlyList<DynamicEnumOptionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDynamicEnumOptions(
+        Guid id, Guid fieldId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(new ResolveDynamicEnumOptionsQuery(id, fieldId), cancellationToken);
+        return OkOrProblem(result);
+    }
+
+    /// <summary>
+    /// Resolves dynamic enum options directly from source parameters.
+    /// Used by editors (e.g. component-item editor) that have a dynamicSource config
+    /// but no owning content-type/field-ID context.
+    /// </summary>
+    [HttpGet("fields/enum-options-by-source")]
+    [ProducesResponseType(typeof(IReadOnlyList<DynamicEnumOptionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDynamicEnumOptionsBySource(
+        [FromQuery] string contentTypeHandle,
+        [FromQuery] string labelField,
+        [FromQuery] string valueField,
+        [FromQuery] string? statusFilter = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(
+            new ResolveDynamicEnumOptionsBySourceQuery(contentTypeHandle, labelField, valueField, statusFilter),
+            cancellationToken);
+        return OkOrProblem(result);
+    }
 }
 
 // ── Request models ───────────────────────────────────────────────────────────
@@ -239,9 +276,11 @@ public sealed record AddFieldRequest(
     /// <summary>Static option list for Enum fields.</summary>
     IReadOnlyList<string>? Options = null,
     /// <summary>Dynamic source config for Enum/Reference fields.</summary>
-  FieldDynamicSourceRequest? DynamicSource = null,
+    FieldDynamicSourceRequest? DynamicSource = null,
     /// <summary>Source config for MultiList fields — defines the content type to pick entries from.</summary>
-    FieldDynamicSourceRequest? MultiListSource = null);
+  FieldDynamicSourceRequest? MultiListSource = null,
+    /// <summary>Component key restriction for Component fields (e.g. "button").</summary>
+    string? ComponentSourceKey = null);
 
 public sealed record UpdateContentTypeRequest(
     string DisplayName,
@@ -269,7 +308,9 @@ Guid? Id,
     IReadOnlyList<string>? Options = null,
     FieldDynamicSourceRequest? DynamicSource = null,
     /// <summary>Source config for MultiList fields.</summary>
-    FieldDynamicSourceRequest? MultiListSource = null);
+    FieldDynamicSourceRequest? MultiListSource = null,
+    /// <summary>Component key restriction for Component fields (e.g. "button").</summary>
+    string? ComponentSourceKey = null);
 
 public sealed record ImportSchemaRequest(
     string Handle,

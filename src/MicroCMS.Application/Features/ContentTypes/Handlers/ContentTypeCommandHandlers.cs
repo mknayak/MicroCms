@@ -26,20 +26,21 @@ internal static class ValidationJsonHelper
     internal static string? Build(
         IReadOnlyList<string>? options,
         FieldDynamicSourceInput? dynamicSource,
-        FieldDynamicSourceInput? multiListSource = null)
+        FieldDynamicSourceInput? multiListSource = null,
+        string? componentSourceKey = null)
     {
-      if (options is null && dynamicSource is null && multiListSource is null)
-   return null;
+        if (options is null && dynamicSource is null && multiListSource is null && componentSourceKey is null)
+            return null;
 
-  var config = new FieldValidationConfig
-  {
-       Options = options,
-  DynamicSource = dynamicSource is null ? null : new FieldDynamicSource
+        var config = new FieldValidationConfig
+        {
+            Options = options,
+            DynamicSource = dynamicSource is null ? null : new FieldDynamicSource
             {
-     ContentTypeHandle = dynamicSource.ContentTypeHandle,
-              LabelField = dynamicSource.LabelField,
-            ValueField = dynamicSource.ValueField,
-        StatusFilter = dynamicSource.StatusFilter,
+                ContentTypeHandle = dynamicSource.ContentTypeHandle,
+                LabelField = dynamicSource.LabelField,
+                ValueField = dynamicSource.ValueField,
+                StatusFilter = dynamicSource.StatusFilter,
                 GroupHandle = dynamicSource.GroupHandle,
             },
             MultiListSource = multiListSource is null ? null : new FieldDynamicSource
@@ -49,6 +50,10 @@ internal static class ValidationJsonHelper
                 ValueField = multiListSource.ValueField,
                 StatusFilter = multiListSource.StatusFilter,
                 GroupHandle = multiListSource.GroupHandle,
+            },
+            ComponentSource = componentSourceKey is null ? null : new ComponentFieldSource
+            {
+                ComponentKey = componentSourceKey,
             },
         };
         return config.ToJson();
@@ -101,7 +106,7 @@ internal sealed class AddFieldCommandHandler(
         if (!Enum.TryParse<FieldType>(request.FieldType, ignoreCase: true, out var fieldType))
         throw new ValidationException([new ValidationFailure("FieldType", $"'{request.FieldType}' is not a valid FieldType.")]);
 
-        var validationJson = ValidationJsonHelper.Build(request.Options, request.DynamicSource, request.MultiListSource);
+        var validationJson = ValidationJsonHelper.Build(request.Options, request.DynamicSource, request.MultiListSource, request.ComponentSourceKey);
 
         ct.AddField(request.Handle, request.Label, fieldType,
        request.IsRequired, request.IsLocalized, request.IsUnique,
@@ -261,7 +266,7 @@ ICacheService cacheService)
         if (!Enum.TryParse<FieldType>(f.FieldType, ignoreCase: true, out var fieldType))
           throw new ValidationException([new ValidationFailure("FieldType", $"'{f.FieldType}' is not a valid FieldType.")]);
 
-        var validationJson = ValidationJsonHelper.Build(f.Options, f.DynamicSource, f.MultiListSource);
+        var validationJson = ValidationJsonHelper.Build(f.Options, f.DynamicSource, f.MultiListSource, f.ComponentSourceKey);
 
         if (f.Id.HasValue)
         ct.UpdateField(f.Id.Value, f.Label, fieldType,

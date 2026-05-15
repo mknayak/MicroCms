@@ -45,6 +45,7 @@ export function toFormFields(ct: ContentType): SchemaFormValues['fields'] {
                     groupHandle: f.multiListSource.groupHandle ?? '',
                 }
                 : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
+            componentSourceKey: f.componentSource?.componentKey ?? '',
         }));
 }
 

@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { siteTemplatesApi } from '@/api/siteTemplates';
 import { contentTypesApi } from '@/api/contentTypes';
 import { FIELD_TYPE_COLORS, FIELD_TYPE_LABELS } from './contentTypeDetail.shared';
-import { EnumOptionsEditor, ReferenceSourceEditor, MultiListSourceEditor } from './SchemaFieldEditors';
+import { EnumOptionsEditor, ReferenceSourceEditor, MultiListSourceEditor, ComponentSourceEditor } from './SchemaFieldEditors';
 import { FIELD_TYPES, DEFAULT_GROUP, makeBlankField } from './schemaTab.types';
 import { orderedGroups } from './schemaTab.helpers';
 import type { SchemaFormValues } from './schemaTab.types';
@@ -116,6 +116,9 @@ function FieldRow({
                         )}
                         {watch(`fields.${idx}.type`) === 'Reference' && (
                             <ReferenceSourceEditor register={register} prefix={`fields.${idx}.dynamicSource`} errors={errors.fields?.[idx]?.dynamicSource} />
+                        )}
+                        {watch(`fields.${idx}.type`) === 'Component' && (
+                            <ComponentSourceEditor register={register} prefix={`fields.${idx}.componentSourceKey`} errors={errors.fields?.[idx]?.componentSourceKey} />
                         )}
                         {watch(`fields.${idx}.type`) === 'MultiList' && (
                             <MultiListSourceEditor

@@ -34,6 +34,14 @@ public sealed record FieldValidationConfig
     [JsonPropertyName("multiListSource")]
     public FieldDynamicSource? MultiListSource { get; init; }
 
+    /// <summary>
+    /// Restricts a <see cref="FieldType.Component"/> field to items of a specific component,
+    /// identified by the component's <c>Key</c> (e.g. "button").
+    /// When null, any component item may be selected.
+    /// </summary>
+    [JsonPropertyName("componentSource")]
+    public ComponentFieldSource? ComponentSource { get; init; }
+
     /// <summary>Min length for ShortText / LongText fields.</summary>
     [JsonPropertyName("minLength")]
     public int? MinLength { get; init; }
@@ -90,6 +98,17 @@ public sealed record FieldDynamicSource
     /// </summary>
     [JsonPropertyName("groupHandle")]
     public string? GroupHandle { get; init; }
+}
+
+/// <summary>
+/// Identifies the component type (by key) that a <see cref="FieldType.Component"/> field
+/// is restricted to.  The picker will only show items belonging to that component.
+/// </summary>
+public sealed record ComponentFieldSource
+{
+    /// <summary>The component <c>Key</c> (e.g. "button") used to filter the picker.</summary>
+    [JsonPropertyName("componentKey")]
+    public string ComponentKey { get; init; } = string.Empty;
 }
 
 // ── FieldDefinition ──────────────────────────────────────────────────────────

@@ -48,7 +48,12 @@ public sealed record FieldDefinitionDto(
     /// Source config for MultiList fields — defines which content type's entries
     /// populate the available (left-pane) dual-pane picker.
     /// </summary>
-    FieldDynamicSource? MultiListSource = null);
+    FieldDynamicSource? MultiListSource = null,
+    /// <summary>
+    /// Restricts a Component field to items of a specific component key.
+    /// Null means any component item is selectable.
+    /// </summary>
+    ComponentFieldSource? ComponentSource = null);
 
 public sealed record ContentTypeListItemDto(
     Guid Id,

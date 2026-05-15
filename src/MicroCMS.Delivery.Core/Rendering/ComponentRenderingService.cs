@@ -16,7 +16,8 @@ namespace MicroCMS.Delivery.Core.Rendering;
 internal sealed class ComponentRenderingService(
     IComponentRenderer componentRenderer,
     ILayoutRenderer layoutRenderer,
-    EntryFieldExpander fieldExpander)
+    EntryFieldExpander fieldExpander,
+    IComponentFieldRenderer componentFieldRenderer)
     : IComponentRenderingService
 {
     public async Task<string> RenderComponentAsync(

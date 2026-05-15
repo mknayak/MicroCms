@@ -211,7 +211,38 @@ export function ReferenceSourceEditor({
     );
 }
 
-// ─── MultiListSourceEditor ────────────────────────────────────────────────────
+// ─── ComponentSourceEditor ────────────────────────────────────────────────────
+
+export function ComponentSourceEditor({
+    register,
+    prefix,
+    errors,
+}: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    register: any;
+    prefix: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    errors?: any;
+}) {
+    const keyError = errors;
+    return (
+        <div className={`col-span-2 space-y-2 rounded-lg border p-3 ${keyError ? 'border-red-300 bg-red-50' : 'border-dashed border-violet-300 bg-violet-50'}`}>
+            <p className="text-xs font-semibold text-violet-800">Component Source — which component type to pick items from</p>
+            <div>
+                <label className="form-label text-xs">Component Key <span className="text-red-500">*</span></label>
+                <input
+                    className={`form-input mt-1 font-mono text-xs ${keyError ? 'border-red-400 focus:ring-red-400' : ''}`}
+                    placeholder="e.g. hero-banner, button"
+                    {...register(prefix)}
+                />
+                {keyError
+                    ? <p className="mt-0.5 text-xs text-red-600">{keyError.message}</p>
+                    : <p className="mt-0.5 text-xs text-slate-400">The key of the component whose items will appear in the picker.</p>
+                }
+            </div>
+        </div>
+    );
+}
 
 export function MultiListSourceEditor({
     contentTypeId,

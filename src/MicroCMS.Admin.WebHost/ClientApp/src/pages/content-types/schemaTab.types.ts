@@ -54,6 +54,8 @@ export const fieldSchema = z.object({
     dynamicSource: dynamicSourceSchema.optional(),
     /** Dynamic source config for MultiList fields */
     multiListSource: dynamicSourceSchema.optional(),
+    /** Component key restriction for Component fields */
+    componentSourceKey: z.string().optional(),
 });
 
 export const schemaFormSchema = z.object({
@@ -82,6 +84,11 @@ export const schemaFormValidator = schemaFormSchema.superRefine((values, ctx) =>
         if (field.type === 'Reference') {
             if (!field.dynamicSource?.contentTypeHandle?.trim()) {
                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Source content type is required', path: ['fields', i, 'dynamicSource', 'contentTypeHandle'] });
+            }
+        }
+        if (field.type === 'Component') {
+            if (!field.componentSourceKey?.trim()) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Component key is required', path: ['fields', i, 'componentSourceKey'] });
             }
         }
         if (field.type === 'Enum' && field.enumMode === 'dynamic') {
@@ -114,5 +121,6 @@ export function makeBlankField(groupName: string = DEFAULT_GROUP): FieldFormValu
         staticOptions: [],
         dynamicSource: { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
         multiListSource: { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
+        componentSourceKey: '',
     };
 }

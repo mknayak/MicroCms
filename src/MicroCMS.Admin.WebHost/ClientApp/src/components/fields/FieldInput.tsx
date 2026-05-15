@@ -17,7 +17,7 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { MediaPickerField } from '@/pages/pages/MediaPickerField';
 import { EntryPickerField } from '@/pages/pages/EntryPickerField';
 import { ComponentItemPickerField } from '@/pages/components/ComponentItemPickerField';
-import type { FieldDynamicSource, MultiListOptionDto } from '@/types';
+import type { EnumOptionDto, FieldDynamicSource, MultiListOptionDto } from '@/types';
 
 // ─── Shared field descriptor ──────────────────────────────────────────────────
 
@@ -152,6 +152,77 @@ function MultiListPickerField({
   );
 }
 
+// ─── Dynamic Enum select ─────────────────────────────────────────────────────
+
+function DynamicEnumSelect({
+  field,
+  value,
+  onChange,
+  contentTypeId,
+  multiple = false,
+}: {
+  field: AnyFieldDefinition;
+  value: unknown;
+  onChange: (val: unknown) => void;
+  contentTypeId?: string;
+  multiple?: boolean;
+}) {
+  const src = field.dynamicSource;
+  // Prefer the field-scoped endpoint (entry editor, has CT+field IDs).
+  // Fall back to the source-param endpoint (component-item editor, no CT/field ID).
+  const useFieldEndpoint = Boolean(contentTypeId && field.id && src?.contentTypeHandle);
+  const useSourceEndpoint = !useFieldEndpoint && Boolean(src?.contentTypeHandle);
+
+  const { data: options = [], isLoading } = useQuery<EnumOptionDto[]>({
+    queryKey: useFieldEndpoint
+      ? ['enum-options', contentTypeId, field.id]
+      : ['enum-options-by-source', src?.contentTypeHandle, src?.labelField, src?.valueField, src?.statusFilter],
+    queryFn: () =>
+      useFieldEndpoint
+        ? contentTypesApi.getEnumOptions(contentTypeId!, field.id!)
+        : contentTypesApi.getEnumOptionsBySource({
+            contentTypeHandle: src!.contentTypeHandle!,
+            labelField: src!.labelField ?? '',
+            valueField: src!.valueField ?? '',
+            statusFilter: src?.statusFilter,
+          }),
+    enabled: useFieldEndpoint || useSourceEndpoint,
+    staleTime: 60_000,
+  });
+
+  if (!useFieldEndpoint && !useSourceEndpoint) {
+    // No source config at all — plain text fallback
+    return <input type="text" value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input" placeholder="Enter value…" />;
+  }
+
+  if (isLoading) return <div className="h-9 animate-pulse rounded-lg bg-slate-100" />;
+
+  if (!multiple) {
+    return (
+      <select value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input">
+        <option value="">— select —</option>
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    );
+  }
+
+  // Multi-value: checkbox list
+  const selected = Array.isArray(value) ? value.map(String) : [];
+  const toggle = (v: string) =>
+    onChange(selected.includes(v) ? selected.filter((s) => s !== v) : [...selected, v]);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => (
+        <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:border-brand-300 hover:bg-brand-50">
+          <input type="checkbox" checked={selected.includes(o.value)} onChange={() => toggle(o.value)} className="h-4 w-4 rounded border-slate-300 text-brand-600" />
+          {o.label}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 // ─── Scalar renderer (single value) ──────────────────────────────────────────
 
 function ScalarFieldInput({
@@ -201,6 +272,9 @@ function ScalarFieldInput({
         </div>
       );
     case 'Enum':
+      if (field.dynamicSource?.contentTypeHandle) {
+        return <DynamicEnumSelect field={field} value={value} onChange={onChange} contentTypeId={contentTypeId} />;
+      }
       if (field.options && field.options.length > 0) {
         return (
           <select value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} className="form-input">
@@ -255,7 +329,11 @@ function ListFieldInput({
   const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
 
   // Enum isList → checkbox multi-select
-  if (field.fieldType === 'Enum' && field.options && field.options.length > 0) {
+  if (field.fieldType === 'Enum') {
+    if (field.dynamicSource?.contentTypeHandle) {
+      return <DynamicEnumSelect field={field} value={value} onChange={onChange} contentTypeId={contentTypeId} multiple />;
+    }
+    if (field.options && field.options.length > 0) {
     const selected = items.map(String);
     const toggle = (opt: string) =>
       onChange(selected.includes(opt) ? selected.filter((o) => o !== opt) : [...selected, opt]);
@@ -269,6 +347,7 @@ function ListFieldInput({
         ))}
       </div>
     );
+    }
   }
 
   const scalarField = { ...field, isList: false };

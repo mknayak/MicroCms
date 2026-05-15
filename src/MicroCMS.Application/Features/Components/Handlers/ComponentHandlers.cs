@@ -65,7 +65,8 @@ internal static class ComponentMapper
                 f.GroupName,
                 Options: v?.Options,
                 DynamicSource: v?.DynamicSource,
-                MultiListSource: v?.MultiListSource);
+                MultiListSource: v?.MultiListSource,
+                ComponentSource: v?.ComponentSource);
         }).ToList(),
         c.CreatedAt,
         c.UpdatedAt);
@@ -177,7 +178,7 @@ internal sealed class UpdateComponentCommandHandler(
             var existing = contentType.Fields.FirstOrDefault(x =>
                 x.Handle.Equals(f.Handle, StringComparison.OrdinalIgnoreCase));
 
-            var validationJson = ContentTypes.Handlers.ValidationJsonHelper.Build(f.Options?.ToList(), f.DynamicSource, f.MultiListSource);
+            var validationJson = ContentTypes.Handlers.ValidationJsonHelper.Build(f.Options?.ToList(), f.DynamicSource, f.MultiListSource, f.ComponentSourceKey);
 
             if (existing is null)
                 contentType.AddField(f.Handle, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsUnique, f.Description, validationJson, f.IsIndexed, f.IsList);
