@@ -2,10 +2,12 @@ using FluentAssertions;
 using MicroCMS.Application.Common.Interfaces;
 using MicroCMS.Application.Features.Media.Commands;
 using MicroCMS.Application.Features.Media.Handlers;
+using MicroCMS.Application.Features.Media.Options;
 using MicroCMS.Domain.Aggregates.Media;
 using MicroCMS.Domain.Enums;
 using MicroCMS.Domain.Repositories;
 using MicroCMS.Shared.Ids;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
 
@@ -17,6 +19,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
     private readonly IMimeTypeInspector _mimeInspector = Substitute.For<IMimeTypeInspector>();
     private readonly IRepository<MediaAsset, MediaAssetId> _repo = Substitute.For<IRepository<MediaAsset, MediaAssetId>>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
+    private readonly IOptions<MediaOptions> _mediaOptions = Options.Create(new MediaOptions());
 
     private readonly TenantId _tenantId = TenantId.New();
     private readonly Guid _siteId = Guid.NewGuid();
@@ -42,7 +45,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
             1024,
             "image/jpeg");
 
-        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
+        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser, _mediaOptions);
 
         // Act
         var result = await sut.Handle(command, CancellationToken.None);
@@ -64,7 +67,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
         var command = new UploadMediaAssetCommand(
             "photo.jpg", new MemoryStream(new byte[512]), 512, "image/png");
 
-        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
+        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser, _mediaOptions);
 
         // Act
         var result = await sut.Handle(command, CancellationToken.None);
@@ -82,7 +85,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
         var command = new UploadMediaAssetCommand(
             "huge.bin", Stream.Null, overLimit, "application/octet-stream");
 
-        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
+        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser, _mediaOptions);
 
         // Act
         var result = await sut.Handle(command, CancellationToken.None);
@@ -99,7 +102,7 @@ public sealed class UploadMediaAssetCommandHandlerTests
         var command = new UploadMediaAssetCommand(
             "doc.pdf", new MemoryStream(new byte[256]), 256, "application/pdf");
 
-        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser);
+        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser, _mediaOptions);
         await sut.Handle(command, CancellationToken.None);
 
         await _storage.Received(1).UploadAsync(
@@ -108,5 +111,23 @@ public sealed class UploadMediaAssetCommandHandlerTests
             Arg.Any<string>(),
             _tenantId.Value.ToString(),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldMarkAssetAvailable_WhenSkipVirusScanIsEnabled()
+    {
+        // Arrange
+        var options = Options.Create(new MediaOptions { SkipVirusScan = true });
+        var command = new UploadMediaAssetCommand(
+            "photo.jpg", new MemoryStream(new byte[1024]), 1024, "image/jpeg");
+
+        var sut = new UploadMediaAssetCommandHandler(_storage, _mimeInspector, _repo, _currentUser, options);
+
+        // Act
+        var result = await sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(MediaAssetStatus.Available.ToString());
     }
 }

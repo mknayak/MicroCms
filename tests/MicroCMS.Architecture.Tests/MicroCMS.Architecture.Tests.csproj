@@ -17,7 +17,6 @@
     <ProjectReference Include="..\..\src\MicroCMS.Application\MicroCMS.Application.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Infrastructure\MicroCMS.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Api\MicroCMS.Api.csproj" />
-    <ProjectReference Include="..\..\src\MicroCMS.GraphQL\MicroCMS.GraphQL.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Ai.Abstractions\MicroCMS.Ai.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Ai.Core\MicroCMS.Ai.Core.csproj" />
     <ProjectReference Include="..\..\src\MicroCMS.Ai.Providers.OpenAI\MicroCMS.Ai.Providers.OpenAI.csproj" />
@@ -28,7 +27,6 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
-    <PackageReference Include="HotChocolate.Language" Version="13.9.16" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />

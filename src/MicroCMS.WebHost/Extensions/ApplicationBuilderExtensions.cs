@@ -165,25 +165,6 @@ internal static class ApplicationBuilderExtensions
         .WithTags("Media");
     }
 
-    // ── GraphQL middleware ────────────────────────────────────────────────
-
-    internal static WebApplication UseGraphQlMiddleware(this WebApplication app)
-    {
-        // WebSockets must be enabled before MapGraphQL so subscription transports work.
-        app.UseWebSockets();
-
-  // Mount the Hot Chocolate endpoint at /graphql.
-        // Banana Cake Pop (HC IDE) is served alongside in Development for interactive exploration.
-        app.MapGraphQL("/graphql");
-
-        if (app.Environment.IsDevelopment())
-   {
-    app.MapBananaCakePop("/graphql/ui");
-   }
-
-      return app;
-    }
-
     // ── Health check endpoints ────────────────────────────────────────────
 
     internal static WebApplication UseHealthCheckEndpoints(this WebApplication app)

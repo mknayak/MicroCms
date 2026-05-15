@@ -36,7 +36,6 @@ builder.AddSecurityServices();
 builder.AddApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddApiServices();
-builder.AddGraphQlServices();
 builder.AddPluginHosting();
 builder.AddAiServices();
 builder.AddHealthChecks();
@@ -47,7 +46,6 @@ await app.UseDatabaseAsync();
 
 app.UseSecurityMiddleware();
 app.UseApiMiddleware();
-app.UseGraphQlMiddleware();
 app.UseHealthCheckEndpoints();
 
 await app.RunAsync();

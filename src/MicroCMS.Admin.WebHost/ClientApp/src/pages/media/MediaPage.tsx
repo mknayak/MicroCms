@@ -81,36 +81,46 @@ export default function MediaPage() {
 
     const onDrop = useCallback(
         (acceptedFiles: File[]) => {
+            const startIdx = uploads.length;
             const items: UploadItem[] = acceptedFiles.map((f) => ({ file: f, progress: 0, status: 'uploading' }));
             setUploads((prev) => [...prev, ...items]);
             acceptedFiles.forEach((file, i) => {
                 mediaApi
                     .upload(file, { folderId: activeFolderId ?? undefined }, (pct) => {
                         setUploads((prev) =>
-                            prev.map((u, idx) => (idx === uploads.length + i ? { ...u, progress: pct } : u)),
+                            prev.map((u, idx) => (idx === startIdx + i ? { ...u, progress: pct } : u)),
                         );
                     })
-                    .then(() => {
+                    .then((uploaded) => {
                         setUploads((prev) =>
-                            prev.map((u, idx) => (idx === uploads.length + i ? { ...u, status: 'done' } : u)),
+                            prev.map((u, idx) => (idx === startIdx + i ? { ...u, status: 'done' } : u)),
                         );
                         void qc.invalidateQueries({ queryKey: ['media'] });
                         void qc.invalidateQueries({ queryKey: ['media-folders'] });
                         toast.success(`${file.name} uploaded — virus scan in progress…`);
+                        // Auto-set assetPath from folder breadcrumb + filename
+                        if (uploaded?.id) {
+                            const folderPath = breadcrumb.map((b) => b.name).join('/');
+                            const autoPath = folderPath
+                                ? `${folderPath}/${file.name}`
+                                : file.name;
+                            void mediaApi.setAssetPath(uploaded.id, autoPath);
+                        }
                     })
                     .catch(() => {
                         setUploads((prev) =>
-                            prev.map((u, idx) => (idx === uploads.length + i ? { ...u, status: 'error' } : u)),
+                            prev.map((u, idx) => (idx === startIdx + i ? { ...u, status: 'error' } : u)),
                         );
                         toast.error(`Failed to upload ${file.name}.`);
                     });
             });
         },
-        [qc, uploads.length, activeFolderId],
+        [qc, uploads.length, activeFolderId, breadcrumb],
     );
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, open: openFilePicker } = useDropzone({
         onDrop,
+        noClick: true,
         accept: {
             'image/*': [],
             'video/*': [],
@@ -129,7 +139,6 @@ export default function MediaPage() {
             'font/otf': ['.otf'],
         },
         maxSize: 2 * 1024 * 1024 * 1024,
-        noClick: false,
     });
 
     const toggleCheck = (id: string) =>
@@ -140,7 +149,8 @@ export default function MediaPage() {
         });
 
     return (
-        <div className="-m-6 flex h-full min-h-0">
+        <div className="-m-6 flex h-full min-h-0" {...getRootProps()}>
+            <input {...getInputProps()} />
             {/* Left sidebar */}
             <div className="flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto py-4">
                 <FolderSidebar
@@ -180,9 +190,8 @@ export default function MediaPage() {
                     />
 
                     {/* Upload button */}
-                    <div {...getRootProps()} className="relative">
-                        <input {...getInputProps()} />
-                        <button className="btn-primary flex items-center gap-2 text-sm">
+                    <div className="relative">
+                        <button onClick={openFilePicker} className="btn-primary flex items-center gap-2 text-sm">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                             </svg>

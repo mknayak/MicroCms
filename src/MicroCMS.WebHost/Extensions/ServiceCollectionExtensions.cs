@@ -6,7 +6,6 @@ using MicroCMS.Application.Common.Exceptions;
 using MicroCMS.Application.Common.Security;
 using MicroCMS.Application.Features.Media.Options;
 using MicroCMS.Domain.Exceptions;
-using MicroCMS.GraphQL;
 using MicroCMS.Infrastructure;
 using MicroCMS.Delivery.Core.Extensions;
 using Microsoft.AspNetCore.Authentication;
@@ -357,15 +356,6 @@ internal static class ServiceCollectionExtensions
     /// e.g. "ApiClients" → "Api Clients", "ContentTypes" → "Content Types"</summary>
     private static string PascalToWords(string value) =>
         Regex.Replace(value, @"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", " ");
-
-    // ── GraphQL layer ─────────────────────────────────────────────────────
-
-    internal static WebApplicationBuilder AddGraphQlServices(
-        this WebApplicationBuilder builder)
-    {
-        builder.Services.AddGraphQlSchema();
-        return builder;
-    }
 
     // ── Plugin hosting ────────────────────────────────────────────────────
 

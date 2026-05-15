@@ -13,7 +13,7 @@ public sealed class LayeringRules
     private static readonly string[] DomainAssemblies = ["MicroCMS.Domain"];
     private static readonly string[] ApplicationAssemblies = ["MicroCMS.Application"];
     private static readonly string[] InfrastructureAssemblies = ["MicroCMS.Infrastructure"];
-    private static readonly string[] PresentationAssemblies = ["MicroCMS.Api", "MicroCMS.GraphQL"];
+    private static readonly string[] PresentationAssemblies = ["MicroCMS.Api"];
 
     [Fact]
     public void Domain_ShouldNot_DependOn_Application()
