@@ -297,6 +297,7 @@ export function SchemaEditView({
     parentHandle,
     onCancel,
     isSubmitting,
+    componentMode = false,
 }: {
     contentTypeId: string;
     contentTypeName: string;
@@ -304,6 +305,8 @@ export function SchemaEditView({
     parentHandle?: string;
     onCancel: () => void;
     isSubmitting: boolean;
+    /** When true, hides the Basic Information card, save/cancel buttons, and content-type-specific options. */
+    componentMode?: boolean;
 }) {
     const { register, watch, setValue, control, formState: { errors } } = useFormContext<SchemaFormValues>();
     const { fields, append, remove, move } = useFieldArray({ control, name: 'fields' });
@@ -355,7 +358,8 @@ export function SchemaEditView({
 
     return (
         <div className="space-y-5">
-            {/* Edit header */}
+            {/* Edit header — hidden in component mode */}
+            {!componentMode && (
             <div className="flex items-center justify-between gap-4">
                 <div>
                     <p className="text-sm font-semibold text-slate-800">Editing Schema — {contentTypeName}</p>
@@ -368,9 +372,10 @@ export function SchemaEditView({
                     </button>
                 </div>
             </div>
+            )}
 
-            {/* Basic information */}
-            <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 space-y-4">
+            {/* Basic information — hidden in component mode */}
+            {!componentMode && <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 space-y-4">
                 <h3 className="text-sm font-semibold text-slate-800">Basic Information</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -426,7 +431,7 @@ export function SchemaEditView({
                         <p className="mt-1 text-xs text-slate-400">Fields from the parent are merged in (read-only) at the top of the schema.</p>
                     </div>
                 </div>
-            </div>
+            </div>}
 
             {/* Inherited fields (read-only) */}
             {inheritedFields && inheritedFields.length > 0 && (
@@ -491,13 +496,15 @@ export function SchemaEditView({
                 </div>
             </div>
 
-            {/* Bottom save/cancel */}
+            {/* Bottom save/cancel — hidden in component mode */}
+            {!componentMode && (
             <div className="flex justify-end gap-3 pb-2">
                 <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
                 <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50">
                     {isSubmitting ? 'Saving…' : 'Save Changes'}
                 </button>
             </div>
+            )}
         </div>
     );
 }

@@ -1,3 +1,5 @@
+using MicroCMS.Domain.Aggregates.Content;
+
 namespace MicroCMS.Application.Features.Components.Dtos;
 
 public sealed record ComponentFieldDto(
@@ -11,7 +13,11 @@ public sealed record ComponentFieldDto(
     bool IsIndexed,
     bool IsList,
     int SortOrder,
-    string? Description);
+    string? Description,
+    string GroupName = "Default",
+    IReadOnlyList<string>? Options = null,
+    FieldDynamicSource? DynamicSource = null,
+    FieldDynamicSource? MultiListSource = null);
 
 public sealed record ComponentDto(
 Guid Id,

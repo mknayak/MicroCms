@@ -567,21 +567,21 @@ const PREVIEW_EXTRA_CSS = `
  * token so nothing breaks.
  */
 function shellToPreview(shell: string): string {
-  // 1. Replace {{{token}}} with empty string (the wrapper div stays)
-  let html = shell.replace(/\{\{\{[^}]+\}\}\}/g, '');
-
-  // 2. For every data-zone="name" div, copy the name into data-zone-label
-  //    so the CSS ::before can display it.
-  html = html.replace(
-    /data-zone="([^"]+)"/g,
-    (_m, name: string) =>
-      `data-zone="${name}" data-zone-label="⬡ ${name}"`,
+  // 1. Replace each bare {{{token}}} with a synthetic [data-zone] wrapper
+  //    so the preview overlay CSS can highlight and label it.
+  //    Token names use underscores; convert back to hyphens for the label.
+  let html = shell.replace(
+    /\{\{\{([^}]+)\}\}\}/g,
+    (_m, token: string) => {
+      const name = token.replace(/_/g, '-');
+      return `<div data-zone="${name}" data-zone-label="⬡ ${name}"></div>`;
+    },
   );
 
-  // 3. Strip any {{page:*}} or {{site:*}} tokens (language, title, etc.)
+  // 2. Strip any {{page:*}} or {{site:*}} tokens (language, title, etc.)
   html = html.replace(/\{\{[^}]+\}\}/g, '');
 
-  // 4. Inject our extra overlay CSS just before </head>
+  // 3. Inject our extra overlay CSS just before </head>
   const extraStyle = `<style>${PREVIEW_EXTRA_CSS}</style>`;
   if (html.includes('</head>')) {
     html = html.replace('</head>', `${extraStyle}\n</head>`);

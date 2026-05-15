@@ -78,6 +78,9 @@ export default function ContentTypeEditPage() {
                 isIndexed: f.isIndexed, isUnique: f.isUnique,
                 isList: f.isList,
                 description: f.description ?? '',
+                enumMode: f.options && f.options.length > 0 ? 'static' : (f.dynamicSource ? 'dynamic' : 'static'),
+                optionsText: (f.options ?? []).join('\n'),
+                referenceHandle: f.dynamicSource?.contentTypeHandle ?? '',
             })));
         }
     }, [existing, setValue]);
@@ -108,6 +111,15 @@ export default function ContentTypeEditPage() {
                         label: f.name, fieldType: f.fieldType, isRequired: f.isRequired,
                         isLocalized: f.isLocalized, isUnique: f.isUnique,
                         isIndexed: f.isIndexed, isList: f.isList, sortOrder: idx,
+                        options:
+                            f.fieldType === 'Enum' && f.enumMode === 'static' && f.optionsText?.trim()
+                              ? f.optionsText.trim().split('\n').map((s) => s.trim()).filter(Boolean)
+                              : undefined,
+                        dynamicSource:
+                            (f.fieldType === 'Enum' && f.enumMode === 'dynamic' && f.referenceHandle?.trim()) ||
+                            (f.fieldType === 'Reference' && f.referenceHandle?.trim())
+                              ? { contentTypeHandle: f.referenceHandle!.trim(), labelField: '', valueField: '', statusFilter: 'Published' }
+                              : undefined,
                     })),
                 });
             }
@@ -121,6 +133,15 @@ export default function ContentTypeEditPage() {
                     label: f.name, fieldType: f.fieldType, isRequired: f.isRequired,
                     isLocalized: f.isLocalized, isUnique: f.isUnique,
                     isIndexed: f.isIndexed, isList: f.isList, sortOrder: idx,
+                    options:
+                        f.fieldType === 'Enum' && f.enumMode === 'static' && f.optionsText?.trim()
+                          ? f.optionsText.trim().split('\n').map((s) => s.trim()).filter(Boolean)
+                          : undefined,
+                    dynamicSource:
+                        (f.fieldType === 'Enum' && f.enumMode === 'dynamic' && f.referenceHandle?.trim()) ||
+                        (f.fieldType === 'Reference' && f.referenceHandle?.trim())
+                          ? { contentTypeHandle: f.referenceHandle!.trim(), labelField: '', valueField: '', statusFilter: 'Published' }
+                          : undefined,
                 })),
             });
         },
@@ -135,7 +156,7 @@ export default function ContentTypeEditPage() {
     });
 
     const addField = () => {
-        append({ name: '', fieldType: 'ShortText', isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, description: '' });
+        append({ name: '', fieldType: 'ShortText', isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, description: '', enumMode: 'static', optionsText: '', referenceHandle: '' });
         setActiveFieldIdx(fields.length);
     };
 

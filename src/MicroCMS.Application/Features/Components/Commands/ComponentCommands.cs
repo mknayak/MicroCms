@@ -16,7 +16,10 @@ public sealed record ComponentFieldInput(
     bool IsUnique,
     bool IsList,
     int SortOrder,
-    string? Description);
+    string? Description,
+    IReadOnlyList<string>? Options = null,
+    MicroCMS.Application.Features.ContentTypes.Commands.FieldDynamicSourceInput? DynamicSource = null,
+    MicroCMS.Application.Features.ContentTypes.Commands.FieldDynamicSourceInput? MultiListSource = null);
 
 [HasPolicy(ContentPolicies.ComponentManage)]
 public sealed record CreateComponentCommand(

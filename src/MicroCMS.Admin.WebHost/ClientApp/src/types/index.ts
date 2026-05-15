@@ -989,7 +989,14 @@ export interface ComponentFieldDefinition {
     isUnique: boolean;
     isList: boolean;
     sortOrder: number;
+    groupName?: string;
     description?: string;
+    /** Static option list for Enum fields. */
+    options?: string[];
+    /** Dynamic source for Enum, Reference and Component fields. */
+    dynamicSource?: FieldDynamicSource;
+    /** Multi-list source for MultiList fields. */
+    multiListSource?: FieldDynamicSource;
 }
 
 export interface ComponentDto {

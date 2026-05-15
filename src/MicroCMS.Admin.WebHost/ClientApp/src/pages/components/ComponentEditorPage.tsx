@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { componentsApi } from '@/api/components';
 import { ApiError } from '@/api/client';
 import type { ComponentCategory, RenderingTemplateType } from '@/types';
-import { fieldRowSchema, toCamelCase } from '@/components/fields/fieldConstants';
-import ContentTypeFieldEditor from '@/components/fields/ContentTypeFieldEditor';
+import { toCamelCase } from '@/pages/content-types/schemaTab.helpers';
+import { schemaFormValidator, DEFAULT_GROUP } from '@/pages/content-types/schemaTab.types';
+import type { SchemaFormValues } from '@/pages/content-types/schemaTab.types';
+import { SchemaEditView } from '@/pages/content-types/SchemaEditView';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -24,15 +26,14 @@ const TEMPLATE_TYPES: { value: RenderingTemplateType; label: string; ext: string
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-const formSchema = z.object({
+const metaSchema = z.object({
   name: z.string().min(1, 'Name required').max(200),
   key: z.string().min(1, 'Key required').regex(/^[a-z0-9-]+$/),
   description: z.string().optional(),
   category: z.enum(CATEGORIES as [ComponentCategory, ...ComponentCategory[]]),
-  fields: z.array(fieldRowSchema),
 });
 
-type EditorForm = z.infer<typeof formSchema>;
+type MetaForm = z.infer<typeof metaSchema>;
 type ActiveTab = 'fields' | 'template' | 'thumbnail' | 'meta';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -42,7 +43,6 @@ export default function ComponentEditorPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<ActiveTab>('fields');
-  const [activeFieldIdx, setActiveFieldIdx] = useState<number | null>(null);
 
   // Template state — managed separately from the schema form
   const [templateType, setTemplateType] = useState<RenderingTemplateType>('RazorPartial');
@@ -57,61 +57,111 @@ export default function ComponentEditorPage() {
     enabled: !!id,
   });
 
-  const {
-    register, control, handleSubmit, reset, watch,
-    formState: { errors, isDirty },
-  } = useForm<EditorForm>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { name: '', key: '', description: '', category: 'Layout', fields: [] },
+  // ── Meta form (name / key / category / description) ────────────────────────
+  const metaForm = useForm<MetaForm>({
+    resolver: zodResolver(metaSchema),
+    defaultValues: { name: '', key: '', description: '', category: 'Layout' },
   });
+  const { register: registerMeta, formState: { errors: metaErrors, isDirty: metaIsDirty }, reset: resetMeta } = metaForm;
+
+  // ── Schema form (fields) — uses the same SchemaFormValues as content types ──
+  const schemaForm = useForm<SchemaFormValues>({
+    resolver: zodResolver(schemaFormValidator),
+    defaultValues: {
+      name: '', apiKey: '', description: '', localizationMode: 'PerLocale',
+      kind: 'Content', siteTemplateId: '', parentContentTypeId: '', fields: [],
+    },
+  });
+  const { formState: { isDirty: schemaDirty }, reset: resetSchema } = schemaForm;
 
   useEffect(() => {
     if (comp) {
-      reset({
+      resetMeta({
         name: comp.name,
         key: comp.key,
         description: comp.description ?? '',
         category: comp.category,
+      });
+      resetSchema({
+        name: comp.name,
+        apiKey: comp.key,
+        description: comp.description ?? '',
+        localizationMode: 'PerLocale',
+        kind: 'Content',
+        siteTemplateId: '',
+        parentContentTypeId: '',
         fields: comp.fields.map((f) => ({
           id: f.id,
           name: f.label,
-          fieldType: f.fieldType,
-          isRequired: f.isRequired,
-          isLocalized: f.isLocalized,
+          type: f.fieldType as SchemaFormValues['fields'][number]['type'],
+          required: f.isRequired,
+          localized: f.isLocalized,
           isIndexed: f.isIndexed,
           isUnique: f.isUnique ?? false,
           isList: f.isList ?? false,
-          description: f.description ?? '',
+          groupName: f.groupName ?? DEFAULT_GROUP,
+          enumMode: (f.dynamicSource ? 'dynamic' : 'static') as 'static' | 'dynamic',
+          staticOptions: f.options ?? [],
+          dynamicSource: f.dynamicSource
+            ? { contentTypeHandle: f.dynamicSource.contentTypeHandle ?? '', labelField: f.dynamicSource.labelField ?? '', valueField: f.dynamicSource.valueField ?? '', statusFilter: f.dynamicSource.statusFilter ?? 'Published', groupHandle: f.dynamicSource.groupHandle ?? '' }
+            : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
+          multiListSource: f.multiListSource
+            ? { contentTypeHandle: f.multiListSource.contentTypeHandle ?? '', labelField: f.multiListSource.labelField ?? '', valueField: f.multiListSource.valueField ?? '', statusFilter: f.multiListSource.statusFilter ?? 'Published', groupHandle: f.multiListSource.groupHandle ?? '' }
+            : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
         })),
       });
-    setTemplateType(comp.templateType);
+      setTemplateType(comp.templateType);
       setTemplateContent(comp.templateContent ?? '');
       setThumbnailDataUri(comp.thumbnailDataUri ?? null);
     }
-  }, [comp, reset]);
-
-  const { fields, append, remove, move } = useFieldArray({ control, name: 'fields' });
+  }, [comp, resetMeta, resetSchema]);
 
   // ── Schema save ────────────────────────────────────────────────────────────
   const updateMutation = useMutation({
-    mutationFn: (data: EditorForm) =>
+    mutationFn: (data: SchemaFormValues) =>
       componentsApi.update(id!, {
-        name: data.name,
-        description: data.description,
-    category: data.category,
-      fields: data.fields.map((f, i) => ({
+        name: comp!.name,
+        description: comp?.description,
+        category: comp!.category,
+        fields: data.fields.map((f, i) => ({
           id: f.id ?? crypto.randomUUID(),
           handle: toCamelCase(f.name) || `field${i}`,
           label: f.name,
-          fieldType: f.fieldType,
-          isRequired: f.isRequired,
-          isLocalized: f.isLocalized,
+          fieldType: f.type,
+          isRequired: f.required,
+          isLocalized: f.localized,
           isIndexed: f.isIndexed,
           isUnique: f.isUnique,
           isList: f.isList,
           sortOrder: i,
-          description: f.description,
+          groupName: f.groupName ?? DEFAULT_GROUP,
+          options: f.type === 'Enum' && f.enumMode === 'static' ? f.staticOptions : undefined,
+          dynamicSource:
+            (f.type === 'Enum' && f.enumMode === 'dynamic') || f.type === 'Reference' || f.type === 'Component'
+              ? (f.dynamicSource?.contentTypeHandle?.trim() ? f.dynamicSource : undefined)
+              : undefined,
+          multiListSource: f.type === 'MultiList'
+            ? (f.multiListSource?.contentTypeHandle?.trim() ? f.multiListSource : undefined)
+            : undefined,
         })),
+      }),
+    onSuccess: () => {
+      toast.success('Component fields saved.');
+      void qc.invalidateQueries({ queryKey: ['component', id] });
+      void qc.invalidateQueries({ queryKey: ['components'] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save failed.'),
+  });
+
+  // ── Meta save (name / category / description) ──────────────────────────────
+  const updateMetaMutation = useMutation({
+    mutationFn: (data: MetaForm) =>
+      componentsApi.update(id!, {
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        fields: comp?.fields ?? [],
       }),
     onSuccess: () => {
       toast.success('Component definition saved.');
@@ -159,8 +209,9 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
   if (!comp) return <p className="text-sm text-slate-500">Component not found.</p>;
 
   const currentExt = TEMPLATE_TYPES.find((t) => t.value === templateType)?.ext ?? '';
+  const schemaFields = schemaForm.watch('fields');
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'fields',    label: `Fields (${fields.length})` },
+    { key: 'fields',    label: `Fields (${schemaFields.length})` },
     { key: 'template',  label: 'Template' },
     { key: 'thumbnail', label: 'Thumbnail' },
     { key: 'meta',      label: 'Meta' },
@@ -169,28 +220,28 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
-<div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-        <button type="button" onClick={() => navigate('/components')}
+          <button type="button" onClick={() => navigate('/components')}
             className="text-sm text-slate-500 hover:text-slate-700">
             ← Component Library
-      </button>
+          </button>
           <span className="text-slate-300">/</span>
-      <h1 className="text-xl font-bold text-slate-900">{comp.name}</h1>
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-500">
-  comp/{comp.key}
-      </span>
+          <h1 className="text-xl font-bold text-slate-900">{comp.name}</h1>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-500">
+            comp/{comp.key}
+          </span>
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={() => navigate(`/components/${id}/items`)}
-        className="btn-secondary text-sm">
+            className="btn-secondary text-sm">
             {comp.itemCount} Items
           </button>
           {activeTab === 'template' ? (
-    <button type="button" className="btn-primary"
-          disabled={templateMutation.isPending}
-     onClick={() => templateMutation.mutate()}>
- {templateMutation.isPending ? 'Saving…' : 'Save Template'}
+            <button type="button" className="btn-primary"
+              disabled={templateMutation.isPending}
+              onClick={() => templateMutation.mutate()}>
+              {templateMutation.isPending ? 'Saving…' : 'Save Template'}
             </button>
           ) : activeTab === 'thumbnail' ? (
             <button type="button" className="btn-primary"
@@ -198,25 +249,31 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
               onClick={() => thumbnailMutation.mutate()}>
               {thumbnailMutation.isPending ? 'Saving…' : 'Save Thumbnail'}
             </button>
+          ) : activeTab === 'meta' ? (
+            <button type="button" className="btn-primary"
+              disabled={!metaIsDirty || updateMetaMutation.isPending}
+              onClick={metaForm.handleSubmit((v) => updateMetaMutation.mutate(v))}>
+              {updateMetaMutation.isPending ? 'Saving…' : 'Save Meta'}
+            </button>
           ) : (
-    <button type="button" className="btn-primary"
-    disabled={!isDirty || updateMutation.isPending}
-    onClick={handleSubmit((v) => updateMutation.mutate(v))}>
-     {updateMutation.isPending ? 'Saving…' : 'Save Definition'}
-  </button>
+            <button type="button" className="btn-primary"
+              disabled={!schemaDirty || updateMutation.isPending}
+              onClick={schemaForm.handleSubmit((v) => updateMutation.mutate(v))}>
+              {updateMutation.isPending ? 'Saving…' : 'Save Fields'}
+            </button>
           )}
         </div>
       </div>
 
       {/* ── Tabs ── */}
       <div className="flex border-b border-slate-200">
- {TABS.map((tab) => (
+        {TABS.map((tab) => (
           <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-        activeTab === tab.key
-         ? 'border-brand-500 text-brand-600'
-      : 'border-transparent text-slate-500 hover:text-slate-700'
-      }`}>
+              activeTab === tab.key
+                ? 'border-brand-500 text-brand-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}>
             {tab.label}
  </button>
         ))}
@@ -226,85 +283,71 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-4">
 
-          {/* ── Fields ── */}
+          {/* ── Fields — reuse the full content-type SchemaEditView ── */}
           {activeTab === 'fields' && (
-            <div className="card space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-slate-900">Fields</h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    append({ name: '', fieldType: 'ShortText', isRequired: false, isLocalized: false, isIndexed: false, isUnique: false, isList: false, description: '' });
-                    setActiveFieldIdx(fields.length);
-                  }}
-                  className="btn-secondary text-xs"
-                >
-                  + Add Field
-                </button>
-              </div>
-              <ContentTypeFieldEditor
-                fieldArray={{ fields, append, remove, move }}
-                register={register}
-                errors={errors}
-                watch={watch}
-                activeFieldIdx={activeFieldIdx}
-                onActiveFieldChange={setActiveFieldIdx}
+            <FormProvider {...schemaForm}>
+              <SchemaEditView
+                contentTypeId={id ?? ''}
+                contentTypeName={comp.name}
+                onCancel={() => resetSchema()}
+                isSubmitting={updateMutation.isPending}
+                componentMode
               />
-            </div>
+            </FormProvider>
           )}
 
           {/* ── Template ── */}
-      {activeTab === 'template' && (
-    <div className="card overflow-hidden p-0">
-      {/* Toolbar */}
- <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-       <select
-  value={templateType}
-        onChange={(e) => setTemplateType(e.target.value as RenderingTemplateType)}
-       className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold focus:outline-none focus:border-brand-500">
-     {TEMPLATE_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-  ))}
-        </select>
-    <span className="font-mono text-xs text-slate-400">
-    {comp.key}{currentExt}
-    </span>
-           <div className="ml-auto flex items-center gap-1.5 text-xs text-slate-400">
-    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-  Use <code className="mx-1 rounded bg-slate-200 px-1">&#123;&#123;fieldHandle&#125;&#125;</code> to bind field values
-            </div>
-           </div>
+          {activeTab === 'template' && (
+            <div className="card overflow-hidden p-0">
+              {/* Toolbar */}
+              <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                <select
+                  value={templateType}
+                  onChange={(e) => setTemplateType(e.target.value as RenderingTemplateType)}
+                  className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold focus:outline-none focus:border-brand-500">
+                  {TEMPLATE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+                <span className="font-mono text-xs text-slate-400">
+                  {comp.key}{currentExt}
+                </span>
+                <div className="ml-auto flex items-center gap-1.5 text-xs text-slate-400">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Use <code className="mx-1 rounded bg-slate-200 px-1">&#123;&#123;fieldHandle&#125;&#125;</code> to bind field values
+                </div>
+              </div>
 
-         {/* Code editor */}
-  <textarea
-value={templateContent}
-  onChange={(e) => setTemplateContent(e.target.value)}
- spellCheck={false}
-      placeholder={getTemplatePlaceholder(templateType, comp.key, fields.map((f) => toCamelCase(f.name)).filter(Boolean))}
-  className="block min-h-[420px] w-full resize-y bg-[#1e1e2e] p-4 font-mono text-sm leading-relaxed text-[#cdd6f4] placeholder-[#585b70] focus:outline-none"
+              {/* Code editor */}
+              <textarea
+                value={templateContent}
+                onChange={(e) => setTemplateContent(e.target.value)}
+                spellCheck={false}
+                placeholder={getTemplatePlaceholder(templateType, comp.key, schemaFields.map((f) => toCamelCase(f.name)).filter(Boolean))}
+                className="block min-h-[420px] w-full resize-y bg-[#1e1e2e] p-4 font-mono text-sm leading-relaxed text-[#cdd6f4] placeholder-[#585b70] focus:outline-none"
               />
 
               {/* Bindings reference */}
-   {fields.length > 0 && (
-    <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
-  <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-        Available bindings
-        </p>
-  <div className="flex flex-wrap gap-2">
- {fields.map((f) => { const h = toCamelCase(f.name); return h ? (
-    <span key={f.id}
-                className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 font-mono text-xs text-brand-600"
-      title={f.fieldType}>
-     {getBindingExpression(templateType, h)}
-     <span className="text-[10px] text-slate-400">({f.fieldType})</span>
-        </span>
-     ) : null; })}
-   </div>
- </div>
-        )}
+              {schemaFields.length > 0 && (
+                <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Available bindings
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {schemaFields.map((f, i) => { const h = toCamelCase(f.name); return h ? (
+                      <span key={i}
+                        className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 font-mono text-xs text-brand-600"
+                        title={f.type}>
+                        {getBindingExpression(templateType, h)}
+                        <span className="text-[10px] text-slate-400">({f.type})</span>
+                      </span>
+                    ) : null; })}
+                  </div>
+                </div>
+              )}
 
               {/* Example / placeholder */}
               <div className="border-t border-slate-200">
@@ -317,7 +360,7 @@ value={templateContent}
                   </span>
                 </div>
                 <pre className="overflow-auto bg-[#1e1e2e] p-4 font-mono text-xs leading-relaxed text-[#585b70]">
-                  {getTemplatePlaceholder(templateType, comp.key, fields.map((f) => toCamelCase(f.name)).filter(Boolean))}
+                  {getTemplatePlaceholder(templateType, comp.key, schemaFields.map((f) => toCamelCase(f.name)).filter(Boolean))}
                 </pre>
               </div>
             </div>
@@ -333,38 +376,38 @@ value={templateContent}
       )}
 
   {/* ── Meta ── */}
-      {activeTab === 'meta' && (
-            <div className="card space-y-4">
-  <div className="grid grid-cols-2 gap-4">
+  {activeTab === 'meta' && (
+    <div className="card space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="form-label">Display Name</label>
+          <input className="form-input mt-1" {...registerMeta('name')} />
+          {metaErrors.name && <p className="form-error">{metaErrors.name.message}</p>}
+        </div>
+        <div>
+          <label className="form-label">Key</label>
+          <div className="mt-1 flex items-center rounded-lg border border-slate-200 focus-within:border-brand-500">
+            <span className="rounded-l-lg border-r border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-500">
+              comp/
+            </span>
+            <input className="flex-1 rounded-r-lg px-2.5 py-2 font-mono text-sm focus:outline-none"
+              {...registerMeta('key')} />
+          </div>
+          {metaErrors.key && <p className="form-error">{metaErrors.key.message}</p>}
+        </div>
+      </div>
       <div>
-<label className="form-label">Display Name</label>
-             <input className="form-input mt-1" {...register('name')} />
-   {errors.name && <p className="form-error">{errors.name.message}</p>}
-        </div>
-       <div>
-        <label className="form-label">Key</label>
-  <div className="mt-1 flex items-center rounded-lg border border-slate-200 focus-within:border-brand-500">
-          <span className="rounded-l-lg border-r border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-500">
-       comp/
-        </span>
-    <input className="flex-1 rounded-r-lg px-2.5 py-2 font-mono text-sm focus:outline-none"
-        {...register('key')} />
-        </div>
-                  {errors.key && <p className="form-error">{errors.key.message}</p>}
+        <label className="form-label">Category</label>
+        <select className="form-input mt-1" {...registerMeta('category')}>
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="form-label">Description</label>
+        <textarea className="form-input mt-1" {...registerMeta('description')} rows={3} />
+      </div>
     </div>
-         </div>
-  <div>
-      <label className="form-label">Category</label>
-    <select className="form-input mt-1" {...register('category')}>
-   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-    </select>
-              </div>
-              <div>
-             <label className="form-label">Description</label>
-            <textarea className="form-input mt-1" {...register('description')} rows={3} />
-         </div>
-</div>
- )}
+  )}
         </div>
 
         {/* ── Sidebar ── */}

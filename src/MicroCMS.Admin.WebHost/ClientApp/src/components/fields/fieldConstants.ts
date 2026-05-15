@@ -43,7 +43,13 @@ export const fieldRowSchema = z.object({
   isIndexed: z.boolean(),
   isUnique: z.boolean(),
   isList: z.boolean(),
-  description: z.string().optional(),
+  description: z.string().optional().default(''),
+  /** 'static' | 'dynamic' — only relevant when fieldType === 'Enum'. */
+  enumMode: z.enum(['static', 'dynamic']).default('static'),
+  /** Newline-separated list of static enum option values. */
+  optionsText: z.string().optional().default(''),
+  /** Content type handle (for Reference / dynamic Enum) or component key (for Component). */
+  referenceHandle: z.string().optional().default(''),
 });
 
 export type FieldRowValue = z.infer<typeof fieldRowSchema>;

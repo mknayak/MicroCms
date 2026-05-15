@@ -147,7 +147,77 @@ export default function ContentTypeFieldEditor({
                       </label>
                     ))}
                   </div>
+
+                  {/* Description */}
+                  <div className="col-span-2">
+                    <label className="form-label">Description</label>
+                    <input
+                      className="form-input mt-1 text-sm"
+                      placeholder="Optional hint shown beneath this field in the item editor"
+                      {...register(`fields.${idx}.description`)}
+                    />
+                  </div>
                 </div>
+
+                {/* Enum-specific options */}
+                {watch(`fields.${idx}.fieldType`) === 'Enum' && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                    <p className="text-xs font-semibold text-slate-600">Enum Options</p>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-1.5 text-sm text-slate-700">
+                        <input type="radio" value="static" className="text-brand-600"
+                          {...register(`fields.${idx}.enumMode`)} />
+                        Static list
+                      </label>
+                      <label className="flex items-center gap-1.5 text-sm text-slate-700">
+                        <input type="radio" value="dynamic" className="text-brand-600"
+                          {...register(`fields.${idx}.enumMode`)} />
+                        Dynamic source
+                      </label>
+                    </div>
+                    {watch(`fields.${idx}.enumMode`) === 'static' ? (
+                      <div>
+                        <label className="form-label">Options (one per line)</label>
+                        <textarea
+                          className="form-input mt-1 font-mono text-xs"
+                          rows={4}
+                          placeholder={`option-one\noption-two\noption-three`}
+                          {...register(`fields.${idx}.optionsText`)}
+                        />
+                        <p className="mt-1 text-[10px] text-slate-400">Each non-empty line becomes a selectable value.</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="form-label">Source Content Type Handle</label>
+                        <input
+                          className="form-input mt-1 font-mono text-xs"
+                          placeholder="e.g. blog_post"
+                          {...register(`fields.${idx}.referenceHandle`)}
+                        />
+                        <p className="mt-1 text-[10px] text-slate-400">Options are resolved at runtime from published entries of this type.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Reference / Component target */}
+                {(watch(`fields.${idx}.fieldType`) === 'Reference' || watch(`fields.${idx}.fieldType`) === 'Component') && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                    <p className="text-xs font-semibold text-slate-600">
+                      {watch(`fields.${idx}.fieldType`) === 'Component' ? 'Component Key' : 'Content Type Handle'}
+                    </p>
+                    <input
+                      className="form-input font-mono text-xs"
+                      placeholder={watch(`fields.${idx}.fieldType`) === 'Component' ? 'e.g. hero-banner' : 'e.g. blog_post'}
+                      {...register(`fields.${idx}.referenceHandle`)}
+                    />
+                    <p className="text-[10px] text-slate-400">
+                      {watch(`fields.${idx}.fieldType`) === 'Component'
+                        ? 'Restricts the picker to items of this component type.'
+                        : 'Restricts the picker to entries of this content type.'}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

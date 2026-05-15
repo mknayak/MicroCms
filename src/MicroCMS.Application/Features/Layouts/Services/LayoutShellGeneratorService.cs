@@ -65,18 +65,16 @@ public sealed class LayoutShellGeneratorService
             case "zone":
             {
                 var token = node.Name.Replace("-", "_");
-                sb.AppendLine($"{indent}<div data-zone=\"{node.Name}\">");
-                sb.AppendLine($"{indent}  {{{{{{{token}}}}}}}");
-                sb.AppendLine($"{indent}</div>");
+                sb.AppendLine($"{indent}{{{{{{{token}}}}}}}");
                 break;
             }
             case "grid-row" when node.Columns?.Count > 0:
             {
-                sb.AppendLine($"{indent}<div class=\"grid-row\" data-zone-row=\"{node.Name}\">");
+                sb.AppendLine($"{indent}<div class=\"grid-row\">");
                 foreach (var col in node.Columns)
                 {
                     var token = col.ZoneName.Replace("-", "_");
-                    sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\" data-zone=\"{col.ZoneName}\">");
+                    sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\">");
                     sb.AppendLine($"{indent}    {{{{{{{token}}}}}}}");
                     sb.AppendLine($"{indent}  </div>");
                 }
@@ -86,7 +84,7 @@ public sealed class LayoutShellGeneratorService
         }
     }
 
-    // ── HTML builder ──────────────────────────────────────────────────────
+    // ── HTML builder
 
     private static string BuildHtml(List<ZoneNodeDto> zones, LayoutConfigDto config)
     {
@@ -125,17 +123,15 @@ public sealed class LayoutShellGeneratorService
             case "drop-zone":
             case "zone":
             {
-                sb.AppendLine($"{indent}<div data-zone=\"{node.Name}\">");
-                sb.AppendLine($"{indent}  {{{{zone:{node.Name}}}}}");
-                sb.AppendLine($"{indent}</div>");
+                sb.AppendLine($"{indent}{{{{zone:{node.Name}}}}}");
                 break;
             }
             case "grid-row" when node.Columns?.Count > 0:
             {
-                sb.AppendLine($"{indent}<div class=\"grid-row\" data-zone-row=\"{node.Name}\">");
+                sb.AppendLine($"{indent}<div class=\"grid-row\">");
                 foreach (var col in node.Columns)
                 {
-                    sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\" data-zone=\"{col.ZoneName}\">");
+                    sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\">");
                     sb.AppendLine($"{indent}    {{{{zone:{col.ZoneName}}}}}");
                     sb.AppendLine($"{indent}  </div>");
                 }

@@ -56,10 +56,17 @@ internal static class ComponentMapper
         c.TemplateType.ToString(),
         c.TemplateContent,
         c.ThumbnailDataUri,
-        backingType.Fields.OrderBy(f => f.SortOrder).Select(f => new ComponentFieldDto(
-            f.Id, f.Handle, f.Label, f.FieldType.ToString(),
-            f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.IsList, f.SortOrder, f.Description
-        )).ToList(),
+        backingType.Fields.OrderBy(f => f.SortOrder).Select(f =>
+        {
+            var v = f.Validation;
+            return new ComponentFieldDto(
+                f.Id, f.Handle, f.Label, f.FieldType.ToString(),
+                f.IsRequired, f.IsLocalized, f.IsUnique, f.IsIndexed, f.IsList, f.SortOrder, f.Description,
+                f.GroupName,
+                Options: v?.Options,
+                DynamicSource: v?.DynamicSource,
+                MultiListSource: v?.MultiListSource);
+        }).ToList(),
         c.CreatedAt,
         c.UpdatedAt);
 
@@ -170,10 +177,12 @@ internal sealed class UpdateComponentCommandHandler(
             var existing = contentType.Fields.FirstOrDefault(x =>
                 x.Handle.Equals(f.Handle, StringComparison.OrdinalIgnoreCase));
 
+            var validationJson = ContentTypes.Handlers.ValidationJsonHelper.Build(f.Options?.ToList(), f.DynamicSource, f.MultiListSource);
+
             if (existing is null)
-                contentType.AddField(f.Handle, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsUnique, f.Description, null, f.IsIndexed, f.IsList);
+                contentType.AddField(f.Handle, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsUnique, f.Description, validationJson, f.IsIndexed, f.IsList);
             else
-                contentType.UpdateField(existing.Id, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsIndexed, f.IsList, i, f.Description);
+                contentType.UpdateField(existing.Id, f.Label, ft, f.IsRequired, f.IsLocalized, f.IsIndexed, f.IsList, i, f.Description, validationJson);
         }
     }
 }
