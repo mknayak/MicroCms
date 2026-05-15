@@ -130,5 +130,27 @@ public sealed class UpdateEntryCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Slug.Should().Be("new-unique-slug");
     }
+
+    [Fact]
+    public async Task Handle_WhenEntryIsPublished_ReturnsToDraftAndUpdatesFields()
+    {
+        // Arrange — simulate a published entry by advancing it through the workflow
+        _existingEntry.Submit();
+        _existingEntry.Approve();
+        _existingEntry.Publish();
+
+        var command = new UpdateEntryCommand(
+            EntryId: _existingEntry.Id.Value,
+            FieldsJson: """{"title":"Re-edited after publish"}""",
+            ChangeNote: "Post-publish edit");
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert — save succeeds and entry reverts to Draft
+        result.IsSuccess.Should().BeTrue();
+        _existingEntry.Status.Should().Be(MicroCMS.Domain.Enums.EntryStatus.Draft);
+        _repository.Received(1).Update(_existingEntry);
+    }
 }
 

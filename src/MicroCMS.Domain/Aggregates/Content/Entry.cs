@@ -93,6 +93,14 @@ public sealed class Entry : AggregateRoot<EntryId>
             return;
         }
 
+        // A published entry edited in place returns to Draft so it can be
+        // reviewed and republished.  The previous live version is preserved
+        // in the version history.
+        if (Status == EntryStatus.Published)
+        {
+            Status = EntryStatus.Draft;
+        }
+
         FieldsJson = fieldsJson;
         UpdatedAt = DateTimeOffset.UtcNow;
         SnapshotVersion(editorId, changeNote);
@@ -144,11 +152,11 @@ public sealed class Entry : AggregateRoot<EntryId>
 
     public void Publish()
     {
-        if (Status != EntryStatus.Approved && Status != EntryStatus.Scheduled)
+        if (Status != EntryStatus.Draft && Status != EntryStatus.Approved && Status != EntryStatus.Scheduled)
         {
             throw new BusinessRuleViolationException(
-                "Entry.CannotPublishWithoutApproval",
-                $"Entry must be Approved or Scheduled before publishing. Current status: {Status}.");
+                "Entry.CannotPublish",
+                $"Entry must be in Draft, Approved, or Scheduled status before publishing. Current status: {Status}.");
         }
 
         Status = EntryStatus.Published;
@@ -232,7 +240,7 @@ public sealed class Entry : AggregateRoot<EntryId>
 
     private void EnsureEditable()
     {
-        if (Status is EntryStatus.Archived or EntryStatus.Published)
+        if (Status == EntryStatus.Archived)
         {
             throw new BusinessRuleViolationException(
                 "Entry.NotEditable",

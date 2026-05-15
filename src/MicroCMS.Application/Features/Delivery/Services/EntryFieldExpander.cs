@@ -11,8 +11,8 @@ namespace MicroCMS.Application.Features.Delivery.Services;
 /// <summary>
 /// Expands typed field values in an entry's <c>FieldsJson</c> before rendering:
 /// <list type="bullet">
-///   <item><term>Reference</term><description>GUID → flattened field dictionary of the linked entry (slug, title + all fields).</description></item>
-///   <item><term>MultiList</term><description>GUID array → list of flattened field dictionaries.</description></item>
+///   <item><term>Reference</term><description>GUID → flattened field dictionary of the linked entry (slug, title + all fields), recursed up to <see cref="MaxDepth"/> levels deep.</description></item>
+///   <item><term>MultiList</term><description>GUID array → list of flattened field dictionaries, recursed up to <see cref="MaxDepth"/> levels deep.</description></item>
 ///   <item><term>AssetReference</term><description>Looks up the <see cref="MediaAsset"/> and writes <c>{id, assetUrl, fileName, mimeType, assetType, altText?, width?, height?}</c>.</description></item>
 ///   <item><term>DateTime</term><description>ISO-8601 string with UTC offset preserved.</description></item>
 ///   <item><term>All others</term><description>Unchanged.</description></item>
@@ -23,6 +23,8 @@ public sealed class EntryFieldExpander(
     IRepository<MediaAsset, MediaAssetId> mediaRepo,
     IStorageProvider storage)
 {
+    /// <summary>Maximum number of linked-entry levels that will be recursively expanded.</summary>
+    public const int MaxDepth = 2;
     /// <summary>
     /// Returns a <see cref="JsonElement"/> where Reference/MultiList fields have been
     /// replaced with the full field content of the linked entries.
@@ -50,7 +52,7 @@ public sealed class EntryFieldExpander(
 
             if (fieldDefMap.TryGetValue(prop.Name, out var fd))
             {
-                await WriteExpandedValueAsync(writer, prop.Value, fd, siteId, ct);
+                await WriteExpandedValueAsync(writer, prop.Value, fd, siteId, depth: 0, ct);
             }
             else
             {
@@ -73,17 +75,18 @@ public sealed class EntryFieldExpander(
         JsonElement value,
         FieldDefinition fd,
         SiteId siteId,
+        int depth,
         CancellationToken ct)
     {
         switch (fd.FieldType)
         {
             case FieldType.Reference when !fd.IsList:
-                await WriteReferenceAsync(writer, value, ct);
+                await WriteReferenceAsync(writer, value, siteId, depth, ct);
                 break;
 
             case FieldType.Reference when fd.IsList:
             case FieldType.MultiList:
-                await WriteReferenceListAsync(writer, value, ct);
+                await WriteReferenceListAsync(writer, value, siteId, depth, ct);
                 break;
 
             case FieldType.AssetReference:
@@ -104,8 +107,9 @@ public sealed class EntryFieldExpander(
     /// <summary>
     /// Resolves a single reference GUID to the linked entry's fields.
     /// Falls back to writing a null literal when the entry is not found.
+    /// References within the linked entry are recursively expanded up to <see cref="MaxDepth"/> levels.
     /// </summary>
-    private async Task WriteReferenceAsync(Utf8JsonWriter writer, JsonElement value, CancellationToken ct)
+    private async Task WriteReferenceAsync(Utf8JsonWriter writer, JsonElement value, SiteId siteId, int depth, CancellationToken ct)
     {
         var entryId = ParseEntryId(value);
         if (entryId is null) { writer.WriteNullValue(); return; }
@@ -113,13 +117,14 @@ public sealed class EntryFieldExpander(
         var linked = await entryRepo.GetByIdAsync(entryId.Value, ct);
         if (linked is null) { writer.WriteNullValue(); return; }
 
-        WriteEntryFields(writer, linked);
+        await WriteEntryFieldsAsync(writer, linked, siteId, depth, ct);
     }
 
     /// <summary>
     /// Resolves an array of reference GUIDs to a JSON array of entry field objects.
+    /// References within each linked entry are recursively expanded up to <see cref="MaxDepth"/> levels.
     /// </summary>
-    private async Task WriteReferenceListAsync(Utf8JsonWriter writer, JsonElement value, CancellationToken ct)
+    private async Task WriteReferenceListAsync(Utf8JsonWriter writer, JsonElement value, SiteId siteId, int depth, CancellationToken ct)
     {
         writer.WriteStartArray();
 
@@ -133,7 +138,7 @@ public sealed class EntryFieldExpander(
                 var linked = await entryRepo.GetByIdAsync(entryId.Value, ct);
                 if (linked is null) continue;
 
-                WriteEntryFields(writer, linked);
+                await WriteEntryFieldsAsync(writer, linked, siteId, depth, ct);
             }
         }
 
@@ -141,10 +146,13 @@ public sealed class EntryFieldExpander(
     }
 
     /// <summary>
-    /// Writes the linked entry as a JSON object containing its slug, title (if present),
+    /// Writes the linked entry as a JSON object containing its <c>id</c>, <c>slug</c>,
     /// and all field values from its <c>FieldsJson</c>.
+    /// When <paramref name="depth"/> is below <see cref="MaxDepth"/>, any Reference/MultiList
+    /// fields found inside the linked entry are themselves recursively expanded.
+    /// At <see cref="MaxDepth"/> the raw GUID values are written as-is to stop recursion.
     /// </summary>
-    private static void WriteEntryFields(Utf8JsonWriter writer, Entry linked)
+    private async Task WriteEntryFieldsAsync(Utf8JsonWriter writer, Entry linked, SiteId siteId, int depth, CancellationToken ct)
     {
         writer.WriteStartObject();
         writer.WriteString("id", linked.Id.Value.ToString());
@@ -155,13 +163,70 @@ public sealed class EntryFieldExpander(
             using var linkedDoc = JsonDocument.Parse(linked.FieldsJson);
             if (linkedDoc.RootElement.ValueKind == JsonValueKind.Object)
             {
-                foreach (var prop in linkedDoc.RootElement.EnumerateObject())
-                    prop.WriteTo(writer);
+                if (depth < MaxDepth - 1)
+                {
+                    // Recurse: expand reference fields one level deeper.
+                    // We don't have field definitions for the linked type, so we
+                    // detect references heuristically (GUID strings / GUID arrays).
+                    foreach (var prop in linkedDoc.RootElement.EnumerateObject())
+                    {
+                        writer.WritePropertyName(prop.Name);
+                        await WriteHeuristicAsync(writer, prop.Value, siteId, depth + 1, ct);
+                    }
+                }
+                else
+                {
+                    // At max depth — write fields verbatim (no further expansion).
+                    foreach (var prop in linkedDoc.RootElement.EnumerateObject())
+                        prop.WriteTo(writer);
+                }
             }
         }
         catch (JsonException) { /* corrupt linked entry — emit only id/slug */ }
 
         writer.WriteEndObject();
+    }
+
+    /// <summary>
+    /// Best-effort heuristic expansion used when no <see cref="FieldDefinition"/> is
+    /// available for a linked entry's fields (i.e. depth &gt; 0).
+    /// A JSON string that parses as a <see cref="Guid"/> is treated as a Reference;
+    /// a JSON array whose first element is a GUID string is treated as a MultiList.
+    /// Everything else is written verbatim.
+    /// </summary>
+    private async Task WriteHeuristicAsync(Utf8JsonWriter writer, JsonElement value, SiteId siteId, int depth, CancellationToken ct)
+    {
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var entryId = ParseEntryId(value);
+            if (entryId is not null)
+            {
+                var linked = await entryRepo.GetByIdAsync(entryId.Value, ct);
+                if (linked is not null)
+                {
+                    await WriteEntryFieldsAsync(writer, linked, siteId, depth, ct);
+                    return;
+                }
+            }
+            value.WriteTo(writer);
+            return;
+        }
+
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            // Peek at the first element to decide whether this looks like a GUID list.
+            var firstIsGuid = value.EnumerateArray()
+                .Cast<JsonElement?>()
+                .FirstOrDefault() is { } first && ParseEntryId(first) is not null;
+
+            if (firstIsGuid)
+            {
+                await WriteReferenceListAsync(writer, value, siteId, depth, ct);
+                return;
+            }
+        }
+
+        value.WriteTo(writer);
     }
 
     /// <summary>
@@ -222,9 +287,20 @@ public sealed class EntryFieldExpander(
         var asset = await mediaRepo.GetByIdAsync(assetId.Value, ct);
         if (asset is null || asset.Status != MediaAssetStatus.Available) { value.WriteTo(writer); return; }
 
-        var url = await storage.GetPublicUrlAsync(asset.StorageKey, ct);
-        if (string.IsNullOrEmpty(url))
-            url = $"/api/delivery/v1/media/{assetId.Value.Value}/stream?siteId={siteId.Value}";
+        // Prefer the cacheable static path (/static/assets/{AssetPath}) when the asset
+        // has a virtual path set.  Fall back to the storage provider's public URL, and
+        // finally to the streaming API endpoint for private/unsigned assets.
+        string url;
+        if (!string.IsNullOrWhiteSpace(asset.AssetPath))
+        {
+            url = $"/static/assets/{asset.AssetPath.TrimStart('/')}";
+        }
+        else
+        {
+            url = await storage.GetPublicUrlAsync(asset.StorageKey, ct);
+            if (string.IsNullOrEmpty(url))
+                url = $"/api/delivery/v1/media/{assetId.Value.Value}/stream?siteId={siteId.Value}";
+        }
 
         writer.WriteStartObject();
         writer.WriteString("id", assetId.Value.Value.ToString());
