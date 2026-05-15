@@ -446,7 +446,29 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
          <p>Use <code className="rounded bg-slate-100 px-1">@Model.FieldHandle</code> to output field values. Asset refs expose <code className="rounded bg-slate-100 px-1">.Url</code>, <code className="rounded bg-slate-100 px-1">.Alt</code>.</p>
   )}
          {templateType === 'Handlebars' && (
-     <p>Use <code className="rounded bg-slate-100 px-1">{'{{fieldHandle}}'}</code> to output values. Triple-stash <code className="rounded bg-slate-100 px-1">{'{{{}}}' }</code> for unescaped HTML.</p>
+     <div className="space-y-2">
+       <p>Use <code className="rounded bg-slate-100 px-1">{'{{fieldHandle}}'}</code> to output values. Triple-stash <code className="rounded bg-slate-100 px-1">{'{{{fieldHandle}}}'}</code> for unescaped HTML.</p>
+       <div>
+         <p className="font-semibold text-slate-700 mb-1">Conditional (if / else)</p>
+         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{#if fieldHandle}}\n  shown when truthy\n{{else}}\n  shown when falsy\n{{/if}}`}</pre>
+         <p className="mt-1 text-slate-500">Use <code className="rounded bg-slate-100 px-1">{'{{#unless fieldHandle}}'}</code> for the inverse.</p>
+       </div>
+       <div>
+         <p className="font-semibold text-slate-700 mb-1">Loop (each)</p>
+         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{#each listField}}\n  {{this.title}} — {{@index}}\n{{/each}}`}</pre>
+         <p className="mt-1 text-slate-500"><code className="rounded bg-slate-100 px-1">{'{{@index}}'}</code> = 0-based position · <code className="rounded bg-slate-100 px-1">{'{{@first}}'}</code> / <code className="rounded bg-slate-100 px-1">{'{{@last}}'}</code> = booleans.</p>
+       </div>
+       <div>
+         <p className="font-semibold text-slate-700 mb-1">Nested properties</p>
+         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{image.url}}\n{{image.alt}}`}</pre>
+       </div>
+       <div>
+         <p className="font-semibold text-slate-700 mb-1">Inspect / debug a field</p>
+         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{this}}`}</pre>
+         <p className="mt-1 text-slate-500">Inside an <code className="rounded bg-slate-100 px-1">{'{{#each}}'}</code> block, <code className="rounded bg-slate-100 px-1">{'{{this}}'}</code> outputs all key/value pairs of the current item — useful for discovering available field names.</p>
+       </div>
+
+     </div>
     )}
   {templateType === 'React' && (
             <p>Props are typed from the field schema. Each field is passed as a prop. Asset refs are <code className="rounded bg-slate-100 px-1">AssetRef</code> objects with <code className="rounded bg-slate-100 px-1">url</code> and <code className="rounded bg-slate-100 px-1">alt</code>.</p>

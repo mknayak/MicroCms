@@ -48,6 +48,7 @@ internal sealed class ComponentRenderer(ILogger<ComponentRenderer> logger) : ICo
             if (arguments.Length > 0)
                 writer.WriteSafeString(arguments[0]?.ToString() ?? string.Empty);
         });
+
     }
     public Task<string> RenderAsync(
         Component component,
