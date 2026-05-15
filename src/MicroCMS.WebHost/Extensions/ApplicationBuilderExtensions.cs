@@ -22,25 +22,15 @@ internal static class ApplicationBuilderExtensions
     // ── Database initialisation ───────────────────────────────────────────
 
     /// <summary>
-    /// Initialises the database connection on startup.
-    /// - SQLite / development: <c>EnsureCreated</c> (fast, creates schema from the current model).
-    /// - PostgreSQL / production: schema is managed via SQL scripts in
-    ///   <c>Persistence/PostgreSql/Scripts/</c>; no automatic migration is run.
+    /// Verifies the database connection is reachable on startup.
+    /// Schema is managed exclusively via SQL scripts in <c>Persistence/PostgreSql/Scripts/</c>.
+    /// No automatic schema creation or migration is performed.
     /// </summary>
     internal static async Task UseDatabaseAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var config = app.Configuration;
-
-        var provider = config.GetValue<string>("MicroCMS:Database:Provider") ?? "Sqlite";
-
-        if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
-        {
-            // EnsureCreated is fine for SQLite dev — creates the schema from the current model.
-            await db.Database.EnsureCreatedAsync();
-        }
-        // PostgreSQL schema is managed via SQL scripts; migrations are not applied at runtime.
+        await db.Database.CanConnectAsync();
     }
 
     // ── Security middleware ────────────────────────────────────────────────

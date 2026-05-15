@@ -26,7 +26,7 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
     ArgumentNullException.ThrowIfNull(builder);
  builder.UseEnvironment("Testing");
 
-        // Force SQLite provider so UseDatabaseAsync calls EnsureCreated (not MigrateAsync)
+        // Use SQLite in-memory so UseDatabaseAsync only verifies connectivity (no schema setup needed for SQLite)
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>

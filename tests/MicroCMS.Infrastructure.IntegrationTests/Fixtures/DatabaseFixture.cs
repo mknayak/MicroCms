@@ -13,7 +13,7 @@ namespace MicroCMS.Infrastructure.IntegrationTests.Fixtures;
 
 /// <summary>
 /// xUnit collection fixture that starts a PostgreSQL container once per test collection,
-/// applies migrations, and exposes a factory for creating per-test service scopes.
+/// creates the schema, and exposes a factory for creating per-test service scopes.
 ///
 /// Using a single container per collection reduces test run time while still giving
 /// each test a fresh scope (and therefore a fresh <see cref="ApplicationDbContext"/>).
@@ -33,10 +33,10 @@ public sealed class DatabaseFixture : IAsyncLifetime
     {
         await _postgresContainer.StartAsync();
 
-        // Apply migrations using a system (no-tenant) scope
+        // Create schema from the current EF model (no migration history required).
         await using var scope = CreateScope(tenantId: null);
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await context.Database.MigrateAsync();
+        await context.Database.EnsureCreatedAsync();
     }
 
     public async Task DisposeAsync()
