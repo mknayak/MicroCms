@@ -104,6 +104,7 @@ export function DynamicSourceEditor({
                 <div>
                     <label className="form-label text-xs">Status Filter</label>
                     <select className="form-input mt-1 text-xs" {...register(`${prefix}.statusFilter`)}>
+                        <option value="">All</option>
                         <option value="Published">Published</option>
                         <option value="Draft">Draft</option>
                         <option value="Approved">Approved</option>
@@ -201,6 +202,7 @@ export function ReferenceSourceEditor({
                 <div className="col-span-2">
                     <label className="form-label text-xs">Status Filter</label>
                     <select className="form-input mt-1 text-xs" {...register(`${prefix}.statusFilter`)}>
+                        <option value="">All</option>
                         <option value="Published">Published</option>
                         <option value="Draft">Draft</option>
                         <option value="Approved">Approved</option>
@@ -211,7 +213,7 @@ export function ReferenceSourceEditor({
     );
 }
 
-// ─── ComponentSourceEditor ────────────────────────────────────────────────────
+// ─── ComponentSourceEditor
 
 export function ComponentSourceEditor({
     register,
@@ -295,6 +297,7 @@ export function MultiListSourceEditor({
                 <div>
                     <label className="form-label text-xs">Status Filter</label>
                     <select className="form-input mt-1 text-xs" {...register(`${prefix}.statusFilter`)}>
+                        <option value="">All</option>
                         <option value="Published">Published</option>
                         <option value="Draft">Draft</option>
                         <option value="Approved">Approved</option>

@@ -2322,3 +2322,20 @@ MicroCMS.Application.Common.Exceptions.NotFoundException: Entity 'ContentType' w
 2026-05-15 23:51:35.823 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListComponentItemsQuery in 2ms
 2026-05-15 23:51:37.671 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListEntriesQuery
 2026-05-15 23:51:37.673 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListEntriesQuery in 0ms
+2026-05-15 23:57:19.504 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling RefreshTokenCommand
+2026-05-15 23:57:19.528 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled RefreshTokenCommand in 23ms
+2026-05-15 23:57:19.545 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SwitchSiteCommand
+2026-05-15 23:57:19.553 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SwitchSiteCommand in 5ms
+2026-05-15 23:57:41.478 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling RefreshTokenCommand
+2026-05-15 23:57:41.484 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled RefreshTokenCommand in 4ms
+2026-05-15 23:57:41.497 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling SwitchSiteCommand
+2026-05-15 23:57:41.501 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled SwitchSiteCommand in 2ms
+2026-05-15 23:59:35.998 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '3fd7f9ab-7778-48d2-86eb-aa7e092084a4' could not be resolved to a known tenant.
+2026-05-15 23:59:35.998 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '3fd7f9ab-7778-48d2-86eb-aa7e092084a4' could not be resolved to a known tenant.
+2026-05-15 23:59:36.001 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetCurrentTenantQuery
+2026-05-15 23:59:36.003 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling GetComponentQuery
+2026-05-15 23:59:36.005 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetCurrentTenantQuery in 0ms
+2026-05-15 23:59:36.006 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled GetComponentQuery in 1ms
+2026-05-15 23:59:36.008 +08:00 [WRN] MicroCMS.Infrastructure.Tenancy.SubdomainTenantResolver: Tenant slug '3fd7f9ab-7778-48d2-86eb-aa7e092084a4' could not be resolved to a known tenant.
+2026-05-15 23:59:36.021 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handling ListEntriesQuery
+2026-05-15 23:59:36.028 +08:00 [INF] MicroCMS.Application.Common.Behaviors.LoggingBehavior: Handled ListEntriesQuery in 4ms

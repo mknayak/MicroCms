@@ -110,6 +110,19 @@ export const contentTypesApi = {
   /** Returns the candidate entry list (left pane) for a MultiList field picker. */
   getMultiListOptions: (contentTypeId: string, fieldId: string): Promise<MultiListOptionDto[]> =>
     get<MultiListOptionDto[]>(`/content-types/${contentTypeId}/fields/${fieldId}/multilist-options`),
+
+  /**
+   * Resolves MultiList options directly from source params (no owning CT/field ID required).
+   * Used by editors (e.g. component-item editor) that have a multiListSource config
+   * but no content-type + field ID pair.
+   */
+  getMultiListOptionsBySource: (params: {
+    contentTypeHandle: string;
+    labelField: string;
+    statusFilter?: string;
+    groupHandle?: string;
+  }): Promise<MultiListOptionDto[]> =>
+    get<MultiListOptionDto[]>('/content-types/fields/multilist-options-by-source', { params }),
 };
 
 // ─── Entry Groups API ─────────────────────────────────────────────────────────

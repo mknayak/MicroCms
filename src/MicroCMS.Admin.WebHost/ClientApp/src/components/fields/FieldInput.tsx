@@ -12,7 +12,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { contentTypesApi } from '@/api/contentTypes';
-import { entriesApi } from '@/api/entries';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { MediaPickerField } from '@/pages/pages/MediaPickerField';
 import { EntryPickerField } from '@/pages/pages/EntryPickerField';
@@ -75,9 +74,12 @@ function MultiListPickerField({
   });
 
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
-    queryKey: ['multilist-search', handle, availableSearch],
-    queryFn: () => entriesApi.list({ search: availableSearch, pageSize: 100 }),
-    select: (d) => d.items.map((e) => ({ entryId: e.id, label: e.title ?? e.slug })) as MultiListOptionDto[],
+    queryKey: ['multilist-search', handle, field.multiListSource?.labelField, field.multiListSource?.groupHandle],
+    queryFn: () => contentTypesApi.getMultiListOptionsBySource({
+      contentTypeHandle: handle,
+      labelField: field.multiListSource?.labelField ?? 'title',
+      groupHandle: field.multiListSource?.groupHandle,
+    }),
     enabled: !useEndpoint && !!handle,
     staleTime: 30_000,
   });

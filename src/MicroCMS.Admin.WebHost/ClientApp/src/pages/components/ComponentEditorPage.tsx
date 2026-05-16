@@ -106,8 +106,8 @@ export default function ComponentEditorPage() {
             ? { contentTypeHandle: f.dynamicSource.contentTypeHandle ?? '', labelField: f.dynamicSource.labelField ?? '', valueField: f.dynamicSource.valueField ?? '', statusFilter: f.dynamicSource.statusFilter ?? 'Published', groupHandle: f.dynamicSource.groupHandle ?? '' }
             : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
           multiListSource: f.multiListSource
-            ? { contentTypeHandle: f.multiListSource.contentTypeHandle ?? '', labelField: f.multiListSource.labelField ?? '', valueField: f.multiListSource.valueField ?? '', statusFilter: f.multiListSource.statusFilter ?? 'Published', groupHandle: f.multiListSource.groupHandle ?? '' }
-            : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: 'Published', groupHandle: '' },
+            ? { contentTypeHandle: f.multiListSource.contentTypeHandle ?? '', labelField: f.multiListSource.labelField ?? '', valueField: f.multiListSource.valueField ?? '', statusFilter: f.multiListSource.statusFilter ?? '', groupHandle: f.multiListSource.groupHandle ?? '' }
+            : { contentTypeHandle: '', labelField: '', valueField: '', statusFilter: '', groupHandle: '' },
           componentSourceKey: f.componentSource?.componentKey ?? '',
         })),
       });

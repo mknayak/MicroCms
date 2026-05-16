@@ -250,6 +250,26 @@ cancellationToken);
             cancellationToken);
         return OkOrProblem(result);
     }
+
+    /// <summary>
+    /// Resolves the available (left-pane) entry list for a MultiList field directly from source parameters.
+    /// Used by editors (e.g. component-item editor) that have a multiListSource config
+    /// but no owning content-type/field-ID context.
+    /// </summary>
+    [HttpGet("fields/multilist-options-by-source")]
+    [ProducesResponseType(typeof(IReadOnlyList<MultiListOptionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMultiListOptionsBySource(
+        [FromQuery] string contentTypeHandle,
+        [FromQuery] string? labelField = null,
+        [FromQuery] string? statusFilter = null,
+        [FromQuery] string? groupHandle = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Sender.Send(
+            new ResolveMultiListOptionsBySourceQuery(contentTypeHandle, labelField ?? "title", statusFilter, groupHandle),
+            cancellationToken);
+        return OkOrProblem(result);
+    }
 }
 
 // ── Request models ───────────────────────────────────────────────────────────

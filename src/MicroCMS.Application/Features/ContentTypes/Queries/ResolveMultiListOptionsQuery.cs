@@ -142,3 +142,95 @@ internal sealed class ResolveMultiListOptionsQueryHandler(
         return null;
     }
 }
+
+/// <summary>
+/// Resolves the available (left-pane) entry list for a <c>MultiList</c> field directly
+/// from source parameters — no owning content-type/field lookup required.
+/// Used when the caller has a <c>multiListSource</c> config but no content-type + field ID pair
+/// (e.g. the component-item editor).
+/// </summary>
+[HasPolicy(ContentPolicies.ContentTypeRead)]
+public sealed record ResolveMultiListOptionsBySourceQuery(
+    string SourceContentTypeHandle,
+    string LabelField,
+    string? StatusFilter = null,
+    string? GroupHandle = null) : IQuery<IReadOnlyList<MultiListOptionDto>>;
+
+internal sealed class ResolveMultiListOptionsBySourceQueryHandler(
+    IRepository<ContentType, ContentTypeId> ctRepo,
+    IRepository<Entry, EntryId> entryRepo,
+    IRepository<EntryGroup, EntryGroupId> groupRepo,
+    ICurrentUser currentUser)
+    : IRequestHandler<ResolveMultiListOptionsBySourceQuery, Result<IReadOnlyList<MultiListOptionDto>>>
+{
+    private static readonly JsonSerializerOptions _jsonOpts =
+        new() { PropertyNameCaseInsensitive = true };
+
+    public async Task<Result<IReadOnlyList<MultiListOptionDto>>> Handle(
+        ResolveMultiListOptionsBySourceQuery request,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.SiteId is not { } siteId)
+            return Result.Failure<IReadOnlyList<MultiListOptionDto>>(
+                Error.Validation("Auth.NoSiteContext", "No site context in token."));
+
+        var allTypes = await ctRepo.ListAsync(new ContentTypesBySiteSpec(siteId), cancellationToken);
+        var sourceCt = allTypes.FirstOrDefault(c =>
+            c.Handle.Equals(request.SourceContentTypeHandle, StringComparison.OrdinalIgnoreCase))
+            ?? throw new NotFoundException("Source ContentType", request.SourceContentTypeHandle);
+
+        var spec = new EntriesBySiteSpec(
+            siteId,
+            statusFilter: request.StatusFilter,
+            contentTypeId: sourceCt.Id.Value,
+            locale: null,
+            folderId: null,
+            pageNumber: 1,
+            pageSize: 1000);
+
+        var entries = await entryRepo.ListAsync(spec, cancellationToken);
+
+        IEnumerable<Entry> filtered = entries;
+        if (!string.IsNullOrWhiteSpace(request.GroupHandle))
+        {
+            var groupSpec = new EntryGroupByHandleSpec(siteId, sourceCt.Id, request.GroupHandle);
+            var groups = await groupRepo.ListAsync(groupSpec, cancellationToken);
+            var memberIds = groups
+                .SelectMany(g => g.Members)
+                .Select(m => m.EntryId)
+                .ToHashSet();
+            filtered = entries.Where(e => memberIds.Contains(e.Id));
+        }
+
+        var options = filtered
+            .Select(e => BuildOption(e, request.LabelField))
+            .Where(o => o is not null)
+            .Select(o => o!)
+            .ToList();
+
+        return Result.Success<IReadOnlyList<MultiListOptionDto>>(options);
+    }
+
+    private static MultiListOptionDto? BuildOption(Entry entry, string labelField)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(entry.FieldsJson);
+            var root = doc.RootElement;
+            var label = TryGetString(root, labelField) ?? entry.Slug.Value;
+            return new MultiListOptionDto(entry.Id.Value, label, entry.Slug.Value);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string? TryGetString(JsonElement root, string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        if (root.TryGetProperty(key, out var el) && el.ValueKind == JsonValueKind.String)
+            return el.GetString();
+        return null;
+    }
+}
