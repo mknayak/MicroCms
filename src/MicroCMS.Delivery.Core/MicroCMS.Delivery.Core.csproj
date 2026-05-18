@@ -24,9 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Server-side Handlebars template rendering -->
+    <!-- Server-side Scriban template rendering -->
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
-    <PackageReference Include="Handlebars.Net" Version="2.1.6" />
+    <PackageReference Include="Scriban" Version="7.2.0" />
     <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
   </ItemGroup>
 

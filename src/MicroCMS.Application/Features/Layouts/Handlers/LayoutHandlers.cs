@@ -162,7 +162,7 @@ internal sealed class CreateLayoutCommandHandler(
     public async Task<Result<LayoutDto>> Handle(CreateLayoutCommand request, CancellationToken cancellationToken)
     {
         if (!Enum.TryParse<LayoutTemplateType>(request.TemplateType, true, out var templateType))
-            templateType = LayoutTemplateType.Handlebars;
+            templateType = LayoutTemplateType.Scriban;
         var siteId = currentUser.SiteId;
         if (siteId is null)
             return Result.Failure<LayoutDto>(Error.Validation("Auth.NoSiteContext", "No site context in token. Call POST /auth/switch-site first."));
@@ -188,7 +188,7 @@ internal sealed class UpdateLayoutCommandHandler(
             ?? throw new NotFoundException(nameof(Layout), request.LayoutId);
 
         if (!Enum.TryParse<LayoutTemplateType>(request.TemplateType, true, out var templateType))
-            templateType = LayoutTemplateType.Handlebars;
+            templateType = LayoutTemplateType.Scriban;
 
         layout.Update(request.Name, templateType);
         repo.Update(layout);

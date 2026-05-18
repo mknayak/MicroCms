@@ -23,7 +23,7 @@ public sealed class CreateLayoutRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
-    public string TemplateType { get; set; } = "Handlebars";
+    public string TemplateType { get; set; } = "Scriban";
 }
 
 public sealed class UpdateLayoutRequest

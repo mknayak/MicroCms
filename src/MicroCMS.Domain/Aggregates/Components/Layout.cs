@@ -10,12 +10,11 @@ namespace MicroCMS.Domain.Aggregates.Components;
 public enum LayoutTemplateType
 {
     /// <summary>
- /// Handlebars template (default).
-    /// Zones are available as <c>{{{zone_hero_zone}}}</c> (triple-stash, unescaped HTML)
-    /// or via the nested helper <c>{{{zones.[hero-zone]}}}</c>.
-    /// Full Handlebars syntax is supported: <c>{{#if}}</c>, <c>{{#each}}</c>, partials, etc.
+    /// Scriban template (default).
+    /// Zones are available as <c>{{ zone_hero_zone }}</c> (raw HTML output, hyphens replaced with underscores).
+    /// Full Scriban syntax is supported: <c>{{ if cond }}...{{ end }}</c>, <c>{{ for item in items }}...{{ end }}</c>, filters, etc.
     /// </summary>
-    Handlebars = 0,
+    Scriban = 0,
 
     /// <summary>
     /// Raw HTML with <c>{{zone:name}}</c> and <c>{{seo:*}}</c> placeholder tokens.
@@ -105,7 +104,7 @@ public string ZonesJson { get; private set; } = "[]";
 public static Layout Create(
         TenantId tenantId, SiteId siteId,
   string name, string key,
-        LayoutTemplateType templateType = LayoutTemplateType.Handlebars)
+        LayoutTemplateType templateType = LayoutTemplateType.Scriban)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));

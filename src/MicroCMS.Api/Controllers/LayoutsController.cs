@@ -30,15 +30,15 @@ public sealed class LayoutsController : ApiControllerBase
     /// <summary>
  /// Creates a new layout.
 ///
-    /// <b>TemplateType</b> values: <c>Handlebars</c> (default), <c>Html</c>.
+    /// <b>TemplateType</b> values: <c>Scriban</c> (default), <c>Html</c>.
     ///
     /// <b>ShellTemplate</b> zone placeholders:
     /// <ul>
     ///   <li><c>{{zone:hero-zone}}</c> — replaced with rendered component HTML for that zone.</li>
     ///   <li><c>{{seo:title}}</c>, <c>{{seo:description}}</c>, <c>{{seo:ogImage}}</c> — SEO tokens.</li>
     /// </ul>
-    /// For Handlebars layouts, zones are also available as <c>{{{zone_hero_zone}}}</c>
-  /// (hyphens replaced with underscores, triple-stash for unescaped HTML).
+    /// For Scriban layouts, zones are also directly available as <c>{{ zone_hero_zone }}</c>
+    /// (hyphens replaced with underscores). All output is unescaped by default.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status201Created)]

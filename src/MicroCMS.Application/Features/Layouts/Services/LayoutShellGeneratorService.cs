@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace MicroCMS.Application.Features.Layouts.Services;
 
 /// <summary>
-/// Generates a Handlebars or HTML shell template from a structured zone tree and layout config.
+/// Generates a Scriban or HTML shell template from a structured zone tree and layout config.
 /// Called by layout command handlers whenever zones or config change.
 /// </summary>
 public sealed class LayoutShellGeneratorService
@@ -21,13 +21,13 @@ public sealed class LayoutShellGeneratorService
     {
         var zones = JsonSerializer.Deserialize<List<ZoneNodeDto>>(zonesJson, _json) ?? [];
         var config = DeserializeConfig(layoutConfigJson);
-        var isHandlebars = !templateType.Equals("Html", StringComparison.OrdinalIgnoreCase);
-        return isHandlebars ? BuildHandlebars(zones, config) : BuildHtml(zones, config);
+        var isScriban = !templateType.Equals("Html", StringComparison.OrdinalIgnoreCase);
+        return isScriban ? BuildScriban(zones, config) : BuildHtml(zones, config);
     }
 
-    // ── Handlebars builder ────────────────────────────────────────────────
+    // ── Scriban builder ────────────────────────────────────────────────────
 
-    private static string BuildHandlebars(List<ZoneNodeDto> zones, LayoutConfigDto config)
+    private static string BuildScriban(List<ZoneNodeDto> zones, LayoutConfigDto config)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html>");
@@ -39,7 +39,7 @@ public sealed class LayoutShellGeneratorService
         AppendBodyStartAssets(sb, config, "  ");
 
         foreach (var zone in zones.OrderBy(z => z.SortOrder))
-            AppendNodeHandlebars(sb, zone, "  ");
+            AppendNodeScriban(sb, zone, "  ");
 
         AppendBodyEndAssets(sb, config, "  ");
         sb.AppendLine("</body>");
@@ -47,7 +47,7 @@ public sealed class LayoutShellGeneratorService
         return sb.ToString();
     }
 
-    private static void AppendNodeHandlebars(StringBuilder sb, ZoneNodeDto node, string indent)
+    private static void AppendNodeScriban(StringBuilder sb, ZoneNodeDto node, string indent)
     {
         switch (node.Type)
         {
@@ -57,7 +57,7 @@ public sealed class LayoutShellGeneratorService
                 var attrs = BuildHtmlAttrs(node);
                 sb.AppendLine($"{indent}<{tag}{attrs}>");
                 foreach (var child in (node.Children ?? []).OrderBy(c => c.SortOrder))
-                    AppendNodeHandlebars(sb, child, indent + "  ");
+                    AppendNodeScriban(sb, child, indent + "  ");
                 sb.AppendLine($"{indent}</{tag}>");
                 break;
             }
@@ -65,7 +65,7 @@ public sealed class LayoutShellGeneratorService
             case "zone":
             {
                 var token = node.Name.Replace("-", "_");
-                sb.AppendLine($"{indent}{{{{{{{token}}}}}}}");
+                sb.AppendLine($"{indent}{{{{ {token} }}}}");
                 break;
             }
             case "grid-row" when node.Columns?.Count > 0:
@@ -75,7 +75,7 @@ public sealed class LayoutShellGeneratorService
                 {
                     var token = col.ZoneName.Replace("-", "_");
                     sb.AppendLine($"{indent}  <div class=\"col-{col.Span}\">");
-                    sb.AppendLine($"{indent}    {{{{{{{token}}}}}}}");
+                    sb.AppendLine($"{indent}    {{{{ {token} }}}}");
                     sb.AppendLine($"{indent}  </div>");
                 }
                 sb.AppendLine($"{indent}</div>");

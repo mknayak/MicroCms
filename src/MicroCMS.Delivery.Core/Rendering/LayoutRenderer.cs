@@ -1,4 +1,5 @@
-using HandlebarsDotNet;
+using Scriban;
+using Scriban.Runtime;
 using MicroCMS.Application.Features.Delivery.Rendering;
 using MicroCMS.Application.Features.Delivery.Rendering.Resolvers;
 using MicroCMS.Domain.Aggregates.Components;
@@ -12,6 +13,9 @@ namespace MicroCMS.Delivery.Core.Rendering;
 ///
 /// Zone placeholder syntax (all template types):
 ///   <c>{{zone:hero-zone}}</c>  →  replaced with the accumulated HTML of that zone.
+///
+/// For Scriban layouts, zones are also directly available as
+///   <c>{{ zone_hero_zone }}</c> (hyphens replaced with underscores).
 ///
 /// SEO placeholders:
 ///   <c>{{seo:title}}</c>  <c>{{seo:description}}</c>  <c>{{seo:ogImage}}</c>
@@ -56,9 +60,9 @@ internal sealed class LayoutRenderer(
         // ── 1. Inject zone HTML into the shell ────────────────────────────
         var zoneResolved = layout.TemplateType switch
         {
-            LayoutTemplateType.Handlebars => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
+            LayoutTemplateType.Scriban => RenderScriban(layout, zones, seoTitle, seoDescription, seoOgImage),
             LayoutTemplateType.Html => RenderTokenReplace(layout, zones, seoTitle, seoDescription, seoOgImage),
-            _ => RenderHandlebars(layout, zones, seoTitle, seoDescription, seoOgImage),
+            _ => RenderScriban(layout, zones, seoTitle, seoDescription, seoOgImage),
         };
 
         // ── 2. Resolve remaining {{namespace:key}} tokens ─────────────────
@@ -67,63 +71,65 @@ internal sealed class LayoutRenderer(
         return html;
     }
 
-    // ── Handlebars ────────────────────────────────────────────────────────
+    // ── Scriban ───────────────────────────────────────────────────────────
 
-    // Pre-built Handlebars environment with HTML encoding disabled.
-    // Zone values are already trusted HTML fragments; encoding them would break the output.
-    private static readonly IHandlebars _hb = Handlebars.Create(
-        new HandlebarsConfiguration { TextEncoder = null });
-
-    private string RenderHandlebars(
+    private string RenderScriban(
         Layout layout,
         IReadOnlyDictionary<string, string> zones,
         string? seoTitle, string? seoDescription, string? seoOgImage)
     {
         try
         {
-            var template = _hb.Compile(layout.ShellTemplate!);
-            var data = BuildHandlebarsData(zones, seoTitle, seoDescription, seoOgImage);
-            return template(data);
+            var processed = ScribanHelpers.Stash(layout.ShellTemplate!, out var stash);
+            var template = Template.Parse(processed);
+            if (template.HasErrors)
+            {
+                logger.LogError("Scriban parse errors for layout {Key}: {Errors}",
+                    layout.Key, string.Join("; ", template.Messages));
+                return FallbackZoneComment(zones);
+            }
+
+            var ctx = new TemplateContext { StrictVariables = false };
+            ctx.PushGlobal(BuildScribanData(zones, seoTitle, seoDescription, seoOgImage));
+
+            var result = template.Render(ctx);
+            return ScribanHelpers.Restore(result, stash);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Handlebars layout render failed for layout {Key}", layout.Key);
+            logger.LogError(ex, "Scriban layout render failed for layout {Key}", layout.Key);
             return FallbackZoneComment(zones);
         }
     }
 
-    private static Dictionary<string, object?> BuildHandlebarsData(
+    private static ScriptObject BuildScribanData(
    IReadOnlyDictionary<string, string> zones,
         string? seoTitle, string? seoDescription, string? seoOgImage)
     {
-        var data = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var scriptObj = new ScriptObject();
 
-        // Expose zones as  zone_hero_zone, zone_content_zone etc. (hyphens → underscores)
-        // AND as a nested "zones" object so templates can use {{zone.hero-zone}} too.
-        var zonesObj = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        // Expose zones as zone_hero_zone, zone_content_zone etc. (hyphens → underscores)
+        // AND as a nested "zones" object so templates can use {{ zones.hero_zone }} too.
+        var zonesObj = new ScriptObject();
         foreach (var (name, html) in zones)
         {
-            // Normalise hyphens/spaces, then strip any leading "zone_" so that a zone
-            // named "zone-yfoxwd3p" doesn't become "zone_zone_yfoxwd3p".
             var safeKey = name.Replace('-', '_').Replace(' ', '_');
             if (safeKey.StartsWith("zone_", StringComparison.OrdinalIgnoreCase))
                 safeKey = safeKey["zone_".Length..];
-            data[$"zone_{safeKey}"] = (object)html;
-            zonesObj[name] = (object)html;
+            scriptObj[$"zone_{safeKey}"] = html;
+            zonesObj[safeKey] = html;
         }
-        data["zones"] = zonesObj;
+        scriptObj["zones"] = zonesObj;
 
         // SEO
-        var seo = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["title"] = seoTitle,
-            ["description"] = seoDescription,
-            ["ogImage"] = seoOgImage,
-        };
-        data["seo"] = seo;
-        data["title"] = seoTitle;
+        var seo = new ScriptObject();
+        seo["title"] = seoTitle;
+        seo["description"] = seoDescription;
+        seo["og_image"] = seoOgImage;
+        scriptObj["seo"] = seo;
+        scriptObj["title"] = seoTitle;
 
-        return data;
+        return scriptObj;
     }
 
     // ── Simple token replacement (Html / Razor fallback) ──────────────────

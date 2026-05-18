@@ -443,7 +443,7 @@ public sealed class PackageService(
             try
             {
                 var templateType = Enum.TryParse<LayoutTemplateType>(data.TemplateType, out var lt)
-           ? lt : LayoutTemplateType.Handlebars;
+           ? lt : LayoutTemplateType.Scriban;
 
                 if (existingByKey.TryGetValue(data.Key, out var existingLayout))
                 {

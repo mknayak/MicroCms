@@ -15,7 +15,7 @@ namespace MicroCMS.Delivery.WebHost.Controllers;
 /// Delivery API — published component items.
 ///
 /// Supports JSON data delivery as well as server-side rendered HTML
-/// via the optional <c>Accept: text/html</c> header (Handlebars templates only).
+/// via the optional <c>Accept: text/html</c> header (Scriban templates only).
 /// </summary>
 [Authorize(Policy = DeliveryPolicies.ApiKeyAuthenticated)]
 public sealed class ComponentsController : DeliveryControllerBase
@@ -43,7 +43,7 @@ public sealed class ComponentsController : DeliveryControllerBase
 
     /// <summary>
     /// Returns a single published component item by ID.
-    /// When the caller sends <c>Accept: text/html</c> and the component has a Handlebars
+    /// When the caller sends <c>Accept: text/html</c> and the component has a Scriban
     /// template, the response is server-side rendered HTML instead of JSON.
     /// </summary>
     [HttpGet("{componentKey}/{itemId:guid}")]
@@ -78,7 +78,7 @@ public sealed class ComponentsController : DeliveryControllerBase
               new ComponentId(result.Value.ComponentId), cancellationToken);
 
             if (comp is not null &&
-        comp.TemplateType == RenderingTemplateType.Handlebars &&
+        comp.TemplateType == RenderingTemplateType.Scriban &&
          !string.IsNullOrWhiteSpace(comp.TemplateContent))
             {
                 var html = await renderer.RenderAsync(comp, result.Value, cancellationToken: cancellationToken);

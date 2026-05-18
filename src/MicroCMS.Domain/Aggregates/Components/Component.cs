@@ -13,12 +13,12 @@ namespace MicroCMS.Domain.Aggregates.Components;
 public enum RenderingTemplateType
 {
     /// <summary>
-    /// Handlebars template (.hbs) — fully rendered server-side via Handlebars.Net.
-    /// Fields are flattened to named tokens: <c>{{heading}}</c>, <c>{{{body}}}</c> (triple-stash for raw HTML).
-    /// Supports <c>{{#if}}</c>, <c>{{#each}}</c>, partials and helpers.
+    /// Scriban template — fully rendered server-side via the Scriban engine.
+    /// Fields are available as <c>{{ heading }}</c>, <c>{{ body }}</c> (all output is raw/unescaped by default).
+    /// Supports <c>{{ if cond }}...{{ end }}</c>, <c>{{ for item in items }}...{{ end }}</c>, filters, and more.
     /// <b>This is the recommended default for server-side rendering.</b>
     /// </summary>
-    Handlebars = 0,
+    Scriban = 0,
 
   /// <summary>
     /// React component (.tsx) — <c>TemplateContent</c> is not rendered server-side.
@@ -80,7 +80,7 @@ SiteId = siteId;
         Key = key;
         Description = description;
         Category = category;
-        TemplateType = RenderingTemplateType.Handlebars;
+        TemplateType = RenderingTemplateType.Scriban;
       CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
@@ -95,7 +95,7 @@ SiteId = siteId;
     private string ZonesJson { get; set; } = "[]";
     public int UsageCount { get; private set; }
     public int ItemCount { get; private set; }
-    public RenderingTemplateType TemplateType { get; private set; } = RenderingTemplateType.Handlebars;
+    public RenderingTemplateType TemplateType { get; private set; } = RenderingTemplateType.Scriban;
     public string? TemplateContent { get; private set; }
 
     /// <summary>
