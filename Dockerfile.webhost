@@ -1,0 +1,63 @@
+# ─── Stage 1: restore & build ───────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution and project files first to leverage layer caching
+COPY MicroCMS.sln .
+COPY Directory.Build.props .
+COPY .editorconfig .
+
+COPY src/MicroCMS.Shared/MicroCMS.Shared.csproj                       src/MicroCMS.Shared/
+COPY src/MicroCMS.Domain/MicroCMS.Domain.csproj                       src/MicroCMS.Domain/
+COPY src/MicroCMS.Application/MicroCMS.Application.csproj             src/MicroCMS.Application/
+COPY src/MicroCMS.Infrastructure/MicroCMS.Infrastructure.csproj       src/MicroCMS.Infrastructure/
+COPY src/MicroCMS.Api/MicroCMS.Api.csproj                             src/MicroCMS.Api/
+COPY src/MicroCMS.Ai.Abstractions/MicroCMS.Ai.Abstractions.csproj     src/MicroCMS.Ai.Abstractions/
+COPY src/MicroCMS.Ai.Core/MicroCMS.Ai.Core.csproj                     src/MicroCMS.Ai.Core/
+COPY src/MicroCMS.Ai.Providers.OpenAI/MicroCMS.Ai.Providers.OpenAI.csproj  src/MicroCMS.Ai.Providers.OpenAI/
+COPY src/MicroCMS.Ai.VectorStores.PgVector/MicroCMS.Ai.VectorStores.PgVector.csproj   src/MicroCMS.Ai.VectorStores.PgVector/
+COPY src/MicroCMS.Ai.VectorStores.OpenSearch/MicroCMS.Ai.VectorStores.OpenSearch.csproj src/MicroCMS.Ai.VectorStores.OpenSearch/
+COPY src/MicroCMS.Ai.VectorStores.Qdrant/MicroCMS.Ai.VectorStores.Qdrant.csproj        src/MicroCMS.Ai.VectorStores.Qdrant/
+COPY src/MicroCMS.Plugins.Abstractions/MicroCMS.Plugins.Abstractions.csproj src/MicroCMS.Plugins.Abstractions/
+COPY src/MicroCMS.Plugins.Hosting/MicroCMS.Plugins.Hosting.csproj         src/MicroCMS.Plugins.Hosting/
+COPY src/MicroCMS.Delivery.Core/MicroCMS.Delivery.Core.csproj             src/MicroCMS.Delivery.Core/
+COPY src/MicroCMS.WebHost/MicroCMS.WebHost.csproj                         src/MicroCMS.WebHost/
+
+RUN dotnet restore src/MicroCMS.WebHost/MicroCMS.WebHost.csproj
+
+# Copy all source code
+COPY src/ src/
+
+# Publish the WebHost in Release mode to /app/publish
+RUN dotnet publish src/MicroCMS.WebHost/MicroCMS.WebHost.csproj \
+      -c Release \
+      -o /app/publish \
+      --no-restore \
+      -p:UseAppHost=false
+
+# ─── Stage 2: runtime (distroless) ──────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+WORKDIR /app
+
+# Non-root user for security hardening
+RUN addgroup --system --gid 1001 microcms && \
+    adduser  --system --uid 1001 --ingroup microcms microcms
+
+# Create writable directories for logs and media cache
+RUN mkdir -p /app/App_Data/logs /app/App_Data/media-cache && \
+    chown -R microcms:microcms /app/App_Data
+
+COPY --from=build --chown=microcms:microcms /app/publish .
+
+USER microcms
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://localhost:8080/health/live || exit 1
+
+ENTRYPOINT ["dotnet", "MicroCMS.WebHost.dll"]

@@ -46,6 +46,7 @@ await app.UseDatabaseAsync();
 
 app.UseSecurityMiddleware();
 app.UseApiMiddleware();
+app.UseObservabilityEndpoints();
 app.UseHealthCheckEndpoints();
 
 await app.RunAsync();

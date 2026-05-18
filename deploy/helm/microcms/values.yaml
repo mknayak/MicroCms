@@ -1,0 +1,117 @@
+# ── Replica / scaling ────────────────────────────────────────────────────────
+replicaCount: 2
+
+# ── Container image ──────────────────────────────────────────────────────────
+image:
+  repository: ghcr.io/mknayak/microcms/microcms-webhost
+  pullPolicy: IfNotPresent
+  tag: ""          # overridden by CI with the Git SHA tag
+
+imagePullSecrets: []
+
+# ── Service account ──────────────────────────────────────────────────────────
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# ── Pod annotations / labels ─────────────────────────────────────────────────
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port:   "8080"
+  prometheus.io/path:   "/metrics"
+
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop: [ALL]
+
+# ── Networking ───────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: cms.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: microcms-tls
+      hosts:
+        - cms.example.com
+
+# ── Resource limits ──────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+# ── Horizontal Pod Autoscaler ────────────────────────────────────────────────
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# ── Probes ───────────────────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# ── Application environment variables ────────────────────────────────────────
+env:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:8080
+  MicroCMS__Database__Provider: PostgreSql
+  MicroCMS__Cache__Provider: Redis
+  MicroCMS__Search__Provider: OpenSearch
+  MicroCMS__Storage__Provider: DATABASE
+  Telemetry__Enabled: "true"
+
+# ── Secrets (injected via external-secrets or Kubernetes secrets) ─────────────
+existingSecret: ""   # name of a pre-created K8s Secret with DB/Redis connection strings
+
+# ── Volumes (log persistence) ────────────────────────────────────────────────
+persistence:
+  logs:
+    enabled: false
+    storageClass: ""
+    size: 2Gi
+
+# ── Node scheduling ──────────────────────────────────────────────────────────
+nodeSelector: {}
+tolerations: []
+affinity: {}

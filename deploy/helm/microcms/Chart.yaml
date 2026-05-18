@@ -1,0 +1,13 @@
+apiVersion: v2
+name: microcms
+description: MicroCMS Headless CMS — Helm chart for Kubernetes deployment
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - cms
+  - headless
+  - dotnet
+home: https://github.com/mknayak/MicroCms
+maintainers:
+  - name: MicroCMS Team

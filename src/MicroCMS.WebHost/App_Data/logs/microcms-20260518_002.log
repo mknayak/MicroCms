@@ -1,0 +1,634 @@
+2026-05-18 22:36:12.777 +08:00 [INF] MicroCMS.Infrastructure.Install.InstallationStateService: Installation state primed: system is now installed.
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Core.SchedulerSignalerImpl: Initialized Scheduler Signaller of type: Quartz.Core.SchedulerSignalerImpl
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Core.QuartzScheduler: Quartz Scheduler created
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Core.QuartzScheduler: JobFactory set to: Quartz.Simpl.MicrosoftDependencyInjectionJobFactory
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Simpl.RAMJobStore: RAMJobStore initialized.
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Quartz Scheduler 3.9.0.0 - 'QuartzScheduler' with instanceId 'NON_CLUSTERED' initialized
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using thread pool 'Quartz.Simpl.DefaultThreadPool', size: 10
+2026-05-18 22:36:12.881 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using job store 'Quartz.Simpl.RAMJobStore', supports persistence: False, clustered: False
+2026-05-18 22:36:12.882 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding 3 jobs, 3 triggers.
+2026-05-18 22:36:12.882 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.MediaScanJob
+2026-05-18 22:36:12.882 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.OutboxDispatcherJob
+2026-05-18 22:36:12.882 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.BroadcastOutboxPollerJob
+2026-05-18 22:36:12.909 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED started.
+2026-05-18 22:36:12.912 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (0ms) [Parameters=[@__ef_filter__p_0='?' (DbType = Boolean), @__p_1='?' (DbType = Int32), @__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT "m"."Id", "m"."AiAltText", "m"."AltText", "m"."AssetPath", "m"."CreatedAt", "m"."FolderId", "m"."SiteId", "m"."Status", "m"."StorageKey", "m"."TenantId", "m"."UpdatedAt", "m"."UploadedBy", "m"."Visibility", "m"."Tags", "m"."Meta_Duration", "m"."Meta_ExifJson", "m"."Meta_FileName", "m"."Meta_HeightPx", "m"."Meta_MimeType", "m"."Meta_SizeBytes", "m"."Meta_WidthPx"
+FROM "MediaAssets" AS "m"
+WHERE @__ef_filter__p_0 AND "m"."Status" = 'PendingScan'
+ORDER BY "m"."CreatedAt"
+LIMIT @__p_1 OFFSET @__p_0
+2026-05-18 22:36:12.912 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (0ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT "o"."Id", "o"."Content", "o"."DispatchMode", "o"."Error", "o"."OccurredOnUtc", "o"."ProcessedOnUtc", "o"."RetryCount", "o"."TenantId", "o"."Type"
+FROM "OutboxMessages" AS "o"
+WHERE "o"."DispatchMode" = 0 AND "o"."ProcessedOnUtc" IS NULL AND "o"."RetryCount" < 5
+ORDER BY "o"."OccurredOnUtc"
+LIMIT @__p_0
+2026-05-18 22:36:12.913 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:36:12.913 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:36:12.916 +08:00 [ERR] Quartz.Core.JobRunShell: Job DEFAULT.OutboxDispatcherJob threw an unhandled Exception: 
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 55
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 73
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+2026-05-18 22:36:12.916 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (1ms) [Parameters=[@__cutoff_0='?' (DbType = Int64), @___instanceId_1='?' (Size = 2), @__p_2='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT "o"."Id", "o"."Content", "o"."DispatchMode", "o"."Error", "o"."OccurredOnUtc", "o"."ProcessedOnUtc", "o"."RetryCount", "o"."TenantId", "o"."Type"
+FROM "OutboxMessages" AS "o"
+WHERE "o"."DispatchMode" = 1 AND "o"."OccurredOnUtc" >= @__cutoff_0 AND NOT EXISTS (
+    SELECT 1
+    FROM "OutboxDeliveryRecords" AS "o0"
+    WHERE "o0"."MessageId" = "o"."Id" AND "o0"."InstanceId" = @___instanceId_1)
+ORDER BY "o"."OccurredOnUtc"
+LIMIT @__p_2
+2026-05-18 22:36:12.919 +08:00 [ERR] Quartz.Core.JobRunShell: Job DEFAULT.MediaScanJob threw an unhandled Exception: 
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.Persistence.Common.EfRepository`2.ListAsync(ISpecification`1 specification, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\Persistence\Common\EfRepository.cs:line 41
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 43
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 57
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+2026-05-18 22:36:12.923 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:36:12.922 +08:00 [ERR] Quartz.Core.ErrorLogger: Job DEFAULT.MediaScanJob threw an exception.
+Quartz.SchedulerException: Job threw an unhandled exception.
+ ---> Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.Persistence.Common.EfRepository`2.ListAsync(ISpecification`1 specification, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\Persistence\Common\EfRepository.cs:line 41
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 43
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 57
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+   --- End of inner exception stack trace --- [See nested exception: Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.Persistence.Common.EfRepository`2.ListAsync(ISpecification`1 specification, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\Persistence\Common\EfRepository.cs:line 41
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 43
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 57
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)]
+2026-05-18 22:36:12.920 +08:00 [ERR] Quartz.Core.ErrorLogger: Job DEFAULT.OutboxDispatcherJob threw an exception.
+Quartz.SchedulerException: Job threw an unhandled exception.
+ ---> Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 55
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 73
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+   --- End of inner exception stack trace --- [See nested exception: Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 55
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 73
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)]
+2026-05-18 22:36:12.925 +08:00 [ERR] Quartz.Core.JobRunShell: Job DEFAULT.BroadcastOutboxPollerJob threw an unhandled Exception: 
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 65
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 84
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+2026-05-18 22:36:12.942 +08:00 [ERR] Quartz.Core.ErrorLogger: Job DEFAULT.BroadcastOutboxPollerJob threw an exception.
+Quartz.SchedulerException: Job threw an unhandled exception.
+ ---> Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 65
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 84
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+   --- End of inner exception stack trace --- [See nested exception: Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 65
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 84
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)]
+2026-05-18 22:36:12.949 +08:00 [WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+2026-05-18 22:36:13.002 +08:00 [INF] System.Net.Http.HttpClient.search.LogicalHandler: Start processing HTTP request GET http://localhost:9200/
+2026-05-18 22:36:13.004 +08:00 [INF] System.Net.Http.HttpClient.search.ClientHandler: Sending HTTP request GET http://localhost:9200/
+2026-05-18 22:36:17.168 +08:00 [ERR] Microsoft.Extensions.Diagnostics.HealthChecks.DefaultHealthCheckService: Health check search with status "Unhealthy" completed after 4174.5142ms with message 'null'
+System.Net.Http.HttpRequestException: No connection could be made because the target machine actively refused it. (localhost:9200)
+ ---> System.Net.Sockets.SocketException (10061): No connection could be made because the target machine actively refused it.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.AddHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.HttpConnectionWaiter`1.WaitForConnectionWithTelemetryAsync(HttpRequestMessage request, HttpConnectionPool pool, Boolean async, CancellationToken requestCancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.DiagnosticsHandler.SendAsyncCore(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.Metrics.MetricsHandler.SendAsyncWithMetrics(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingHttpMessageHandler.<SendCoreAsync>g__Core|5_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingScopeHttpMessageHandler.<SendCoreAsync>g__Core|5_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at HealthChecks.Uris.UriHealthCheck.CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) in /_/src/HealthChecks.Uris/UriHealthCheck.cs:line 54
+2026-05-18 22:36:17.206 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED shutting down.
+2026-05-18 22:36:17.206 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED paused.
+2026-05-18 22:36:17.206 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED Shutdown complete.
+2026-05-18 22:37:59.532 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'MediaAsset._tags' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.557 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'Plugin._capabilities' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.559 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'ApiClient._scopes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.560 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._corsOrigins' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.560 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._locales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.561 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSecuritySettings._ipAllowlist' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.562 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'WebhookSubscription._events' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.565 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'AssetMetadata.ExifData' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:37:59.567 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSettings.EnabledLocales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.104 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'MediaAsset._tags' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.105 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'Plugin._capabilities' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.107 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'ApiClient._scopes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.108 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._corsOrigins' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.108 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'SiteSettings._locales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.109 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSecuritySettings._ipAllowlist' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.110 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'WebhookSubscription._events' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.110 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'AssetMetadata.ExifData' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.112 +08:00 [WRN] Microsoft.EntityFrameworkCore.Model.Validation: The property 'TenantSettings.EnabledLocales' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-05-18 22:38:00.314 +08:00 [INF] MicroCMS.Infrastructure.Install.InstallationStateService: Installation state primed: system is now installed.
+2026-05-18 22:38:00.622 +08:00 [INF] Quartz.Core.SchedulerSignalerImpl: Initialized Scheduler Signaller of type: Quartz.Core.SchedulerSignalerImpl
+2026-05-18 22:38:00.623 +08:00 [INF] Quartz.Core.QuartzScheduler: Quartz Scheduler created
+2026-05-18 22:38:00.623 +08:00 [INF] Quartz.Core.QuartzScheduler: JobFactory set to: Quartz.Simpl.MicrosoftDependencyInjectionJobFactory
+2026-05-18 22:38:00.623 +08:00 [INF] Quartz.Simpl.RAMJobStore: RAMJobStore initialized.
+2026-05-18 22:38:00.624 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Quartz Scheduler 3.9.0.0 - 'QuartzScheduler' with instanceId 'NON_CLUSTERED' initialized
+2026-05-18 22:38:00.624 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using thread pool 'Quartz.Simpl.DefaultThreadPool', size: 10
+2026-05-18 22:38:00.624 +08:00 [INF] Quartz.Impl.StdSchedulerFactory: Using job store 'Quartz.Simpl.RAMJobStore', supports persistence: False, clustered: False
+2026-05-18 22:38:00.633 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding 3 jobs, 3 triggers.
+2026-05-18 22:38:00.635 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.MediaScanJob
+2026-05-18 22:38:00.644 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.OutboxDispatcherJob
+2026-05-18 22:38:00.645 +08:00 [INF] Quartz.ContainerConfigurationProcessor: Adding job: DEFAULT.BroadcastOutboxPollerJob
+2026-05-18 22:38:00.718 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED started.
+2026-05-18 22:38:00.819 +08:00 [WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+2026-05-18 22:38:01.014 +08:00 [WRN] Microsoft.EntityFrameworkCore.Query: Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-18 22:38:01.036 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (3ms) [Parameters=[@__cutoff_0='?' (DbType = Int64), @___instanceId_1='?' (Size = 2), @__p_2='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT "o"."Id", "o"."Content", "o"."DispatchMode", "o"."Error", "o"."OccurredOnUtc", "o"."ProcessedOnUtc", "o"."RetryCount", "o"."TenantId", "o"."Type"
+FROM "OutboxMessages" AS "o"
+WHERE "o"."DispatchMode" = 1 AND "o"."OccurredOnUtc" >= @__cutoff_0 AND NOT EXISTS (
+    SELECT 1
+    FROM "OutboxDeliveryRecords" AS "o0"
+    WHERE "o0"."MessageId" = "o"."Id" AND "o0"."InstanceId" = @___instanceId_1)
+ORDER BY "o"."OccurredOnUtc"
+LIMIT @__p_2
+2026-05-18 22:38:01.036 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (3ms) [Parameters=[@__ef_filter__p_0='?' (DbType = Boolean), @__p_1='?' (DbType = Int32), @__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT "m"."Id", "m"."AiAltText", "m"."AltText", "m"."AssetPath", "m"."CreatedAt", "m"."FolderId", "m"."SiteId", "m"."Status", "m"."StorageKey", "m"."TenantId", "m"."UpdatedAt", "m"."UploadedBy", "m"."Visibility", "m"."Tags", "m"."Meta_Duration", "m"."Meta_ExifJson", "m"."Meta_FileName", "m"."Meta_HeightPx", "m"."Meta_MimeType", "m"."Meta_SizeBytes", "m"."Meta_WidthPx"
+FROM "MediaAssets" AS "m"
+WHERE @__ef_filter__p_0 AND "m"."Status" = 'PendingScan'
+ORDER BY "m"."CreatedAt"
+LIMIT @__p_1 OFFSET @__p_0
+2026-05-18 22:38:01.036 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (3ms) [Parameters=[@__Create_0='?' (Size = 36)], CommandType='"Text"', CommandTimeout='30']
+SELECT "t"."Id", "t"."CreatedAt", "t"."Slug", "t"."Status", "t"."UpdatedAt", "t"."Quota_MaxAiTokensPerMonth", "t"."Quota_MaxApiCallsPerMinute", "t"."Quota_MaxContentTypes", "t"."Quota_MaxSites", "t"."Quota_MaxStorageBytes", "t"."Quota_MaxUsers", "t"."Settings_AiEnabled", "t"."Settings_DefaultLocale", "t"."Settings_DisplayName", "t"."Settings_EnabledLocales", "t"."Settings_LogoUrl", "t"."Settings_TimeZoneId", "t0"."Id", "t0"."CreatedAt", "t0"."CustomDomain", "t0"."DefaultLocale", "t0"."Handle", "t0"."IsActive", "t0"."Name", "t0"."TenantId", "t0"."SiteId", "t0"."Type", "t0"."IsLive", "t0"."SslStatus", "t0"."Url"
+FROM "Tenants" AS "t"
+LEFT JOIN (
+    SELECT "s"."Id", "s"."CreatedAt", "s"."CustomDomain", "s"."DefaultLocale", "s"."Handle", "s"."IsActive", "s"."Name", "s"."TenantId", "s0"."SiteId", "s0"."Type", "s0"."IsLive", "s0"."SslStatus", "s0"."Url"
+    FROM "Sites" AS "s"
+    LEFT JOIN "SiteEnvironments" AS "s0" ON "s"."Id" = "s0"."SiteId"
+) AS "t0" ON "t"."Id" = "t0"."TenantId"
+WHERE "t"."Slug" = @__Create_0
+ORDER BY "t"."Id", "t0"."Id", "t0"."SiteId"
+2026-05-18 22:38:01.036 +08:00 [ERR] Microsoft.EntityFrameworkCore.Database.Command: Failed executing DbCommand (3ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT "o"."Id", "o"."Content", "o"."DispatchMode", "o"."Error", "o"."OccurredOnUtc", "o"."ProcessedOnUtc", "o"."RetryCount", "o"."TenantId", "o"."Type"
+FROM "OutboxMessages" AS "o"
+WHERE "o"."DispatchMode" = 0 AND "o"."ProcessedOnUtc" IS NULL AND "o"."RetryCount" < 5
+ORDER BY "o"."OccurredOnUtc"
+LIMIT @__p_0
+2026-05-18 22:38:01.049 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:38:01.049 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:38:01.049 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:38:01.049 +08:00 [ERR] Microsoft.EntityFrameworkCore.Query: An exception occurred while iterating over the results of a query for context type 'MicroCMS.Infrastructure.Persistence.Common.ApplicationDbContext'.
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: Tenants'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: Tenants'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2026-05-18 22:38:01.054 +08:00 [ERR] Quartz.Core.JobRunShell: Job DEFAULT.BroadcastOutboxPollerJob threw an unhandled Exception: 
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 65
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 84
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+2026-05-18 22:38:01.054 +08:00 [ERR] Quartz.Core.JobRunShell: Job DEFAULT.MediaScanJob threw an unhandled Exception: 
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.Persistence.Common.EfRepository`2.ListAsync(ISpecification`1 specification, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\Persistence\Common\EfRepository.cs:line 41
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 43
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 57
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+2026-05-18 22:38:01.054 +08:00 [ERR] Quartz.Core.JobRunShell: Job DEFAULT.OutboxDispatcherJob threw an unhandled Exception: 
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 55
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 73
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+2026-05-18 22:38:01.064 +08:00 [ERR] Quartz.Core.ErrorLogger: Job DEFAULT.BroadcastOutboxPollerJob threw an exception.
+Quartz.SchedulerException: Job threw an unhandled exception.
+ ---> Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 65
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 84
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+   --- End of inner exception stack trace --- [See nested exception: Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 65
+   at MicroCMS.Infrastructure.BackgroundJobs.BroadcastOutboxPollerJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\BroadcastOutboxPollerJob.cs:line 84
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)]
+2026-05-18 22:38:01.065 +08:00 [ERR] Quartz.Core.ErrorLogger: Job DEFAULT.MediaScanJob threw an exception.
+Quartz.SchedulerException: Job threw an unhandled exception.
+ ---> Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.Persistence.Common.EfRepository`2.ListAsync(ISpecification`1 specification, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\Persistence\Common\EfRepository.cs:line 41
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 43
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 57
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+   --- End of inner exception stack trace --- [See nested exception: Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: MediaAssets'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.Persistence.Common.EfRepository`2.ListAsync(ISpecification`1 specification, CancellationToken cancellationToken) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\Persistence\Common\EfRepository.cs:line 41
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 43
+   at MicroCMS.Infrastructure.BackgroundJobs.MediaScanJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\MediaScanJob.cs:line 57
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)]
+2026-05-18 22:38:01.065 +08:00 [ERR] Quartz.Core.ErrorLogger: Job DEFAULT.OutboxDispatcherJob threw an exception.
+Quartz.SchedulerException: Job threw an unhandled exception.
+ ---> Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 55
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 73
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)
+   --- End of inner exception stack trace --- [See nested exception: Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: OutboxMessages'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 55
+   at MicroCMS.Infrastructure.BackgroundJobs.OutboxDispatcherJob.Execute(IJobExecutionContext context) in C:\Users\mknayak\Documents\Claude\Projects\MicroCMS\src\MicroCMS.Infrastructure\BackgroundJobs\OutboxDispatcherJob.cs:line 73
+   at Quartz.Core.JobRunShell.Run(CancellationToken cancellationToken)]
+2026-05-18 22:38:01.224 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED shutting down.
+2026-05-18 22:38:01.225 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED paused.
+2026-05-18 22:38:01.228 +08:00 [INF] Quartz.Core.QuartzScheduler: Scheduler QuartzScheduler_$_NON_CLUSTERED Shutdown complete.

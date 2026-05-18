@@ -10,8 +10,9 @@
  */
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { contentTypesApi } from '@/api/contentTypes';
+import { aiWritingApi } from '@/api/ai';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { MediaPickerField } from '@/pages/pages/MediaPickerField';
 import { EntryPickerField } from '@/pages/pages/EntryPickerField';
@@ -225,6 +226,139 @@ function DynamicEnumSelect({
   );
 }
 
+// ─── RichText field with AI Assist modal ─────────────────────────────────────
+
+const TONE_OPTIONS = ['Professional', 'Friendly', 'Formal', 'Casual', 'Persuasive', 'Concise'];
+
+function RichTextFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: AnyFieldDefinition;
+  value: unknown;
+  onChange: (val: unknown) => void;
+}) {
+  const [showModal, setShowModal] = useState(false);
+  const [mode, setMode] = useState<'draft' | 'rewrite' | 'tone' | 'summarize'>('draft');
+  const [prompt, setPrompt] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [tone, setTone] = useState(TONE_OPTIONS[0]);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // Extract entryId from the URL (works inside the entry editor)
+  const entryId = window.location.pathname.match(/\/entries\/([0-9a-f-]+)/i)?.[1] ?? '';
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!entryId) throw new Error('Entry must be saved before using AI Assist.');
+      switch (mode) {
+        case 'draft':     return aiWritingApi.draft(entryId, prompt);
+        case 'rewrite':   return aiWritingApi.rewrite(entryId, field.handle, instructions);
+        case 'tone':      return aiWritingApi.tone(entryId, field.handle, tone);
+        case 'summarize': return aiWritingApi.summarize(entryId, field.handle);
+      }
+    },
+    onSuccess: (result) => { if (result) setPreview(result.content); },
+  });
+
+  const applyPreview = () => {
+    if (preview !== null) { onChange(preview); setPreview(null); setShowModal(false); }
+  };
+
+  return (
+    <div className="relative">
+      <RichTextEditor value={typeof value === 'string' ? value : ''} onChange={onChange} placeholder={`Write ${field.label}…`} />
+      <button
+        type="button"
+        onClick={() => { setPreview(null); setShowModal(true); }}
+        className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-100"
+      >
+        <span>✦</span> AI Assist
+      </button>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="card mx-4 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">✦ AI Assist — {field.label}</h3>
+              <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
+            </div>
+
+            {/* Mode tabs */}
+            <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+              {(['draft', 'rewrite', 'tone', 'summarize'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setMode(m); setPreview(null); }}
+                  className={`flex-1 rounded-md px-2 py-1 text-xs font-medium capitalize transition-colors ${mode === m ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+
+            {/* Mode inputs */}
+            {mode === 'draft' && (
+              <div className="space-y-1.5">
+                <label className="form-label text-xs">Describe what to write</label>
+                <textarea className="form-input w-full resize-none" rows={3} placeholder="e.g. A blog intro about headless CMS benefits…" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+              </div>
+            )}
+            {mode === 'rewrite' && (
+              <div className="space-y-1.5">
+                <label className="form-label text-xs">Rewrite instructions</label>
+                <textarea className="form-input w-full resize-none" rows={3} placeholder="e.g. Make it shorter and more engaging…" value={instructions} onChange={(e) => setInstructions(e.target.value)} />
+              </div>
+            )}
+            {mode === 'tone' && (
+              <div className="space-y-1.5">
+                <label className="form-label text-xs">Target tone</label>
+                <select className="form-input" value={tone} onChange={(e) => setTone(e.target.value)}>
+                  {TONE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            )}
+            {mode === 'summarize' && (
+              <p className="text-xs text-slate-500">Summarizes the current field content into 3 sentences.</p>
+            )}
+
+            {/* Error */}
+            {mutation.isError && (
+              <p className="text-xs text-red-600">{mutation.error instanceof Error ? mutation.error.message : 'AI request failed.'}</p>
+            )}
+
+            {/* Preview */}
+            {preview !== null && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-slate-700">Preview</p>
+                <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 prose prose-sm" dangerouslySetInnerHTML={{ __html: preview }} />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button type="button" onClick={() => setShowModal(false)} className="btn-secondary text-xs">Cancel</button>
+              {preview !== null ? (
+                <button type="button" onClick={applyPreview} className="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700">Apply</button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => mutation.mutate()}
+                  disabled={mutation.isPending || (mode === 'draft' && !prompt.trim()) || (mode === 'rewrite' && !instructions.trim())}
+                  className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {mutation.isPending ? 'Generating…' : 'Generate'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Scalar renderer (single value) ──────────────────────────────────────────
 
 function ScalarFieldInput({
@@ -240,14 +374,7 @@ function ScalarFieldInput({
 }) {
   switch (field.fieldType) {
     case 'RichText':
-      return (
-        <div className="relative">
-          <RichTextEditor value={typeof value === 'string' ? value : ''} onChange={onChange} placeholder={`Write ${field.label}…`} />
-          <button type="button" className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-100">
-            <span>✦</span> AI Assist
-          </button>
-        </div>
-      );
+      return <RichTextFieldInput field={field} value={value} onChange={onChange} />;
     case 'LongText':
     case 'Markdown':
       return <textarea value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} rows={6} className="form-input resize-y font-mono" placeholder={`Enter ${field.label}…`} />;

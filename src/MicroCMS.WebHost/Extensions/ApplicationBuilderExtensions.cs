@@ -8,8 +8,11 @@ using MicroCMS.Infrastructure.Install;
 using MicroCMS.Infrastructure.Persistence.Common;
 using MicroCMS.Infrastructure.Tenancy;
 using MicroCMS.Shared.Ids;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Text.Json;
 
 namespace MicroCMS.WebHost.Extensions;
 
@@ -155,24 +158,63 @@ internal static class ApplicationBuilderExtensions
         .WithTags("Media");
     }
 
+    // ── Observability endpoints ───────────────────────────────────────────
+
+    internal static WebApplication UseObservabilityEndpoints(this WebApplication app)
+    {
+        // Prometheus scraping endpoint — allow anonymous access from monitoring infra
+        app.MapPrometheusScrapingEndpoint("/metrics").AllowAnonymous();
+        return app;
+    }
+
     // ── Health check endpoints ────────────────────────────────────────────
 
     internal static WebApplication UseHealthCheckEndpoints(this WebApplication app)
     {
-        // Liveness: process-alive only (no dependency checks)
+        // Liveness: process-alive only ("self" check, no dependency probes)
         app.MapHealthChecks("/health/live",
-            new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            new HealthCheckOptions
             {
-                Predicate = _ => false,
-            });
+                Predicate = check => check.Tags.Contains("live"),
+                ResponseWriter = WriteJsonResponseAsync,
+            }).AllowAnonymous();
 
-        // Readiness: all registered health checks
+        // Readiness: all checks tagged "ready" plus the self check
         app.MapHealthChecks("/health/ready",
-            new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            new HealthCheckOptions
             {
-                Predicate = _ => true,
-            });
+                Predicate = check => check.Tags.Contains("ready") || check.Tags.Contains("live"),
+                ResponseWriter = WriteJsonResponseAsync,
+            }).AllowAnonymous();
 
         return app;
+    }
+
+    /// <summary>
+    /// Writes a structured JSON health-check response body compatible with
+    /// the Kubernetes liveness/readiness probe JSON format.
+    /// </summary>
+    private static Task WriteJsonResponseAsync(
+        HttpContext context,
+        HealthReport report)
+    {
+        context.Response.ContentType = "application/json; charset=utf-8";
+
+        var result = JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            totalDurationMs = (int)report.TotalDuration.TotalMilliseconds,
+            entries = report.Entries.ToDictionary(
+                e => e.Key,
+                e => new
+                {
+                    status = e.Value.Status.ToString(),
+                    durationMs = (int)e.Value.Duration.TotalMilliseconds,
+                    description = e.Value.Description,
+                    error = e.Value.Exception?.Message,
+                }),
+        }, new JsonSerializerOptions { WriteIndented = false });
+
+        return context.Response.WriteAsync(result);
     }
 }

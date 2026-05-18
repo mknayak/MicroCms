@@ -13,8 +13,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
 using System.IdentityModel.Tokens.Jwt;
@@ -69,12 +73,10 @@ internal static class ServiceCollectionExtensions
         Directory.CreateDirectory(logDir);
         var logFile = Path.Combine(logDir, "microcms-.log");
 
-        var minimumLevel = builder.Configuration["Logging:LogLevel:Default"] is string lvl
-            && Enum.TryParse<LogEventLevel>(lvl, ignoreCase: true, out var parsed)
-            ? parsed
-            : LogEventLevel.Information;
+        var otlpEndpoint = builder.Configuration["Telemetry:OtlpEndpoint"] ?? "http://localhost:4317";
+        var telemetryEnabled = builder.Configuration.GetValue<bool>("Telemetry:Enabled");
 
-        Log.Logger = new LoggerConfiguration()
+        var serilogConfig = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
             .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
@@ -87,10 +89,53 @@ internal static class ServiceCollectionExtensions
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 31,
                 outputTemplate:
-                    "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
-            .CreateLogger();
+                    "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}");
 
+        if (telemetryEnabled)
+        {
+            serilogConfig = serilogConfig.WriteTo.OpenTelemetry(opts =>
+            {
+                opts.Endpoint = otlpEndpoint + "/v1/logs";
+                opts.ResourceAttributes = new Dictionary<string, object>
+                {
+                    ["service.name"] = "MicroCMS.WebHost",
+                };
+            });
+        }
+
+        Log.Logger = serilogConfig.CreateLogger();
         builder.Host.UseSerilog();
+
+        // ── OpenTelemetry tracing + metrics ───────────────────────────────
+        var resourceBuilder = ResourceBuilder.CreateDefault()
+            .AddService("MicroCMS.WebHost",
+                serviceVersion: typeof(ServiceCollectionExtensions).Assembly.GetName().Version?.ToString() ?? "1.0.0");
+
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .SetResourceBuilder(resourceBuilder)
+                    .AddAspNetCoreInstrumentation(opts => { opts.RecordException = true; })
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation(opts => { opts.SetDbStatementForText = true; })
+                    .AddRedisInstrumentation();
+
+                if (telemetryEnabled)
+                    tracing.AddOtlpExporter(opts => opts.Endpoint = new Uri(otlpEndpoint));
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .SetResourceBuilder(resourceBuilder)
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddPrometheusExporter();
+
+                if (telemetryEnabled)
+                    metrics.AddOtlpExporter(opts => opts.Endpoint = new Uri(otlpEndpoint));
+            });
 
         return builder;
     }
@@ -414,8 +459,54 @@ internal static class ServiceCollectionExtensions
     internal static WebApplicationBuilder AddHealthChecks(
         this WebApplicationBuilder builder)
     {
-        builder.Services.AddHealthChecks().AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
+        var hc = builder.Services.AddHealthChecks()
+            .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
+
+        AddDatabaseHealthCheck(hc, builder.Configuration);
+        AddCacheHealthCheck(hc, builder.Configuration);
+        AddSearchHealthCheck(hc, builder.Configuration);
 
         return builder;
     }
+
+    private static void AddDatabaseHealthCheck(
+        IHealthChecksBuilder hc,
+        IConfiguration configuration)
+    {
+        var provider = configuration.GetValue<string>("MicroCMS:Database:Provider") ?? "Sqlite";
+        var cs = configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=microcms_dev.db";
+
+        if (provider.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase) ||
+            provider.Equals("Npgsql", StringComparison.OrdinalIgnoreCase))
+            hc.AddNpgSql(cs, name: "db", tags: ["db", "ready"]);
+        else if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+            hc.AddSqlServer(cs, name: "db", tags: ["db", "ready"]);
+    }
+
+    private static void AddCacheHealthCheck(
+        IHealthChecksBuilder hc,
+        IConfiguration configuration)
+    {
+        var provider = configuration.GetValue<string>("MicroCMS:Cache:Provider") ?? "InMemory";
+        var redisCs = configuration.GetValue<string>("MicroCMS:Cache:ConnectionString");
+
+        if (!string.IsNullOrWhiteSpace(redisCs) &&
+            provider.Equals("Redis", StringComparison.OrdinalIgnoreCase))
+            hc.AddRedis(redisCs, name: "redis", tags: ["redis", "ready"]);
+    }
+
+    private static void AddSearchHealthCheck(
+        IHealthChecksBuilder hc,
+        IConfiguration configuration)
+    {
+        var provider = configuration.GetValue<string>("MicroCMS:Search:Provider") ?? "None";
+        var endpoint = configuration.GetValue<string>("MicroCMS:Search:Endpoint")
+            ?? "http://localhost:9200";
+
+        if (provider.Equals("OpenSearch", StringComparison.OrdinalIgnoreCase) ||
+            provider.Equals("ElasticSearch", StringComparison.OrdinalIgnoreCase))
+            hc.AddUrlGroup(new Uri(endpoint), name: "search", tags: ["search", "ready"]);
+    }
 }
+

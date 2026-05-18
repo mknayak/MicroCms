@@ -343,10 +343,14 @@ Security items:
 
 ---
 
-## Phase 6 — AI Module (Sprints 14–15)
+## Phase 6 — AI Module (Sprints 14–18)
 
-### Sprint 14 — AI Core + Provider Adapters ✅ DONE
-**Goal:** All four AI interfaces operational with at least AzureOpenAI and Ollama adapters; budget enforcement live.
+> **Full AI strategy, RAG design, copilot architecture, and sprint breakdown: [`docs/AI_PLAN.md`](./AI_PLAN.md)**
+
+### Sprint 14 — AI Core + OpenAI Provider Adapter ✅ DONE
+**Goal:** AI interfaces operational with OpenAI adapter; budget enforcement live.
+
+> **Provider scope:** Only the OpenAI provider is supported. Multi-provider abstractions (`IAiCompletionProvider`, `IAiEmbeddingProvider`) remain in place for future extension but no additional adapters (Azure OpenAI, Ollama, Anthropic) are planned.
 
 #### Settings Capability (GAP-AI-1) — prerequisite for all AI runtime configuration ✅
 - `ConfigEntryId` strongly-typed ID in `MicroCMS.Shared`. ✅
@@ -364,44 +368,81 @@ Security items:
 - EF Core migration: `AddSettingsCapability` (adds `TenantConfigs`, `TenantConfigEntries`, `SiteConfigEntries` tables). ✅
 
 #### AI Core
-- `AiOrchestrator`: routes calls to the tenant's configured provider — reads `AiSettingKeys.Provider` via `ISettingsReader`. ✅
-- `ProviderRegistry`: maps provider names to `IAiCompletionProvider` implementations; enforces `AiSettingKeys.DataResidencyRegion`. ✅
+- `AiOrchestrator`: routes calls to the configured provider — reads `AiSettingKeys.Provider` via `ISettingsReader`. ✅
+- `ProviderRegistry`: maps provider names to `IAiCompletionProvider` implementations. ✅
 - `BudgetService`: tracks token usage per tenant/user; reads cap from `AiSettingKeys.BudgetMaxTokensPerDay` via `ISettingsReader`; returns `429` when exceeded. ✅
 - `PiiRedactor`: strips PII before dispatch; reads `AiSettingKeys.PiiRedactionEnabled` via `ISettingsReader`. ✅
 - `PromptLibrary`: resolves system prompts from `ISettingsReader` by `AiSettingKeys.SystemPrompt*` keys — no hardcoded strings. ✅
 - `StructuredOutputValidator`: validates AI response against JSON Schema; repair loop (max 2 retries). ✅
-- Concrete adapters: `AzureOpenAICompletionProvider`, `OllamaCompletionProvider`. ✅
+- Concrete adapter: `OpenAICompletionProvider` (`MicroCMS.Ai.Providers.OpenAI`). ✅
 - AI feature handlers: draft generation, rewrite, summarization, tone change, alt-text generation, translation — `AiController`, `AiWritingController`. ✅
 - Admin UI: AI settings tab (provider, endpoint, budget, per-prompt CRUD backed by `SiteSettings.UpsertEntry` / `TenantConfig.UpsertEntry`). ✅
-- Application unit tests for orchestrator and budget service (≥ 80% coverage). ✅
 
-Security items:
-- `AiSettingKeys.ApiKey` and `AiSettingKeys.VectorStoreApiKey` stored with `isSecret: true`; value redacted in read API responses.
-- Provider registry blocks calls to non-compliant regions per `AiSettingKeys.DataResidencyRegion`.
-- Prompt injection detection on user-supplied content.
-- All AI calls and responses audit-logged; PII redacted in logs.
+Open items carried into Sprint 15:
+- `AiSettingKeys.ApiKey` / `AiSettingKeys.VectorStoreApiKey` value must be redacted (masked) in read API responses — `IsSecret` flag stored but redaction not enforced in controller layer.
+- Application unit tests for `AiOrchestrator` and `BudgetService` (target ≥ 80% coverage) — only contract-level tests exist today.
+- Prompt injection detection key/config defined but no runtime enforcement class.
+- All AI calls and responses should be audit-logged; not yet implemented.
 
-### Sprint 15 — RAG, Semantic Search & AI Safety
-**Goal:** Vector search and copilot features operational; safety pipeline enforced end-to-end.
+### Sprint 15 — AI Admin UI Wiring
+**Goal:** Every ✦ "Generate with AI" / "AI Assist" surface in Admin.WebHost is fully functional, backed by the existing `AiWritingController` and `AiController` endpoints.
 
-Deliverables:
-- Vector indexing pipeline: on entry save, generate embedding and upsert to vector store.
-- `VectorSearchService`: hybrid search (BM25 + vector), result fusion.
-- RAG pipeline: retrieve → assemble context → complete → cite sources.
-- AI copilot endpoint (`/api/v1/ai/copilot/chat`).
-- `SafetyPipeline`: pre-call moderation → call → post-call safety classifier.
-- Grounded-only mode: copilot declines if no retrieved source supports claim.
-- Related content suggestions.
-- Media intelligence: alt-text, tag suggestions via vision model.
-- Feedback endpoint: thumbs-up/down + comment on AI output.
-- PgVector and Qdrant vector store adapters.
-- Admin UI: copilot chat panel embedded in entry editor; AI usage analytics dashboard.
-- SDK updated: `useCopilot` hook and `generateDraft` helper for Next.js starter.
+> **Approach — shared component, not per-page duplication.**
+> A single reusable `AiAssistModal` component and `useAiAssist` hook will be created in `src/components/ai/`.
+> Individual pages pass a typed `AiAssistContext` (mode, target field, entry/asset ID) to the modal.
+> This avoids copy-pasting modal logic into every editor.
 
-Security items:
-- Retrieved content from tenant index only; no cross-tenant vector leakage.
-- Jailbreak detector on user messages in copilot.
-- AI audit log retention ≥ 90 days; separate table, separate backup policy.
+#### Backend gaps to close first
+- Add `POST /api/v1/media/{assetId}/generate-alt-text` endpoint in `AiController` (command already exists: `GenerateAltTextCommand`). No new application code needed — only the controller action.
+- Add `POST /api/v1/media/{assetId}/suggest-tags` endpoint or extend alt-text result to include tag suggestions.
+- Extend `src/api/ai.ts` (already created) with `generateAltText(assetId)` and `generateDraft(contentTypeId, prompt)` calls.
+- Enforce secret redaction: controller/mapper layer must return `"***"` for any `ConfigEntry` where `IsSecret = true`.
+
+#### Shared AI component layer (`src/components/ai/`)
+- `AiAssistModal` — single modal used by all surfaces. Accepts `context: AiAssistContext` and `onApply(result: string): void`.
+  - Modes driven by context type:
+    - `field` → tabs: Draft · Rewrite · Tone · Summarize (maps to `AiWritingController` endpoints, already wired for RichText).
+    - `entry` → tab: Generate Draft (maps to `POST /ai/drafts/generate`, populates multiple fields at once, user reviews diff before applying).
+    - `asset` → tab: Generate Alt Text + Suggest Tags (maps to new alt-text endpoint).
+  - Shows a preview/diff before applying; user must confirm.
+  - Displays a `429` budget-exceeded banner inline when the API returns that status.
+- `useAiAssist` hook — wraps `useMutation` + modal open/close state; returns `{ open, trigger, modal }`.
+- `AiBudgetBanner` — small inline warning shown when `aiEnabled = false` on the site, or when the last call returned 429.
+
+#### Surface wiring
+
+**1. EntryEditorPage — `AiAuthoringPanel` sidebar (currently 5 dead buttons)**
+- Replace static button list with live actions using `useAiAssist` hook.
+- "Generate Draft" → opens modal in `entry` mode (prompt → `POST /ai/drafts/generate` → diff view → apply to all fields).
+- "Rewrite / Tone" → opens modal in `field` mode targeting the first RichText field, or prompts user to pick a field.
+- "Summarize" → opens modal in `field` mode, summarize action.
+- "SEO Suggestions" → opens modal in `field` mode targeting `seoTitle` / `seoDescription` fields if present (falls back to a prompt).
+- "Translate" → opens modal with locale picker; calls `POST /entries/{id}/translate`.
+- Remove hardcoded "Powered by Claude Sonnet" — replace with "Powered by OpenAI" sourced from site AI settings.
+
+**2. EntryEditorPage — per ShortText / LongText field "Generate with AI" inline button (currently no `onClick`)**
+- Handled inside `FieldInput.tsx` `ScalarFieldInput`, same as the already-wired RichText case.
+- `ShortText` → opens modal in `field` mode, Draft tab (short prompt → fill field).
+- `LongText` → opens modal in `field` mode, all four tabs (Draft · Rewrite · Tone · Summarize).
+- Both use `useAiAssist` hook to avoid repeating mutation + modal JSX.
+
+**3. AssetDetail — "Generate" alt-text link (currently a plain `<span>`)**
+- Convert `<span>` to a `<button>` wired to `useAiAssist` in `asset` mode.
+- On success, auto-fills the `altText` textarea and the `tags` input; user still clicks "Save Changes" to persist.
+- Show spinner on the button while the mutation is pending.
+
+#### Open items from Sprint 14 (close in this sprint)
+- Secret redaction in settings read API responses.
+- `AiOrchestrator` + `BudgetService` unit tests (≥ 80% coverage).
+- Prompt injection runtime enforcement.
+
+#### Not in scope for Sprint 15 (deferred)
+- RAG pipeline, vector indexing, hybrid search.
+- Copilot chat panel.
+- PgVector / Qdrant adapters (project shells exist; implementation deferred).
+- AI audit log table.
+- Jailbreak detector.
+- SDK / Next.js starter helpers.
 
 ---
 
@@ -452,9 +493,12 @@ Security items:
 | 11 | Search, Caching & GraphQL | Headless Starter & TypeScript SDK | 🔲 Not started | — |
 | 12 | Webhooks, Events & Plugins | Webhooks and Outbox | 🔲 Not started | — |
 | 13 | Webhooks, Events & Plugins | Plugin System | 🔲 Not started | — |
-| 14 | AI Module | AI Core + Provider Adapters | ✅ Done | 2026-04-29 |
-| 15 | AI Module | RAG, Semantic Search & AI Safety | 🔲 Not started | — |
-| 16 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
+| 14 | AI Module | AI Core + OpenAI Provider | ✅ Done | 2026-04-29 |
+| 15 | AI Module | Inline AI Assist UI Wiring | 🔲 Not started | — |
+| 16 | AI Module | RAG + PgVector Indexing | 🔲 Not started | — |
+| 17 | AI Module | Copilot Chat (RAG + Tools + SSE) | 🔲 Not started | — |
+| 18 | AI Module | Quality Checks, Analytics & Polish | 🔲 Not started | — |
+| 19 | Observability & GA | Observability, Hardening & GA | 🔲 Not started | — |
 | 17 | Taxonomy Integration | Taxonomy Integration with Entries | 🔲 Not started | — |
 | 18 | Layout Configuration | Layout Configuration: Assets, Body Attributes & Token Namespaces | 🔲 Not started | — |
 
