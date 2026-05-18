@@ -36,8 +36,7 @@ const PageTemplatesPage = lazy(() => import('@/pages/page-templates/PageTemplate
 const PageTemplateDesignerPage = lazy(() => import('@/pages/page-templates/PageTemplateDesignerPage'));
 
 // Package Manager
-const ExportPage = lazy(() => import('@/pages/packages/ExportPage'));
-const ImportPage = lazy(() => import('@/pages/packages/ImportPage'));
+const PackagesPage = lazy(() => import('@/pages/packages/PackagesPage'));
 
 // Site management
 const SiteSettingPage = lazy(() => import('@/pages/sites/SiteSettingPage'));
@@ -318,25 +317,17 @@ export default function App() {
                                             }
                                         />
                                         <Route
-                                            path="/export"
+                                            path="/packages"
                                             element={
-                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Designer']}>
+                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'SiteAdmin']}>
                                                     <Suspense fallback={<PageLoader />}>
-                                                        <ExportPage />
+                                                        <PackagesPage />
                                                     </Suspense>
                                                 </ProtectedRoute>
                                             }
                                         />
-                                        <Route
-                                            path="/import"
-                                            element={
-                                                <ProtectedRoute requiredRoles={['SystemAdmin', 'TenantAdmin', 'Designer']}>
-                                                    <Suspense fallback={<PageLoader />}>
-                                                        <ImportPage />
-                                                    </Suspense>
-                                                </ProtectedRoute>
-                                            }
-                                        />
+                                        <Route path="/export" element={<Navigate to="/packages?tab=export" replace />} />
+                                        <Route path="/import" element={<Navigate to="/packages?tab=import" replace />} />
                                     </Route>
 
                                     {/* Fallback */}

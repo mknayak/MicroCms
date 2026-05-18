@@ -36,21 +36,20 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: '',
     items: [
-   {
+      {
         label: 'Dashboard',
         href: '/',
         icon: <Icon d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
-    },
+      },
     ],
   },
 
   // 2 ── Content — site-level authoring
   {
     title: 'Content',
- items: [
-
+    items: [
       {
-     label: 'Pages',
+        label: 'Pages',
         href: '/pages',
         icon: <Icon d="M3 7h18M3 12h18M3 17h18" />,
       },
@@ -58,16 +57,11 @@ const NAV_SECTIONS: NavSection[] = [
         label: 'Media Library',
         href: '/media',
         icon: <Icon d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />,
- },
-      {
-        label: 'Taxonomy',
-    href: '/taxonomy',
-    icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />,
-   },
+      },
     ],
   },
 
-  // 3 ── Structure — content modelling
+  // 3 ── Structure — content modelling + taxonomy
   {
     title: 'Structure',
     roles: ['SystemAdmin', 'TenantAdmin', 'SiteAdmin'],
@@ -76,27 +70,32 @@ const NAV_SECTIONS: NavSection[] = [
         label: 'Content Types',
         href: '/content-types',
         icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" />,
- },
+      },
+      {
+        label: 'Taxonomy',
+        href: '/taxonomy',
+        icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />,
+      },
     ],
   },
 
   // 4 ── Design — component system
   {
- title: 'Design',
+    title: 'Design',
     items: [
       {
-    label: 'Component Library',
-     href: '/components',
+        label: 'Component Library',
+        href: '/components',
         icon: (
           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         ),
       },
       {
         label: 'Layouts',
-      href: '/layouts',
-      icon: <Icon d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />,
+        href: '/layouts',
+        icon: <Icon d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />,
       },
-    {
+      {
         label: 'Page Templates',
         href: '/page-templates',
         icon: <Icon d="M3 3h18v18H3zM3 9h18M9 21V9" />,
@@ -104,16 +103,22 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
 
-  // 5 ── Tenant Management
+  // 5 ── Configuration — admin / tenant / site settings
   {
-    title: 'Tenant Management',
-    roles: ['SystemAdmin', 'TenantAdmin'],
+    title: 'Configuration',
+    roles: ['SystemAdmin', 'TenantAdmin', 'SiteAdmin'],
     items: [
       {
         label: 'Users',
         href: '/users',
         roles: ['SystemAdmin', 'TenantAdmin'],
         icon: <Icon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
+      },
+      {
+        label: 'Tenants',
+        href: '/tenants',
+        roles: ['SystemAdmin'],
+        icon: <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />,
       },
       {
         label: 'Settings',
@@ -126,41 +131,13 @@ const NAV_SECTIONS: NavSection[] = [
           />
         ),
       },
-    ],
-  },
-
-  // 6 ── Package Manager
-  {
-    title: 'Package Manager',
-    roles: ['SystemAdmin', 'TenantAdmin', 'SiteAdmin'],
- items: [
       {
-        label: 'Export',
-        href: '/export',
+        label: 'Import / Export',
+        href: '/packages',
         roles: ['SystemAdmin', 'TenantAdmin', 'SiteAdmin'],
-        icon: <Icon d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
-      },
-  {
-  label: 'Import',
-        href: '/import',
-     roles: ['SystemAdmin', 'TenantAdmin', 'SiteAdmin'],
-  icon: <Icon d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
+        icon: <Icon d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l-3-3m3 3l3-3" />,
       },
     ],
-  },
-
-  // 7 ── Global Administration — SystemAdmin only
-  {
-    title: 'Global Administration',
-    roles: ['SystemAdmin'],
-    items: [
-      {
-        label: 'Tenants',
-     href: '/tenants',
-        roles: ['SystemAdmin'],
-   icon: <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />,
-      },
-],
   },
 ];
 
