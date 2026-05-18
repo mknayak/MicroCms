@@ -20,7 +20,7 @@ const CATEGORIES: ComponentCategory[] = [
 ];
 
 const TEMPLATE_TYPES: { value: RenderingTemplateType; label: string; ext: string }[] = [
-  { value: 'Handlebars',   label: 'Handlebars (.hbs)', ext: '.hbs'   },
+  { value: 'Scriban',      label: 'Scriban (.sbn)',   ext: '.sbn'   },
   { value: 'WebComponent', label: 'HTML (.html)',       ext: '.html'  },
 ];
 
@@ -321,7 +321,7 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Use <code className="mx-1 rounded bg-slate-200 px-1">&#123;&#123;fieldHandle&#125;&#125;</code> to bind field values
+                  Use <code className="mx-1 rounded bg-slate-200 px-1">&#123;&#123; fieldHandle &#125;&#125;</code> to bind field values
                 </div>
               </div>
 
@@ -449,31 +449,29 @@ toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Save 
           {templateType === 'RazorPartial' && (
          <p>Use <code className="rounded bg-slate-100 px-1">@Model.FieldHandle</code> to output field values. Asset refs expose <code className="rounded bg-slate-100 px-1">.Url</code>, <code className="rounded bg-slate-100 px-1">.Alt</code>.</p>
   )}
-         {templateType === 'Handlebars' && (
-     <div className="space-y-2">
-       <p>Use <code className="rounded bg-slate-100 px-1">{'{{fieldHandle}}'}</code> to output values. Triple-stash <code className="rounded bg-slate-100 px-1">{'{{{fieldHandle}}}'}</code> for unescaped HTML.</p>
-       <div>
-         <p className="font-semibold text-slate-700 mb-1">Conditional (if / else)</p>
-         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{#if fieldHandle}}\n  shown when truthy\n{{else}}\n  shown when falsy\n{{/if}}`}</pre>
-         <p className="mt-1 text-slate-500">Use <code className="rounded bg-slate-100 px-1">{'{{#unless fieldHandle}}'}</code> for the inverse.</p>
-       </div>
-       <div>
-         <p className="font-semibold text-slate-700 mb-1">Loop (each)</p>
-         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{#each listField}}\n  {{this.title}} — {{@index}}\n{{/each}}`}</pre>
-         <p className="mt-1 text-slate-500"><code className="rounded bg-slate-100 px-1">{'{{@index}}'}</code> = 0-based position · <code className="rounded bg-slate-100 px-1">{'{{@first}}'}</code> / <code className="rounded bg-slate-100 px-1">{'{{@last}}'}</code> = booleans.</p>
-       </div>
-       <div>
-         <p className="font-semibold text-slate-700 mb-1">Nested properties</p>
-         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{image.url}}\n{{image.alt}}`}</pre>
-       </div>
-       <div>
-         <p className="font-semibold text-slate-700 mb-1">Inspect / debug a field</p>
-         <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{this}}`}</pre>
-         <p className="mt-1 text-slate-500">Inside an <code className="rounded bg-slate-100 px-1">{'{{#each}}'}</code> block, <code className="rounded bg-slate-100 px-1">{'{{this}}'}</code> outputs all key/value pairs of the current item — useful for discovering available field names.</p>
-       </div>
+         {templateType === 'Scriban' && (
+      <div className="space-y-2">
+        <p>Use <code className="rounded bg-slate-100 px-1">{`{{ fieldHandle }}`}</code> to output values. HTML is output raw by default; use <code className="rounded bg-slate-100 px-1">{`{{ fieldHandle | html.escape }}`}</code> to encode.</p>
+        <div>
+          <p className="font-semibold text-slate-700 mb-1">Conditional (if / else)</p>
+          <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{ if fieldHandle }}\n  shown when truthy\n{{ else }}\n  shown when falsy\n{{ end }}`}</pre>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-700 mb-1">Loop (for)</p>
+          <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{ for item in listField }}\n  {{ item.title }} — {{ for.index }}\n{{ end }}`}</pre>
+          <p className="mt-1 text-slate-500"><code className="rounded bg-slate-100 px-1">{`{{ for.index }}`}</code> = 0-based position · <code className="rounded bg-slate-100 px-1">{`{{ for.first }}`}</code> / <code className="rounded bg-slate-100 px-1">{`{{ for.last }}`}</code> = booleans.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-700 mb-1">Nested properties</p>
+          <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{ image.url }}\n{{ image.alt }}`}</pre>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-700 mb-1">String functions</p>
+          <pre className="rounded bg-slate-100 px-2 py-1.5 font-mono text-[11px] text-slate-700 whitespace-pre-wrap">{`{{ title | string.upcase }}\n{{ body | string.truncate 120 }}`}</pre>
+        </div>
 
-     </div>
-    )}
+      </div>
+     )}
   {templateType === 'React' && (
             <p>Props are typed from the field schema. Each field is passed as a prop. Asset refs are <code className="rounded bg-slate-100 px-1">AssetRef</code> objects with <code className="rounded bg-slate-100 px-1">url</code> and <code className="rounded bg-slate-100 px-1">alt</code>.</p>
    )}
@@ -593,7 +591,7 @@ function ThumbnailEditor({
 function getBindingExpression(templateType: RenderingTemplateType, handle: string): string {
   switch (templateType) {
     case 'RazorPartial': return `@Model.${handle.charAt(0).toUpperCase() + handle.slice(1)}`;
-    case 'Handlebars':   return `{{${handle}}}`;
+    case 'Scriban':      return `{{ ${handle} }}`;
     case 'React':  return `{props.${handle}}`;
     case 'WebComponent': return `getAttribute('${handle}')`;
     default:     return handle;
@@ -616,11 +614,11 @@ function getTemplatePlaceholder(
         ...handles.map((h) => `  <p>@Model.${h.charAt(0).toUpperCase() + h.slice(1)}</p>`),
         '</div>',
       ].join('\n');
-    case 'Handlebars':
+    case 'Scriban':
       return [
-        `{{! ${pascal} Component }}`,
+        `{{- ## ${pascal} Component -}}`,
         `<div class="${key}">`,
-        ...handles.map((h) => `  <p>{{${h}}}</p>`),
+        ...handles.map((h) => `  <p>{{ ${h} }}</p>`),
         '</div>',
       ].join('\n');
     case 'React':

@@ -560,20 +560,20 @@ const PREVIEW_EXTRA_CSS = `
  * Injects wireframe zone placeholders into a saved shell template.
  *
  * The shell already contains all <link>, <script>, body attrs etc.
- * We only replace the triple-brace Handlebars tokens that the generator
- * emits for each drop-zone:  {{{zone_name}}}
+ * We only replace the Scriban tokens that the generator emits for each
+ * drop-zone:  {{ zone_name }}
  * Each data-zone wrapper div already exists in the shell; we add a
  * data-zone-label attribute so CSS ::before can label it, and empty the
  * token so nothing breaks.
  */
 function shellToPreview(shell: string): string {
-  // 1. Replace each bare {{{token}}} with a synthetic [data-zone] wrapper
+  // 1. Replace each bare {{ token }} with a synthetic [data-zone] wrapper
   //    so the preview overlay CSS can highlight and label it.
   //    Token names use underscores; convert back to hyphens for the label.
   let html = shell.replace(
-    /\{\{\{([^}]+)\}\}\}/g,
+    /\{\{([^}]+)\}\}/g,
     (_m, token: string) => {
-      const name = token.replace(/_/g, '-');
+      const name = token.trim().replace(/_/g, '-');
       return `<div data-zone="${name}" data-zone-label="⬡ ${name}"></div>`;
     },
   );

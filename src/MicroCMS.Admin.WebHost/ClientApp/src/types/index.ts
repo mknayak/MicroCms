@@ -660,7 +660,7 @@ export interface CreateCollectionPageRequest {
 
 // ─── Layouts ──────────────────────────────────────────────────────────────────
 
-export type LayoutTemplateType = 'Handlebars' | 'Html';
+export type LayoutTemplateType = 'Scriban' | 'Html';
 
 export interface LayoutListItem {
     id: string;
@@ -980,7 +980,7 @@ export type ComponentCategory =
 
 export type RenderingTemplateType =
     | 'RazorPartial'
-    | 'Handlebars'
+    | 'Scriban'
     | 'React'
     | 'WebComponent';
 

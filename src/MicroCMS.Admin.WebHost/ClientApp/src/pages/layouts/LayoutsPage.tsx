@@ -16,13 +16,13 @@ const layoutSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   key: z.string().min(1, 'Key is required').max(100)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Lowercase letters, numbers and hyphens only'),
-  templateType: z.enum(['Handlebars', 'Html'] as const),
+  templateType: z.enum(['Scriban', 'Html'] as const),
 });
 
 type LayoutForm = z.infer<typeof layoutSchema>;
 
 const TEMPLATE_TYPE_BADGE: Record<LayoutTemplateType, string> = {
-  Handlebars: 'bg-amber-100 text-amber-800',
+  Scriban: 'bg-amber-100 text-amber-800',
   Html: 'bg-slate-100 text-slate-700',
 };
 
@@ -38,7 +38,7 @@ function LayoutEditor({ layout, onClose }: {
     resolver: zodResolver(layoutSchema),
     defaultValues: layout
       ? { name: layout.name, key: layout.key, templateType: layout.templateType }
-      : { name: '', key: '', templateType: 'Handlebars' },
+      : { name: '', key: '', templateType: 'Scriban' },
   });
 
   const templateType = form.watch('templateType');
@@ -83,11 +83,11 @@ function LayoutEditor({ layout, onClose }: {
           <div>
    <label className="form-label">Template Engine</label>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              {(['Handlebars', 'Html'] as LayoutTemplateType[]).map((t) => (
+              {(['Scriban', 'Html'] as LayoutTemplateType[]).map((t) => (
            <label key={t} className={`flex cursor-pointer flex-col rounded-lg border-2 p-3 transition-colors ${templateType === t ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:border-slate-300'}`}>
  <input type="radio" value={t} {...form.register('templateType')} className="sr-only" />
                   <span className="text-sm font-semibold text-slate-800">{t}</span>
-      <span className="mt-0.5 text-xs text-slate-500">{t === 'Handlebars' ? 'Recommended — full logic support' : 'Simple token replacement'}</span>
+      <span className="mt-0.5 text-xs text-slate-500">{t === 'Scriban' ? 'Recommended — full logic support' : 'Simple token replacement'}</span>
   </label>
            ))}
           </div>
