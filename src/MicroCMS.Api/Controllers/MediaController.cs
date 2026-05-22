@@ -451,6 +451,8 @@ public sealed class MediaController : ApiControllerBase
         return NoContentOrProblem(result);
     }
 
+    // ── AI ────────────────────────────────────────────────────────────────
+
     // ── Static helpers ────────────────────────────────────────────────────
 
     private static bool IsMultipartContentType(string? contentType) =>

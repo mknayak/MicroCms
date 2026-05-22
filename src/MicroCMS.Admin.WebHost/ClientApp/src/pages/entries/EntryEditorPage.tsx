@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { entriesApi } from '@/api/entries';
 import { contentTypesApi } from '@/api/contentTypes';
+import { aiWritingApi } from '@/api/ai';
 import type { EntryVersion, EntryStatus, FieldDefinitionDto } from '@/types';
 import { ApiError } from '@/api/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -15,6 +16,7 @@ import { useSite } from '@/contexts/SiteContext';
 import { orderedGroups } from '@/pages/content-types/schemaTab.helpers';
 import { DEFAULT_GROUP } from '@/pages/content-types/schemaTab.types';
 import { FieldInput, CharCounter } from '@/components/fields/FieldInput';
+import { AiBudgetBanner } from '@/components/ai/AiBudgetBanner';
 
 // ─── Form schema ──────────────────────────────────────────────────────────────
 
@@ -85,12 +87,7 @@ function FieldGroupSection({
                 </div>
                 <div className="flex items-center gap-3">
                   {(field.fieldType === 'ShortText' || field.fieldType === 'LongText') && (
-                    <>
-                      <CharCounter value={typeof watchedFields?.[field.handle] === 'string' ? watchedFields[field.handle] as string : ''} max={field.fieldType === 'ShortText' ? 100 : 500} />
-                      <button type="button" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
-                        <span>✦</span> Generate with AI
-                      </button>
-                    </>
+                    <CharCounter value={typeof watchedFields?.[field.handle] === 'string' ? watchedFields[field.handle] as string : ''} max={field.fieldType === 'ShortText' ? 100 : 500} />
                   )}
                   <span className="text-xs text-slate-400">{field.fieldType}</span>
                 </div>
@@ -251,60 +248,182 @@ Unpublish
 
 // ─── AI Authoring Assist Panel ────────────────────────────────────────────────
 
-function AiAuthoringPanel() {
+// ─── AI Authoring Assist Panel ────────────────────────────────────────────────
+
+function AiAuthoringPanel({ entryId, contentTypeId, fields }: { entryId?: string; contentTypeId?: string; fields: Record<string, unknown> }) {
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftPrompt, setDraftPrompt] = useState('');
+
+  const draftMutation = useMutation({
+    mutationFn: () => aiWritingApi.generateDraft(contentTypeId ?? '', draftPrompt),
+    onSuccess: () => { toast.success('Draft generated — reload fields to see changes.'); setShowDraftModal(false); },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Draft generation failed.'),
+  });
+
+  const rewriteMutation = useMutation({
+    mutationFn: () => {
+      if (!entryId) throw new Error('Save the entry first.');
+      const firstTextField = Object.keys(fields).find((k) => typeof fields[k] === 'string');
+      if (!firstTextField) throw new Error('No text field found.');
+      return aiWritingApi.rewrite(entryId, firstTextField, 'Improve clarity and tone');
+    },
+    onSuccess: () => toast.success('Use the field-level ✦ Generate button to preview the rewrite.'),
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Rewrite failed.'),
+  });
+
+  const summarizeMutation = useMutation({
+    mutationFn: () => {
+      if (!entryId) throw new Error('Save the entry first.');
+      const firstTextField = Object.keys(fields).find((k) => typeof fields[k] === 'string');
+      if (!firstTextField) throw new Error('No text field found.');
+      return aiWritingApi.summarize(entryId, firstTextField);
+    },
+    onSuccess: (result) => { if (result) toast.success(`Summary: ${result.content.slice(0, 120)}…`); },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Summarize failed.'),
+  });
+
+  const actions = [
+    { icon: '✦', label: 'Generate Draft', desc: 'Create body from brief', onClick: () => setShowDraftModal(true), pending: draftMutation.isPending },
+    { icon: '↺', label: 'Rewrite / Tone', desc: 'Format, friendly, shorter…', onClick: () => rewriteMutation.mutate(), pending: rewriteMutation.isPending },
+    { icon: '≡', label: 'Summarize', desc: 'TL;DR, abstract, social', onClick: () => summarizeMutation.mutate(), pending: summarizeMutation.isPending },
+    { icon: '◈', label: 'SEO Suggestions', desc: 'Use ✦ Generate on SEO fields', onClick: () => toast('Open the SEO field\'s ✦ Generate button.'), pending: false },
+    { icon: '⇄', label: 'Translate', desc: 'Switch locale + use ✦ Generate', onClick: () => toast('Switch locale above then use ✦ Generate on each field.'), pending: false },
+  ];
+
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-2">
-    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs text-white">✦</span>
-    <h3 className="text-sm font-semibold text-slate-900">AI Authoring Assist</h3>
-    </div>
- <div className="space-y-1.5">
-     {[
-          { icon: '✦', label: 'Generate Draft', desc: 'Create body from brief' },
-      { icon: '↺', label: 'Rewrite / Tone', desc: 'Format, friendly, shorter…' },
-          { icon: '≡', label: 'Summarize', desc: 'TL;DR, abstract, social' },
-    { icon: '◈', label: 'SEO Suggestions', desc: 'Title, description, keywords' },
-        { icon: '⇄', label: 'Translate', desc: 'In-EN (missing), de-DE' },
- ].map((action) => (
-        <button key={action.label} type="button" className="flex w-full items-start gap-2.5 rounded-lg p-2 text-left hover:bg-slate-50">
-        <span className="mt-0.5 text-sm text-brand-500">{action.icon}</span>
- <div>
-       <p className="text-xs font-medium text-slate-800">{action.label}</p>
-     <p className="text-xs text-slate-400">{action.desc}</p>
-          </div>
- </button>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs text-white">✦</span>
+        <h3 className="text-sm font-semibold text-slate-900">AI Authoring Assist</h3>
+      </div>
+      <div className="space-y-1.5">
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={action.onClick}
+            disabled={action.pending}
+            className="flex w-full items-start gap-2.5 rounded-lg p-2 text-left hover:bg-slate-50 disabled:opacity-50"
+          >
+            <span className="mt-0.5 text-sm text-brand-500">{action.icon}</span>
+            <div>
+              <p className="text-xs font-medium text-slate-800">{action.label}</p>
+              <p className="text-xs text-slate-400">{action.pending ? 'Working…' : action.desc}</p>
+            </div>
+          </button>
         ))}
-   </div>
+      </div>
       <p className="border-t border-slate-100 pt-2 text-xs text-slate-400">
-        Powered by <span className="font-medium text-slate-600">Claude Sonnet</span> (Balanced tier)
+        Powered by <span className="font-medium text-slate-600">OpenAI</span>
       </p>
+
+      {showDraftModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="card mx-4 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">✦ Generate Draft</h3>
+              <button type="button" onClick={() => setShowDraftModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
+            </div>
+            <div className="space-y-1.5">
+              <label className="form-label text-xs">Describe the content to create</label>
+              <textarea
+                className="form-input w-full resize-none"
+                rows={4}
+                placeholder="e.g. A blog post about the benefits of headless CMS for e-commerce teams…"
+                value={draftPrompt}
+                onChange={(e) => setDraftPrompt(e.target.value)}
+              />
+            </div>
+            {draftMutation.isError && (
+              <p className="text-xs text-red-600">{draftMutation.error instanceof Error ? draftMutation.error.message : 'Failed.'}</p>
+            )}
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button type="button" onClick={() => setShowDraftModal(false)} className="btn-secondary text-xs">Cancel</button>
+              <button
+                type="button"
+                onClick={() => draftMutation.mutate()}
+                disabled={draftMutation.isPending || !draftPrompt.trim()}
+                className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              >
+                {draftMutation.isPending ? 'Generating…' : 'Generate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Quality Checks Panel ─────────────────────────────────────────────────────
 
-function QualityChecksPanel({ localeVariants, activeLocale }: { localeVariants: string[]; activeLocale: string }) {
-  const checks = [
-    { label: 'Grammar & spelling', status: 'pass', detail: 'no issues' },
-    { label: 'Readability', status: 'pass', detail: 'Grade 9 (Good)' },
-    { label: 'No PII detected', status: 'pass', detail: '' },
-    { label: `${localeVariants.find(l => l !== activeLocale) ?? 'de-DE'} locale missing`, status: 'warn', detail: '' },
+function QualityChecksPanel({
+  localeVariants,
+  activeLocale,
+  siteLocales,
+  fields,
+  fieldDefs,
+}: {
+  localeVariants: string[];
+  activeLocale: string;
+  siteLocales: string[];
+  fields: Record<string, unknown>;
+  fieldDefs: FieldDefinitionDto[];
+}) {
+  const missingLocales = siteLocales.filter((l) => !localeVariants.includes(l) && l !== activeLocale);
+
+  const seoFields = fieldDefs.filter((f) => /seo|meta/i.test(f.handle));
+  const seoEmpty = seoFields.some((f) => !fields[f.handle]);
+
+  const richTextFields = fieldDefs.filter((f) => f.fieldType === 'RichText' || f.fieldType === 'LongText');
+  const wordCount = richTextFields.reduce((sum, f) => {
+    const text = typeof fields[f.handle] === 'string'
+      ? (fields[f.handle] as string).replace(/<[^>]+>/g, ' ').trim()
+      : '';
+    return sum + (text ? text.split(/\s+/).length : 0);
+  }, 0);
+  const wordCountOk = wordCount === 0 || wordCount >= 100;
+
+  const piiPattern = /\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i;
+  const hasPii = fieldDefs.some((f) => piiPattern.test(String(fields[f.handle] ?? '')));
+
+  const checks: { label: string; status: 'pass' | 'warn'; detail: string }[] = [
+    {
+      label: 'Locale coverage',
+      status: missingLocales.length === 0 ? 'pass' : 'warn',
+      detail: missingLocales.length > 0 ? `Missing: ${missingLocales.join(', ')}` : 'All locales present',
+    },
+    {
+      label: 'SEO fields',
+      status: seoEmpty ? 'warn' : 'pass',
+      detail: seoFields.length === 0 ? 'No SEO fields defined' : seoEmpty ? 'Some fields empty' : 'Filled',
+    },
+    {
+      label: 'Word count',
+      status: wordCountOk ? 'pass' : 'warn',
+      detail: wordCount === 0 ? 'No text yet' : `${wordCount} words${wordCount < 100 ? ' (< 100)' : ''}`,
+    },
+    {
+      label: 'No PII detected',
+      status: hasPii ? 'warn' : 'pass',
+      detail: hasPii ? 'Possible email in content' : '',
+    },
   ];
+
   const passed = checks.filter((c) => c.status === 'pass').length;
   return (
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
-   <h3 className="text-sm font-semibold text-slate-900">Quality Checks</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Quality Checks</h3>
         <span className="text-xs font-semibold text-brand-600">{passed}/{checks.length}</span>
       </div>
       <ul className="space-y-1.5">
         {checks.map((c) => (
           <li key={c.label} className="flex items-center gap-2 text-xs">
-<span className={c.status === 'pass' ? 'text-green-500' : 'text-amber-500'}>{c.status === 'pass' ? '✓' : '⚠'}</span>
-     <span className={c.status === 'pass' ? 'text-slate-700' : 'text-amber-700'}>{c.label}</span>
-   {c.detail && <span className="ml-auto text-slate-400">{c.detail}</span>}
-    </li>
+            <span className={c.status === 'pass' ? 'text-green-500' : 'text-amber-500'}>{c.status === 'pass' ? '✓' : '⚠'}</span>
+            <span className={c.status === 'pass' ? 'text-slate-700' : 'text-amber-700'}>{c.label}</span>
+            {c.detail && <span className="ml-auto text-slate-400 truncate max-w-[110px]" title={c.detail}>{c.detail}</span>}
+          </li>
         ))}
       </ul>
     </div>
@@ -629,11 +748,22 @@ key={loc}
           </div>
       )}
 
+          {/* AI Budget */}
+          <AiBudgetBanner />
+
           {/* AI Authoring Assist */}
-          <AiAuthoringPanel />
+          <AiAuthoringPanel entryId={id} contentTypeId={selectedContentTypeId} fields={watchedFields ?? {}} />
 
    {/* Quality Checks */}
- {!isNew && <QualityChecksPanel localeVariants={localeVariants} activeLocale={activeLocale} />}
+          {!isNew && (
+            <QualityChecksPanel
+              localeVariants={localeVariants}
+              activeLocale={activeLocale}
+              siteLocales={localeVariants}
+              fields={watchedFields ?? {}}
+              fieldDefs={selectedContentType?.fields ?? []}
+            />
+          )}
 
        {/* Version History */}
           {!isNew && id && (

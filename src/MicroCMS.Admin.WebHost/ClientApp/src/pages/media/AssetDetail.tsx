@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { mediaApi } from '@/api/media';
+import { aiWritingApi } from '@/api/ai';
 import type { MediaAsset } from '@/types';
 import { ApiError } from '@/api/client';
 import { ScanStatusBadge } from './ScanStatusBadge';
@@ -83,6 +84,15 @@ export function AssetDetail({
       toast.success('Signed URL generated (valid 1 hr).');
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Failed.'),
+  });
+
+  const altTextMutation = useMutation({
+    mutationFn: () => aiWritingApi.generateAltText(asset.id),
+    onSuccess: (result) => {
+      setAltText(result.content);
+      toast.success('Alt text generated.');
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.problem.detail ?? err.message : 'Alt text generation failed.'),
   });
 
   const sizeKb = Math.round(asset.fileSize / 1024);
@@ -180,7 +190,16 @@ export function AssetDetail({
               <div>
                 <div className="flex items-center justify-between">
                   <label className="form-label">Alt Text</label>
-                  <span className="text-xs text-brand-600">Generate</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      altTextMutation.mutate()
+                    }
+                    disabled={altTextMutation.isPending}
+                    className="text-xs text-brand-600 hover:underline disabled:opacity-50"
+                  >
+                    {altTextMutation.isPending ? 'Generating…' : '✦ Generate'}
+                  </button>
                 </div>
                 <textarea
                   className="form-input mt-1 resize-none text-xs"

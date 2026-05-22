@@ -4,6 +4,10 @@ export interface AiContentResult {
   content: string;
 }
 
+export interface AiDraftResult {
+  fields: Record<string, string>;
+}
+
 export const aiWritingApi = {
   draft: (entryId: string, prompt: string, locale?: string): Promise<AiContentResult> =>
     post<AiContentResult>(`/entries/${entryId}/draft`, { prompt, locale }),
@@ -16,4 +20,10 @@ export const aiWritingApi = {
 
   summarize: (entryId: string, fieldHandle: string, maxSentences = 3): Promise<AiContentResult> =>
     get<AiContentResult>(`/entries/${entryId}/summarize`, { params: { fieldHandle, maxSentences } }),
+
+  generateAltText: (assetId: string): Promise<AiContentResult> =>
+    post<AiContentResult>(`/media/${assetId}/alt-text`, {}),
+
+  generateDraft: (contentTypeId: string, prompt: string): Promise<AiDraftResult> =>
+    post<AiDraftResult>('/ai/drafts/generate', { contentTypeId, prompt }),
 };

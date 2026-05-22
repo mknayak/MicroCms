@@ -7,8 +7,10 @@ namespace MicroCMS.Api.Controllers;
 
 /// <summary>
 /// AI-powered writing assistance: draft, rewrite, tone change, summarise, translate (GAP-25/26).
+/// Mounted under /entries/{entryId}/... to match the frontend API contract.
 /// </summary>
 [Authorize]
+[Route("api/v{version:apiVersion}/entries")]
 public sealed class AiWritingController : ApiControllerBase
 {
     [HttpPost("{entryId:guid}/draft")]

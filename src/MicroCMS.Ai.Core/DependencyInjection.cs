@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using MicroCMS.Ai.Core.Interfaces;
+using MicroCMS.Ai.Abstractions.Interfaces;
 using MicroCMS.Ai.Core.Services;
 
 namespace MicroCMS.Ai.Core;

@@ -92,6 +92,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Layout> Layouts => Set<Layout>();
     public DbSet<EditLock> EditLocks => Set<EditLock>();
     public DbSet<SiteTemplate> SiteTemplates => Set<SiteTemplate>();
+    public DbSet<Ai.AiDailyUsage> AiDailyUsage => Set<Ai.AiDailyUsage>();
 
     // ── Model configuration ───────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using MicroCMS.Ai.Abstractions;
 using MicroCMS.Ai.Abstractions.Exceptions;
 using MicroCMS.Ai.Abstractions.Interfaces;
-using MicroCMS.Ai.Core.Interfaces;
+using MicroCMS.Ai.Abstractions.Interfaces;
 using MicroCMS.Shared.Ids;
 
 namespace MicroCMS.Ai.Core.Services;

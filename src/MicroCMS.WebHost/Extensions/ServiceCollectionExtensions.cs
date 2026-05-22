@@ -417,6 +417,11 @@ internal static class ServiceCollectionExtensions
     {
         builder.Services.AddAiCore();
 
+        // Replace the in-memory BudgetService with a DB-backed repository so usage
+        // persists across restarts and is accurate in multi-instance deployments (Sprint 15).
+        builder.Services.AddScoped<MicroCMS.Ai.Abstractions.Interfaces.IAiUsageTracker,
+            MicroCMS.Infrastructure.Ai.AiUsageRepository>();
+
         // Replace the ProviderRegistry singleton registered by AddAiCore() with a factory that
         // constructs the instance directly — avoiding the circular-resolution deadlock that
         // occurs when a factory calls sp.GetRequiredService<ProviderRegistry>() on itself.
