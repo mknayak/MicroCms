@@ -1,0 +1,24 @@
+# Recommended additions to .gitignore for deployment scripts
+# Add these lines to your .gitignore file to prevent committing sensitive deployment configurations
+
+## Deployment Scripts - Secrets and Production Configs
+# Keep the template files, but ignore files with actual secrets
+*-secrets.ps1
+*production*.ps1
+!deploy-production.ps1  # Keep the template
+
+# Alternative: be more specific
+# my-production.ps1
+# prod-secrets.ps1
+# staging-secrets.ps1
+
+## Deployment Logs (if you add logging to scripts)
+deploy-*.log
+publish-*.log
+
+## IIS Configuration Backups (if you create backup functionality)
+iis-backup-*.xml
+
+## Local Development Overrides
+deploy-local.ps1
+local-*.ps1
